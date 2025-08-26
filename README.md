@@ -1,10 +1,10 @@
-# 🏗️ Sistema ARCA Construcción
+#  Sistema ARCA Construcción
 
 Sistema integral de gestión para empresas de construcción con capacidades PWA (Progressive Web App) y acceso móvil.
 
-## 🚀 Características Principales
+##  Características Principales
 
-### ✨ Funcionalidades Core
+###  Funcionalidades Core
 - **Gestión de Proyectos** - Planificación, seguimiento y control de obras
 - **Gestión de Clientes** - Base de datos completa de clientes
 - **Facturación** - Sistema de facturas con estados y pagos
@@ -12,19 +12,19 @@ Sistema integral de gestión para empresas de construcción con capacidades PWA 
 - **Inventario** - Control de materiales y herramientas
 - **Presupuestos** - Elaboración y seguimiento de presupuestos
 
-### 📱 Características Móviles
+###  Características Móviles
 - **PWA Completa** - Instalable como aplicación nativa
 - **Responsive Design** - Optimizado para todos los dispositivos
 - **Funcionamiento Offline** - Cache de datos importantes
 - **Notificaciones Push** - Alertas en tiempo real
 
-### 🔒 Seguridad
-- **Autenticación de Usuarios** - Sistema de login seguro
+###  Seguridad
+- **Atenticación de Usuarios** - Sistema de login seguro
 - **Control de Permisos** - Roles y accesos diferenciados
 - **Logs de Actividad** - Auditoría completa del sistema
 - **Tokens CSRF** - Protección contra ataques
 
-## 🛠️ Tecnologías Utilizadas
+##  Tecnologías Utilizadas
 
 - **Backend:** Django 5.2.5 (Python)
 - **Frontend:** HTML5, CSS3, JavaScript (ES6+)
@@ -33,7 +33,7 @@ Sistema integral de gestión para empresas de construcción con capacidades PWA 
 - **Iconos:** Font Awesome 6.4.0
 - **PWA:** Service Worker, Manifest, Cache API
 
-## 📋 Requisitos del Sistema
+## Requisitos del Sistema
 
 ### Desarrollo
 - Python 3.11+
@@ -48,7 +48,7 @@ Sistema integral de gestión para empresas de construcción con capacidades PWA 
 - Gunicorn
 - SSL/HTTPS
 
-## 🚀 Instalación y Configuración
+##  Instalación y Configuración
 
 ### 1. Clonar el repositorio
 ```bash
@@ -79,13 +79,13 @@ python manage.py createsuperuser
 python manage.py runserver
 ```
 
-## 🌐 Acceso al Sistema
+##  Acceso al Sistema
 
 - **URL:** http://localhost:8000
 - **Admin:** http://localhost:8000/admin
 - **Dashboard:** http://localhost:8000/dashboard
 
-## 📱 Uso como PWA
+##  Uso como PWA
 
 ### Instalación en Móvil
 1. Abrir el sistema en Chrome/Safari
@@ -94,12 +94,12 @@ python manage.py runserver
 4. La app aparecerá en la pantalla de inicio
 
 ### Funcionalidades PWA
-- ✅ Instalación como app nativa
-- ✅ Funcionamiento offline
-- ✅ Sincronización automática
-- ✅ Notificaciones push
+- Instalación como app nativa
+- Funcionamiento offline
+-  Sincronización automática
+-  Notificaciones push
 
-## 🔧 Configuración de Producción
+##  Configuración de Producción
 
 ### Variables de Entorno
 ```bash
@@ -114,7 +114,7 @@ ALLOWED_HOSTS=tu-dominio.com
 - **Gunicorn** como servidor WSGI
 - **SSL** con Let's Encrypt
 
-## 📊 Estructura del Proyecto
+##  Estructura del Proyecto
 
 ```
 sistema-construccion-django/
@@ -134,20 +134,16 @@ sistema-construccion-django/
 └── manage.py              # Script de gestión Django
 ```
 
-## 🚀 Despliegue
+## Despliegue
 
-### DigitalOcean (Recomendado)
+### DigitalOcean 
 - **Droplet:** Ubuntu 22.04 LTS
 - **RAM:** 2GB mínimo
 - **Storage:** 50GB SSD
 - **Costo:** $12 USD/mes
 
-### Otros Proveedores
-- **Railway:** $5-20 USD/mes
-- **Render:** $7 USD/mes
-- **Heroku:** $7 USD/mes
 
-## 🔄 Control de Versiones
+##  Control de Versiones
 
 ### Git Workflow
 ```bash
@@ -170,7 +166,7 @@ git tag -a v1.0.0 -m "Versión 1.0.0 estable"
 git push origin v1.0.0
 ```
 
-## 🐛 Solución de Problemas
+##  Solución de Problemas
 
 ### Problemas Comunes
 1. **Error CSRF:** Verificar token en plantillas
@@ -183,7 +179,7 @@ git push origin v1.0.0
 - **Backup:** `logs/backup.log`
 - **Sistema:** `/var/log/` (producción)
 
-## 📞 Soporte
+##  Soporte
 
 ### Documentación
 - **README:** Este archivo
@@ -195,11 +191,11 @@ git push origin v1.0.0
 - **Proyecto:** Sistema ARCA Construcción
 - **Versión:** 1.0.0
 
-## 📄 Licencia
+##  Licencia
 
 Este proyecto es de uso interno para ARCA Construcción.
 
-## 🔮 Roadmap
+##  Roadmap
 
 ### Versión 1.1
 - [ ] Reportes avanzados
@@ -213,4 +209,4 @@ Este proyecto es de uso interno para ARCA Construcción.
 
 ---
 
-**Desarrollado con ❤️ para ARCA Construcción**
+
