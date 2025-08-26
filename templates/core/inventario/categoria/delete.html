@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+
+{% block title %}Eliminar Categoría de Inventario - Sistema de Construcción{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <!-- Header -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h1 class="h3 mb-0">
+                        <i class="fas fa-trash me-2"></i>Eliminar Categoría
+                    </h1>
+                    <p class="text-muted">Confirma la eliminación de la categoría</p>
+                </div>
+                <a href="{% url 'categoria_list' %}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left me-2"></i>Volver
+                </a>
+            </div>
+
+            <!-- Advertencia -->
+            <div class="card border-danger">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-exclamation-triangle me-2"></i>¡Advertencia!
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <h6 class="card-title text-danger">¿Estás seguro de que quieres eliminar esta categoría?</h6>
+                    
+                    <div class="alert alert-warning">
+                        <strong>Categoría:</strong> {{ categoria.nombre }}
+                        {% if categoria.descripcion %}
+                            <br><strong>Descripción:</strong> {{ categoria.descripcion }}
+                        {% endif %}
+                    </div>
+
+                    {% if categoria.items.count > 0 %}
+                        <div class="alert alert-danger">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            <strong>¡ATENCIÓN!</strong> Esta categoría tiene {{ categoria.items.count }} item(s) asociado(s).
+                            <br><strong>No se puede eliminar</strong> hasta que se eliminen o reasignen todos los items.
+                        </div>
+                        
+                        <div class="text-center">
+                            <a href="{% url 'categoria_list' %}" class="btn btn-primary">
+                                <i class="fas fa-arrow-left me-2"></i>Volver a la Lista
+                            </a>
+                        </div>
+                    {% else %}
+                        <p class="text-muted">
+                            <i class="fas fa-info-circle me-2"></i>
+                            Esta acción no se puede deshacer. La categoría será eliminada permanentemente.
+                        </p>
+
+                        <!-- Formulario de confirmación -->
+                        <form method="post" class="mt-3">
+                            {% csrf_token %}
+                            <div class="d-flex justify-content-between">
+                                <a href="{% url 'categoria_list' %}" class="btn btn-outline-secondary">
+                                    <i class="fas fa-times me-2"></i>Cancelar
+                                </a>
+                                <button type="submit" class="btn btn-danger">
+                                    <i class="fas fa-trash me-2"></i>Eliminar Categoría
+                                </button>
+                            </div>
+                        </form>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Información adicional -->
+            <div class="card mt-4 bg-light">
+                <div class="card-body">
+                    <h6 class="card-title">
+                        <i class="fas fa-info-circle me-2"></i>Información sobre Eliminación
+                    </h6>
+                    <ul class="mb-0">
+                        <li>Las categorías solo se pueden eliminar si no tienen items asociados</li>
+                        <li>Si hay items, primero debes eliminarlos o reasignarlos a otra categoría</li>
+                        <li>Esta acción es irreversible</li>
+                        <li>Se registrará en el historial de actividades del sistema</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

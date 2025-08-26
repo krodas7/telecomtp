@@ -1,0 +1,102 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Gestión de Usuarios{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-0">
+                <i class="fas fa-users me-2"></i>Gestión de Usuarios
+            </h1>
+            <p class="text-muted">Administra los usuarios del sistema y sus perfiles</p>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{% url 'roles_lista' %}" class="btn btn-info">
+                <i class="fas fa-user-shield me-1"></i>Gestionar Roles
+            </a>
+            <a href="{% url 'usuario_crear' %}" class="btn btn-primary">
+                <i class="fas fa-plus me-1"></i>Nuevo Usuario
+            </a>
+        </div>
+    </div>
+
+    <!-- Contenido de la tabla de usuarios -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">Usuarios del Sistema ({{ usuarios|length }})</h6>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
+                    <thead>
+                        <tr>
+                            <th>Usuario</th>
+                            <th>Nombre Completo</th>
+                            <th>Email</th>
+                            <th>Rol</th>
+                            <th>Estado</th>
+                            <th>Fecha Registro</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for usuario in usuarios %}
+                        <tr>
+                            <td>{{ usuario.username }}
+                                {% if usuario.is_superuser %}
+                                <span class="badge bg-danger text-white ms-2">Superusuario</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ usuario.perfilusuario.nombre_completo|default:"No especificado" }}</td>
+                            <td>{{ usuario.email|default:"No especificado" }}</td>
+                            <td>
+                                {% if usuario.perfilusuario and usuario.perfilusuario.rol %}
+                                <span class="badge bg-primary">{{ usuario.perfilusuario.rol.nombre }}</span>
+                                {% else %}
+                                <span class="badge bg-warning text-dark">Sin rol</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if usuario.is_active %}
+                                <span class="badge bg-success">Activo</span>
+                                {% else %}
+                                <span class="badge bg-danger">Inactivo</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ usuario.date_joined|date:"d/m/Y H:i" }}</td>
+                            <td>
+                                <a href="{% url 'usuario_editar' usuario.id %}" class="btn btn-warning btn-sm" title="Editar usuario">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="7" class="text-center">No hay usuarios registrados.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    // Inicializar DataTable
+    $('#dataTable').DataTable({
+        language: {
+            url: '//cdn.datatables.net/plug-ins/1.13.7/i18n/es-ES.json'
+        },
+        responsive: true,
+        order: [[0, 'asc']]
+    });
+});
+</script>
+{% endblock %}

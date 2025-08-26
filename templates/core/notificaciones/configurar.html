@@ -1,0 +1,684 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Configurar Notificaciones - Sistema de Construcción{% endblock %}
+
+{% block extra_css %}
+<style>
+    :root {
+        --primary-color: #667eea;
+        --primary-dark: #5a6fd8;
+        --secondary-color: #6c757d;
+        --success-color: #28a745;
+        --warning-color: #ffc107;
+        --danger-color: #dc3545;
+        --info-color: #17a2b8;
+        --text-primary: #2d3748;
+        --text-secondary: #718096;
+        --card-bg: #ffffff;
+        --card-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
+        --border-color: #e2e8f0;
+    }
+    
+    .configurar-hero {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 3rem 2rem;
+        border-radius: 20px;
+        margin-bottom: 2rem;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .configurar-hero::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="white" opacity="0.1"/><circle cx="75" cy="75" r="1" fill="white" opacity="0.1"/><circle cx="50" cy="10" r="0.5" fill="white" opacity="0.1"/><circle cx="10" cy="60" r="0.5" fill="white" opacity="0.1"/><circle cx="90" cy="40" r="0.5" fill="white" opacity="0.1"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+        opacity: 0.3;
+    }
+    
+    .configurar-hero-content {
+        position: relative;
+        z-index: 1;
+    }
+    
+    .configurar-hero-title {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin-bottom: 1rem;
+        text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    }
+    
+    .configurar-hero-subtitle {
+        font-size: 1.2rem;
+        opacity: 0.9;
+        margin-bottom: 0;
+    }
+    
+    .configuracion-container {
+        background: var(--card-bg);
+        border-radius: 20px;
+        padding: 2rem;
+        box-shadow: var(--card-shadow);
+        border: 1px solid var(--border-color);
+        margin-bottom: 2rem;
+    }
+    
+    .configuracion-header {
+        text-align: center;
+        margin-bottom: 2rem;
+        padding-bottom: 1.5rem;
+        border-bottom: 2px solid var(--border-color);
+    }
+    
+    .configuracion-title {
+        font-size: 1.8rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        margin-bottom: 0.5rem;
+    }
+    
+    .configuracion-subtitle {
+        color: var(--text-secondary);
+        font-size: 1rem;
+        margin-bottom: 0;
+    }
+    
+    .configuracion-section {
+        margin-bottom: 2.5rem;
+    }
+    
+    .section-title {
+        font-size: 1.3rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        margin-bottom: 1.5rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 1px solid var(--border-color);
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+    
+    .section-icon {
+        color: var(--primary-color);
+        font-size: 1.2rem;
+    }
+    
+    .tipos-notificaciones {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 1.5rem;
+    }
+    
+    .tipo-notificacion {
+        background: var(--card-bg);
+        border: 2px solid var(--border-color);
+        border-radius: 15px;
+        padding: 1.5rem;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .tipo-notificacion:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        border-color: var(--primary-color);
+    }
+    
+    .tipo-notificacion::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+    
+    .tipo-notificacion:hover::before {
+        opacity: 1;
+    }
+    
+    .tipo-header {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 1rem;
+    }
+    
+    .tipo-icono {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        color: white;
+    }
+    
+    .icono-facturas { background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%); }
+    .icono-pagos { background: linear-gradient(135deg, #4ecdc4 0%, #44a08d 100%); }
+    .icono-gastos { background: linear-gradient(135deg, #45b7d1 0%, #96c93d 100%); }
+    .icono-proyectos { background: linear-gradient(135deg, #f9ca24 0%, #f0932b 100%); }
+    .icono-anticipos { background: linear-gradient(135deg, #6c5ce7 0%, #a29bfe 100%); }
+    .icono-presupuestos { background: linear-gradient(135deg, #fd79a8 0%, #e84393 100%); }
+    .icono-archivos { background: linear-gradient(135deg, #00b894 0%, #00cec9 100%); }
+    .icono-sistema { background: linear-gradient(135deg, #636e72 0%, #2d3436 100%); }
+    
+    .tipo-info h4 {
+        margin: 0;
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: var(--text-primary);
+    }
+    
+    .tipo-info p {
+        margin: 0.25rem 0 0 0;
+        font-size: 0.9rem;
+        color: var(--text-secondary);
+    }
+    
+    .tipo-toggle {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-top: 1rem;
+    }
+    
+    .toggle-switch {
+        position: relative;
+        width: 60px;
+        height: 30px;
+    }
+    
+    .toggle-switch input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+    }
+    
+    .toggle-slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: #ccc;
+        transition: .4s;
+        border-radius: 30px;
+    }
+    
+    .toggle-slider:before {
+        position: absolute;
+        content: "";
+        height: 22px;
+        width: 22px;
+        left: 4px;
+        bottom: 4px;
+        background-color: white;
+        transition: .4s;
+        border-radius: 50%;
+    }
+    
+    input:checked + .toggle-slider {
+        background-color: var(--success-color);
+    }
+    
+    input:checked + .toggle-slider:before {
+        transform: translateX(30px);
+    }
+    
+    .toggle-label {
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: var(--text-primary);
+    }
+    
+    .configuracion-frecuencia {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1.5rem;
+    }
+    
+    .frecuencia-item {
+        background: var(--card-bg);
+        border: 2px solid var(--border-color);
+        border-radius: 15px;
+        padding: 1.5rem;
+        transition: all 0.3s ease;
+    }
+    
+    .frecuencia-item:hover {
+        border-color: var(--primary-color);
+        transform: translateY(-2px);
+    }
+    
+    .frecuencia-header {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        margin-bottom: 1rem;
+    }
+    
+    .frecuencia-icono {
+        color: var(--primary-color);
+        font-size: 1.2rem;
+    }
+    
+    .frecuencia-titulo {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        margin: 0;
+    }
+    
+    .frecuencia-descripcion {
+        color: var(--text-secondary);
+        font-size: 0.9rem;
+        margin-bottom: 1rem;
+    }
+    
+    .form-group {
+        margin-bottom: 1rem;
+    }
+    
+    .form-label {
+        font-weight: 600;
+        color: var(--text-primary);
+        margin-bottom: 0.5rem;
+        display: block;
+    }
+    
+    .form-control {
+        border: 2px solid var(--border-color);
+        border-radius: 10px;
+        padding: 0.75rem;
+        transition: all 0.3s ease;
+        background: var(--card-bg);
+        width: 100%;
+    }
+    
+    .form-control:focus {
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+        outline: none;
+    }
+    
+    .horarios-container {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+    }
+    
+    .btn-guardar {
+        background: linear-gradient(135deg, var(--success-color) 0%, #1e7e34 100%);
+        color: white;
+        border: none;
+        padding: 1rem 2rem;
+        border-radius: 15px;
+        font-size: 1.1rem;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        width: 100%;
+        max-width: 300px;
+        margin: 0 auto;
+        display: block;
+    }
+    
+    .btn-guardar:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+        background: linear-gradient(135deg, #1e7e34 0%, var(--success-color) 100%);
+    }
+    
+    .btn-guardar:active {
+        transform: translateY(-1px);
+    }
+    
+    .info-card {
+        background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+        border: 1px solid var(--primary-color);
+        border-radius: 15px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    
+    .info-header {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        margin-bottom: 1rem;
+    }
+    
+    .info-icono {
+        color: var(--primary-color);
+        font-size: 1.5rem;
+    }
+    
+    .info-titulo {
+        font-size: 1.2rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        margin: 0;
+    }
+    
+    .info-texto {
+        color: var(--text-secondary);
+        line-height: 1.6;
+        margin-bottom: 0;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Hero Section -->
+    <div class="configurar-hero">
+        <div class="configurar-hero-content">
+            <h1 class="configurar-hero-title">
+                <i class="fas fa-cog me-3"></i>
+                Configurar Notificaciones
+            </h1>
+            <p class="configurar-hero-subtitle">
+                Personaliza cómo y cuándo recibir notificaciones del sistema
+            </p>
+        </div>
+    </div>
+
+    <!-- Información -->
+    <div class="info-card">
+        <div class="info-header">
+            <i class="fas fa-info-circle info-icono"></i>
+            <h3 class="info-titulo">¿Cómo funcionan las notificaciones?</h3>
+        </div>
+        <p class="info-texto">
+            Las notificaciones te mantienen informado sobre eventos importantes del sistema. 
+            Puedes configurar qué tipos de notificaciones quieres recibir, con qué frecuencia 
+            y en qué horarios. Las notificaciones se envían automáticamente cuando ocurren 
+            eventos como facturas vencidas, pagos pendientes, cambios de estado en proyectos, etc.
+        </p>
+    </div>
+
+    <!-- Formulario de Configuración -->
+    <form method="POST" class="configuracion-container">
+        {% csrf_token %}
+        
+        <!-- Tipos de Notificaciones -->
+        <div class="configuracion-section">
+            <h3 class="section-title">
+                <i class="fas fa-bell section-icon"></i>
+                Tipos de Notificaciones
+            </h3>
+            <p class="text-muted mb-4">Selecciona qué tipos de notificaciones quieres recibir:</p>
+            
+            <div class="tipos-notificaciones">
+                <!-- Facturas Vencidas -->
+                <div class="tipo-notificacion">
+                    <div class="tipo-header">
+                        <div class="tipo-icono icono-facturas">
+                            <i class="fas fa-exclamation-triangle"></i>
+                        </div>
+                        <div class="tipo-info">
+                            <h4>Facturas Vencidas</h4>
+                            <p>Alertas sobre facturas que han vencido</p>
+                        </div>
+                    </div>
+                    <div class="tipo-toggle">
+                        <span class="toggle-label">Recibir notificaciones</span>
+                        <label class="toggle-switch">
+                            <input type="checkbox" name="facturas_vencidas" {% if config.facturas_vencidas %}checked{% endif %}>
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Pagos Pendientes -->
+                <div class="tipo-notificacion">
+                    <div class="tipo-header">
+                        <div class="tipo-icono icono-pagos">
+                            <i class="fas fa-clock"></i>
+                        </div>
+                        <div class="tipo-info">
+                            <h4>Pagos Pendientes</h4>
+                            <p>Recordatorios sobre pagos por cobrar</p>
+                        </div>
+                    </div>
+                    <div class="tipo-toggle">
+                        <span class="toggle-label">Recibir notificaciones</span>
+                        <label class="toggle-switch">
+                            <input type="checkbox" name="pagos_pendientes" {% if config.pagos_pendientes %}checked{% endif %}>
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Gastos Requieren Aprobación -->
+                <div class="tipo-notificacion">
+                    <div class="tipo-header">
+                        <div class="tipo-icono icono-gastos">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                        <div class="tipo-info">
+                            <h4>Gastos Requieren Aprobación</h4>
+                            <p>Notificaciones sobre gastos pendientes de aprobación</p>
+                        </div>
+                    </div>
+                    <div class="tipo-toggle">
+                        <span class="toggle-label">Recibir notificaciones</span>
+                        <label class="toggle-switch">
+                            <input type="checkbox" name="gastos_aprobacion" {% if config.gastos_aprobacion %}checked{% endif %}>
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Cambios de Proyecto -->
+                <div class="tipo-notificacion">
+                    <div class="tipo-header">
+                        <div class="tipo-icono icono-proyectos">
+                            <i class="fas fa-project-diagram"></i>
+                        </div>
+                        <div class="tipo-info">
+                            <h4>Cambios de Estado del Proyecto</h4>
+                            <p>Alertas sobre cambios importantes en proyectos</p>
+                        </div>
+                    </div>
+                    <div class="tipo-toggle">
+                        <span class="toggle-label">Recibir notificaciones</span>
+                        <label class="toggle-switch">
+                            <input type="checkbox" name="cambios_proyecto" {% if config.cambios_proyecto %}checked{% endif %}>
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Anticipos Disponibles -->
+                <div class="tipo-notificacion">
+                    <div class="tipo-header">
+                        <div class="tipo-icono icono-anticipos">
+                            <i class="fas fa-money-bill-wave"></i>
+                        </div>
+                        <div class="tipo-info">
+                            <h4>Anticipos Disponibles</h4>
+                            <p>Notificaciones sobre anticipos listos para aplicar</p>
+                        </div>
+                    </div>
+                    <div class="tipo-toggle">
+                        <span class="toggle-label">Recibir notificaciones</span>
+                        <label class="toggle-switch">
+                            <input type="checkbox" name="anticipos_disponibles" {% if config.anticipos_disponibles %}checked{% endif %}>
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Presupuestos en Revisión -->
+                <div class="tipo-notificacion">
+                    <div class="tipo-header">
+                        <div class="tipo-icono icono-presupuestos">
+                            <i class="fas fa-file-invoice-dollar"></i>
+                        </div>
+                        <div class="tipo-info">
+                            <h4>Presupuestos Requieren Revisión</h4>
+                            <p>Alertas sobre presupuestos pendientes de revisión</p>
+                        </div>
+                    </div>
+                    <div class="tipo-toggle">
+                        <span class="toggle-label">Recibir notificaciones</span>
+                        <label class="toggle-switch">
+                            <input type="checkbox" name="presupuestos_revision" {% if config.presupuestos_revision %}checked{% endif %}>
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Archivos Subidos -->
+                <div class="tipo-notificacion">
+                    <div class="tipo-header">
+                        <div class="tipo-icono icono-archivos">
+                            <i class="fas fa-file-upload"></i>
+                        </div>
+                        <div class="tipo-info">
+                            <h4>Nuevos Archivos Subidos</h4>
+                            <p>Notificaciones sobre archivos recién subidos</p>
+                        </div>
+                    </div>
+                    <div class="tipo-toggle">
+                        <span class="toggle-label">Recibir notificaciones</span>
+                        <label class="toggle-switch">
+                            <input type="checkbox" name="archivos_subidos" {% if config.archivos_subidos %}checked{% endif %}>
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Notificaciones del Sistema -->
+                <div class="tipo-notificacion">
+                    <div class="tipo-header">
+                        <div class="tipo-icono icono-sistema">
+                            <i class="fas fa-cog"></i>
+                        </div>
+                        <div class="tipo-info">
+                            <h4>Notificaciones del Sistema</h4>
+                            <p>Alertas generales del sistema y mantenimiento</p>
+                        </div>
+                    </div>
+                    <div class="tipo-toggle">
+                        <span class="toggle-label">Recibir notificaciones</span>
+                        <label class="toggle-switch">
+                            <input type="checkbox" name="notificaciones_sistema" {% if config.notificaciones_sistema %}checked{% endif %}>
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Configuración de Frecuencia -->
+        <div class="configuracion-section">
+            <h3 class="section-title">
+                <i class="fas fa-clock section-icon"></i>
+                Frecuencia de Notificaciones
+            </h3>
+            <p class="text-muted mb-4">Configura cómo quieres recibir las notificaciones:</p>
+            
+            <div class="configuracion-frecuencia">
+                <!-- Frecuencia de Email -->
+                <div class="frecuencia-item">
+                    <div class="frecuencia-header">
+                        <i class="fas fa-envelope frecuencia-icono"></i>
+                        <h4 class="frecuencia-titulo">Frecuencia de Email</h4>
+                    </div>
+                    <p class="frecuencia-descripcion">
+                        Define con qué frecuencia quieres recibir notificaciones por email
+                    </p>
+                    <div class="form-group">
+                        <label for="frecuencia_email" class="form-label">Frecuencia:</label>
+                        <select name="frecuencia_email" id="frecuencia_email" class="form-control">
+                            <option value="inmediato" {% if config.frecuencia_email == 'inmediato' %}selected{% endif %}>
+                                Inmediato - Recibir notificaciones al instante
+                            </option>
+                            <option value="diario" {% if config.frecuencia_email == 'diario' %}selected{% endif %}>
+                                Diario - Resumen diario de notificaciones
+                            </option>
+                            <option value="semanal" {% if config.frecuencia_email == 'semanal' %}selected{% endif %}>
+                                Semanal - Resumen semanal de notificaciones
+                            </option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Horarios de Notificación -->
+                <div class="frecuencia-item">
+                    <div class="frecuencia-header">
+                        <i class="fas fa-calendar-alt frecuencia-icono"></i>
+                        <h4 class="frecuencia-titulo">Horarios de Notificación</h4>
+                    </div>
+                    <p class="frecuencia-descripcion">
+                        Define en qué horarios quieres recibir notificaciones
+                    </p>
+                    <div class="form-group">
+                        <label for="horario_inicio" class="form-label">Horario de Inicio:</label>
+                        <input type="time" name="horario_inicio" id="horario_inicio" 
+                               class="form-control" value="{{ config.horario_inicio|time:'H:i' }}">
+                    </div>
+                    <div class="form-group">
+                        <label for="horario_fin" class="form-label">Horario de Fin:</label>
+                        <input type="time" name="horario_fin" id="horario_fin" 
+                               class="form-control" value="{{ config.horario_fin|time:'H:i' }}">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Botón de Guardar -->
+        <div class="text-center">
+            <button type="submit" class="btn-guardar">
+                <i class="fas fa-save me-2"></i>
+                Guardar Configuración
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Animaciones para los toggles
+    document.querySelectorAll('.toggle-switch input').forEach(toggle => {
+        toggle.addEventListener('change', function() {
+            const tipoNotificacion = this.closest('.tipo-notificacion');
+            if (this.checked) {
+                tipoNotificacion.style.borderColor = 'var(--success-color)';
+                tipoNotificacion.style.backgroundColor = 'rgba(40, 167, 69, 0.05)';
+            } else {
+                tipoNotificacion.style.borderColor = 'var(--border-color)';
+                tipoNotificacion.style.backgroundColor = 'var(--card-bg)';
+            }
+        });
+    });
+
+    // Validación del formulario
+    document.querySelector('form').addEventListener('submit', function(e) {
+        const horarioInicio = document.getElementById('horario_inicio').value;
+        const horarioFin = document.getElementById('horario_fin').value;
+        
+        if (horarioInicio >= horarioFin) {
+            e.preventDefault();
+            alert('El horario de inicio debe ser menor al horario de fin');
+            return false;
+        }
+    });
+</script>
+{% endblock %}

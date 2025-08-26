@@ -1,0 +1,149 @@
+{% extends "base.html" %}
+
+{% block title %}Eliminar Pago - Sistema de Construcción{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">
+        <i class="fas fa-trash me-2"></i>Eliminar Pago
+    </h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <a href="{% url 'pagos_list' %}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left me-1"></i>Volver
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card border-danger">
+            <div class="card-header bg-danger text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-exclamation-triangle me-2"></i>Confirmar Eliminación
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-warning">
+                    <h6 class="alert-heading">
+                        <i class="fas fa-exclamation-triangle me-2"></i>¡Atención!
+                    </h6>
+                    <p class="mb-0">
+                        Está a punto de eliminar el pago de <strong>Q{{ pago.monto|floatformat:2 }}</strong> 
+                        para la factura <strong>"{{ pago.factura.numero_factura }}"</strong>. 
+                        Esta acción desactivará el pago y no podrá ser utilizado en nuevas operaciones.
+                    </p>
+                </div>
+                
+                <div class="card mb-3">
+                    <div class="card-header">
+                        <h6 class="mb-0">Información del Pago a Eliminar</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <p><strong>Factura:</strong> {{ pago.factura.numero_factura }}</p>
+                                <p><strong>Proyecto:</strong> {{ pago.factura.proyecto.nombre }}</p>
+                                <p><strong>Cliente:</strong> {{ pago.factura.cliente.razon_social }}</p>
+                            </div>
+                            <div class="col-md-6">
+                                <p><strong>Estado:</strong> 
+                                    <span class="badge bg-{% if pago.estado == 'confirmado' %}success{% elif pago.estado == 'pendiente' %}warning{% else %}danger{% endif %}">
+                                        {{ pago.get_estado_display }}
+                                    </span>
+                                </p>
+                                {% if pago.monto %}
+                                    <p><strong>Monto:</strong> Q{{ pago.monto|floatformat:2 }}</p>
+                                {% endif %}
+                                <p><strong>Creado:</strong> {{ pago.creado_en|date:"d/m/Y H:i" }}</p>
+                            </div>
+                        </div>
+                        
+                        {% if pago.fecha_pago %}
+                            <p><strong>Fecha del Pago:</strong> {{ pago.fecha_pago|date:"d/m/Y" }}</p>
+                        {% endif %}
+                        
+                        {% if pago.metodo_pago %}
+                            <p><strong>Método de Pago:</strong> {{ pago.get_metodo_pago_display }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="alert alert-info">
+                    <h6 class="alert-heading">
+                        <i class="fas fa-info-circle me-2"></i>Información Importante
+                    </h6>
+                    <ul class="mb-0">
+                        <li>El pago será marcado como inactivo, no se eliminará físicamente de la base de datos.</li>
+                        <li>La factura asociada no se verá afectada.</li>
+                        <li>No se podrán crear nuevos pagos para esta factura.</li>
+                        <li>Esta acción se puede revertir editando el pago y marcándolo como activo.</li>
+                    </ul>
+                </div>
+                
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-danger">
+                            <i class="fas fa-trash me-2"></i>Confirmar Eliminación
+                        </button>
+                        <a href="{% url 'pagos_list' %}" class="btn btn-secondary">
+                            <i class="fas fa-times me-2"></i>Cancelar
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="fas fa-file-invoice-dollar me-2"></i>Información de la Factura
+                </h6>
+            </div>
+            <div class="card-body">
+                <p><strong>Factura:</strong> {{ pago.factura.numero_factura }}</p>
+                <p><strong>Proyecto:</strong> {{ pago.factura.proyecto.nombre }}</p>
+                <p><strong>Cliente:</strong> {{ pago.factura.cliente.razon_social }}</p>
+                <p><strong>Estado:</strong> 
+                    <span class="badge bg-{% if pago.factura.estado == 'pagada' %}success{% elif pago.factura.estado == 'pendiente' %}warning{% elif pago.factura.estado == 'vencida' %}danger{% else %}secondary{% endif %}">
+                        {{ pago.factura.get_estado_display }}
+                    </span>
+                </p>
+                {% if pago.factura.monto_total %}
+                    <p><strong>Total Factura:</strong> Q{{ pago.factura.monto_total|floatformat:2 }}</p>
+                {% endif %}
+                {% if pago.factura.fecha_emision %}
+                    <p><strong>Fecha Emisión:</strong> {{ pago.factura.fecha_emision|date:"d/m/Y" }}</p>
+                {% endif %}
+                {% if pago.factura.fecha_vencimiento %}
+                    <p><strong>Fecha Vencimiento:</strong> {{ pago.factura.fecha_vencimiento|date:"d/m/Y" }}</p>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="card mt-3">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="fas fa-chart-line me-2"></i>Estadísticas de la Factura
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-6">
+                        <div class="border-end">
+                            <h5 class="text-primary mb-1">{{ pago.factura.pagos.count }}</h5>
+                            <small class="text-muted">Pagos</small>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <h5 class="text-success mb-1">{{ pago.factura.aplicaciones_anticipo.count }}</h5>
+                        <small class="text-muted">Anticipos</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

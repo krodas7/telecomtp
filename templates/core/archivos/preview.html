@@ -1,0 +1,229 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Vista Previa - {{ archivo.nombre }} - Sistema de Construcción{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">
+            <i class="fas fa-eye text-info"></i>
+            Vista Previa del Archivo
+        </h1>
+        <div>
+            <a href="{% url 'archivo_download' archivo.id %}" class="btn btn-success btn-sm me-2">
+                <i class="fas fa-download fa-sm"></i> Descargar
+            </a>
+            <a href="{% url 'archivos_proyecto_list' archivo.proyecto.id %}" class="btn btn-secondary btn-sm">
+                <i class="fas fa-arrow-left fa-sm"></i> Volver a Archivos
+            </a>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Información del Archivo -->
+        <div class="col-lg-4">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-info-circle"></i> Información del Archivo
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <strong>Nombre:</strong><br>
+                        <span class="text-primary">{{ archivo.nombre }}</span>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <strong>Tipo:</strong><br>
+                        <span class="badge badge-{% if archivo.tipo == 'plano' %}warning{% elif archivo.tipo == 'documento' %}info{% elif archivo.tipo == 'imagen' %}primary{% else %}secondary{% endif %}">
+                            {{ archivo.get_tipo_display }}
+                        </span>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <strong>Proyecto:</strong><br>
+                        <span class="text-success">{{ archivo.proyecto.nombre }}</span>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <strong>Cliente:</strong><br>
+                        <span class="text-info">{{ archivo.proyecto.cliente.razon_social }}</span>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <strong>Tamaño:</strong><br>
+                        <span class="text-muted">{{ archivo.get_tamaño_archivo }}</span>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <strong>Extensión:</strong><br>
+                        <span class="text-muted">{{ archivo.get_extension|upper }}</span>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <strong>Subido por:</strong><br>
+                        <small class="text-muted">{{ archivo.subido_por.get_full_name|default:archivo.subido_por.username }}</small>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <strong>Fecha de subida:</strong><br>
+                        <small class="text-muted">{{ archivo.fecha_subida|date:"d/m/Y H:i" }}</small>
+                    </div>
+                    
+                    {% if archivo.descripcion %}
+                    <hr>
+                    <div class="mb-3">
+                        <strong>Descripción:</strong><br>
+                        <p class="text-muted mb-0">{{ archivo.descripcion }}</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Acciones Rápidas -->
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-bolt"></i> Acciones Rápidas
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="{% url 'archivo_download' archivo.id %}" class="btn btn-success btn-block">
+                            <i class="fas fa-download"></i> Descargar Archivo
+                        </a>
+                        
+                        <a href="{% url 'archivos_proyecto_list' archivo.proyecto.id %}" class="btn btn-primary btn-block">
+                            <i class="fas fa-folder-open"></i> Ver Todos los Archivos
+                        </a>
+                        
+                        <a href="{% url 'proyecto_dashboard' archivo.proyecto.id %}" class="btn btn-info btn-block">
+                            <i class="fas fa-project-diagram"></i> Dashboard del Proyecto
+                        </a>
+                        
+                        <a href="{% url 'archivo_delete' archivo.id %}" class="btn btn-danger btn-block">
+                            <i class="fas fa-trash"></i> Eliminar Archivo
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Vista Previa del Contenido -->
+        <div class="col-lg-8">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-eye"></i> Vista Previa del Contenido
+                    </h6>
+                </div>
+                <div class="card-body">
+                    {% if archivo.es_imagen %}
+                        <!-- Vista previa de imagen -->
+                        <div class="text-center">
+                            <img src="{{ archivo.archivo.url }}" alt="{{ archivo.nombre }}" 
+                                 class="img-fluid" style="max-height: 600px;">
+                        </div>
+                        
+                    {% elif archivo.es_documento and archivo.get_extension == 'pdf' %}
+                        <!-- Vista previa de PDF -->
+                        <div class="text-center">
+                            <iframe src="{{ archivo.archivo.url }}" 
+                                    width="100%" height="600" 
+                                    style="border: 1px solid #ddd; border-radius: 5px;">
+                                <p>Tu navegador no soporta la vista previa de PDF. 
+                                <a href="{% url 'archivo_download' archivo.id %}">Descarga el archivo</a> para verlo.</p>
+                            </iframe>
+                        </div>
+                        
+                    {% elif archivo.es_documento %}
+                        <!-- Vista previa de documentos de texto -->
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle"></i>
+                            <strong>Vista previa no disponible</strong><br>
+                            Este tipo de archivo no se puede previsualizar directamente. 
+                            <a href="{% url 'archivo_download' archivo.id %}" class="alert-link">Descarga el archivo</a> para ver su contenido.
+                        </div>
+                        
+                    {% elif archivo.es_plano %}
+                        <!-- Vista previa de planos -->
+                        {% if archivo.get_extension in 'jpg,jpeg,png' %}
+                            <div class="text-center">
+                                <img src="{{ archivo.archivo.url }}" alt="{{ archivo.nombre }}" 
+                                     class="img-fluid" style="max-height: 600px;">
+                            </div>
+                        {% elif archivo.get_extension == 'pdf' %}
+                            <div class="text-center">
+                                <iframe src="{{ archivo.archivo.url }}" 
+                                        width="100%" height="600" 
+                                        style="border: 1px solid #ddd; border-radius: 5px;">
+                                    <p>Tu navegador no soporta la vista previa de PDF. 
+                                    <a href="{% url 'archivo_download' archivo.id %}">Descarga el archivo</a> para verlo.</p>
+                                </iframe>
+                            </div>
+                        {% else %}
+                            <div class="alert alert-warning">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                <strong>Vista previa no disponible</strong><br>
+                                Los archivos CAD (DWG, DXF) no se pueden previsualizar directamente. 
+                                <a href="{% url 'archivo_download' archivo.id %}" class="alert-link">Descarga el archivo</a> y ábrelo con un software CAD.
+                            </div>
+                        {% endif %}
+                        
+                    {% else %}
+                        <!-- Otros tipos de archivo -->
+                        <div class="alert alert-secondary">
+                            <i class="fas fa-file"></i>
+                            <strong>Vista previa no disponible</strong><br>
+                            Este tipo de archivo no se puede previsualizar. 
+                            <a href="{% url 'archivo_download' archivo.id %}" class="alert-link">Descarga el archivo</a> para acceder a su contenido.
+                        </div>
+                    {% endif %}
+                    
+                    <!-- Información adicional -->
+                    <div class="mt-4">
+                        <div class="row text-center">
+                            <div class="col-md-4">
+                                <div class="border rounded p-3">
+                                    <i class="fas fa-download fa-2x text-success mb-2"></i>
+                                    <h6>Descargar</h6>
+                                    <small class="text-muted">Obtén una copia local</small>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="border rounded p-3">
+                                    <i class="fas fa-share fa-2x text-info mb-2"></i>
+                                    <h6>Compartir</h6>
+                                    <small class="text-muted">Comparte con el equipo</small>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="border rounded p-3">
+                                    <i class="fas fa-history fa-2x text-warning mb-2"></i>
+                                    <h6>Historial</h6>
+                                    <small class="text-muted">Ver actividad reciente</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+$(document).ready(function() {
+    // Inicializar tooltips
+    $('[data-toggle="tooltip"]').tooltip();
+    
+    // Ajustar altura del iframe si es PDF
+    if (window.location.href.includes('pdf')) {
+        $('iframe').css('height', '600px');
+    }
+});
+</script>
+{% endblock %}

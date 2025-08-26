@@ -1,0 +1,1221 @@
+from django.db import models
+from django.contrib.auth.models import User
+from django.utils import timezone
+from decimal import Decimal
+
+
+class Rol(models.Model):
+    """Modelo para roles de usuario"""
+    nombre = models.CharField(max_length=50, unique=True)
+    descripcion = models.TextField(blank=True)
+    creado_en = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        verbose_name = 'Rol'
+        verbose_name_plural = 'Roles'
+    
+    def __str__(self):
+        return self.nombre
+
+
+class Modulo(models.Model):
+    """Modelo para módulos del sistema"""
+    nombre = models.CharField(max_length=100, unique=True)
+    descripcion = models.TextField(blank=True)
+    icono = models.CharField(max_length=50, blank=True, help_text="Clase CSS del icono")
+    orden = models.IntegerField(default=0)
+    activo = models.BooleanField(default=True)
+    
+    class Meta:
+        verbose_name = 'Módulo'
+        verbose_name_plural = 'Módulos'
+        ordering = ['orden']
+    
+    def __str__(self):
+        return self.nombre
+
+
+class Permiso(models.Model):
+    """Modelo para permisos específicos"""
+    TIPO_CHOICES = [
+        ('ver', 'Ver'),
+        ('crear', 'Crear'),
+        ('editar', 'Editar'),
+        ('eliminar', 'Eliminar'),
+        ('exportar', 'Exportar'),
+        ('importar', 'Importar'),
+        ('reset', 'Reset'),
+    ]
+    
+    nombre = models.CharField(max_length=100)
+    codigo = models.CharField(max_length=50, unique=True)
+    descripcion = models.TextField(blank=True)
+    tipo = models.CharField(max_length=20, choices=TIPO_CHOICES)
+    modulo = models.ForeignKey(Modulo, on_delete=models.CASCADE)
+    
+    class Meta:
+        verbose_name = 'Permiso'
+        verbose_name_plural = 'Permisos'
+        unique_together = ['codigo', 'modulo']
+    
+    def __str__(self):
+        return f"{self.modulo.nombre} - {self.nombre}"
+
+
+class RolPermiso(models.Model):
+    """Modelo para asignar permisos a roles"""
+    rol = models.ForeignKey(Rol, on_delete=models.CASCADE)
+    permiso = models.ForeignKey(Permiso, on_delete=models.CASCADE)
+    activo = models.BooleanField(default=True)
+    creado_en = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        verbose_name = 'Permiso de Rol'
+        verbose_name_plural = 'Permisos de Rol'
+        unique_together = ['rol', 'permiso']
+    
+    def __str__(self):
+        return f"{self.rol.nombre} - {self.permiso.nombre}"
+
+
+class PerfilUsuario(models.Model):
+    """Modelo para extender el usuario de Django"""
+    usuario = models.OneToOneField(User, on_delete=models.CASCADE)
+    rol = models.ForeignKey(Rol, on_delete=models.CASCADE, null=True, blank=True)
+    telefono = models.CharField(max_length=20, blank=True)
+    direccion = models.TextField(blank=True)
+    activo = models.BooleanField(default=True)
+    ultimo_acceso = models.DateTimeField(null=True, blank=True)
+    
+    class Meta:
+        verbose_name = 'Perfil de Usuario'
+        verbose_name_plural = 'Perfiles de Usuario'
+    
+    def __str__(self):
+        if self.rol:
+            return f"{self.usuario.get_full_name()} - {self.rol.nombre}"
+        else:
+            return f"{self.usuario.get_full_name()} - Sin rol"
+    
+    def tiene_permiso(self, codigo_permiso):
+        """Verifica si el usuario tiene un permiso específico"""
+        try:
+            if not self.rol:
+                return False
+            return RolPermiso.objects.filter(
+                rol=self.rol,
+                permiso__codigo=codigo_permiso,
+                activo=True
+            ).exists()
+        except:
+            return False
+    
+    def tiene_permiso_modulo(self, codigo_modulo, tipo_permiso='ver'):
+        """Verifica si el usuario tiene un permiso específico en un módulo"""
+        try:
+            if not self.rol:
+                return False
+            return RolPermiso.objects.filter(
+                rol=self.rol,
+                permiso__modulo__nombre=codigo_modulo,
+                permiso__tipo=tipo_permiso,
+                activo=True
+            ).exists()
+        except:
+            return False
+
+
+class Cliente(models.Model):
+    """Modelo para clientes"""
+    razon_social = models.CharField(max_length=200)
+    codigo_fiscal = models.CharField(max_length=50, blank=True)
+    email = models.EmailField(blank=True)
+    telefono = models.CharField(max_length=20, blank=True)
+    direccion = models.TextField(blank=True)
+    activo = models.BooleanField(default=True)
+    creado_en = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        verbose_name = 'Cliente'
+        verbose_name_plural = 'Clientes'
+    
+    def __str__(self):
+        return self.razon_social
+
+
+class Colaborador(models.Model):
+    """Modelo para colaboradores"""
+    nombre = models.CharField(max_length=100)
+    dpi = models.CharField(max_length=20, blank=True)
+    direccion = models.TextField(blank=True)
+    telefono = models.CharField(max_length=20, blank=True)
+    email = models.EmailField(blank=True)
+    salario = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    fecha_contratacion = models.DateField(null=True, blank=True)
+    fecha_vencimiento_contrato = models.DateField(null=True, blank=True)
+    activo = models.BooleanField(default=True)
+    creado_en = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        verbose_name = 'Colaborador'
+        verbose_name_plural = 'Colaboradores'
+    
+    def __str__(self):
+        return self.nombre
+    
+    def calcular_salario_neto(self, proyecto):
+        """Calcula el salario neto considerando anticipos pendientes del proyecto"""
+        salario_base = self.salario or 0
+        anticipos_pendientes = self.anticipos_proyecto.filter(
+            proyecto=proyecto,
+            estado='pendiente'
+        ).aggregate(total=Sum('monto'))['total'] or 0
+        
+        return salario_base - anticipos_pendientes
+
+
+class Proyecto(models.Model):
+    """Modelo para proyectos"""
+    ESTADO_CHOICES = [
+        ('pendiente', 'Pendiente'),
+        ('en_progreso', 'En Progreso'),
+        ('completado', 'Completado'),
+        ('cancelado', 'Cancelado'),
+    ]
+    
+    nombre = models.CharField(max_length=200)
+    descripcion = models.TextField(blank=True)
+    cliente = models.ForeignKey(Cliente, on_delete=models.CASCADE)
+    colaboradores = models.ManyToManyField(Colaborador, blank=True, related_name='proyectos')
+    presupuesto = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
+    fecha_inicio = models.DateField(null=True, blank=True)
+    fecha_fin = models.DateField(null=True, blank=True)
+    estado = models.CharField(max_length=20, choices=ESTADO_CHOICES, default='pendiente')
+    activo = models.BooleanField(default=True)
+    creado_en = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        verbose_name = 'Proyecto'
+        verbose_name_plural = 'Proyectos'
+    
+    def __str__(self):
+        return f"{self.nombre} - {self.cliente.razon_social}"
+
+
+class ArchivoAdjunto(models.Model):
+    """Modelo para archivos adjuntos"""
+    TIPO_CHOICES = [
+        ('cliente', 'Cliente'),
+        ('proyecto', 'Proyecto'),
+        ('factura', 'Factura'),
+        ('gasto', 'Gasto'),
+        ('pago', 'Pago'),
+    ]
+    
+    tipo = models.CharField(max_length=20, choices=TIPO_CHOICES)
+    registro_id = models.IntegerField()
+    nombre_archivo = models.CharField(max_length=255)
+    archivo = models.FileField(upload_to='archivos_adjuntos/')
+    tipo_mime = models.CharField(max_length=100, blank=True)
+    tamano = models.IntegerField(blank=True)
+    uploaded_by = models.ForeignKey(User, on_delete=models.CASCADE)
+    creado_en = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        verbose_name = 'Archivo Adjunto'
+        verbose_name_plural = 'Archivos Adjuntos'
+    
+    def __str__(self):
+        return f"{self.nombre_archivo} - {self.tipo}"
+
+
+class Factura(models.Model):
+    """Modelo para manejar facturas de proyectos"""
+    
+    ESTADO_CHOICES = [
+        ('borrador', 'Borrador'),
+        ('emitida', 'Emitida'),
+        ('enviada', 'Enviada al Cliente'),
+        ('pagada', 'Pagada'),
+        ('vencida', 'Vencida'),
+        ('cancelada', 'Cancelada'),
+    ]
+    
+    TIPO_CHOICES = [
+        ('progreso', 'Factura por Progreso de Obra'),
+        ('final', 'Factura Final'),
+        ('adicional', 'Factura por Trabajos Adicionales'),
+        ('retencion', 'Factura por Retención'),
+        ('otros', 'Otros'),
+    ]
+    
+    numero_factura = models.CharField(max_length=20, unique=True, help_text="Número único de la factura")
+    proyecto = models.ForeignKey(Proyecto, on_delete=models.CASCADE, related_name='facturas')
+    cliente = models.ForeignKey(Cliente, on_delete=models.CASCADE, related_name='facturas')
+    
+    tipo = models.CharField(max_length=20, choices=TIPO_CHOICES, default='progreso')
+    estado = models.CharField(max_length=20, choices=ESTADO_CHOICES, default='borrador')
+    
+    fecha_emision = models.DateField(help_text="Fecha de emisión de la factura", default=timezone.now)
+    fecha_vencimiento = models.DateField(help_text="Fecha de vencimiento para el pago", default=timezone.now)
+    fecha_pago = models.DateField(null=True, blank=True, help_text="Fecha en que se pagó completamente")
+    
+    # Montos
+    monto_subtotal = models.DecimalField(max_digits=12, decimal_places=2, help_text="Subtotal antes de impuestos", default=0)
+    monto_iva = models.DecimalField(max_digits=12, decimal_places=2, default=0, help_text="Monto del IVA")
+    monto_total = models.DecimalField(max_digits=12, decimal_places=2, help_text="Monto total de la factura", default=0)
+    monto_pagado = models.DecimalField(max_digits=12, decimal_places=2, default=0, help_text="Monto ya pagado")
+    monto_anticipos = models.DecimalField(max_digits=12, decimal_places=2, default=0, help_text="Monto de anticipos aplicados")
+    monto_pendiente = models.DecimalField(max_digits=12, decimal_places=2, help_text="Monto pendiente de pago", default=0)
+    
+    # Detalles
+    descripcion_servicios = models.TextField(help_text="Descripción detallada de los servicios facturados", default="Servicios de construcción")
+    porcentaje_avance = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True, help_text="Porcentaje de avance del proyecto")
+    
+    # Campos de pago
+    metodo_pago = models.CharField(max_length=50, choices=[
+        ('efectivo', 'Efectivo'),
+        ('transferencia', 'Transferencia Bancaria'),
+        ('cheque', 'Cheque'),
+        ('tarjeta', 'Tarjeta de Crédito/Débito'),
+        ('anticipo', 'Anticipo'),
+        ('otros', 'Otros'),
+    ], blank=True)
+    
+    referencia_pago = models.CharField(max_length=100, blank=True, help_text="Número de referencia del pago")
+    banco_origen = models.CharField(max_length=100, blank=True, help_text="Banco de origen del pago")
+    
+    # Campos adicionales
+    observaciones = models.TextField(blank=True, help_text="Observaciones adicionales")
+    archivos_adjuntos = models.ManyToManyField(ArchivoAdjunto, blank=True, related_name='facturas')
+    
+    # Campos de auditoría
+    creado_por = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='facturas_creadas')
+    fecha_creacion = models.DateTimeField(auto_now_add=True)
+    modificado_por = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='facturas_modificadas')
+    fecha_modificacion = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        verbose_name = 'Factura'
+        verbose_name_plural = 'Facturas'
+        ordering = ['-fecha_emision', '-numero_factura']
+        indexes = [
+            models.Index(fields=['proyecto', 'cliente']),
+            models.Index(fields=['estado', 'fecha_vencimiento']),
+            models.Index(fields=['numero_factura']),
+        ]
+    
+    def __str__(self):
+        return f"Factura {self.numero_factura} - {self.cliente.razon_social} - Q{self.monto_total}"
+    
+    def save(self, *args, **kwargs):
+        # Calcular montos si no están definidos
+        if not self.monto_total:
+            self.monto_total = self.monto_subtotal + self.monto_iva
+        
+        # Calcular monto pendiente
+        self.monto_pendiente = self.monto_total - self.monto_pagado - self.monto_anticipos
+        
+        # Actualizar estado basado en montos
+        if self.monto_pendiente <= 0:
+            self.estado = 'pagada'
+            if not self.fecha_pago:
+                self.fecha_pago = timezone.now().date()
+        elif self.fecha_vencimiento and timezone.now().date() > self.fecha_vencimiento.date() if hasattr(self.fecha_vencimiento, 'date') else self.fecha_vencimiento:
+            if self.estado not in ['pagada', 'cancelada']:
+                self.estado = 'vencida'
+        
+        super().save(*args, **kwargs)
+    
+    @property
+    def dias_vencimiento(self):
+        """Retorna los días hasta el vencimiento"""
+        if self.fecha_vencimiento:
+            fecha_vencimiento = self.fecha_vencimiento.date() if hasattr(self.fecha_vencimiento, 'date') else self.fecha_vencimiento
+            delta = fecha_vencimiento - timezone.now().date()
+            return delta.days
+        return None
+    
+    @property
+    def porcentaje_pagado(self):
+        """Retorna el porcentaje de la factura que ya fue pagado"""
+        if self.monto_total > 0:
+            return ((self.monto_pagado + self.monto_anticipos) / self.monto_total) * 100
+        return 0
+    
+    def puede_aplicar_anticipo(self, monto_anticipo):
+        """Verifica si se puede aplicar un anticipo a esta factura"""
+        return self.monto_pendiente >= monto_anticipo and self.estado not in ['pagada', 'cancelada']
+    
+    def aplicar_anticipo(self, anticipo, monto):
+        """Aplica un anticipo a esta factura"""
+        if not self.puede_aplicar_anticipo(monto):
+            raise ValueError(f"No se puede aplicar Q{monto} del anticipo a esta factura")
+        
+        # Aplicar el anticipo
+        anticipo.aplicar_a_factura(self, monto)
+        return True
+
+
+class Pago(models.Model):
+    """Modelo para pagos"""
+    ESTADO_CHOICES = [
+        ('pendiente', 'Pendiente'),
+        ('confirmado', 'Confirmado'),
+        ('rechazado', 'Rechazado'),
+    ]
+    
+    METODO_CHOICES = [
+        ('efectivo', 'Efectivo'),
+        ('transferencia', 'Transferencia'),
+        ('cheque', 'Cheque'),
+        ('tarjeta', 'Tarjeta'),
+    ]
+    
+    factura = models.ForeignKey(Factura, on_delete=models.CASCADE, related_name='pagos')
+    monto = models.DecimalField(max_digits=12, decimal_places=2)
+    fecha_pago = models.DateField()
+    metodo_pago = models.CharField(max_length=20, choices=METODO_CHOICES, default='transferencia')
+    estado = models.CharField(max_length=20, choices=ESTADO_CHOICES, default='pendiente')
+    comprobante_pago = models.FileField(upload_to='comprobantes/', blank=True)
+    registrado_por = models.ForeignKey(User, on_delete=models.CASCADE)
+    creado_en = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        verbose_name = 'Pago'
+        verbose_name_plural = 'Pagos'
+    
+    def __str__(self):
+        return f"Pago {self.id} - {self.factura.numero_factura}"
+
+
+class CategoriaGasto(models.Model):
+    """Modelo para categorías de gastos"""
+    nombre = models.CharField(max_length=100, unique=True)
+    descripcion = models.TextField(blank=True)
+    creado_en = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        verbose_name = 'Categoría de Gasto'
+        verbose_name_plural = 'Categorías de Gastos'
+    
+    def __str__(self):
+        return self.nombre
+
+
+class Gasto(models.Model):
+    """Modelo para gastos"""
+    proyecto = models.ForeignKey(Proyecto, on_delete=models.CASCADE)
+    categoria = models.ForeignKey(CategoriaGasto, on_delete=models.CASCADE)
+    descripcion = models.TextField()
+    monto = models.DecimalField(max_digits=10, decimal_places=2)
+    fecha_gasto = models.DateField()
+    aprobado = models.BooleanField(default=False)
+    aprobado_por = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+    comprobante = models.FileField(upload_to='comprobantes_gastos/', blank=True)
+    creado_en = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        verbose_name = 'Gasto'
+        verbose_name_plural = 'Gastos'
+    
+    def __str__(self):
+        return f"{self.descripcion} - Q{self.monto}"
+
+
+class GastoFijoMensual(models.Model):
+    """Modelo para gastos fijos mensuales"""
+    concepto = models.CharField(max_length=200)
+    monto = models.DecimalField(max_digits=10, decimal_places=2)
+    activo = models.BooleanField(default=True)
+    creado_en = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        verbose_name = 'Gasto Fijo Mensual'
+        verbose_name_plural = 'Gastos Fijos Mensuales'
+    
+    def __str__(self):
+        return f"{self.concepto} - Q{self.monto}"
+
+
+class LogActividad(models.Model):
+    """Modelo para log de actividades"""
+    usuario = models.ForeignKey(User, on_delete=models.CASCADE)
+    accion = models.CharField(max_length=100)
+    modulo = models.CharField(max_length=100)
+    descripcion = models.TextField(blank=True)
+    ip_address = models.GenericIPAddressField(null=True, blank=True)
+    user_agent = models.TextField(blank=True)
+    fecha_actividad = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        verbose_name = 'Log de Actividad'
+        verbose_name_plural = 'Logs de Actividad'
+        ordering = ['-fecha_actividad']
+    
+    def __str__(self):
+        return f"{self.usuario.username} - {self.accion} - {self.fecha_actividad}"
+
+
+class Anticipo(models.Model):
+    """Modelo para manejar anticipos de clientes a proyectos"""
+    
+    ESTADO_CHOICES = [
+        ('pendiente', 'Pendiente de Aplicar'),
+        ('aplicado', 'Aplicado a Facturas'),
+        ('devuelto', 'Devuelto al Cliente'),
+        ('cancelado', 'Cancelado'),
+    ]
+    
+    TIPO_CHOICES = [
+        ('anticipo', 'Anticipo de Obra'),
+        ('materiales', 'Anticipo de Materiales'),
+        ('gastos', 'Anticipo de Gastos'),
+        ('otros', 'Otros Anticipos'),
+    ]
+    
+    cliente = models.ForeignKey(Cliente, on_delete=models.CASCADE, related_name='anticipos')
+    proyecto = models.ForeignKey(Proyecto, on_delete=models.CASCADE, related_name='anticipos')
+    numero_anticipo = models.CharField(max_length=20, unique=True, help_text="Número único del anticipo")
+    
+    monto = models.DecimalField(max_digits=12, decimal_places=2, help_text="Monto del anticipo en GTQ")
+    monto_aplicado = models.DecimalField(max_digits=12, decimal_places=2, default=0, help_text="Monto ya aplicado a facturas")
+    monto_disponible = models.DecimalField(max_digits=12, decimal_places=2, help_text="Monto disponible para aplicar")
+    
+    tipo = models.CharField(max_length=20, choices=TIPO_CHOICES, default='anticipo')
+    estado = models.CharField(max_length=20, choices=ESTADO_CHOICES, default='pendiente')
+    
+    fecha_recepcion = models.DateField(help_text="Fecha en que se recibió el anticipo", default=timezone.now)
+    fecha_vencimiento = models.DateField(null=True, blank=True, help_text="Fecha de vencimiento del anticipo")
+    fecha_aplicacion = models.DateField(null=True, blank=True, help_text="Fecha en que se aplicó completamente")
+    
+    metodo_pago = models.CharField(max_length=50, choices=[
+        ('efectivo', 'Efectivo'),
+        ('transferencia', 'Transferencia Bancaria'),
+        ('cheque', 'Cheque'),
+        ('tarjeta', 'Tarjeta de Crédito/Débito'),
+        ('otros', 'Otros'),
+    ], default='transferencia')
+    
+    referencia_pago = models.CharField(max_length=100, blank=True, help_text="Número de referencia, cheque, etc.")
+    banco_origen = models.CharField(max_length=100, blank=True, help_text="Banco de origen del pago")
+    
+    descripcion = models.TextField(blank=True, help_text="Descripción detallada del anticipo")
+    observaciones = models.TextField(blank=True, help_text="Observaciones adicionales")
+    
+    # Campos de auditoría
+    creado_por = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='anticipos_creados')
+    fecha_creacion = models.DateTimeField(auto_now_add=True)
+    modificado_por = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='anticipos_modificados')
+    fecha_modificacion = models.DateTimeField(auto_now=True)
+    
+    # Campos para seguimiento
+    facturas_aplicadas = models.ManyToManyField(Factura, through='AplicacionAnticipo', blank=True)
+    
+    class Meta:
+        verbose_name = 'Anticipo'
+        verbose_name_plural = 'Anticipos'
+        ordering = ['-fecha_recepcion', '-fecha_creacion']
+        indexes = [
+            models.Index(fields=['cliente', 'proyecto']),
+            models.Index(fields=['estado', 'fecha_recepcion']),
+            models.Index(fields=['numero_anticipo']),
+        ]
+    
+    def __str__(self):
+        return f"Anticipo {self.numero_anticipo} - {self.cliente.razon_social} - Q{self.monto}"
+    
+    def save(self, *args, **kwargs):
+        # Calcular monto disponible
+        if not self.pk:  # Nuevo anticipo
+            self.monto_disponible = self.monto
+        else:
+            self.monto_disponible = self.monto - self.monto_aplicado
+        
+        # Actualizar estado basado en montos
+        if self.monto_aplicado >= self.monto:
+            self.estado = 'aplicado'
+            if not self.fecha_aplicacion:
+                self.fecha_aplicacion = timezone.now().date()
+        elif self.monto_aplicado == 0:
+            self.estado = 'pendiente'
+        
+        super().save(*args, **kwargs)
+    
+    @property
+    def porcentaje_aplicado(self):
+        """Retorna el porcentaje del anticipo que ya fue aplicado"""
+        if self.monto > 0:
+            return (self.monto_aplicado / self.monto) * 100
+        return 0
+    
+    @property
+    def dias_vencimiento(self):
+        """Retorna los días hasta el vencimiento"""
+        if self.fecha_vencimiento:
+            delta = self.fecha_vencimiento - timezone.now().date()
+            return delta.days
+        return None
+    
+    def puede_aplicar(self, monto_factura):
+        """Verifica si se puede aplicar un monto a una factura"""
+        return self.monto_disponible >= monto_factura and self.estado == 'pendiente'
+    
+    def aplicar_a_factura(self, factura, monto):
+        """Aplica el anticipo a una factura específica"""
+        if not self.puede_aplicar(monto):
+            raise ValueError(f"No se puede aplicar Q{monto} del anticipo")
+        
+        # Crear la aplicación
+        AplicacionAnticipo.objects.create(
+            anticipo=self,
+            factura=factura,
+            monto_aplicado=monto,
+            fecha_aplicacion=timezone.now().date()
+        )
+        
+        # Actualizar montos
+        self.monto_aplicado += monto
+        self.save()
+        
+        # Actualizar factura
+        factura.monto_anticipos += monto
+        factura.save()
+        
+        return True
+
+
+class AplicacionAnticipo(models.Model):
+    """Modelo para rastrear cómo se aplican los anticipos a las facturas"""
+    
+    anticipo = models.ForeignKey(Anticipo, on_delete=models.CASCADE, related_name='aplicaciones')
+    factura = models.ForeignKey(Factura, on_delete=models.CASCADE, related_name='aplicaciones_anticipo')
+    
+    monto_aplicado = models.DecimalField(max_digits=12, decimal_places=2, help_text="Monto del anticipo aplicado a esta factura")
+    fecha_aplicacion = models.DateField(auto_now_add=True)
+    
+    # Campos de auditoría
+    aplicado_por = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='aplicaciones_anticipo')
+    fecha_creacion = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        verbose_name = 'Aplicación de Anticipo'
+        verbose_name_plural = 'Aplicaciones de Anticipos'
+        unique_together = ['anticipo', 'factura']
+        ordering = ['-fecha_aplicacion']
+    
+    def __str__(self):
+        return f"Aplicación Q{self.monto_aplicado} - {self.anticipo} → {self.factura}"
+
+
+class ArchivoProyecto(models.Model):
+    """Archivos adjuntos a proyectos (planos, documentos, imágenes)"""
+    
+    TIPO_CHOICES = [
+        ('plano', 'Plano'),
+        ('documento', 'Documento'),
+        ('imagen', 'Imagen'),
+        ('contrato', 'Contrato'),
+        ('permiso', 'Permiso'),
+        ('otro', 'Otro'),
+    ]
+    
+    proyecto = models.ForeignKey(Proyecto, on_delete=models.CASCADE, related_name='archivos')
+    nombre = models.CharField(max_length=255, help_text="Nombre descriptivo del archivo")
+    archivo = models.FileField(upload_to='proyectos/archivos/', help_text="Archivo a subir")
+    thumbnail = models.ImageField(upload_to='proyectos/thumbnails/', blank=True, null=True, help_text="Miniatura generada automáticamente")
+    tipo = models.CharField(max_length=20, choices=TIPO_CHOICES, default='documento')
+    descripcion = models.TextField(blank=True, help_text="Descripción del archivo")
+    fecha_subida = models.DateTimeField(auto_now_add=True)
+    subido_por = models.ForeignKey(User, on_delete=models.CASCADE, related_name='archivos_subidos')
+    activo = models.BooleanField(default=True)
+    
+    class Meta:
+        ordering = ['-fecha_subida']
+        verbose_name = 'Archivo de Proyecto'
+        verbose_name_plural = 'Archivos de Proyecto'
+    
+    def __str__(self):
+        return f"{self.nombre} - {self.proyecto.nombre}"
+    
+    def get_extension(self):
+        """Obtener la extensión del archivo"""
+        return self.archivo.name.split('.')[-1].lower()
+    
+    def get_tamaño_archivo(self):
+        """Obtener el tamaño del archivo en formato legible"""
+        try:
+            size = self.archivo.size
+            for unit in ['B', 'KB', 'MB', 'GB']:
+                if size < 1024.0:
+                    return f"{size:.1f} {unit}"
+                size /= 1024.0
+            return f"{size:.1f} TB"
+        except:
+            return "N/A"
+    
+    def es_imagen(self):
+        """Verificar si el archivo es una imagen"""
+        extensiones_imagen = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp']
+        return self.get_extension() in extensiones_imagen
+    
+    def es_documento(self):
+        """Verificar si el archivo es un documento"""
+        extensiones_documento = ['pdf', 'doc', 'docx', 'txt', 'rtf']
+        return self.get_extension() in extensiones_documento
+    
+    def es_plano(self):
+        """Verificar si el archivo es un plano"""
+        extensiones_plano = ['dwg', 'dxf', 'pdf', 'jpg', 'jpeg', 'png']
+        return self.get_extension() in extensiones_plano
+    
+    def generar_thumbnail(self):
+        """Generar miniatura del archivo si es posible"""
+        try:
+            from PIL import Image
+            import os
+            from django.conf import settings
+            
+            # Solo generar thumbnail para imágenes
+            if not self.es_imagen():
+                return
+            
+            # Abrir la imagen
+            img = Image.open(self.archivo.path)
+            
+            # Convertir a RGB si es necesario
+            if img.mode in ('RGBA', 'LA', 'P'):
+                img = img.convert('RGB')
+            
+            # Redimensionar manteniendo proporción
+            img.thumbnail((200, 200), Image.Resampling.LANCZOS)
+            
+            # Crear nombre para el thumbnail
+            nombre_base = os.path.splitext(os.path.basename(self.archivo.name))[0]
+            extension = 'jpg'
+            nombre_thumbnail = f"{nombre_base}_thumb.{extension}"
+            
+            # Ruta completa para el thumbnail
+            ruta_thumbnail = os.path.join('proyectos/thumbnails/', nombre_thumbnail)
+            ruta_completa = os.path.join(settings.MEDIA_ROOT, ruta_thumbnail)
+            
+            # Crear directorio si no existe
+            os.makedirs(os.path.dirname(ruta_completa), exist_ok=True)
+            
+            # Guardar thumbnail
+            img.save(ruta_completa, 'JPEG', quality=85, optimize=True)
+            
+            # Actualizar campo thumbnail
+            self.thumbnail = ruta_thumbnail
+            self.save(update_fields=['thumbnail'])
+            
+        except Exception as e:
+            print(f"Error generando thumbnail: {e}")
+            pass
+
+
+class Presupuesto(models.Model):
+    """Presupuesto inicial de un proyecto"""
+    proyecto = models.ForeignKey(Proyecto, on_delete=models.CASCADE, related_name='presupuestos')
+    nombre = models.CharField(max_length=200, help_text="Nombre descriptivo del presupuesto")
+    version = models.CharField(max_length=20, default="1.0", help_text="Versión del presupuesto")
+    fecha_creacion = models.DateTimeField(auto_now_add=True)
+    fecha_aprobacion = models.DateTimeField(null=True, blank=True)
+    estado = models.CharField(
+        max_length=20,
+        choices=[
+            ('borrador', 'Borrador'),
+            ('en_revision', 'En Revisión'),
+            ('aprobado', 'Aprobado'),
+            ('rechazado', 'Rechazado'),
+            ('obsoleto', 'Obsoleto')
+        ],
+        default='borrador'
+    )
+    monto_total = models.DecimalField(max_digits=15, decimal_places=2, default=0)
+    monto_aprobado = models.DecimalField(max_digits=15, decimal_places=2, default=0)
+    observaciones = models.TextField(blank=True)
+    creado_por = models.ForeignKey(User, on_delete=models.CASCADE, related_name='presupuestos_creados')
+    aprobado_por = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True, related_name='presupuestos_aprobados')
+    activo = models.BooleanField(default=True)
+
+    class Meta:
+        unique_together = ['proyecto', 'version']
+        ordering = ['-fecha_creacion']
+
+    def __str__(self):
+        return f"Presupuesto {self.version} - {self.proyecto.nombre}"
+
+    def calcular_total(self):
+        """Calcular el monto total del presupuesto"""
+        total = self.partidas.aggregate(
+            total=models.Sum('monto_estimado')
+        )['total'] or 0
+        self.monto_total = total
+        self.save(update_fields=['monto_total'])
+        return total
+
+    def obtener_variacion(self):
+        """Obtener la variación entre presupuesto y gastos reales"""
+        gastos_reales = Gasto.objects.filter(
+            proyecto=self.proyecto,
+            aprobado=True
+        ).aggregate(total=models.Sum('monto'))['total'] or 0
+        
+        return {
+            'presupuesto': self.monto_total,
+            'gastos_reales': gastos_reales,
+            'variacion': gastos_reales - self.monto_total,
+            'porcentaje_variacion': (gastos_reales / self.monto_total * 100) if self.monto_total > 0 else 0
+        }
+
+class PartidaPresupuesto(models.Model):
+    """Partida individual del presupuesto"""
+    presupuesto = models.ForeignKey(Presupuesto, on_delete=models.CASCADE, related_name='partidas')
+    codigo = models.CharField(max_length=20, help_text="Código de la partida")
+    descripcion = models.CharField(max_length=500)
+    unidad = models.CharField(max_length=50, help_text="Unidad de medida (m², m³, kg, etc.)")
+    cantidad = models.DecimalField(max_digits=10, decimal_places=2)
+    precio_unitario = models.DecimalField(max_digits=10, decimal_places=2)
+    monto_estimado = models.DecimalField(max_digits=15, decimal_places=2)
+    categoria = models.ForeignKey(CategoriaGasto, on_delete=models.SET_NULL, null=True, blank=True)
+    subcategoria = models.CharField(max_length=100, blank=True)
+    notas = models.TextField(blank=True)
+    orden = models.PositiveIntegerField(default=0)
+    
+    class Meta:
+        ordering = ['orden', 'codigo']
+
+    def __str__(self):
+        return f"{self.codigo} - {self.descripcion}"
+
+    def save(self, *args, **kwargs):
+        """Calcular automáticamente el monto estimado"""
+        if self.cantidad and self.precio_unitario:
+            self.monto_estimado = self.cantidad * self.precio_unitario
+        super().save(*args, **kwargs)
+        # Actualizar total del presupuesto
+        self.presupuesto.calcular_total()
+
+class VariacionPresupuesto(models.Model):
+    """Registro de variaciones del presupuesto"""
+    presupuesto = models.ForeignKey(Presupuesto, on_delete=models.CASCADE, related_name='variaciones')
+    partida = models.ForeignKey(PartidaPresupuesto, on_delete=models.CASCADE, null=True, blank=True)
+    tipo = models.CharField(
+        max_length=20,
+        choices=[
+            ('aumento', 'Aumento'),
+            ('disminucion', 'Disminución'),
+            ('nueva_partida', 'Nueva Partida'),
+            ('eliminacion', 'Eliminación')
+        ]
+    )
+    monto_anterior = models.DecimalField(max_digits=15, decimal_places=2, default=0)
+    monto_nuevo = models.DecimalField(max_digits=15, decimal_places=2, default=0)
+    diferencia = models.DecimalField(max_digits=15, decimal_places=2)
+    motivo = models.TextField()
+    fecha_variacion = models.DateTimeField(auto_now_add=True)
+    aprobado_por = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
+    estado = models.CharField(
+        max_length=20,
+        choices=[
+            ('pendiente', 'Pendiente'),
+            ('aprobada', 'Aprobada'),
+            ('rechazada', 'Rechazada')
+        ],
+        default='pendiente'
+    )
+
+    class Meta:
+        ordering = ['-fecha_variacion']
+
+    def __str__(self):
+        return f"Variación {self.tipo} - {self.presupuesto.proyecto.nombre}"
+
+# ==================== MODELO DE NOTIFICACIONES ====================
+
+class NotificacionSistema(models.Model):
+    """Notificaciones personalizadas del sistema de construcción"""
+    
+    TIPO_CHOICES = [
+        ('factura_vencida', 'Factura Vencida'),
+        ('pago_pendiente', 'Pago Pendiente'),
+        ('gasto_aprobacion', 'Gasto Requiere Aprobación'),
+        ('proyecto_estado', 'Cambio de Estado del Proyecto'),
+        ('anticipo_disponible', 'Anticipo Disponible'),
+        ('presupuesto_revision', 'Presupuesto Requiere Revisión'),
+        ('archivo_subido', 'Nuevo Archivo Subido'),
+        ('sistema', 'Notificación del Sistema'),
+    ]
+    
+    PRIORIDAD_CHOICES = [
+        ('baja', 'Baja'),
+        ('media', 'Media'),
+        ('alta', 'Alta'),
+        ('urgente', 'Urgente'),
+    ]
+    
+    usuario = models.ForeignKey(User, on_delete=models.CASCADE, related_name='notificaciones')
+    tipo = models.CharField(max_length=50, choices=TIPO_CHOICES)
+    titulo = models.CharField(max_length=200)
+    mensaje = models.TextField()
+    prioridad = models.CharField(max_length=20, choices=PRIORIDAD_CHOICES, default='media')
+    leida = models.BooleanField(default=False)
+    fecha_creacion = models.DateTimeField(auto_now_add=True)
+    fecha_lectura = models.DateTimeField(null=True, blank=True)
+    
+    # Campos opcionales para enlazar con otros modelos
+    proyecto = models.ForeignKey(Proyecto, on_delete=models.CASCADE, null=True, blank=True)
+    factura = models.ForeignKey(Factura, on_delete=models.CASCADE, null=True, blank=True)
+    gasto = models.ForeignKey(Gasto, on_delete=models.CASCADE, null=True, blank=True)
+    
+    class Meta:
+        ordering = ['-fecha_creacion']
+        verbose_name = 'Notificación'
+        verbose_name_plural = 'Notificaciones'
+    
+    def __str__(self):
+        return f"{self.tipo}: {self.titulo}"
+    
+    def marcar_como_leida(self):
+        """Marca la notificación como leída"""
+        self.leida = True
+        self.fecha_lectura = timezone.now()
+        self.save()
+    
+    def get_icono(self):
+        """Retorna el icono apropiado según el tipo"""
+        iconos = {
+            'factura_vencida': 'fas fa-exclamation-triangle text-warning',
+            'pago_pendiente': 'fas fa-clock text-info',
+            'gasto_aprobacion': 'fas fa-check-circle text-primary',
+            'proyecto_estado': 'fas fa-project-diagram text-success',
+            'anticipo_disponible': 'fas fa-money-bill-wave text-success',
+            'presupuesto_revision': 'fas fa-file-invoice-dollar text-warning',
+            'archivo_subido': 'fas fa-file-upload text-info',
+            'sistema': 'fas fa-cog text-secondary',
+        }
+        return iconos.get(self.tipo, 'fas fa-bell text-primary')
+    
+    def get_color_clase(self):
+        """Retorna la clase de color según la prioridad"""
+        colores = {
+            'baja': 'text-muted',
+            'media': 'text-info',
+            'alta': 'text-warning',
+            'urgente': 'text-danger',
+        }
+        return colores.get(self.prioridad, 'text-primary')
+
+
+# ==================== MODELO DE CONFIGURACIÓN DE NOTIFICACIONES ====================
+
+class ConfiguracionNotificaciones(models.Model):
+    usuario = models.OneToOneField(User, on_delete=models.CASCADE, related_name='configuracion_notificaciones')
+    
+    # Configuración general
+    notificaciones_habilitadas = models.BooleanField(default=True, help_text="Activar/desactivar todas las notificaciones")
+    
+    # Tipos de notificaciones
+    facturas_vencidas = models.BooleanField(default=True, help_text="Notificaciones de facturas vencidas")
+    pagos_pendientes = models.BooleanField(default=True, help_text="Notificaciones de pagos pendientes")
+    gastos_pendientes = models.BooleanField(default=True, help_text="Notificaciones de gastos pendientes")
+    archivos_subidos = models.BooleanField(default=True, help_text="Notificaciones de archivos subidos")
+    presupuestos_revision = models.BooleanField(default=True, help_text="Notificaciones de presupuestos en revisión")
+    
+    # Configuración de email
+    email_habilitado = models.BooleanField(default=True, help_text="Recibir notificaciones por email")
+    resumen_diario = models.BooleanField(default=False, help_text="Recibir resumen diario por email")
+    frecuencia_email = models.CharField(
+        max_length=20,
+        choices=[
+            ('inmediato', 'Inmediato'),
+            ('cada_hora', 'Cada hora'),
+            ('diario', 'Diario'),
+            ('semanal', 'Semanal')
+        ],
+        default='inmediato',
+        help_text="Frecuencia de envío de emails"
+    )
+    
+    # Horario de notificaciones
+    horario_inicio = models.TimeField(blank=True, null=True, help_text="Hora de inicio para recibir notificaciones")
+    horario_fin = models.TimeField(blank=True, null=True, help_text="Hora de fin para recibir notificaciones")
+    
+    # Configuración de interfaz
+    mostrar_popup = models.BooleanField(default=True, help_text="Mostrar popup de notificaciones")
+    sonido_notificacion = models.BooleanField(default=True, help_text="Reproducir sonido de notificación")
+    
+    fecha_creacion = models.DateTimeField(default=timezone.now)
+    fecha_actualizacion = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        verbose_name = "Configuración de Notificaciones"
+        verbose_name_plural = "Configuraciones de Notificaciones"
+    
+    def __str__(self):
+        return f"Configuración de {self.usuario.username}"
+    
+    def get_configuracion_activa(self):
+        """Retorna la configuración activa para el usuario"""
+        return {
+            'notificaciones_habilitadas': self.notificaciones_habilitadas,
+            'email_habilitado': self.email_habilitado,
+            'resumen_diario': self.resumen_diario,
+            'frecuencia_email': self.frecuencia_email,
+            'horario_inicio': self.horario_inicio,
+            'horario_fin': self.horario_fin,
+            'mostrar_popup': self.mostrar_popup,
+            'sonido_notificacion': self.sonido_notificacion
+        }
+
+
+class NotificacionProgramada(models.Model):
+    """
+    Modelo para notificaciones programadas para envío futuro
+    """
+    usuario = models.ForeignKey(User, on_delete=models.CASCADE, related_name='notificaciones_programadas')
+    
+    tipo = models.CharField(
+        max_length=50,
+        choices=[
+            ('factura', 'Factura'),
+            ('proyecto', 'Proyecto'),
+            ('gasto', 'Gasto'),
+            ('archivo', 'Archivo'),
+            ('sistema', 'Sistema'),
+            ('recordatorio', 'Recordatorio'),
+            ('cumpleanos', 'Cumpleaños'),
+            ('evento', 'Evento')
+        ]
+    )
+    
+    titulo = models.CharField(max_length=200)
+    mensaje = models.TextField()
+    prioridad = models.CharField(
+        max_length=20,
+        choices=[
+            ('baja', 'Baja'),
+            ('normal', 'Normal'),
+            ('alta', 'Alta'),
+            ('urgente', 'Urgente')
+        ],
+        default='normal'
+    )
+    
+    fecha_envio = models.DateTimeField(help_text="Fecha y hora programada para el envío")
+    fecha_envio_real = models.DateTimeField(blank=True, null=True, help_text="Fecha y hora real del envío")
+    
+    estado = models.CharField(
+        max_length=20,
+        choices=[
+            ('programada', 'Programada'),
+            ('enviada', 'Enviada'),
+            ('cancelada', 'Cancelada'),
+            ('error', 'Error')
+        ],
+        default='programada'
+    )
+    
+    # Campos opcionales para personalización
+    datos_adicionales = models.JSONField(blank=True, null=True, help_text="Datos adicionales para la notificación")
+    
+    fecha_creacion = models.DateTimeField(auto_now_add=True)
+    fecha_actualizacion = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        verbose_name = "Notificación Programada"
+        verbose_name_plural = "Notificaciones Programadas"
+        ordering = ['fecha_envio']
+        indexes = [
+            models.Index(fields=['estado', 'fecha_envio']),
+            models.Index(fields=['usuario', 'estado']),
+        ]
+    
+    def __str__(self):
+        return f"Notificación programada para {self.usuario.username} - {self.titulo}"
+    
+    def esta_vencida(self):
+        """Verifica si la notificación programada está vencida"""
+        return timezone.now() > self.fecha_envio
+    
+    def puede_enviarse(self):
+        """Verifica si la notificación puede ser enviada"""
+        return self.estado == 'programada' and not self.esta_vencida()
+    
+    def cancelar(self):
+        """Cancela la notificación programada"""
+        self.estado = 'cancelada'
+        self.save()
+    
+    def reprogramar(self, nueva_fecha):
+        """Reprograma la notificación para una nueva fecha"""
+        self.fecha_envio = nueva_fecha
+        self.estado = 'programada'
+        self.save()
+
+
+class HistorialNotificaciones(models.Model):
+    """Historial de notificaciones enviadas para auditoría"""
+    
+    usuario = models.ForeignKey(User, on_delete=models.CASCADE)
+    tipo = models.CharField(max_length=50)
+    titulo = models.CharField(max_length=200)
+    mensaje = models.TextField()
+    fecha_envio = models.DateTimeField(auto_now_add=True)
+    metodo_envio = models.CharField(max_length=20, choices=[
+        ('sistema', 'Sistema'),
+        ('email', 'Email'),
+        ('push', 'Push'),
+    ])
+    estado = models.CharField(max_length=20, choices=[
+        ('enviada', 'Enviada'),
+        ('entregada', 'Entregada'),
+        ('leida', 'Leída'),
+        ('fallida', 'Fallida'),
+    ], default='enviada')
+    
+    class Meta:
+        ordering = ['-fecha_envio']
+        verbose_name = 'Historial de Notificación'
+        verbose_name_plural = 'Historial de Notificaciones'
+    
+    def __str__(self):
+        return f"{self.tipo} - {self.usuario.username} - {self.fecha_envio}"
+
+
+class CategoriaInventario(models.Model):
+    """Modelo para categorías de inventario"""
+    nombre = models.CharField(max_length=100, unique=True)
+    descripcion = models.TextField(blank=True)
+    creado_en = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        verbose_name = 'Categoría de Inventario'
+        verbose_name_plural = 'Categorías de Inventario'
+    
+    def __str__(self):
+        return self.nombre
+
+
+class ItemInventario(models.Model):
+    """Modelo para items del inventario"""
+    nombre = models.CharField(max_length=200)
+    codigo = models.CharField(max_length=50, unique=True)
+    descripcion = models.TextField(blank=True)
+    categoria = models.ForeignKey(CategoriaInventario, on_delete=models.CASCADE)
+    stock_actual = models.DecimalField(max_digits=10, decimal_places=2, help_text="Stock actual en unidades")
+    stock_disponible = models.DecimalField(max_digits=10, decimal_places=2, help_text="Stock disponible para asignación", default=0)
+    stock_minimo = models.DecimalField(max_digits=10, decimal_places=2, help_text="Stock mínimo recomendado")
+    precio_unitario = models.DecimalField(max_digits=10, decimal_places=2, help_text="Precio por unidad")
+    unidad_medida = models.CharField(max_length=50, help_text="Unidad de medida (m², m³, kg, etc.)")
+    proveedor = models.CharField(max_length=200, blank=True)
+    fecha_ultima_compra = models.DateField(null=True, blank=True)
+    activo = models.BooleanField(default=True)
+    creado_en = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        verbose_name = 'Item de Inventario'
+        verbose_name_plural = 'Items de Inventario'
+    
+    def __str__(self):
+        return f"{self.nombre} ({self.codigo}) - {self.categoria.nombre}"
+    
+    def save(self, *args, **kwargs):
+        # Si es un nuevo item, inicializar stock_disponible
+        if not self.pk:
+            self.stock_disponible = self.stock_actual
+        super().save(*args, **kwargs)
+
+
+class AsignacionInventario(models.Model):
+    """Modelo para asignar items del inventario a proyectos"""
+    item = models.ForeignKey(ItemInventario, on_delete=models.CASCADE, related_name='asignaciones')
+    proyecto = models.ForeignKey(Proyecto, on_delete=models.CASCADE, related_name='asignaciones_inventario')
+    cantidad_asignada = models.PositiveIntegerField(default=1)
+    fecha_asignacion = models.DateTimeField(auto_now_add=True)
+    fecha_devolucion = models.DateField(null=True, blank=True)
+    estado = models.CharField(
+        max_length=20,
+        choices=[
+            ('asignado', 'Asignado'),
+            ('en_uso', 'En Uso'),
+            ('devuelto', 'Devuelto'),
+            ('perdido', 'Perdido'),
+            ('dañado', 'Dañado')
+        ],
+        default='asignado'
+    )
+    notas = models.TextField(blank=True)
+    asignado_por = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+    
+    class Meta:
+        verbose_name = 'Asignación de Inventario'
+        verbose_name_plural = 'Asignaciones de Inventario'
+        ordering = ['-fecha_asignacion']
+    
+    def __str__(self):
+        return f"{self.item.nombre} - {self.proyecto.nombre} ({self.cantidad_asignada})"
+    
+    def save(self, *args, **kwargs):
+        # Actualizar stock disponible del item
+        if self.pk:  # Si es una actualización
+            old_instance = AsignacionInventario.objects.get(pk=self.pk)
+            if old_instance.estado != self.estado:
+                if self.estado == 'devuelto':
+                    self.item.stock_disponible += self.cantidad_asignada
+                elif old_instance.estado == 'devuelto' and self.estado != 'devuelto':
+                    self.item.stock_disponible -= self.cantidad_asignada
+        else:  # Si es una nueva asignación
+            if self.estado != 'devuelto':
+                self.item.stock_disponible -= self.cantidad_asignada
+        
+        self.item.save()
+        super().save(*args, **kwargs)
+
+
+class AnticipoProyecto(models.Model):
+    """Modelo para anticipos por proyecto"""
+    ESTADO_CHOICES = [
+        ('pendiente', 'Pendiente'),
+        ('liquidado', 'Liquidado'),
+        ('cancelado', 'Cancelado'),
+    ]
+    
+    TIPO_CHOICES = [
+        ('masivo', 'Anticipo Masivo'),
+        ('individual', 'Anticipo Individual'),
+    ]
+    
+    proyecto = models.ForeignKey(Proyecto, on_delete=models.CASCADE, related_name='anticipos_proyecto')
+    colaborador = models.ForeignKey(Colaborador, on_delete=models.CASCADE, related_name='anticipos_proyecto')
+    monto = models.DecimalField(max_digits=10, decimal_places=2)
+    tipo = models.CharField(max_length=20, choices=TIPO_CHOICES, default='individual')
+    concepto = models.CharField(max_length=200, default="Anticipo por proyecto")
+    fecha_anticipo = models.DateField(auto_now_add=True)
+    fecha_liquidacion = models.DateField(null=True, blank=True)
+    estado = models.CharField(max_length=20, choices=ESTADO_CHOICES, default='pendiente')
+    observaciones = models.TextField(blank=True)
+    liquidado_por = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='anticipos_liquidados')
+    
+    class Meta:
+        # Permitir múltiples anticipos por colaborador por proyecto
+        # No hay restricción única para permitir flexibilidad
+        ordering = ['-fecha_anticipo']
+    
+    def __str__(self):
+        return f"Anticipo {self.colaborador.nombre} - {self.proyecto.nombre} - Q{self.monto}"
+    
+    @property
+    def saldo_pendiente(self):
+        """Retorna el saldo pendiente de liquidar"""
+        if self.estado == 'pendiente':
+            return self.monto
+        return 0
+    
+    def liquidar_anticipo(self, usuario):
+        """Liquida el anticipo"""
+        self.estado = 'liquidado'
+        self.fecha_liquidacion = timezone.now().date()
+        self.liquidado_por = usuario
+        self.save()

@@ -1,0 +1,378 @@
+{% extends 'base.html' %}
+
+{% block title %}Usuarios - Sistema de Construcción{% endblock %}
+
+{% block extra_css %}
+<style>
+    .usuarios-hero {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 3rem 2rem;
+        border-radius: 20px;
+        margin-bottom: 2rem;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .usuarios-hero::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="white" opacity="0.1"/><circle cx="75" cy="75" r="1" fill="white" opacity="0.1"/><circle cx="50" cy="10" r="0.5" fill="white" opacity="0.1"/><circle cx="10" cy="60" r="0.5" fill="white" opacity="0.1"/><circle cx="90" cy="40" r="0.5" fill="white" opacity="0.1"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+        opacity: 0.3;
+    }
+    
+    .usuarios-hero-content {
+        position: relative;
+        z-index: 2;
+    }
+    
+    .usuarios-hero-title {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin-bottom: 1rem;
+        text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    }
+    
+    .usuarios-hero-subtitle {
+        font-size: 1.2rem;
+        opacity: 0.9;
+        margin-bottom: 2rem;
+    }
+    
+    .usuarios-stats {
+        display: flex;
+        justify-content: center;
+        gap: 2rem;
+        flex-wrap: wrap;
+    }
+    
+    .usuarios-stat {
+        background: rgba(255,255,255,0.1);
+        backdrop-filter: blur(10px);
+        padding: 1rem 1.5rem;
+        border-radius: 15px;
+        border: 1px solid rgba(255,255,255,0.2);
+        transition: all 0.3s ease;
+    }
+    
+    .usuarios-stat:hover {
+        transform: translateY(-5px);
+        background: rgba(255,255,255,0.2);
+    }
+    
+    .usuarios-stat-number {
+        font-size: 2rem;
+        font-weight: 700;
+        display: block;
+    }
+    
+    .usuarios-stat-label {
+        font-size: 0.9rem;
+        opacity: 0.8;
+    }
+    
+    .usuarios-actions {
+        background: white;
+        border-radius: 15px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        border: 1px solid rgba(255,255,255,0.2);
+    }
+    
+    .usuarios-table-container {
+        background: white;
+        border-radius: 20px;
+        overflow: hidden;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        border: 1px solid rgba(255,255,255,0.2);
+    }
+    
+    .usuarios-table-header {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        padding: 1.5rem;
+        border-bottom: 1px solid #dee2e6;
+    }
+    
+    .btn-neostructure {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        color: white;
+        border: none;
+        border-radius: 12px;
+        padding: 12px 24px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+    }
+    
+    .btn-neostructure:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        color: white;
+    }
+    
+    .btn-success-neo {
+        background: linear-gradient(135deg, #43e97b, #38f9d7);
+        color: white;
+        border: none;
+        border-radius: 12px;
+        padding: 12px 24px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(67, 233, 123, 0.3);
+    }
+    
+    .btn-success-neo:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(67, 233, 123, 0.4);
+        color: white;
+    }
+    
+    .table th {
+        background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+        border: none;
+        padding: 18px 20px;
+        font-weight: 600;
+        color: #2c3e50;
+        font-size: 14px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .table tbody tr {
+        transition: all 0.3s ease;
+    }
+    
+    .table tbody tr:hover {
+        background: linear-gradient(135deg, rgba(78, 205, 196, 0.05), rgba(255, 107, 107, 0.05));
+        transform: scale(1.01);
+    }
+    
+    .table tbody td {
+        padding: 18px 20px;
+        border-bottom: 1px solid #f1f3f4;
+        vertical-align: middle;
+    }
+    
+    .badge {
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .badge-success {
+        background: linear-gradient(135deg, #43e97b, #38f9d7);
+        color: white;
+    }
+    
+    .badge-danger {
+        background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+        color: white;
+    }
+    
+    .badge-warning {
+        background: linear-gradient(135deg, #fa709a, #fee140);
+        color: white;
+    }
+    
+    .avatar-sm {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        color: white;
+        font-size: 18px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Hero Banner -->
+    <div class="usuarios-hero">
+        <div class="usuarios-hero-content">
+            <h1 class="usuarios-hero-title">
+                <i class="fas fa-user-cog me-2"></i>Gestión de Usuarios
+            </h1>
+            <p class="usuarios-hero-subtitle">Administra el acceso y permisos de todos los usuarios del sistema</p>
+            
+            <!-- Estadísticas -->
+            <div class="usuarios-stats">
+                <div class="usuarios-stat">
+                    <span class="usuarios-stat-number">{{ total_usuarios|default:"0" }}</span>
+                    <span class="usuarios-stat-label">Total Usuarios</span>
+                </div>
+                <div class="usuarios-stat">
+                    <span class="usuarios-stat-number">{{ usuarios_activos|default:"0" }}</span>
+                    <span class="usuarios-stat-label">Usuarios Activos</span>
+                </div>
+                <div class="usuarios-stat">
+                    <span class="usuarios-stat-number">{{ superusuarios|default:"0" }}</span>
+                    <span class="usuarios-stat-label">Superusuarios</span>
+                </div>
+                <div class="usuarios-stat">
+                    <span class="usuarios-stat-number">{{ staff_users|default:"0" }}</span>
+                    <span class="usuarios-stat-label">Staff</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Acciones Rápidas -->
+    <div class="usuarios-actions">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h5><i class="fas fa-tasks"></i> Acciones Rápidas</h5>
+                <p class="text-muted mb-0">Gestiona los usuarios del sistema</p>
+            </div>
+            <div>
+                <a href="{% url 'usuario_crear' %}" class="btn btn-success-neo me-2">
+                    <i class="fas fa-plus"></i> Nuevo Usuario
+                </a>
+                <a href="{% url 'dashboard' %}" class="btn btn-neostructure">
+                    <i class="fas fa-tachometer-alt"></i> Dashboard
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Lista de Usuarios -->
+    <div class="usuarios-table-container">
+        <div class="usuarios-table-header">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h5><i class="fas fa-users"></i> Lista de Usuarios</h5>
+                    <p class="text-muted mb-0">
+                        {% if usuarios %}
+                            Mostrando {{ usuarios|length }} de {{ usuarios|length }} usuarios
+                        {% else %}
+                            No hay usuarios disponibles
+                        {% endif %}
+                    </p>
+                </div>
+                <div>
+                    <span class="badge badge-primary">Todos los Estados</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="table-responsive">
+            {% if usuarios %}
+                <table class="table table-hover mb-0">
+                    <thead>
+                        <tr>
+                            <th>Usuario</th>
+                            <th>Nombre Completo</th>
+                            <th>Email</th>
+                            <th>Estado</th>
+                            <th>Último Acceso</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for usuario in usuarios %}
+                        <tr>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="avatar-sm me-3">
+                                        <i class="fas fa-user-circle"></i>
+                                    </div>
+                                    <div>
+                                        <strong>{{ usuario.username }}</strong>
+                                        {% if usuario.is_superuser %}
+                                            <span class="badge badge-danger ms-2">Admin</span>
+                                        {% elif usuario.is_staff %}
+                                            <span class="badge badge-warning ms-2">Staff</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </td>
+                            <td>{{ usuario.get_full_name|default:"No especificado" }}</td>
+                            <td>{{ usuario.email|default:"No especificado" }}</td>
+                            <td>
+                                {% if usuario.is_active %}
+                                    <span class="badge badge-success">Activo</span>
+                                {% else %}
+                                    <span class="badge badge-danger">Inactivo</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if usuario.last_login %}
+                                    {{ usuario.last_login|date:"d/m/Y H:i" }}
+                                {% else %}
+                                    <span class="text-muted">Nunca</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="btn-group" role="group">
+                                    <a href="{% url 'usuario_editar' usuario.id %}" class="btn btn-sm btn-outline-warning" title="Editar">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    {% if not usuario.is_superuser or usuario.id != user.id %}
+                                    <button type="button" class="btn btn-sm btn-outline-danger" title="Eliminar" 
+                                            onclick="confirmarEliminacion({{ usuario.id }}, '{{ usuario.username }}')">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-users fa-3x text-muted mb-3"></i>
+                    <h5 class="text-muted">No hay usuarios registrados</h5>
+                    <p class="text-muted">Crea el primer usuario del sistema</p>
+                    <a href="{% url 'usuario_crear' %}" class="btn btn-success-neo">
+                        <i class="fas fa-plus"></i> Crear Usuario
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Modal de confirmación para eliminar -->
+<div class="modal fade" id="confirmarEliminacionModal" tabindex="-1" aria-labelledby="confirmarEliminacionModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="confirmarEliminacionModalLabel">Confirmar Eliminación</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                ¿Estás seguro de que quieres eliminar al usuario <strong id="nombreUsuarioEliminar"></strong>?
+                <br><br>
+                <span class="text-danger">Esta acción no se puede deshacer.</span>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <a href="#" id="btnConfirmarEliminacion" class="btn btn-danger">Eliminar</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function confirmarEliminacion(usuarioId, nombreUsuario) {
+    document.getElementById('nombreUsuarioEliminar').textContent = nombreUsuario;
+    document.getElementById('btnConfirmarEliminacion').href = `/usuarios/${usuarioId}/eliminar/`;
+    
+    const modal = new bootstrap.Modal(document.getElementById('confirmarEliminacionModal'));
+    modal.show();
+}
+</script>
+{% endblock %}

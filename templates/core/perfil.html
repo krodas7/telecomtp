@@ -1,0 +1,231 @@
+{% extends "base.html" %}
+
+{% block title %}Mi Perfil - Sistema de Construcción{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<div class="hero-section">
+    <div class="hero-content">
+        <h1 class="hero-title">
+            <i class="fas fa-user-circle me-2"></i>Mi Perfil
+        </h1>
+        <p class="hero-subtitle">
+            Gestiona tu información personal y configuración de cuenta
+        </p>
+    </div>
+</div>
+
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <div class="card-modern">
+                <div class="card-header-modern">
+                    <div class="card-header-icon">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    <h5 class="card-header-title">Información Personal</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="profile-info">
+                                <label class="form-label">Nombre de Usuario</label>
+                                <p class="form-control-static">{{ usuario.username }}</p>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="profile-info">
+                                <label class="form-label">Email</label>
+                                <p class="form-control-static">{{ usuario.email|default:"No especificado" }}</p>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="profile-info">
+                                <label class="form-label">Nombre</label>
+                                <p class="form-control-static">{{ usuario.first_name|default:"No especificado" }}</p>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="profile-info">
+                                <label class="form-label">Apellido</label>
+                                <p class="form-control-static">{{ usuario.last_name|default:"No especificado" }}</p>
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <div class="profile-info">
+                                <label class="form-label">Fecha de Registro</label>
+                                <p class="form-control-static">{{ usuario.date_joined|date:"d/m/Y H:i" }}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card-modern mt-4">
+                <div class="card-header-modern">
+                    <div class="card-header-icon">
+                        <i class="fas fa-cog"></i>
+                    </div>
+                    <h5 class="card-header-title">Acciones Rápidas</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-3">
+                        <a href="{% url 'notificaciones_configurar' %}" class="btn btn-primary">
+                            <i class="fas fa-bell me-2"></i>Configurar Notificaciones
+                        </a>
+                        <a href="{% url 'push_notifications_setup' %}" class="btn btn-info">
+                            <i class="fas fa-mobile-alt me-2"></i>Notificaciones Push
+                        </a>
+                        <a href="{% url 'test_notification_email' %}" class="btn btn-warning">
+                            <i class="fas fa-envelope me-2"></i>Probar Sistema de Emails
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card-modern mt-4">
+                <div class="card-header-modern">
+                    <div class="card-header-icon">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <h5 class="card-header-title">Estadísticas de Actividad</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-md-4">
+                            <div class="stat-item">
+                                <div class="stat-number text-primary">{{ usuario.notificaciones.all|length }}</div>
+                                <div class="stat-label">Total Notificaciones</div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="stat-item">
+                                <div class="stat-number text-warning">{{ usuario.notificaciones.all|length }}</div>
+                                <div class="stat-label">No Leídas</div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="stat-item">
+                                <div class="stat-number text-success">{{ usuario.notificaciones.all|length }}</div>
+                                <div class="stat-label">Hoy</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .hero-section {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 4rem 0;
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+    
+    .hero-title {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin-bottom: 1rem;
+    }
+    
+    .hero-subtitle {
+        font-size: 1.2rem;
+        opacity: 0.9;
+        margin-bottom: 2rem;
+    }
+    
+    .card-modern {
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        border: none;
+        overflow: hidden;
+    }
+    
+    .card-header-modern {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        padding: 1.5rem;
+        border-bottom: 1px solid #dee2e6;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+    
+    .card-header-icon {
+        width: 40px;
+        height: 40px;
+        background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1.2rem;
+    }
+    
+    .card-header-title {
+        margin: 0;
+        font-weight: 600;
+        color: #495057;
+    }
+    
+    .card-body {
+        padding: 2rem;
+    }
+    
+    .profile-info {
+        margin-bottom: 1.5rem;
+    }
+    
+    .form-label {
+        font-weight: 600;
+        color: #6c757d;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-size: 0.85rem;
+        margin-bottom: 0.5rem;
+    }
+    
+    .form-control-static {
+        background-color: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        padding: 0.75rem 1rem;
+        margin: 0;
+        color: #495057;
+        font-weight: 500;
+    }
+    
+    .stat-item {
+        text-align: center;
+        padding: 1rem;
+    }
+    
+    .stat-number {
+        font-size: 2rem;
+        font-weight: 700;
+        display: block;
+        margin-bottom: 0.5rem;
+    }
+    
+    .stat-label {
+        font-size: 0.9rem;
+        color: #6c757d;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .btn {
+        padding: 1rem 2rem;
+        font-size: 1rem;
+        border-radius: 10px;
+        font-weight: 600;
+    }
+</style>
+{% endblock %}

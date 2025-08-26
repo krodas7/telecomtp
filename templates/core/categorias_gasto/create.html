@@ -1,0 +1,216 @@
+{% extends 'base.html' %}
+
+{% block title %}Crear Categoría de Gasto - Sistema de Construcción{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="mb-0">
+        <i class="fas fa-plus me-2"></i>Crear Nueva Categoría de Gasto
+    </h2>
+    <a href="{% url 'categorias_gasto_list' %}" class="btn btn-outline-secondary">
+        <i class="fas fa-arrow-left me-2"></i>Volver a Categorías
+    </a>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-edit me-2"></i>Información de la Categoría
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.nombre.id_for_label }}" class="form-label">
+                                <strong>Nombre de la Categoría *</strong>
+                            </label>
+                            {{ form.nombre }}
+                            {% if form.nombre.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.nombre.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <small class="form-text text-muted">
+                                Ej: Materiales, Servicios, Herramientas, etc.
+                            </small>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.color.id_for_label }}" class="form-label">
+                                <strong>Color *</strong>
+                            </label>
+                            <div class="input-group">
+                                {{ form.color }}
+                                <span class="input-group-text">
+                                    <div class="color-preview" style="width: 20px; height: 20px; background-color: #007bff; border-radius: 4px; border: 1px solid #ddd;"></div>
+                                </span>
+                            </div>
+                            {% if form.color.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.color.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <small class="form-text text-muted">
+                                Color hexadecimal (ej: #007bff)
+                            </small>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.icono.id_for_label }}" class="form-label">
+                                <strong>Icono *</strong>
+                            </label>
+                            {{ form.icono }}
+                            {% if form.icono.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.icono.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <small class="form-text text-muted">
+                                Clase de Font Awesome (ej: fas fa-tools)
+                            </small>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.descripcion.id_for_label }}" class="form-label">
+                                <strong>Descripción</strong>
+                            </label>
+                            {{ form.descripcion }}
+                            {% if form.descripcion.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.descripcion.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <small class="form-text text-muted">
+                                Descripción opcional de la categoría
+                            </small>
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-2"></i>Guardar Categoría
+                        </button>
+                        <a href="{% url 'categorias_gasto_list' %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-times me-2"></i>Cancelar
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="fas fa-lightbulb me-2"></i>Sugerencias
+                </h6>
+            </div>
+            <div class="card-body">
+                <h6 class="text-primary">Colores Recomendados:</h6>
+                <div class="row mb-3">
+                    <div class="col-6">
+                        <div class="d-flex align-items-center mb-2">
+                            <div class="color-preview me-2" style="width: 16px; height: 16px; background-color: #007bff; border-radius: 3px;"></div>
+                            <small>#007bff</small>
+                        </div>
+                        <div class="d-flex align-items-center mb-2">
+                            <div class="color-preview me-2" style="width: 16px; height: 16px; background-color: #28a745; border-radius: 3px;"></div>
+                            <small>#28a745</small>
+                        </div>
+                        <div class="d-flex align-items-center mb-2">
+                            <div class="color-preview me-2" style="width: 16px; height: 16px; background-color: #ffc107; border-radius: 3px;"></div>
+                            <small>#ffc107</small>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="d-flex align-items-center mb-2">
+                            <div class="color-preview me-2" style="width: 16px; height: 16px; background-color: #dc3545; border-radius: 3px;"></div>
+                            <small>#dc3545</small>
+                        </div>
+                        <div class="d-flex align-items-center mb-2">
+                            <div class="color-preview me-2" style="width: 16px; height: 16px; background-color: #6f42c1; border-radius: 3px;"></div>
+                            <small>#6f42c1</small>
+                        </div>
+                        <div class="d-flex align-items-center mb-2">
+                            <div class="color-preview me-2" style="width: 16px; height: 16px; background-color: #fd7e14; border-radius: 3px;"></div>
+                            <small>#fd7e14</small>
+                        </div>
+                    </div>
+                </div>
+                
+                <h6 class="text-primary">Iconos Recomendados:</h6>
+                <div class="row">
+                    <div class="col-6">
+                        <small class="d-block mb-1"><i class="fas fa-tools"></i> fas fa-tools</small>
+                        <small class="d-block mb-1"><i class="fas fa-hammer"></i> fas fa-hammer</small>
+                        <small class="d-block mb-1"><i class="fas fa-wrench"></i> fas fa-wrench</small>
+                    </div>
+                    <div class="col-6">
+                        <small class="d-block mb-1"><i class="fas fa-bolt"></i> fas fa-bolt</small>
+                        <small class="d-block mb-1"><i class="fas fa-truck"></i> fas fa-truck</small>
+                        <small class="d-block mb-1"><i class="fas fa-cog"></i> fas fa-cog</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card mt-3">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="fas fa-info-circle me-2"></i>¿Por qué categorizar?
+                </h6>
+            </div>
+            <div class="card-body">
+                <ul class="list-unstyled mb-0">
+                    <li><i class="fas fa-check text-success me-2"></i>Mejor organización</li>
+                    <li><i class="fas fa-check text-success me-2"></i>Reportes detallados</li>
+                    <li><i class="fas fa-check text-success me-2"></i>Control presupuestario</li>
+                    <li><i class="fas fa-check text-success me-2"></i>Análisis de costos</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Actualizar preview del color cuando cambie el input
+    const colorInput = document.getElementById('{{ form.color.id_for_label }}');
+    const colorPreview = document.querySelector('.color-preview');
+    
+    function updateColorPreview() {
+        const color = colorInput.value || '#007bff';
+        colorPreview.style.backgroundColor = color;
+    }
+    
+    colorInput.addEventListener('input', updateColorPreview);
+    updateColorPreview();
+    
+    // Aplicar clases de Bootstrap a los campos del formulario
+    const formFields = document.querySelectorAll('input, textarea, select');
+    formFields.forEach(field => {
+        field.classList.add('form-control');
+        if (field.type === 'color') {
+            field.classList.remove('form-control');
+            field.classList.add('form-control-color');
+        }
+    });
+});
+</script>
+{% endblock %}

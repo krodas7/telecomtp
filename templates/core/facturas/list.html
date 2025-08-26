@@ -1,0 +1,519 @@
+{% extends "base.html" %}
+
+{% block title %}Facturas - Sistema de Construcción{% endblock %}
+
+{% block extra_css %}
+<style>
+    .facturas-hero {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 3rem 2rem;
+        border-radius: 20px;
+        margin-bottom: 2rem;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .facturas-hero::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="white" opacity="0.1"/><circle cx="75" cy="75" r="1" fill="white" opacity="0.1"/><circle cx="50" cy="10" r="0.5" fill="white" opacity="0.1"/><circle cx="10" cy="60" r="0.5" fill="white" opacity="0.1"/><circle cx="90" cy="40" r="0.5" fill="white" opacity="0.1"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+        opacity: 0.3;
+    }
+    
+    .facturas-hero-content {
+        position: relative;
+        z-index: 2;
+    }
+    
+    .facturas-hero-title {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin-bottom: 1rem;
+        text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    }
+    
+    .facturas-hero-subtitle {
+        font-size: 1.2rem;
+        opacity: 0.9;
+        margin-bottom: 2rem;
+    }
+    
+    .facturas-stats {
+        display: flex;
+        justify-content: center;
+        gap: 2rem;
+        flex-wrap: wrap;
+    }
+    
+    .facturas-stat {
+        background: rgba(255,255,255,0.1);
+        backdrop-filter: blur(10px);
+        padding: 1rem 1.5rem;
+        border-radius: 15px;
+        border: 1px solid rgba(255,255,255,0.2);
+        transition: all 0.3s ease;
+    }
+    
+    .facturas-stat:hover {
+        transform: translateY(-5px);
+        background: rgba(255,255,255,0.2);
+    }
+    
+    .facturas-stat-number {
+        font-size: 2rem;
+        font-weight: 700;
+        display: block;
+    }
+    
+    .facturas-stat-label {
+        font-size: 0.9rem;
+        opacity: 0.8;
+    }
+    
+    .facturas-actions {
+        background: white;
+        border-radius: 15px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        border: 1px solid rgba(255,255,255,0.2);
+    }
+    
+    .facturas-table-container {
+        background: white;
+        border-radius: 20px;
+        overflow: hidden;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        border: 1px solid rgba(255,255,255,0.2);
+    }
+    
+    .facturas-table-header {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        padding: 1.5rem;
+        border-bottom: 1px solid #dee2e6;
+    }
+    
+    .btn-neostructure {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        color: white;
+        border: none;
+        border-radius: 12px;
+        padding: 12px 24px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+    }
+    
+    .btn-neostructure:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        color: white;
+    }
+    
+    .btn-success-neo {
+        background: linear-gradient(135deg, #43e97b, #38f9d7);
+        color: white;
+        border: none;
+        border-radius: 12px;
+        padding: 12px 24px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(67, 233, 123, 0.3);
+    }
+    
+    .btn-success-neo:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(67, 233, 123, 0.4);
+        color: white;
+    }
+    
+    .table th {
+        background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+        border: none;
+        padding: 18px 20px;
+        font-weight: 600;
+        color: #2c3e50;
+        font-size: 14px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .table tbody tr {
+        transition: all 0.3s ease;
+    }
+    
+    .table tbody tr:hover {
+        background: linear-gradient(135deg, rgba(78, 205, 196, 0.05), rgba(255, 107, 107, 0.05));
+        transform: scale(1.01);
+    }
+    
+    .table tbody td {
+        padding: 18px 20px;
+        border-bottom: 1px solid #f1f3f4;
+        vertical-align: middle;
+    }
+    
+    .badge {
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .badge-success {
+        background: linear-gradient(135deg, #43e97b, #38f9d7);
+        color: white;
+    }
+    
+    .badge-warning {
+        background: linear-gradient(135deg, #fa709a, #fee140);
+        color: white;
+    }
+    
+    .badge-info {
+        background: linear-gradient(135deg, #4facfe, #00f2fe);
+        color: white;
+    }
+    
+    .badge-primary {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        color: white;
+    }
+    
+    .badge-dark {
+        background: linear-gradient(135deg, #2c3e50, #34495e);
+        color: white;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+{% csrf_token %}
+<div class="container-fluid">
+    <!-- Hero Banner -->
+    <div class="facturas-hero">
+        <div class="facturas-hero-content">
+            <h1 class="facturas-hero-title">
+                <i class="fas fa-file-invoice me-3"></i>Gestión de Facturas
+            </h1>
+            <p class="facturas-hero-subtitle">Administra y controla todas las facturas del sistema</p>
+            
+            <!-- Estadísticas -->
+            <div class="facturas-stats">
+                <div class="facturas-stat">
+                    <span class="facturas-stat-number">{{ total_facturas|default:"0" }}</span>
+                    <span class="facturas-stat-label">Total Facturas</span>
+                </div>
+                <div class="facturas-stat">
+                    <span class="facturas-stat-number">{{ facturas_emitidas|default:"0" }}</span>
+                    <span class="facturas-stat-label">Emitidas</span>
+                </div>
+                <div class="facturas-stat">
+                    <span class="facturas-stat-number">{{ facturas_pagadas|default:"0" }}</span>
+                    <span class="facturas-stat-label">Pagadas</span>
+                </div>
+                <div class="facturas-stat">
+                    <span class="facturas-stat-number">Q{{ total_facturado|default:"0"|floatformat:2 }}</span>
+                    <span class="facturas-stat-label">Total Facturado</span>
+                </div>
+                <div class="facturas-stat">
+                    <span class="facturas-stat-number">Q{{ total_cobrado|default:"0"|floatformat:2 }}</span>
+                    <span class="facturas-stat-label">Total Cobrado</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Acciones Rápidas -->
+    <div class="facturas-actions">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h5><i class="fas fa-tasks"></i> Acciones Rápidas</h5>
+                <p class="text-muted mb-0">Gestiona tu facturación y cobranza</p>
+            </div>
+            <div>
+                <a href="{% url 'factura_create' %}" class="btn btn-success-neo me-2">
+                    <i class="fas fa-plus"></i> Nueva Factura
+                </a>
+                <a href="{% url 'dashboard' %}" class="btn btn-neostructure me-2">
+                    <i class="fas fa-tachometer-alt"></i> Dashboard
+                </a>
+                <a href="{% url 'proyectos_list' %}" class="btn btn-secondary">
+                    <i class="fas fa-project-diagram"></i> Proyectos
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Lista de Facturas -->
+    <div class="facturas-table-container">
+        <div class="facturas-table-header">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h5><i class="fas fa-list"></i> Lista de Facturas</h5>
+                    <p class="text-muted mb-0">
+                        {% if facturas %}
+                            Mostrando {{ facturas|length }} de {{ facturas|length }} facturas
+                        {% else %}
+                            No hay facturas disponibles
+                        {% endif %}
+                    </p>
+                    <!-- Información sobre el botón de marcar como pagada -->
+                    <div class="alert alert-info alert-sm mt-2 mb-0" style="font-size: 0.85rem;">
+                        <i class="fas fa-info-circle me-1"></i>
+                        <strong>Nota:</strong> El botón verde <i class="fas fa-check"></i> aparece solo en facturas que no están pagadas. 
+                        Para que desaparezca, marca la factura como pagada.
+                    </div>
+                </div>
+                <div>
+                    <span class="badge badge-primary">Todos los Estados</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="table-responsive">
+            {% if facturas %}
+                <table class="table table-hover mb-0">
+                    <thead>
+                        <tr>
+                            <th>Número</th>
+                            <th>Cliente</th>
+                            <th>Proyecto</th>
+                            <th>Monto</th>
+                            <th>Estado</th>
+                            <th>Fecha</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for factura in facturas %}
+                        <tr>
+                            <td>
+                                <strong>{{ factura.numero_factura }}</strong>
+                            </td>
+                            <td>
+                                <span class="badge badge-info">{{ factura.cliente.razon_social|default:"N/A" }}</span>
+                            </td>
+                            <td>
+                                <span class="badge badge-primary">{{ factura.proyecto.nombre|default:"N/A" }}</span>
+                            </td>
+                            <td>
+                                <strong>Q{{ factura.monto_total|default:"0"|floatformat:2 }}</strong>
+                            </td>
+                            <td>
+                                {% if factura.estado == 'emitida' %}
+                                    <span class="badge bg-warning text-dark">
+                                        <i class="fas fa-clock me-1"></i>Emitida
+                                    </span>
+                                {% elif factura.estado == 'pagada' %}
+                                    <span class="badge bg-success">
+                                        <i class="fas fa-check-circle me-1"></i>Pagada
+                                    </span>
+                                {% elif factura.estado == 'vencida' %}
+                                    <span class="badge bg-danger">
+                                        <i class="fas fa-exclamation-triangle me-1"></i>Vencida
+                                    </span>
+                                {% elif factura.estado == 'borrador' %}
+                                    <span class="badge bg-secondary">
+                                        <i class="fas fa-edit me-1"></i>Borrador
+                                    </span>
+                                {% elif factura.estado == 'enviada' %}
+                                    <span class="badge bg-info">
+                                        <i class="fas fa-paper-plane me-1"></i>Enviada
+                                    </span>
+                                {% elif factura.estado == 'cancelada' %}
+                                    <span class="badge bg-dark">
+                                        <i class="fas fa-ban me-1"></i>Cancelada
+                                    </span>
+                                {% else %}
+                                    <span class="badge bg-secondary">{{ factura.estado|title }}</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {{ factura.fecha_emision|date:"d/m/Y"|default:"N/A" }}
+                            </td>
+                            <td>
+                                <div class="btn-group" role="group">
+                                    <a href="{% url 'factura_detail' factura.id %}" class="btn btn-sm btn-outline-primary" title="Ver Detalles">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    <a href="{% url 'factura_edit' factura.id %}" class="btn btn-sm btn-outline-warning" title="Editar">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    {% if factura.estado != 'pagada' %}
+                                        <button type="button" class="btn btn-sm btn-outline-success" title="Marcar como Pagada" 
+                                                onclick="marcarComoPagada({{ factura.id }}, '{{ factura.numero_factura }}')">
+                                            <i class="fas fa-check"></i>
+                                        </button>
+                                    {% else %}
+                                        <span class="badge bg-success text-white" title="Factura ya pagada">
+                                            <i class="fas fa-check-circle me-1"></i>Pagada
+                                        </span>
+                                    {% endif %}
+                                    <a href="{% url 'factura_delete' factura.id %}" class="btn btn-sm btn-outline-danger" title="Eliminar" onclick="return confirm('¿Estás seguro de que quieres eliminar esta factura?')">
+                                        <i class="fas fa-trash"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-file-invoice fa-3x text-muted mb-3"></i>
+                    <h5 class="text-muted">No hay facturas disponibles</h5>
+                    <p class="text-muted">Comienza creando tu primera factura</p>
+                    <a href="{% url 'factura_create' %}" class="btn btn-success-neo">
+                        <i class="fas fa-plus"></i> Crear Primera Factura
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+function marcarComoPagada(facturaId, numeroFactura) {
+    // Crear un modal de confirmación personalizado
+    const modal = document.createElement('div');
+    modal.className = 'modal fade';
+    modal.innerHTML = `
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-check-circle text-success me-2"></i>
+                        Confirmar Pago
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p>¿Estás seguro de que quieres marcar la factura <strong>${numeroFactura}</strong> como pagada?</p>
+                    <p class="text-muted small">Esta acción cambiará el estado de la factura y registrará la fecha de pago.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-success" id="confirmarPago">
+                        <i class="fas fa-check me-2"></i>Sí, Marcar como Pagada
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+    
+    // Mostrar el modal
+    const bootstrapModal = new bootstrap.Modal(modal);
+    bootstrapModal.show();
+    
+    // Manejar la confirmación
+    document.getElementById('confirmarPago').addEventListener('click', function() {
+        bootstrapModal.hide();
+        procesarMarcadoComoPagada(facturaId, numeroFactura);
+    });
+    
+    // Limpiar el modal cuando se cierre
+    modal.addEventListener('hidden.bs.modal', function() {
+        document.body.removeChild(modal);
+    });
+}
+
+function procesarMarcadoComoPagada(facturaId, numeroFactura) {
+        // Obtener el token CSRF
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+        
+        // Mostrar indicador de carga
+        const button = event.target.closest('button');
+        const originalContent = button.innerHTML;
+        button.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+        button.disabled = true;
+        
+        // Realizar petición AJAX
+        fetch(`/facturas/${facturaId}/marcar-pagada/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Mostrar mensaje de éxito elegante
+                mostrarToast('success', '¡Éxito!', data.message);
+                // Recargar la página después de un breve delay
+                setTimeout(() => {
+                    location.reload();
+                }, 1500);
+            } else {
+                // Mostrar mensaje de error
+                mostrarToast('danger', 'Error', data.error);
+                // Restaurar el botón
+                button.innerHTML = originalContent;
+                button.disabled = false;
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            mostrarToast('danger', 'Error', 'Error al procesar la solicitud. Por favor, inténtalo de nuevo.');
+            // Restaurar el botón
+            button.innerHTML = originalContent;
+            button.disabled = false;
+        });
+    }
+}
+
+// Función para mostrar toasts elegantes
+function mostrarToast(tipo, titulo, mensaje) {
+    // Crear el toast
+    const toastContainer = document.getElementById('toast-container') || crearToastContainer();
+    
+    const toast = document.createElement('div');
+    toast.className = `toast align-items-center text-white bg-${tipo} border-0`;
+    toast.setAttribute('role', 'alert');
+    toast.setAttribute('aria-live', 'assertive');
+    toast.setAttribute('aria-atomic', 'true');
+    
+    toast.innerHTML = `
+        <div class="d-flex">
+            <div class="toast-body">
+                <strong>${titulo}:</strong> ${mensaje}
+            </div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+    `;
+    
+    toastContainer.appendChild(toast);
+    
+    // Mostrar el toast
+    const bootstrapToast = new bootstrap.Toast(toast);
+    bootstrapToast.show();
+    
+    // Remover el toast después de que se oculte
+    toast.addEventListener('hidden.bs.toast', function() {
+        toastContainer.removeChild(toast);
+    });
+}
+
+// Crear contenedor de toasts si no existe
+function crearToastContainer() {
+    const container = document.createElement('div');
+    container.id = 'toast-container';
+    container.className = 'toast-container position-fixed top-0 end-0 p-3';
+    container.style.zIndex = '9999';
+    document.body.appendChild(container);
+    return container;
+}
+</script>
+
+{% endblock %}

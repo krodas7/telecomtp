@@ -1,0 +1,152 @@
+{% extends "base.html" %}
+
+{% block title %}Eliminar Categoría de Gasto - Sistema de Construcción{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">
+        <i class="fas fa-trash me-2"></i>Eliminar Categoría de Gasto
+    </h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <a href="{% url 'categorias_gasto_list' %}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left me-1"></i>Volver
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card border-danger">
+            <div class="card-header bg-danger text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-exclamation-triangle me-2"></i>Confirmar Eliminación
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-warning">
+                    <h6 class="alert-heading">
+                        <i class="fas fa-exclamation-triangle me-2"></i>¡Atención!
+                    </h6>
+                    <p class="mb-0">
+                        Está a punto de eliminar la categoría de gasto <strong>"{{ categoria.nombre }}"</strong>. 
+                        Esta acción desactivará la categoría y no podrá ser utilizada en nuevas operaciones.
+                    </p>
+                </div>
+                
+                <div class="card mb-3">
+                    <div class="card-header">
+                        <h6 class="mb-0">Información de la Categoría a Eliminar</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <p><strong>Nombre:</strong> {{ categoria.nombre }}</p>
+                                {% if categoria.descripcion %}
+                                    <p><strong>Descripción:</strong> {{ categoria.descripcion }}</p>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6">
+                                <p><strong>Gastos Asociados:</strong> {{ categoria.gastos.count }}</p>
+                                <p><strong>Creado:</strong> {{ categoria.creado_en|date:"d/m/Y H:i" }}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="alert alert-info">
+                    <h6 class="alert-heading">
+                        <i class="fas fa-info-circle me-2"></i>Información Importante
+                    </h6>
+                    <ul class="mb-0">
+                        <li>La categoría será marcada como inactiva, no se eliminará físicamente de la base de datos.</li>
+                        <li>Los gastos existentes asociados a esta categoría no se verán afectados.</li>
+                        <li>No se podrán crear nuevos gastos con esta categoría.</li>
+                        <li>Esta acción se puede revertir editando la categoría y marcándola como activa.</li>
+                    </ul>
+                </div>
+                
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-danger">
+                            <i class="fas fa-trash me-2"></i>Confirmar Eliminación
+                        </button>
+                        <a href="{% url 'categorias_gasto_list' %}" class="btn btn-secondary">
+                            <i class="fas fa-times me-2"></i>Cancelar
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="fas fa-money-bill-wave me-2"></i>Gastos Asociados
+                </h6>
+            </div>
+            <div class="card-body">
+                {% if categoria.gastos.all %}
+                    <p class="text-muted">Esta categoría tiene los siguientes gastos asociados:</p>
+                    <ul class="list-unstyled">
+                        {% for gasto in categoria.gastos.all|slice:":5" %}
+                            <li class="mb-2">
+                                <div class="d-flex align-items-center">
+                                    <i class="fas fa-money-bill me-2 text-danger"></i>
+                                    <div>
+                                        <strong>Q{{ gasto.monto|floatformat:2 }}</strong>
+                                        <br>
+                                        <small class="text-muted">
+                                            {{ gasto.proyecto.nombre|truncatechars:30 }} - 
+                                            <span class="badge bg-{% if gasto.aprobado %}success{% else %}warning{% endif %}">
+                                                {% if gasto.aprobado %}Aprobado{% else %}Pendiente{% endif %}
+                                            </span>
+                                        </small>
+                                    </div>
+                                </div>
+                            </li>
+                        {% endfor %}
+                        {% if categoria.gastos.count > 5 %}
+                            <li class="text-muted">
+                                <small>... y {{ categoria.gastos.count|add:"-5" }} más</small>
+                            </li>
+                        {% endif %}
+                    </ul>
+                {% else %}
+                    <p class="text-muted">Esta categoría no tiene gastos asociados.</p>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="card mt-3">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="fas fa-chart-line me-2"></i>Estadísticas de la Categoría
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-6">
+                        <div class="border-end">
+                            <h5 class="text-primary mb-1">{{ categoria.gastos.count }}</h5>
+                            <small class="text-muted">Total Gastos</small>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <h5 class="text-success mb-1">
+                            {% if categoria.gastos.count > 0 %}
+                                Q{{ categoria.gastos.all|dictsort:"monto"|last.monto|floatformat:2 }}
+                            {% else %}
+                                0.00
+                            {% endif %}
+                        </h5>
+                        <small class="text-muted">Monto Máximo</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

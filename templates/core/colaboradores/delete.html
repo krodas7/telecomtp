@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+
+{% block title %}Eliminar Colaborador - Sistema de Construcción{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">
+        <i class="fas fa-user-times me-2"></i>Eliminar Colaborador
+    </h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <a href="{% url 'colaboradores_list' %}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left me-1"></i>Volver
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card border-danger">
+            <div class="card-header bg-danger text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-exclamation-triangle me-2"></i>Confirmar Eliminación
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-warning">
+                    <h6 class="alert-heading">
+                        <i class="fas fa-exclamation-triangle me-2"></i>¡Atención!
+                    </h6>
+                    <p class="mb-0">
+                        Está a punto de eliminar el colaborador <strong>"{{ colaborador.nombre }}"</strong>. 
+                        Esta acción desactivará el colaborador y no podrá ser utilizado en nuevas operaciones.
+                    </p>
+                </div>
+                
+                <div class="card mb-3">
+                    <div class="card-header">
+                        <h6 class="mb-0">Información del Colaborador a Eliminar</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <p><strong>Nombre:</strong> {{ colaborador.nombre }}</p>
+                                <p><strong>DPI:</strong> {{ colaborador.dpi|default:"No especificado" }}</p>
+                                <p><strong>Email:</strong> {{ colaborador.email|default:"No especificado" }}</p>
+                            </div>
+                            <div class="col-md-6">
+                                <p><strong>Teléfono:</strong> {{ colaborador.telefono|default:"No especificado" }}</p>
+                                <p><strong>Estado:</strong> 
+                                    {% if colaborador.activo %}
+                                        <span class="badge bg-success">Activo</span>
+                                    {% else %}
+                                        <span class="badge bg-danger">Inactivo</span>
+                                    {% endif %}
+                                </p>
+                                <p><strong>Creado:</strong> {{ colaborador.creado_en|date:"d/m/Y H:i" }}</p>
+                            </div>
+                        </div>
+                        
+                        {% if colaborador.direccion %}
+                            <p><strong>Dirección:</strong> {{ colaborador.direccion }}</p>
+                        {% endif %}
+                        
+                        {% if colaborador.salario %}
+                            <p><strong>Salario:</strong> Q{{ colaborador.salario|floatformat:2 }}</p>
+                        {% endif %}
+                        
+                        {% if colaborador.fecha_contratacion %}
+                            <p><strong>Fecha de Contratación:</strong> {{ colaborador.fecha_contratacion|date:"d/m/Y" }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="alert alert-info">
+                    <h6 class="alert-heading">
+                        <i class="fas fa-info-circle me-2"></i>Información Importante
+                    </h6>
+                    <ul class="mb-0">
+                        <li>El colaborador será marcado como inactivo, no se eliminará físicamente de la base de datos.</li>
+                        <li>Los proyectos existentes asociados a este colaborador no se verán afectados.</li>
+                        <li>No se podrán asignar nuevos proyectos a este colaborador.</li>
+                        <li>Esta acción se puede revertir editando el colaborador y marcándolo como activo.</li>
+                    </ul>
+                </div>
+                
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-danger">
+                            <i class="fas fa-trash me-2"></i>Confirmar Eliminación
+                        </button>
+                        <a href="{% url 'colaboradores_list' %}" class="btn btn-secondary">
+                            <i class="fas fa-times me-2"></i>Cancelar
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="fas fa-project-diagram me-2"></i>Proyectos Asociados
+                </h6>
+            </div>
+            <div class="card-body">
+                <p class="text-muted">Este colaborador no tiene proyectos asociados directamente.</p>
+                <p class="text-muted">Los colaboradores se asignan a tareas específicas dentro de los proyectos.</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,169 @@
+{% extends "base.html" %}
+
+{% block title %}Prueba de Notificaciones por Email{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<div class="hero-section">
+    <div class="hero-content">
+        <h1 class="hero-title">
+            <i class="fas fa-envelope me-2"></i>Prueba de Notificaciones
+        </h1>
+        <p class="hero-subtitle">
+            Sistema de envío de emails automáticos para notificaciones
+        </p>
+    </div>
+</div>
+
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <div class="card-modern">
+                <div class="card-header-modern">
+                    <div class="card-header-icon">
+                        <i class="fas fa-cog"></i>
+                    </div>
+                    <h5 class="card-header-title">Configuración del Sistema de Emails</h5>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <h6><i class="fas fa-info-circle me-2"></i>Información del Sistema</h6>
+                        <p class="mb-0">
+                            Esta vista te permite probar el sistema de notificaciones por email. 
+                            El sistema está configurado para usar el backend de consola en desarrollo 
+                            (los emails se mostrarán en la terminal del servidor).
+                        </p>
+                    </div>
+                    
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="fas fa-paper-plane me-2"></i>Enviar Notificación de Prueba
+                            </button>
+                        </div>
+                    </form>
+                    
+                    {% if mensaje %}
+                        <div class="alert alert-{{ tipo_mensaje }} mt-3">
+                            <h6><i class="fas fa-{{ icono }} me-2"></i>{{ titulo_mensaje }}</h6>
+                            <p class="mb-0">{{ mensaje }}</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="card-modern mt-4">
+                <div class="card-header-modern">
+                    <div class="card-header-icon">
+                        <i class="fas fa-list"></i>
+                    </div>
+                    <h5 class="card-header-title">Configuración de Email</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>Backend de Email:</h6>
+                            <p class="text-muted">
+                                {% if debug %}
+                                    <span class="badge bg-warning">Console Backend (Desarrollo)</span>
+                                    <br><small>Los emails se muestran en la terminal del servidor</small>
+                                {% else %}
+                                    <span class="badge bg-success">SMTP Backend (Producción)</span>
+                                {% endif %}
+                            </p>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Estado del Sistema:</h6>
+                            <p class="text-muted">
+                                <span class="badge bg-success">Activo</span>
+                                <br><small>Sistema de notificaciones funcionando</small>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .hero-section {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 4rem 0;
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+    
+    .hero-title {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin-bottom: 1rem;
+    }
+    
+    .hero-subtitle {
+        font-size: 1.2rem;
+        opacity: 0.9;
+        margin-bottom: 2rem;
+    }
+    
+    .card-modern {
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        border: none;
+        overflow: hidden;
+    }
+    
+    .card-header-modern {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        padding: 1.5rem;
+        border-bottom: 1px solid #dee2e6;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+    
+    .card-header-icon {
+        width: 40px;
+        height: 40px;
+        background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1.2rem;
+    }
+    
+    .card-header-title {
+        margin: 0;
+        font-weight: 600;
+        color: #495057;
+    }
+    
+    .card-body {
+        padding: 2rem;
+    }
+    
+    .btn-lg {
+        padding: 1rem 2rem;
+        font-size: 1.1rem;
+        border-radius: 10px;
+    }
+    
+    .alert {
+        border-radius: 10px;
+        border: none;
+    }
+    
+    .badge {
+        font-size: 0.8rem;
+        padding: 0.5rem 0.8rem;
+        border-radius: 8px;
+    }
+</style>
+{% endblock %}

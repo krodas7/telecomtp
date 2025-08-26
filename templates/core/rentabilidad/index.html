@@ -1,0 +1,339 @@
+{% extends 'base.html' %}
+
+{% block title %}Rentabilidad - Sistema de Construcción{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="mb-0">
+        <i class="fas fa-chart-line me-2"></i>Análisis de Rentabilidad
+    </h2>
+    <div class="d-flex gap-2">
+        <button class="btn btn-outline-primary" onclick="exportarReporte()">
+            <i class="fas fa-download me-2"></i>Exportar Reporte
+        </button>
+        <button class="btn btn-outline-secondary" onclick="imprimirReporte()">
+            <i class="fas fa-print me-2"></i>Imprimir
+        </button>
+    </div>
+</div>
+
+<!-- Filtros de período -->
+<div class="card mb-4">
+    <div class="card-header">
+        <h6 class="mb-0">
+            <i class="fas fa-filter me-2"></i>Filtros de Período
+        </h6>
+    </div>
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <div class="col-md-3">
+                <label for="periodo" class="form-label">Período</label>
+                <select name="periodo" id="periodo" class="form-select" onchange="this.form.submit()">
+                    <option value="mes" {% if periodo == 'mes' %}selected{% endif %}>Último Mes</option>
+                    <option value="trimestre" {% if periodo == 'trimestre' %}selected{% endif %}>Último Trimestre</option>
+                    <option value="año" {% if periodo == 'año' %}selected{% endif %}>Último Año</option>
+                    <option value="personalizado" {% if periodo == 'personalizado' %}selected{% endif %}>Personalizado</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label for="fecha_inicio" class="form-label">Fecha Inicio</label>
+                <input type="date" name="fecha_inicio" id="fecha_inicio" class="form-control" value="{{ fecha_inicio }}">
+            </div>
+            <div class="col-md-3">
+                <label for="fecha_fin" class="form-label">Fecha Fin</label>
+                <input type="date" name="fecha_fin" id="fecha_fin" class="form-control" value="{{ fecha_fin }}">
+            </div>
+            <div class="col-md-3 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary me-2">
+                    <i class="fas fa-search me-2"></i>Filtrar
+                </button>
+                <a href="{% url 'rentabilidad' %}" class="btn btn-outline-secondary">
+                    <i class="fas fa-undo me-2"></i>Reset
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Resumen General -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card border-success">
+            <div class="card-body text-center">
+                <h5 class="card-title text-success">
+                    <i class="fas fa-arrow-up me-2"></i>Ingresos
+                </h5>
+                <h3 class="text-success">${{ ingresos|floatformat:2 }}</h3>
+                <small class="text-muted">Período seleccionado</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-danger">
+            <div class="card-body text-center">
+                <h5 class="card-title text-danger">
+                    <i class="fas fa-arrow-down me-2"></i>Gastos
+                </h5>
+                <h3 class="text-danger">${{ gastos|floatformat:2 }}</h3>
+                <small class="text-muted">Período seleccionado</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-warning">
+            <div class="card-body text-center">
+                <h5 class="card-title text-warning">
+                    <i class="fas fa-chart-line me-2"></i>Rentabilidad Neta
+                </h5>
+                <h3 class="{% if rentabilidad_neta >= 0 %}text-success{% else %}text-danger{% endif %}">
+                    ${{ rentabilidad_neta|floatformat:2 }}
+                </h3>
+                <small class="text-muted">Ingresos - Gastos - Fijos</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-info">
+            <div class="card-body text-center">
+                <h5 class="card-title text-info">
+                    <i class="fas fa-percentage me-2"></i>Margen
+                </h5>
+                <h3 class="{% if margen_rentabilidad >= 0 %}text-success{% else %}text-danger{% endif %}">
+                    {{ margen_rentabilidad|floatformat:1 }}%
+                </h3>
+                <small class="text-muted">Rentabilidad/Ingresos</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Gráficos y Análisis -->
+<div class="row">
+    <!-- Tendencias Mensuales -->
+    <div class="col-lg-8 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="fas fa-chart-area me-2"></i>Tendencias Mensuales (Últimos 12 meses)
+                </h6>
+            </div>
+            <div class="card-body">
+                <canvas id="tendenciasChart" width="400" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Gastos por Categoría -->
+    <div class="col-lg-4 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="fas fa-pie-chart me-2"></i>Gastos por Categoría
+                </h6>
+            </div>
+            <div class="card-body">
+                <canvas id="categoriasChart" width="400" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Rentabilidad por Proyecto -->
+<div class="card mb-4">
+    <div class="card-header">
+        <h6 class="mb-0">
+            <i class="fas fa-project-diagram me-2"></i>Rentabilidad por Proyecto
+        </h6>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-striped table-hover">
+                <thead>
+                    <tr>
+                        <th>Proyecto</th>
+                        <th>Cliente</th>
+                        <th>Ingresos</th>
+                        <th>Gastos</th>
+                        <th>Rentabilidad</th>
+                        <th>Margen</th>
+                        <th>Estado</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in proyectos_rentabilidad %}
+                    <tr>
+                        <td>
+                            <strong>{{ item.proyecto.nombre }}</strong>
+                        </td>
+                        <td>{{ item.proyecto.cliente.nombre }}</td>
+                        <td class="text-success">${{ item.ingresos|floatformat:2 }}</td>
+                        <td class="text-danger">${{ item.gastos|floatformat:2 }}</td>
+                        <td class="{% if item.rentabilidad >= 0 %}text-success{% else %}text-danger{% endif %}">
+                            ${{ item.rentabilidad|floatformat:2 }}
+                        </td>
+                        <td class="{% if item.margen >= 0 %}text-success{% else %}text-danger{% endif %}">
+                            {{ item.margen|floatformat:1 }}%
+                        </td>
+                        <td>
+                            <span class="badge bg-{% if item.proyecto.estado == 'completado' %}success{% elif item.proyecto.estado == 'en_progreso' %}warning{% else %}secondary{% endif %}">
+                                {{ item.proyecto.get_estado_display }}
+                            </span>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" class="text-center text-muted">
+                            <i class="fas fa-info-circle me-2"></i>No hay proyectos con datos en el período seleccionado
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Análisis Detallado -->
+<div class="row">
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="fas fa-list me-2"></i>Top 5 Proyectos Más Rentables
+                </h6>
+            </div>
+            <div class="card-body">
+                {% for item in proyectos_rentabilidad|slice:":5" %}
+                <div class="d-flex justify-content-between align-items-center mb-2 p-2 border rounded">
+                    <div>
+                        <strong>{{ item.proyecto.nombre }}</strong><br>
+                        <small class="text-muted">{{ item.proyecto.cliente.nombre }}</small>
+                    </div>
+                    <div class="text-end">
+                        <span class="badge bg-success">${{ item.rentabilidad|floatformat:2 }}</span><br>
+                        <small class="text-muted">{{ item.margen|floatformat:1 }}%</small>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="fas fa-exclamation-triangle me-2"></i>Proyectos con Pérdidas
+                </h6>
+            </div>
+            <div class="card-body">
+                {% for item in proyectos_rentabilidad %}
+                    {% if item.rentabilidad < 0 %}
+                    <div class="d-flex justify-content-between align-items-center mb-2 p-2 border rounded border-danger">
+                        <div>
+                            <strong>{{ item.proyecto.nombre }}</strong><br>
+                            <small class="text-muted">{{ item.proyecto.cliente.nombre }}</small>
+                        </div>
+                        <div class="text-end">
+                            <span class="badge bg-danger">${{ item.rentabilidad|floatformat:2 }}</span><br>
+                            <small class="text-muted">{{ item.margen|floatformat:1 }}%</small>
+                        </div>
+                    </div>
+                    {% endif %}
+                {% empty %}
+                <div class="text-center text-muted">
+                    <i class="fas fa-check-circle me-2"></i>¡Excelente! No hay proyectos con pérdidas
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Scripts para gráficos -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Gráfico de tendencias mensuales
+    const tendenciasCtx = document.getElementById('tendenciasChart').getContext('2d');
+    new Chart(tendenciasCtx, {
+        type: 'line',
+        data: {
+            labels: [{% for item in tendencias_mensuales %}'{{ item.mes }}'{% if not forloop.last %}, {% endif %}{% endfor %}],
+            datasets: [{
+                label: 'Ingresos',
+                data: [{% for item in tendencias_mensuales %}{{ item.ingresos }}{% if not forloop.last %}, {% endif %}{% endfor %}],
+                borderColor: 'rgb(75, 192, 192)',
+                backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                tension: 0.1
+            }, {
+                label: 'Gastos',
+                data: [{% for item in tendencias_mensuales %}{{ item.gastos }}{% if not forloop.last %}, {% endif %}{% endfor %}],
+                borderColor: 'rgb(255, 99, 132)',
+                backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                tension: 0.1
+            }, {
+                label: 'Rentabilidad',
+                data: [{% for item in tendencias_mensuales %}{{ item.rentabilidad }}{% if not forloop.last %}, {% endif %}{% endfor %}],
+                borderColor: 'rgb(255, 205, 86)',
+                backgroundColor: 'rgba(255, 205, 86, 0.2)',
+                tension: 0.1
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                title: {
+                    display: true,
+                    text: 'Evolución Financiera Mensual'
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+    
+    // Gráfico de gastos por categoría
+    const categoriasCtx = document.getElementById('categoriasChart').getContext('2d');
+    new Chart(categoriasCtx, {
+        type: 'doughnut',
+        data: {
+            labels: [{% for item in gastos_por_categoria %}'{{ item.categoria__nombre|default:"Sin Categoría" }}'{% if not forloop.last %}, {% endif %}{% endfor %}],
+            datasets: [{
+                data: [{% for item in gastos_por_categoria %}{{ item.total }}{% if not forloop.last %}, {% endif %}{% endfor %}],
+                backgroundColor: [
+                    'rgb(255, 99, 132)',
+                    'rgb(54, 162, 235)',
+                    'rgb(255, 205, 86)',
+                    'rgb(75, 192, 192)',
+                    'rgb(153, 102, 255)',
+                    'rgb(255, 159, 64)'
+                ]
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                title: {
+                    display: true,
+                    text: 'Distribución de Gastos'
+                }
+            }
+        }
+    });
+});
+
+// Funciones de exportación e impresión
+function exportarReporte() {
+    // Implementar exportación a PDF o Excel
+    alert('Función de exportación en desarrollo');
+}
+
+function imprimirReporte() {
+    window.print();
+}
+</script>
+{% endblock %}

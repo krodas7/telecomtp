@@ -1,0 +1,30 @@
+# Configuración de Cron para Backup Automático del Sistema ARCA Construcción
+# Agregar estas líneas al crontab del usuario root o arca
+
+# Backup diario a las 2:00 AM
+0 2 * * * /usr/bin/python3 /var/www/sistema-arca/scripts/backup_automatico_produccion.py >> /var/log/sistema-arca/cron_backup.log 2>&1
+
+# Backup semanal (domingo a las 3:00 AM) - Backup completo
+0 3 * * 0 /usr/bin/python3 /var/www/sistema-arca/scripts/backup_automatico_produccion.py --full >> /var/log/sistema-arca/cron_backup_semanal.log 2>&1
+
+# Limpieza de logs antiguos (cada domingo a las 4:00 AM)
+0 4 * * 0 find /var/log/sistema-arca -name "*.log" -mtime +30 -delete
+
+# Verificación de espacio en disco (cada día a las 6:00 AM)
+0 6 * * * df -h /var/backups/sistema-arca >> /var/log/sistema-arca/disk_space.log
+
+# Monitoreo de servicios (cada 15 minutos)
+*/15 * * * * systemctl is-active --quiet sistema-arca || echo "Sistema ARCA inactivo $(date)" >> /var/log/sistema-arca/service_monitor.log
+
+# Backup de configuración del sistema (cada domingo a las 5:00 AM)
+0 5 * * 0 tar -czf /var/backups/sistema-arca/system_config_$(date +\%Y\%m\%d).tar.gz /etc/nginx /etc/systemd/system/sistema-arca.service
+
+# Notificación de estado del sistema (cada lunes a las 9:00 AM)
+0 9 * * 1 echo "Estado del Sistema ARCA - $(date)" | mail -s "Reporte Semanal Sistema ARCA" admin@arca-construccion.com
+
+# Instrucciones para configurar:
+# 1. Editar crontab: sudo crontab -e
+# 2. Copiar y pegar las líneas anteriores
+# 3. Guardar y salir
+# 4. Verificar: sudo crontab -l
+# 5. Ver logs: tail -f /var/log/sistema-arca/cron_backup.log

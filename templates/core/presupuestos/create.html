@@ -1,0 +1,783 @@
+{% extends 'base.html' %}
+
+{% block title %}Crear Presupuesto - Sistema de Construcción{% endblock %}
+
+{% block extra_css %}
+<style>
+    .create-hero {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 3rem 2rem;
+        border-radius: 20px;
+        margin-bottom: 2rem;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .create-hero::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="white" opacity="0.1"/><circle cx="75" cy="75" r="1" fill="white" opacity="0.1"/><circle cx="50" cy="10" r="0.5" fill="white" opacity="0.1"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+    }
+    
+    .create-hero-content {
+        position: relative;
+        z-index: 1;
+    }
+    
+    .create-hero-title {
+        font-size: 2.5rem;
+        font-weight: 800;
+        margin-bottom: 1rem;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+    }
+    
+    .create-hero-subtitle {
+        font-size: 1.2rem;
+        opacity: 0.9;
+        margin-bottom: 0;
+    }
+    
+    .form-container {
+        background: white;
+        border-radius: 20px;
+        padding: 2.5rem;
+        box-shadow: 0 8px 30px rgba(44, 62, 80, 0.1);
+        margin-bottom: 2rem;
+        border: none;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .form-container::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 5px;
+        background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+    }
+    
+    .form-header {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 2rem;
+        padding-bottom: 1.5rem;
+        border-bottom: 2px solid var(--blanco-humo);
+    }
+    
+    .form-header-icon {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        width: 50px;
+        height: 50px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+    }
+    
+    .form-header-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--azul-acero);
+        margin: 0;
+    }
+    
+    .form-section {
+        margin-bottom: 2rem;
+        padding: 1.5rem;
+        background: var(--blanco-humo);
+        border-radius: 12px;
+        border-left: 4px solid var(--azul-acero);
+    }
+    
+    .form-section-title {
+        font-size: 1.2rem;
+        font-weight: 600;
+        color: var(--azul-acero);
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .form-section-title i {
+        color: var(--amarillo-ocre);
+    }
+    
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+    
+    .form-label {
+        font-weight: 600;
+        color: var(--azul-acero);
+        margin-bottom: 0.75rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 1rem;
+    }
+    
+    .form-label i {
+        color: var(--amarillo-ocre);
+        width: 20px;
+        text-align: center;
+    }
+    
+    .form-control, .form-select {
+        border-radius: 10px;
+        border: 2px solid var(--gris-concreto-claro);
+        padding: 1rem 1.2rem;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+        background: white;
+    }
+    
+    .form-control:focus, .form-select:focus {
+        border-color: var(--amarillo-ocre);
+        box-shadow: 0 0 0 0.3rem rgba(243, 156, 18, 0.15);
+        transform: translateY(-2px);
+    }
+    
+    .form-text {
+        color: var(--gris-concreto);
+        font-size: 0.9rem;
+        margin-top: 0.5rem;
+        font-style: italic;
+    }
+    
+    .invalid-feedback {
+        color: #e74c3c;
+        font-size: 0.9rem;
+        margin-top: 0.5rem;
+        font-weight: 500;
+    }
+    
+    .form-actions {
+        display: flex;
+        gap: 1rem;
+        justify-content: flex-end;
+        padding-top: 2rem;
+        border-top: 2px solid var(--blanco-humo);
+        margin-top: 2rem;
+    }
+    
+    .btn-cancel {
+        background: var(--gris-concreto);
+        color: white;
+        border: none;
+        padding: 1rem 2rem;
+        border-radius: 25px;
+        font-weight: 600;
+        text-decoration: none;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .btn-cancel:hover {
+        background: var(--azul-acero);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        text-decoration: none;
+        color: white;
+    }
+    
+    .btn-submit {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        padding: 1rem 2rem;
+        border-radius: 25px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .btn-submit:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+    }
+    
+    .info-sidebar {
+        background: white;
+        border-radius: 20px;
+        padding: 2rem;
+        box-shadow: 0 8px 30px rgba(44, 62, 80, 0.1);
+        border: none;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .info-sidebar::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 5px;
+        background: linear-gradient(90deg, #27ae60 0%, #2ecc71 100%);
+    }
+    
+    .info-header {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+        padding-bottom: 1rem;
+        border-bottom: 2px solid var(--blanco-humo);
+    }
+    
+    .info-header-icon {
+        background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%);
+        color: white;
+        width: 40px;
+        height: 40px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.2rem;
+    }
+    
+    .info-header-title {
+        font-size: 1.3rem;
+        font-weight: 700;
+        color: var(--azul-acero);
+        margin: 0;
+    }
+    
+    .info-card {
+        background: var(--blanco-humo);
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        border-left: 4px solid var(--amarillo-ocre);
+    }
+    
+    .info-card:last-child {
+        margin-bottom: 0;
+    }
+    
+    .info-card-title {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: var(--azul-acero);
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .info-card-title i {
+        color: var(--amarillo-ocre);
+    }
+    
+    .info-card-content {
+        color: var(--gris-concreto);
+        line-height: 1.6;
+    }
+    
+    .info-card ul {
+        margin: 0;
+        padding-left: 1.5rem;
+    }
+    
+    .info-card li {
+        margin-bottom: 0.5rem;
+    }
+    
+    .info-card li:last-child {
+        margin-bottom: 0;
+    }
+    
+    .project-selector {
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        border-radius: 15px;
+        padding: 1.5rem;
+        color: white;
+        margin-bottom: 2rem;
+    }
+    
+    .project-selector-header {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 1rem;
+    }
+    
+    .project-selector-icon {
+        background: rgba(255, 255, 255, 0.2);
+        backdrop-filter: blur(10px);
+        width: 40px;
+        height: 40px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.2rem;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+    }
+    
+    .project-selector-title {
+        font-size: 1.2rem;
+        font-weight: 600;
+        margin: 0;
+    }
+    
+    .project-selector-description {
+        opacity: 0.9;
+        margin-bottom: 1rem;
+    }
+    
+    .project-select {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        color: var(--azul-acero);
+        border-radius: 10px;
+        padding: 1rem 1.2rem;
+        font-size: 1rem;
+        width: 100%;
+        transition: all 0.3s ease;
+    }
+    
+    .project-select:focus {
+        background: white;
+        border-color: var(--amarillo-ocre);
+        box-shadow: 0 0 0 0.3rem rgba(243, 156, 18, 0.25);
+        transform: translateY(-2px);
+    }
+    
+    .form-progress {
+        background: white;
+        border-radius: 15px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+    }
+    
+    .progress-steps {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+    }
+    
+    .progress-step {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.5rem;
+        flex: 1;
+        position: relative;
+    }
+    
+    .progress-step:not(:last-child)::after {
+        content: '';
+        position: absolute;
+        top: 20px;
+        left: 50%;
+        width: 100%;
+        height: 2px;
+        background: var(--gris-concreto-claro);
+        z-index: 1;
+    }
+    
+    .progress-step-number {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: var(--gris-concreto-claro);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+        position: relative;
+        z-index: 2;
+        transition: all 0.3s ease;
+    }
+    
+    .progress-step.active .progress-step-number {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        transform: scale(1.1);
+    }
+    
+    .progress-step-label {
+        font-size: 0.8rem;
+        color: var(--gris-concreto);
+        text-align: center;
+        font-weight: 500;
+    }
+    
+    .progress-step.active .progress-step-label {
+        color: var(--azul-acero);
+        font-weight: 600;
+    }
+    
+    @media (max-width: 768px) {
+        .create-hero {
+            padding: 2rem 1rem;
+        }
+        
+        .create-hero-title {
+            font-size: 2rem;
+        }
+        
+        .form-container {
+            padding: 1.5rem;
+        }
+        
+        .form-actions {
+            flex-direction: column;
+        }
+        
+        .progress-steps {
+            flex-direction: column;
+            gap: 1rem;
+        }
+        
+        .progress-step:not(:last-child)::after {
+            display: none;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<div class="create-hero">
+    <div class="create-hero-content">
+        <h1 class="create-hero-title">
+            <i class="fas fa-plus me-2"></i>Crear Nuevo Presupuesto
+        </h1>
+        <p class="create-hero-subtitle">
+            Planifica y controla los costos de tu proyecto de construcción
+        </p>
+    </div>
+</div>
+
+<!-- Progress Steps -->
+<div class="form-progress">
+    <div class="progress-steps">
+        <div class="progress-step active">
+            <div class="progress-step-number">1</div>
+            <div class="progress-step-label">Información Básica</div>
+        </div>
+        <div class="progress-step">
+            <div class="progress-step-number">2</div>
+            <div class="progress-step-label">Detalles del Presupuesto</div>
+        </div>
+        <div class="progress-step">
+            <div class="progress-step-number">3</div>
+            <div class="progress-step-label">Revisar y Crear</div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <!-- Project Selector -->
+        <div class="project-selector">
+            <div class="project-selector-header">
+                <div class="project-selector-icon">
+                    <i class="fas fa-project-diagram"></i>
+                </div>
+                <h3 class="project-selector-title">Selección de Proyecto</h3>
+            </div>
+            <p class="project-selector-description">
+                Selecciona el proyecto para el cual crearás el presupuesto. Esta selección determinará el contexto y la información disponible.
+            </p>
+            <select name="proyecto" id="proyecto" class="project-select" required>
+                <option value="">Selecciona un proyecto</option>
+                {% for proyecto in proyectos %}
+                    <option value="{{ proyecto.id }}">{{ proyecto.nombre }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <!-- Main Form -->
+        <div class="form-container">
+            <div class="form-header">
+                <div class="form-header-icon">
+                    <i class="fas fa-edit"></i>
+                </div>
+                <h3 class="form-header-title">Información del Presupuesto</h3>
+            </div>
+            
+            <form method="post" id="presupuestoForm">
+                {% csrf_token %}
+                
+                <!-- Nombre del Presupuesto -->
+                <div class="form-section">
+                    <h4 class="form-section-title">
+                        <i class="fas fa-tag"></i>
+                        Identificación del Presupuesto
+                    </h4>
+                    
+                    <div class="form-group">
+                        <label for="{{ form.nombre.id_for_label }}" class="form-label">
+                            <i class="fas fa-tag"></i>
+                            {{ form.nombre.label }} *
+                        </label>
+                        {{ form.nombre }}
+                        {% if form.nombre.errors %}
+                            <div class="invalid-feedback">
+                                {% for error in form.nombre.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                        <div class="form-text">
+                            Asigna un nombre descriptivo y claro que identifique fácilmente este presupuesto (ej: "Presupuesto inicial", "Presupuesto revisado", "Presupuesto final")
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Versión y Estado -->
+                <div class="form-section">
+                    <h4 class="form-section-title">
+                        <i class="fas fa-code-branch"></i>
+                        Control de Versiones
+                    </h4>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="{{ form.version.id_for_label }}" class="form-label">
+                                    <i class="fas fa-code-branch"></i>
+                                    {{ form.version.label }}
+                                </label>
+                                {{ form.version }}
+                                {% if form.version.errors %}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.version.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                                <div class="form-text">
+                                    Versión del presupuesto para control de cambios (ej: 1.0, 2.1, 3.0)
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="{{ form.estado.id_for_label }}" class="form-label">
+                                    <i class="fas fa-info-circle"></i>
+                                    {{ form.estado.label }}
+                                </label>
+                                {{ form.estado }}
+                                {% if form.estado.errors %}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.estado.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                                <div class="form-text">
+                                    Estado inicial del presupuesto
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Observaciones -->
+                <div class="form-section">
+                    <h4 class="form-section-title">
+                        <i class="fas fa-comment"></i>
+                        Información Adicional
+                    </h4>
+                    
+                    <div class="form-group">
+                        <label for="{{ form.observaciones.id_for_label }}" class="form-label">
+                            <i class="fas fa-comment"></i>
+                            {{ form.observaciones.label }}
+                        </label>
+                        {{ form.observaciones }}
+                        {% if form.observaciones.errors %}
+                            <div class="invalid-feedback">
+                                {% for error in form.observaciones.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                        <div class="form-text">
+                            Agrega observaciones, notas o consideraciones especiales sobre este presupuesto que puedan ser útiles para el equipo.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Form Actions -->
+                <div class="form-actions">
+                    <a href="{% url 'presupuestos_list' %}" class="btn-cancel">
+                        <i class="fas fa-times"></i>
+                        Cancelar
+                    </a>
+                    <button type="submit" class="btn-submit">
+                        <i class="fas fa-save"></i>
+                        Crear Presupuesto
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <!-- Information Sidebar -->
+        <div class="info-sidebar">
+            <div class="info-header">
+                <div class="info-header-icon">
+                    <i class="fas fa-info-circle"></i>
+                </div>
+                <h3 class="info-header-title">Información y Consejos</h3>
+            </div>
+            
+            <div class="info-card">
+                <h4 class="info-card-title">
+                    <i class="fas fa-lightbulb"></i>
+                    Consejos para Crear Presupuestos
+                </h4>
+                <div class="info-card-content">
+                    <ul>
+                        <li>Asigna un nombre descriptivo y claro</li>
+                        <li>Selecciona el proyecto correcto</li>
+                        <li>Usa versiones para controlar cambios</li>
+                        <li>Después de crear el presupuesto, podrás agregar partidas detalladas</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="info-card">
+                <h4 class="info-card-title">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    Importante
+                </h4>
+                <div class="info-card-content">
+                    <p>Una vez creado el presupuesto, podrás agregar partidas individuales con cantidades, precios unitarios y categorías para un control detallado de costos.</p>
+                </div>
+            </div>
+            
+            <div class="info-card">
+                <h4 class="info-card-title">
+                    <i class="fas fa-chart-line"></i>
+                    Beneficios del Sistema
+                </h4>
+                <div class="info-card-content">
+                    <ul>
+                        <li>Control presupuestario en tiempo real</li>
+                        <li>Seguimiento de variaciones</li>
+                        <li>Reportes de rentabilidad</li>
+                        <li>Análisis de desviaciones</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Animación de entrada
+    const elements = document.querySelectorAll('.create-hero, .form-progress, .project-selector, .form-container, .info-sidebar');
+    elements.forEach((element, index) => {
+        element.style.opacity = '0';
+        element.style.transform = 'translateY(30px)';
+        
+        setTimeout(() => {
+            element.style.transition = 'all 0.8s ease';
+            element.style.opacity = '1';
+            element.style.transform = 'translateY(0)';
+        }, index * 200);
+    });
+    
+    // Validación del formulario
+    const form = document.getElementById('presupuestoForm');
+    const proyectoSelect = document.getElementById('proyecto');
+    
+    form.addEventListener('submit', function(e) {
+        if (!proyectoSelect.value) {
+            e.preventDefault();
+            alert('Por favor, selecciona un proyecto antes de continuar.');
+            proyectoSelect.focus();
+            return false;
+        }
+        
+        // Mostrar loading en el botón
+        const submitBtn = form.querySelector('button[type="submit"]');
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Creando...';
+        submitBtn.disabled = true;
+    });
+    
+    // Efecto hover para las tarjetas de información
+    const infoCards = document.querySelectorAll('.info-card');
+    infoCards.forEach(card => {
+        card.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-5px)';
+            this.style.boxShadow = '0 8px 25px rgba(0, 0, 0, 0.1)';
+        });
+        
+        card.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(0)';
+            this.style.boxShadow = 'none';
+        });
+    });
+    
+    // Actualizar pasos del progreso
+    function updateProgress() {
+        const steps = document.querySelectorAll('.progress-step');
+        const currentStep = 1; // Siempre en el primer paso para crear
+        
+        steps.forEach((step, index) => {
+            if (index < currentStep) {
+                step.classList.add('active');
+            } else {
+                step.classList.remove('active');
+            }
+        });
+    }
+    
+    updateProgress();
+    
+    // Efecto de focus mejorado para los campos
+    const formControls = document.querySelectorAll('.form-control, .form-select');
+    formControls.forEach(control => {
+        control.addEventListener('focus', function() {
+            this.parentElement.style.transform = 'scale(1.02)';
+        });
+        
+        control.addEventListener('blur', function() {
+            this.parentElement.style.transform = 'scale(1)';
+        });
+    });
+    
+    // Validación en tiempo real
+    proyectoSelect.addEventListener('change', function() {
+        if (this.value) {
+            this.style.borderColor = '#27ae60';
+            this.style.boxShadow = '0 0 0 0.2rem rgba(39, 174, 96, 0.25)';
+        } else {
+            this.style.borderColor = '#e74c3c';
+            this.style.boxShadow = '0 0 0 0.2rem rgba(231, 76, 60, 0.25)';
+        }
+    });
+});
+</script>
+{% endblock %}

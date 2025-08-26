@@ -1,0 +1,315 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Proyectos - Sistema de Construcción{% endblock %}
+
+{% block extra_css %}
+<style>
+    .proyectos-hero {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 3rem 2rem;
+        border-radius: 20px;
+        margin-bottom: 2rem;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .proyectos-hero::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="white" opacity="0.1"/><circle cx="75" cy="75" r="1" fill="white" opacity="0.1"/><circle cx="50" cy="10" r="0.5" fill="white" opacity="0.1"/><circle cx="10" cy="60" r="0.5" fill="white" opacity="0.1"/><circle cx="90" cy="40" r="0.5" fill="white" opacity="0.1"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+        opacity: 0.3;
+    }
+    
+    .proyectos-hero-content {
+        position: relative;
+        z-index: 2;
+    }
+    
+    .proyectos-hero-title {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin-bottom: 1rem;
+        text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    }
+    
+    .proyectos-hero-subtitle {
+        font-size: 1.2rem;
+        opacity: 0.9;
+        margin-bottom: 2rem;
+    }
+    
+    .proyectos-stats {
+        display: flex;
+        justify-content: center;
+        gap: 2rem;
+        flex-wrap: wrap;
+    }
+    
+    .proyectos-stat {
+        background: rgba(255,255,255,0.1);
+        backdrop-filter: blur(10px);
+        padding: 1rem 1.5rem;
+        border-radius: 15px;
+        border: 1px solid rgba(255,255,255,0.2);
+        transition: all 0.3s ease;
+    }
+    
+    .proyectos-stat:hover {
+        transform: translateY(-5px);
+        background: rgba(255,255,255,0.2);
+    }
+    
+    .proyectos-stat-number {
+        font-size: 2rem;
+        font-weight: 700;
+        display: block;
+    }
+    
+    .proyectos-stat-label {
+        font-size: 0.9rem;
+        opacity: 0.8;
+    }
+    
+    .proyectos-actions {
+        background: white;
+        border-radius: 15px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        border: 1px solid rgba(255,255,255,0.2);
+    }
+    
+    .proyectos-table-container {
+        background: white;
+        border-radius: 20px;
+        overflow: hidden;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        border: 1px solid rgba(255,255,255,0.2);
+    }
+    
+    .proyectos-table-header {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        padding: 1.5rem;
+        border-bottom: 1px solid #dee2e6;
+    }
+    
+    .btn-neostructure {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        color: white;
+        border: none;
+        border-radius: 12px;
+        padding: 12px 24px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+    }
+    
+    .btn-neostructure:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        color: white;
+    }
+    
+    .table th {
+        background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+        border: none;
+        padding: 18px 20px;
+        font-weight: 600;
+        color: #2c3e50;
+        font-size: 14px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .table tbody tr {
+        transition: all 0.3s ease;
+    }
+    
+    .table tbody tr:hover {
+        background: linear-gradient(135deg, rgba(78, 205, 196, 0.05), rgba(255, 107, 107, 0.05));
+        transform: scale(1.01);
+    }
+    
+    .table tbody td {
+        padding: 18px 20px;
+        border-bottom: 1px solid #f1f3f4;
+        vertical-align: middle;
+    }
+    
+    .badge {
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .badge-success {
+        background: linear-gradient(135deg, #43e97b, #38f9d7);
+        color: white;
+    }
+    
+    .badge-warning {
+        background: linear-gradient(135deg, #fa709a, #fee140);
+        color: white;
+    }
+    
+    .badge-info {
+        background: linear-gradient(135deg, #4facfe, #00f2fe);
+        color: white;
+    }
+    
+    .badge-primary {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        color: white;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Hero Banner -->
+    <div class="proyectos-hero">
+        <div class="proyectos-hero-content">
+            <h1 class="proyectos-hero-title">📋 Gestión de Proyectos</h1>
+            <p class="proyectos-hero-subtitle">Administra y da seguimiento a todos tus proyectos de construcción</p>
+            
+            <!-- Estadísticas -->
+            <div class="proyectos-stats">
+                <div class="proyectos-stat">
+                    <span class="proyectos-stat-number">{{ total_proyectos|default:"0" }}</span>
+                    <span class="proyectos-stat-label">Total Proyectos</span>
+                </div>
+                <div class="proyectos-stat">
+                    <span class="proyectos-stat-number">{{ proyectos_en_progreso|default:"0" }}</span>
+                    <span class="proyectos-stat-label">En Progreso</span>
+                </div>
+                <div class="proyectos-stat">
+                    <span class="proyectos-stat-number">{{ proyectos_pendientes|default:"0" }}</span>
+                    <span class="proyectos-stat-label">Pendientes</span>
+                </div>
+                <div class="proyectos-stat">
+                    <span class="proyectos-stat-number">{{ proyectos_completados|default:"0" }}</span>
+                    <span class="proyectos-stat-label">Completados</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Acciones Rápidas -->
+    <div class="proyectos-actions">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h5><i class="fas fa-tasks"></i> Acciones Rápidas</h5>
+                <p class="text-muted mb-0">Gestiona tus proyectos de construcción</p>
+            </div>
+            <div>
+                <a href="{% url 'proyecto_create' %}" class="btn btn-neostructure">
+                    <i class="fas fa-plus"></i> Nuevo Proyecto
+                </a>
+                <a href="{% url 'dashboard' %}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Volver al Dashboard
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Lista de Proyectos -->
+    <div class="proyectos-table-container">
+        <div class="proyectos-table-header">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h5><i class="fas fa-list"></i> Lista de Proyectos</h5>
+                    <p class="text-muted mb-0">
+                        {% if proyectos %}
+                            Mostrando {{ proyectos|length }} de {{ proyectos|length }} proyectos
+                        {% else %}
+                            No hay proyectos disponibles
+                        {% endif %}
+                    </p>
+                </div>
+                <div>
+                    <span class="badge badge-primary">Todos los Estados</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="table-responsive">
+            {% if proyectos %}
+                <table class="table table-hover mb-0">
+                    <thead>
+                        <tr>
+                            <th>Nombre</th>
+                            <th>Cliente</th>
+                            <th>Estado</th>
+                            <th>Presupuesto</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for proyecto in proyectos %}
+                        <tr>
+                            <td>
+                                <strong>{{ proyecto.nombre }}</strong>
+                                <br>
+                                <small class="text-muted">{{ proyecto.descripcion|truncatechars:50|default:"Sin descripción" }}</small>
+                            </td>
+                            <td>
+                                <span class="badge badge-info">{{ proyecto.cliente.razon_social|default:"N/A" }}</span>
+                            </td>
+                            <td>
+                                {% if proyecto.estado == 'en_progreso' %}
+                                    <span class="badge badge-success">En Progreso</span>
+                                {% elif proyecto.estado == 'pendiente' %}
+                                    <span class="badge badge-warning">Pendiente</span>
+                                {% elif proyecto.estado == 'completado' %}
+                                    <span class="badge badge-primary">Completado</span>
+                                {% else %}
+                                    <span class="badge badge-secondary">{{ proyecto.estado|title }}</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <strong>Q{{ proyecto.presupuesto|default:"0"|floatformat:2 }}</strong>
+                            </td>
+                            <td>
+                                <div class="btn-group" role="group">
+                                    <a href="{% url 'proyecto_dashboard' proyecto.id %}" class="btn btn-sm btn-outline-primary" title="Ver Dashboard">
+                                        <i class="fas fa-tachometer-alt"></i>
+                                    </a>
+                                    <a href="{% url 'proyecto_edit' proyecto.id %}" class="btn btn-sm btn-outline-warning" title="Editar">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <a href="{% url 'asignar_colaboradores_proyecto' proyecto.id %}" class="btn btn-sm btn-outline-info" title="Asignar Colaboradores">
+                                        <i class="fas fa-users"></i>
+                                    </a>
+                                    <a href="{% url 'proyecto_delete' proyecto.id %}" class="btn btn-sm btn-outline-danger" title="Eliminar" onclick="return confirm('¿Estás seguro de que quieres eliminar este proyecto?')">
+                                        <i class="fas fa-trash"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-folder-open fa-3x text-muted mb-3"></i>
+                    <h5 class="text-muted">No hay proyectos disponibles</h5>
+                    <p class="text-muted">Comienza creando tu primer proyecto de construcción</p>
+                    <a href="{% url 'proyecto_create' %}" class="btn btn-neostructure">
+                        <i class="fas fa-plus"></i> Crear Primer Proyecto
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

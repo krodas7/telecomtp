@@ -1,0 +1,32 @@
+<script>
+// Variables de datos del dashboard - Generadas por Django
+window.dashboardData = {
+    evolucion_proyectos: (function() {
+        try {
+            const data = '{{ evolucion_proyectos|safe }}';
+            return data && data !== 'None' && data !== 'null' ? JSON.parse(data) : [0,0,0,0,0];
+        } catch (e) {
+            console.warn('Error parsing evolucion_proyectos:', e);
+            return [0,0,0,0,0];
+        }
+    })(),
+    categorias_gastos: (function() {
+        try {
+            const data = '{{ categorias_gastos|safe }}';
+            return data && data !== 'None' && data !== 'null' ? JSON.parse(data) : [];
+        } catch (e) {
+            console.warn('Error parsing categorias_gastos:', e);
+            return [];
+        }
+    })(),
+    montos_gastos: (function() {
+        try {
+            const data = '{{ montos_gastos|safe }}';
+            return data && data !== 'null' && data !== 'null' ? JSON.parse(data) : [];
+        } catch (e) {
+            console.warn('Error parsing montos_gastos:', e);
+            return [];
+        }
+    })()
+};
+</script>

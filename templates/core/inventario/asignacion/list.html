@@ -1,0 +1,191 @@
+{% extends "base.html" %}
+
+{% block title %}Asignaciones de Inventario - Sistema de Construcción{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-0">
+                <i class="fas fa-link me-2"></i>Asignaciones de Inventario
+            </h1>
+            <p class="text-muted">Gestiona la asignación de items a proyectos</p>
+        </div>
+        <a href="{% url 'asignacion_create' %}" class="btn btn-primary">
+            <i class="fas fa-plus me-2"></i>Nueva Asignación
+        </a>
+    </div>
+
+    <!-- Filtros y Búsqueda -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-3">
+                    <input type="text" name="q" class="form-control" placeholder="Buscar asignaciones..." value="{{ request.GET.q }}">
+                </div>
+                <div class="col-md-3">
+                    <select name="estado" class="form-select">
+                        <option value="">Todos los estados</option>
+                        <option value="asignado" {% if request.GET.estado == 'asignado' %}selected{% endif %}>Asignado</option>
+                        <option value="en_uso" {% if request.GET.estado == 'en_uso' %}selected{% endif %}>En Uso</option>
+                        <option value="devuelto" {% if request.GET.estado == 'devuelto' %}selected{% endif %}>Devuelto</option>
+                        <option value="perdido" {% if request.GET.estado == 'perdido' %}selected{% endif %}>Perdido</option>
+                        <option value="dañado" {% if request.GET.estado == 'dañado' %}selected{% endif %}>Dañado</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <select name="proyecto" class="form-select">
+                        <option value="">Todos los proyectos</option>
+                        {% for proy in proyectos %}
+                            <option value="{{ proy.id }}" {% if request.GET.proyecto == proy.id|stringformat:"s" %}selected{% endif %}>
+                                {{ proy.nombre }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-outline-primary">
+                            <i class="fas fa-search me-2"></i>Buscar
+                        </button>
+                        <a href="{% url 'asignacion_list' %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-times me-2"></i>Limpiar
+                        </a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Lista de Asignaciones -->
+    {% if asignaciones %}
+        <div class="row">
+            {% for asignacion in asignaciones %}
+            <div class="col-md-6 col-lg-4 mb-4">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-header bg-transparent">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <h6 class="card-title mb-0">{{ asignacion.item.nombre }}</h6>
+                            <span class="badge {% if asignacion.estado == 'devuelto' %}bg-success{% elif asignacion.estado == 'en_uso' %}bg-primary{% elif asignacion.estado == 'perdido' %}bg-danger{% elif asignacion.estado == 'dañado' %}bg-warning{% else %}bg-info{% endif %}">
+                                {{ asignacion.get_estado_display }}
+                            </span>
+                        </div>
+                        <small class="text-muted">{{ asignacion.item.codigo }}</small>
+                    </div>
+                    
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <strong>Proyecto:</strong> {{ asignacion.proyecto.nombre }}
+                        </div>
+                        
+                        <div class="row text-center mb-3">
+                            <div class="col-6">
+                                <div class="fw-bold text-primary">{{ asignacion.cantidad_asignada }}</div>
+                                <small class="text-muted">Cantidad</small>
+                            </div>
+                            <div class="col-6">
+                                <div class="fw-bold text-info">{{ asignacion.item.unidad_medida }}</div>
+                                <small class="text-muted">Unidad</small>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <span class="badge bg-secondary me-1">{{ asignacion.item.categoria.nombre }}</span>
+                            <span class="badge bg-light text-dark">{{ asignacion.fecha_asignacion|date:"d/m/Y" }}</span>
+                        </div>
+                        
+                        {% if asignacion.notas %}
+                            <div class="mb-3">
+                                <small class="text-muted">
+                                    <strong>Notas:</strong> {{ asignacion.notas|truncatewords:10 }}
+                                </small>
+                            </div>
+                        {% endif %}
+                        
+                        {% if asignacion.fecha_devolucion %}
+                            <div class="alert alert-success py-2 mb-3">
+                                <i class="fas fa-check-circle me-2"></i>
+                                <small>Devuelto: {{ asignacion.fecha_devolucion|date:"d/m/Y" }}</small>
+                            </div>
+                        {% endif %}
+                        
+                        <div class="btn-group w-100" role="group">
+                            <a href="{% url 'asignacion_detail' asignacion.id %}" class="btn btn-outline-primary btn-sm">
+                                <i class="fas fa-eye me-1"></i>Ver
+                            </a>
+                            <a href="{% url 'asignacion_edit' asignacion.id %}" class="btn btn-outline-warning btn-sm">
+                                <i class="fas fa-edit me-1"></i>Editar
+                            </a>
+                            <a href="{% url 'asignacion_delete' asignacion.id %}" class="btn btn-outline-danger btn-sm">
+                                <i class="fas fa-trash me-1"></i>Eliminar
+                            </a>
+                        </div>
+                    </div>
+                    
+                    <div class="card-footer bg-transparent">
+                        <small class="text-muted">
+                            <i class="fas fa-user me-1"></i>
+                            {% if asignacion.asignado_por %}
+                                {{ asignacion.asignado_por.username }}
+                            {% else %}
+                                Sistema
+                            {% endif %}
+                        </small>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Paginación -->
+        {% if is_paginated %}
+        <nav aria-label="Paginación de asignaciones">
+            <ul class="pagination justify-content-center">
+                {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page=1{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.estado %}&estado={{ request.GET.estado }}{% endif %}{% if request.GET.proyecto %}&proyecto={{ request.GET.proyecto }}{% endif %}">
+                            <i class="fas fa-angle-double-left"></i>
+                        </a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.estado %}&estado={{ request.GET.estado }}{% endif %}{% if request.GET.proyecto %}&proyecto={{ request.GET.proyecto }}{% endif %}">
+                            <i class="fas fa-angle-left"></i>
+                        </a>
+                    </li>
+                {% endif %}
+
+                <li class="page-item active">
+                    <span class="page-link">
+                        Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}
+                    </span>
+                </li>
+
+                {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.estado %}&estado={{ request.GET.estado }}{% endif %}{% if request.GET.proyecto %}&proyecto={{ request.GET.proyecto }}{% endif %}">
+                            <i class="fas fa-angle-right"></i>
+                        </a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.estado %}&estado={{ request.GET.estado }}{% endif %}{% if request.GET.proyecto %}&proyecto={{ request.GET.proyecto }}{% endif %}">
+                            <i class="fas fa-angle-double-right"></i>
+                        </a>
+                    </li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+    {% else %}
+        <!-- Estado vacío -->
+        <div class="text-center py-5">
+            <i class="fas fa-link fa-3x text-muted mb-3"></i>
+            <h3 class="text-muted">No hay asignaciones registradas</h3>
+            <p class="text-muted mb-4">Comienza asignando items del inventario a proyectos</p>
+            <a href="{% url 'asignacion_create' %}" class="btn btn-primary btn-lg">
+                <i class="fas fa-plus me-2"></i>Crear Primera Asignación
+            </a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

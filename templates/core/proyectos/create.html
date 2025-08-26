@@ -1,0 +1,714 @@
+{% extends "base.html" %}
+
+{% block title %}Nuevo Proyecto - Sistema de Construcción{% endblock %}
+
+{% block extra_css %}
+<style>
+    .create-hero {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 3rem 2rem;
+        border-radius: 20px;
+        margin-bottom: 2rem;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .create-hero::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="white" opacity="0.1"/><circle cx="75" cy="75" r="1" fill="white" opacity="0.1"/><circle cx="50" cy="10" r="0.5" fill="white" opacity="0.1"/><circle cx="10" cy="60" r="0.5" fill="white" opacity="0.1"/><circle cx="90" cy="40" r="0.5" fill="white" opacity="0.1"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+        opacity: 0.3;
+    }
+    
+    .create-hero-content {
+        position: relative;
+        z-index: 2;
+    }
+    
+    .create-hero-title {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin-bottom: 1rem;
+        text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    }
+    
+    .create-hero-subtitle {
+        font-size: 1.2rem;
+        opacity: 0.9;
+        margin-bottom: 2rem;
+    }
+    
+    .create-steps {
+        display: flex;
+        justify-content: center;
+        gap: 2rem;
+        flex-wrap: wrap;
+        margin-top: 2rem;
+    }
+    
+    .create-step {
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        padding: 1rem 1.5rem;
+        border-radius: 15px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        text-align: center;
+        transition: all 0.3s ease;
+    }
+    
+    .create-step.active {
+        background: rgba(255, 255, 255, 0.2);
+        transform: scale(1.05);
+    }
+    
+    .create-step-icon {
+        font-size: 1.5rem;
+        margin-bottom: 0.5rem;
+        opacity: 0.9;
+    }
+    
+    .create-step-label {
+        font-size: 0.9rem;
+        opacity: 0.8;
+        font-weight: 600;
+    }
+    
+    .form-container {
+        background: white;
+        border-radius: 20px;
+        padding: 2.5rem;
+        box-shadow: 0 8px 30px rgba(44, 62, 80, 0.1);
+        margin-bottom: 2rem;
+        border: none;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .form-container::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, var(--azul-acero) 0%, var(--amarillo-ocre) 100%);
+    }
+    
+    .form-header {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 2rem;
+        padding-bottom: 1.5rem;
+        border-bottom: 2px solid var(--blanco-humo);
+    }
+    
+    .form-header-icon {
+        background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%);
+        color: white;
+        width: 50px;
+        height: 50px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+    }
+    
+    .form-header-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--azul-acero);
+        margin: 0;
+    }
+    
+    .form-group {
+        margin-bottom: 2rem;
+        position: relative;
+    }
+    
+    .form-label {
+        font-weight: 600;
+        color: var(--azul-acero);
+        margin-bottom: 0.8rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .form-label i {
+        color: var(--amarillo-ocre);
+        font-size: 1.1rem;
+    }
+    
+    .form-control, .form-select {
+        border: 2px solid var(--blanco-humo);
+        border-radius: 12px;
+        padding: 1rem 1.2rem;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+        background: white;
+    }
+    
+    .form-control:focus, .form-select:focus {
+        border-color: var(--azul-acero);
+        box-shadow: 0 0 0 0.2rem rgba(52, 152, 219, 0.25);
+        outline: none;
+    }
+    
+    .form-control:hover, .form-select:hover {
+        border-color: var(--azul-acero-claro);
+    }
+    
+    .form-textarea {
+        min-height: 120px;
+        resize: vertical;
+    }
+    
+    .form-row {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1.5rem;
+    }
+    
+    .form-actions {
+        display: flex;
+        gap: 1rem;
+        justify-content: flex-end;
+        margin-top: 2rem;
+        padding-top: 2rem;
+        border-top: 2px solid var(--blanco-humo);
+        flex-wrap: wrap;
+    }
+    
+    .btn {
+        padding: 1rem 2rem;
+        border-radius: 25px;
+        font-weight: 600;
+        text-decoration: none;
+        transition: all 0.3s ease;
+        border: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 1rem;
+        cursor: pointer;
+    }
+    
+    .btn:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+        text-decoration: none;
+    }
+    
+    .btn-cancel {
+        background: var(--blanco-humo);
+        color: var(--gris-concreto);
+        border: 2px solid var(--blanco-humo);
+    }
+    
+    .btn-cancel:hover {
+        background: var(--gris-concreto);
+        color: white;
+        border-color: var(--gris-concreto);
+    }
+    
+    .btn-save {
+        background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%);
+        color: white;
+    }
+    
+    .btn-save:hover {
+        background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%);
+    }
+    
+    .info-sidebar {
+        background: white;
+        border-radius: 20px;
+        padding: 2rem;
+        box-shadow: 0 4px 20px rgba(44, 62, 80, 0.08);
+        height: fit-content;
+        position: sticky;
+        top: 2rem;
+    }
+    
+    .info-header {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+        padding-bottom: 1rem;
+        border-bottom: 2px solid var(--blanco-humo);
+    }
+    
+    .info-header-icon {
+        background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+        color: white;
+        width: 40px;
+        height: 40px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .info-header-title {
+        font-size: 1.2rem;
+        font-weight: 700;
+        color: var(--azul-acero);
+        margin: 0;
+    }
+    
+    .info-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1rem 0;
+        border-bottom: 1px solid var(--blanco-humo);
+    }
+    
+    .info-item:last-child {
+        border-bottom: none;
+    }
+    
+    .info-label {
+        font-weight: 600;
+        color: var(--azul-acero);
+    }
+    
+    .info-value {
+        color: var(--gris-concreto);
+        text-align: right;
+    }
+    
+    .info-alert {
+        background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%);
+        color: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-top: 1.5rem;
+        text-align: center;
+    }
+    
+    .info-alert i {
+        font-size: 2rem;
+        margin-bottom: 1rem;
+        display: block;
+    }
+    
+    .info-alert h6 {
+        margin-bottom: 0.5rem;
+        font-weight: 700;
+    }
+    
+    .info-alert p {
+        margin: 0;
+        opacity: 0.9;
+        font-size: 0.9rem;
+    }
+    
+    .form-validation {
+        margin-top: 0.5rem;
+        font-size: 0.85rem;
+    }
+    
+    .form-validation.error {
+        color: #e74c3c;
+    }
+    
+    .form-validation.success {
+        color: #27ae60;
+    }
+    
+    @media (max-width: 768px) {
+        .create-hero {
+            padding: 2rem 1rem;
+        }
+        
+        .create-hero-title {
+            font-size: 2rem;
+        }
+        
+        .create-steps {
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .form-container {
+            padding: 1.5rem;
+        }
+        
+        .form-row {
+            grid-template-columns: 1fr;
+        }
+        
+        .form-actions {
+            flex-direction: column;
+            align-items: stretch;
+        }
+        
+        .btn {
+            justify-content: center;
+        }
+        
+        .info-sidebar {
+            position: static;
+            margin-top: 2rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<div class="create-hero">
+    <div class="create-hero-content">
+        <h1 class="create-hero-title">
+            <i class="fas fa-plus me-2"></i>Nuevo Proyecto
+        </h1>
+        <p class="create-hero-subtitle">
+            Crea un nuevo proyecto de construcción con toda la información necesaria
+        </p>
+        
+        <div class="create-steps">
+            <div class="create-step active">
+                <div class="create-step-icon">
+                    <i class="fas fa-info-circle"></i>
+                </div>
+                <div class="create-step-label">Información</div>
+            </div>
+            <div class="create-step">
+                <div class="create-step-icon">
+                    <i class="fas fa-clipboard-check"></i>
+                </div>
+                <div class="create-step-label">Revisión</div>
+            </div>
+            <div class="create-step">
+                <div class="create-step-icon">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <div class="create-step-label">Confirmación</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Formulario Principal -->
+    <div class="col-lg-8">
+        <div class="form-container">
+            <div class="form-header">
+                <div class="form-header-icon">
+                    <i class="fas fa-plus"></i>
+                </div>
+                <h3 class="form-header-title">Información del Proyecto</h3>
+            </div>
+            
+            <form method="post" id="createForm">
+                {% csrf_token %}
+                
+                <!-- Nombre y Cliente -->
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="nombre" class="form-label">
+                            <i class="fas fa-project-diagram"></i>Nombre del Proyecto *
+                        </label>
+                        <input type="text" class="form-control" id="nombre" name="nombre" required>
+                        <div class="form-validation" id="nombreValidation"></div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="cliente" class="form-label">
+                            <i class="fas fa-users"></i>Cliente *
+                        </label>
+                        <select class="form-select" id="cliente" name="cliente" required>
+                            <option value="">Seleccionar cliente...</option>
+                            {% for cliente in clientes %}
+                                <option value="{{ cliente.id }}">{{ cliente.razon_social }}</option>
+                            {% endfor %}
+                        </select>
+                        <div class="form-validation" id="clienteValidation"></div>
+                    </div>
+                </div>
+
+                <!-- Descripción -->
+                <div class="form-group">
+                    <label for="descripcion" class="form-label">
+                        <i class="fas fa-align-left"></i>Descripción del Proyecto
+                    </label>
+                    <textarea class="form-control form-textarea" id="descripcion" name="descripcion" rows="4" placeholder="Describe los detalles del proyecto..."></textarea>
+                    <div class="form-validation" id="descripcionValidation"></div>
+                </div>
+
+                <!-- Presupuesto y Estado -->
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="presupuesto" class="form-label">
+                            <i class="fas fa-dollar-sign"></i>Presupuesto (Q)
+                        </label>
+                        <input type="number" class="form-control" id="presupuesto" name="presupuesto" step="0.01" min="0" placeholder="0.00">
+                        <div class="form-validation" id="presupuestoValidation"></div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="estado" class="form-label">
+                            <i class="fas fa-tasks"></i>Estado del Proyecto
+                        </label>
+                        <select class="form-select" id="estado" name="estado">
+                            <option value="pendiente">Pendiente</option>
+                            <option value="en_progreso">En Progreso</option>
+                            <option value="completado">Completado</option>
+                            <option value="cancelado">Cancelado</option>
+                        </select>
+                        <div class="form-validation" id="estadoValidation"></div>
+                    </div>
+                </div>
+
+                <!-- Fechas -->
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="fecha_inicio" class="form-label">
+                            <i class="fas fa-calendar"></i>Fecha de Inicio
+                        </label>
+                        <input type="date" class="form-control" id="fecha_inicio" name="fecha_inicio">
+                        <div class="form-validation" id="fechaInicioValidation"></div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="fecha_fin" class="form-label">
+                            <i class="fas fa-flag-checkered"></i>Fecha de Finalización
+                        </label>
+                        <input type="date" class="form-control" id="fecha_fin" name="fecha_fin">
+                        <div class="form-validation" id="fechaFinValidation"></div>
+                    </div>
+                </div>
+
+                <!-- Acciones del Formulario -->
+                <div class="form-actions">
+                    <a href="{% url 'proyectos_list' %}" class="btn btn-cancel">
+                        <i class="fas fa-times"></i>Cancelar
+                    </a>
+                    <button type="submit" class="btn btn-save" id="saveButton">
+                        <i class="fas fa-save"></i>Crear Proyecto
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Sidebar de Información -->
+    <div class="col-lg-4">
+        <div class="info-sidebar">
+            <div class="info-header">
+                <div class="info-header-icon">
+                    <i class="fas fa-info-circle"></i>
+                </div>
+                <h4 class="info-header-title">Información Útil</h4>
+            </div>
+            
+            <div class="info-item">
+                <span class="info-label">Total Clientes:</span>
+                <span class="info-value">{{ clientes.count }}</span>
+            </div>
+            
+            <div class="info-item">
+                <span class="info-label">Proyectos Activos:</span>
+                <span class="info-value">{{ proyectos_activos|default:"0" }}</span>
+            </div>
+            
+            <div class="info-item">
+                <span class="info-label">Presupuesto Promedio:</span>
+                <span class="info-value">Q {{ presupuesto_promedio|default:"0.00" }}</span>
+            </div>
+            
+            <div class="info-alert">
+                <i class="fas fa-lightbulb"></i>
+                <h6>Consejos</h6>
+                <p>Completa toda la información requerida para crear un proyecto exitoso. Los campos marcados con * son obligatorios.</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('createForm');
+    const saveButton = document.getElementById('saveButton');
+    
+    // Animación de entrada para las tarjetas
+    const cards = document.querySelectorAll('.form-container, .info-sidebar');
+    cards.forEach((card, index) => {
+        card.style.opacity = '0';
+        card.style.transform = 'translateY(30px)';
+        
+        setTimeout(() => {
+            card.style.transition = 'all 0.8s ease';
+            card.style.opacity = '1';
+            card.style.transform = 'translateY(0)';
+        }, index * 200);
+    });
+    
+    // Efecto hover para los pasos
+    const steps = document.querySelectorAll('.create-step');
+    steps.forEach(step => {
+        step.addEventListener('mouseenter', function() {
+            this.style.transform = 'scale(1.05)';
+        });
+        
+        step.addEventListener('mouseleave', function() {
+            this.style.transform = 'scale(1)';
+        });
+    });
+    
+    // Validación en tiempo real
+    const nombreInput = document.getElementById('nombre');
+    const clienteInput = document.getElementById('cliente');
+    const descripcionInput = document.getElementById('descripcion');
+    const presupuestoInput = document.getElementById('presupuesto');
+    const fechaInicioInput = document.getElementById('fecha_inicio');
+    const fechaFinInput = document.getElementById('fecha_fin');
+    
+    function validateField(input, validationElement, fieldName) {
+        const value = input.value.trim();
+        let isValid = true;
+        let message = '';
+        
+        if (fieldName === 'nombre') {
+            if (value.length < 3) {
+                isValid = false;
+                message = 'El nombre debe tener al menos 3 caracteres';
+            } else if (value.length > 200) {
+                isValid = false;
+                message = 'El nombre no puede exceder 200 caracteres';
+            }
+        } else if (fieldName === 'cliente') {
+            if (!value) {
+                isValid = false;
+                message = 'Debes seleccionar un cliente';
+            }
+        } else if (fieldName === 'descripcion') {
+            if (value.length > 1000) {
+                isValid = false;
+                message = 'La descripción no puede exceder 1000 caracteres';
+            }
+        } else if (fieldName === 'presupuesto') {
+            if (value && parseFloat(value) < 0) {
+                isValid = false;
+                message = 'El presupuesto no puede ser negativo';
+            }
+        } else if (fieldName === 'fechaInicio' || fieldName === 'fechaFin') {
+            if (value) {
+                const fecha = new Date(value);
+                if (isNaN(fecha.getTime())) {
+                    isValid = false;
+                    message = 'Fecha inválida';
+                }
+            }
+        }
+        
+        if (isValid) {
+            validationElement.className = 'form-validation success';
+            validationElement.innerHTML = '<i class="fas fa-check-circle me-1"></i>Campo válido';
+        } else {
+            validationElement.className = 'form-validation error';
+            validationElement.innerHTML = '<i class="fas fa-exclamation-circle me-1"></i>' + message;
+        }
+        
+        return isValid;
+    }
+    
+    // Aplicar validación en tiempo real
+    if (nombreInput) {
+        nombreInput.addEventListener('input', () => validateField(nombreInput, document.getElementById('nombreValidation'), 'nombre'));
+        nombreInput.addEventListener('blur', () => validateField(nombreInput, document.getElementById('nombreValidation'), 'nombre'));
+    }
+    
+    if (clienteInput) {
+        clienteInput.addEventListener('change', () => validateField(clienteInput, document.getElementById('clienteValidation'), 'cliente'));
+    }
+    
+    if (descripcionInput) {
+        descripcionInput.addEventListener('input', () => validateField(descripcionInput, document.getElementById('descripcionValidation'), 'descripcion'));
+        descripcionInput.addEventListener('blur', () => validateField(descripcionInput, document.getElementById('descripcionValidation'), 'descripcion'));
+    }
+    
+    if (presupuestoInput) {
+        presupuestoInput.addEventListener('input', () => validateField(presupuestoInput, document.getElementById('presupuestoValidation'), 'presupuesto'));
+        presupuestoInput.addEventListener('blur', () => validateField(presupuestoInput, document.getElementById('presupuestoValidation'), 'presupuesto'));
+    }
+    
+    if (fechaInicioInput) {
+        fechaInicioInput.addEventListener('change', () => validateField(fechaInicioInput, document.getElementById('fechaInicioValidation'), 'fechaInicio'));
+    }
+    
+    if (fechaFinInput) {
+        fechaFinInput.addEventListener('change', () => validateField(fechaFinInput, document.getElementById('fechaFinValidation'), 'fechaFin'));
+    }
+    
+    // Validación del formulario antes de enviar
+    form.addEventListener('submit', function(e) {
+        let isValid = true;
+        
+        // Validar todos los campos requeridos
+        if (nombreInput && !validateField(nombreInput, document.getElementById('nombreValidation'), 'nombre')) {
+            isValid = false;
+        }
+        if (clienteInput && !validateField(clienteInput, document.getElementById('clienteValidation'), 'cliente')) {
+            isValid = false;
+        }
+        
+        if (!isValid) {
+            e.preventDefault();
+            
+            // Mostrar mensaje de error
+            saveButton.innerHTML = '<i class="fas fa-exclamation-triangle me-2"></i>Corrige los errores';
+            saveButton.style.background = 'linear-gradient(135deg, #e74c3c 0%, #c0392b 100%)';
+            
+            setTimeout(() => {
+                saveButton.innerHTML = '<i class="fas fa-save me-2"></i>Crear Proyecto';
+                saveButton.style.background = 'linear-gradient(135deg, #27ae60 0%, #2ecc71 100%)';
+            }, 3000);
+            
+            // Scroll al primer error
+            const firstError = document.querySelector('.form-validation.error');
+            if (firstError) {
+                firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        } else {
+            // Mostrar estado de carga
+            saveButton.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Creando...';
+            saveButton.disabled = true;
+        }
+    });
+    
+    // Efecto de focus en los campos
+    const formInputs = document.querySelectorAll('.form-control, .form-select');
+    formInputs.forEach(input => {
+        input.addEventListener('focus', function() {
+            this.parentElement.style.transform = 'translateY(-2px)';
+        });
+        
+        input.addEventListener('blur', function() {
+            this.parentElement.style.transform = 'translateY(0)';
+        });
+    });
+    
+    // Animación del botón de guardar
+    saveButton.addEventListener('mouseenter', function() {
+        this.style.transform = 'translateY(-3px) scale(1.02)';
+    });
+    
+    saveButton.addEventListener('mouseleave', function() {
+        this.style.transform = 'translateY(0) scale(1)';
+    });
+});
+</script>
+{% endblock %}

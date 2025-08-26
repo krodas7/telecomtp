@@ -1,0 +1,149 @@
+{% extends "base.html" %}
+
+{% block title %}Crear Asignación de Inventario - Sistema de Construcción{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <!-- Header -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h1 class="h3 mb-0">
+                        <i class="fas fa-plus me-2"></i>Nueva Asignación de Inventario
+                    </h1>
+                    <p class="text-muted">Asigna items del inventario a proyectos específicos</p>
+                </div>
+                <a href="{% url 'asignacion_list' %}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left me-2"></i>Volver
+                </a>
+            </div>
+
+            <!-- Formulario -->
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <form method="post" novalidate>
+                        {% csrf_token %}
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.item.id_for_label }}" class="form-label">
+                                    <i class="fas fa-box me-1"></i>Item del Inventario *
+                                </label>
+                                {{ form.item }}
+                                {% if form.item.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.item.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                                <div class="form-text">
+                                    Selecciona el item que quieres asignar
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.proyecto.id_for_label }}" class="form-label">
+                                    <i class="fas fa-project-diagram me-1"></i>Proyecto *
+                                </label>
+                                {{ form.proyecto }}
+                                {% if form.proyecto.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.proyecto.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                                <div class="form-text">
+                                    Selecciona el proyecto donde se usará el item
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.cantidad_asignada.id_for_label }}" class="form-label">
+                                    <i class="fas fa-hashtag me-1"></i>Cantidad Asignada *
+                                </label>
+                                {{ form.cantidad_asignada }}
+                                {% if form.cantidad_asignada.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.cantidad_asignada.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                                <div class="form-text">
+                                    Cantidad de unidades a asignar
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.estado.id_for_label }}" class="form-label">
+                                    <i class="fas fa-info-circle me-1"></i>Estado *
+                                </label>
+                                {{ form.estado }}
+                                {% if form.estado.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.estado.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                                <div class="form-text">
+                                    Estado actual de la asignación
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-12 mb-3">
+                                <label for="{{ form.notas.id_for_label }}" class="form-label">
+                                    <i class="fas fa-align-left me-1"></i>Notas
+                                </label>
+                                {{ form.notas }}
+                                {% if form.notas.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.notas.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                                <div class="form-text">
+                                    Notas adicionales sobre la asignación
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Botones de acción -->
+                        <div class="d-flex justify-content-between pt-3">
+                            <a href="{% url 'asignacion_list' %}" class="btn btn-outline-secondary">
+                                <i class="fas fa-times me-2"></i>Cancelar
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-2"></i>Crear Asignación
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Información adicional -->
+            <div class="card mt-4 bg-light">
+                <div class="card-body">
+                    <h6 class="card-title">
+                        <i class="fas fa-info-circle me-2"></i>Información sobre Asignaciones
+                    </h6>
+                    <ul class="mb-0">
+                        <li>Las asignaciones reducen automáticamente el stock disponible</li>
+                        <li>Puedes cambiar el estado de la asignación según el progreso</li>
+                        <li>Al marcar como "devuelto", el stock se restaura automáticamente</li>
+                        <li>Las asignaciones se registran con fecha y usuario que las creó</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

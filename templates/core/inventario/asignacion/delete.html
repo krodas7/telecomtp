@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+
+{% block title %}Eliminar Asignación de Inventario - Sistema de Construcción{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <!-- Header -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h1 class="h3 mb-0">
+                        <i class="fas fa-trash me-2"></i>Eliminar Asignación
+                    </h1>
+                    <p class="text-muted">Confirma la eliminación de la asignación</p>
+                </div>
+                <a href="{% url 'asignacion_list' %}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left me-2"></i>Volver
+                </a>
+            </div>
+
+            <!-- Advertencia -->
+            <div class="card border-danger">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-exclamation-triangle me-2"></i>¡Advertencia!
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <h6 class="card-title text-danger">¿Estás seguro de que quieres eliminar esta asignación?</h6>
+                    
+                    <div class="alert alert-warning">
+                        <strong>Item:</strong> {{ asignacion.item.nombre }}
+                        <br><strong>Proyecto:</strong> {{ asignacion.proyecto.nombre }}
+                        <br><strong>Cantidad:</strong> {{ asignacion.cantidad_asignada }} {{ asignacion.item.unidad_medida }}
+                        <br><strong>Estado:</strong> {{ asignacion.get_estado_display }}
+                        {% if asignacion.notas %}
+                            <br><strong>Notas:</strong> {{ asignacion.notas }}
+                        {% endif %}
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <p><strong>Fecha de Asignación:</strong> {{ asignacion.fecha_asignacion|date:"d/m/Y H:i" }}</p>
+                            <p><strong>Asignado por:</strong> {{ asignacion.asignado_por.username|default:"Sistema" }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            {% if asignacion.fecha_devolucion %}
+                                <p><strong>Fecha de Devolución:</strong> {{ asignacion.fecha_devolucion|date:"d/m/Y" }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <p class="text-muted">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Esta acción no se puede deshacer. La asignación será eliminada permanentemente.
+                        <br><strong>Nota:</strong> Si el item está en uso, considera marcarlo como "devuelto" en lugar de eliminarlo.
+                    </p>
+
+                    <!-- Formulario de confirmación -->
+                    <form method="post" class="mt-3">
+                        {% csrf_token %}
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'asignacion_list' %}" class="btn btn-outline-secondary">
+                                <i class="fas fa-times me-2"></i>Cancelar
+                            </a>
+                            <button type="submit" class="btn btn-danger">
+                                <i class="fas fa-trash me-2"></i>Eliminar Asignación
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Información adicional -->
+            <div class="card mt-4 bg-light">
+                <div class="card-body">
+                    <h6 class="card-title">
+                        <i class="fas fa-info-circle me-2"></i>Información sobre Eliminación
+                    </h6>
+                    <ul class="mb-0">
+                        <li>La eliminación de asignaciones es irreversible</li>
+                        <li>Si el item está en uso, considera marcarlo como "devuelto"</li>
+                        <li>Se registrará en el historial de actividades del sistema</li>
+                        <li>El stock disponible del item se ajustará automáticamente</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

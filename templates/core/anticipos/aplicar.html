@@ -1,0 +1,326 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Aplicar Anticipo - Sistema de Construcción{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">
+            <i class="fas fa-check text-success"></i>
+            Aplicar Anticipo a Facturas
+        </h1>
+        <a href="{% url 'anticipo_detail' anticipo.id %}" class="btn btn-secondary btn-sm">
+            <i class="fas fa-arrow-left fa-sm"></i> Volver al Detalle
+        </a>
+    </div>
+
+    <div class="row">
+        <!-- Información del Anticipo -->
+        <div class="col-lg-4">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 bg-success text-white">
+                    <h6 class="m-0 font-weight-bold">
+                        <i class="fas fa-info-circle"></i> Información del Anticipo
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <strong>Número:</strong><br>
+                        <span class="badge badge-primary">{{ anticipo.numero_anticipo }}</span>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <strong>Cliente:</strong><br>
+                        {{ anticipo.cliente.razon_social }}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <strong>Proyecto:</strong><br>
+                        {{ anticipo.proyecto.nombre }}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <strong>Monto Total:</strong><br>
+                        <span class="text-success font-weight-bold">Q{{ anticipo.monto|floatformat:2 }}</span>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <strong>Monto Aplicado:</strong><br>
+                        <span class="text-info">Q{{ anticipo.monto_aplicado|floatformat:2 }}</span>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <strong>Monto Disponible:</strong><br>
+                        <span class="text-warning font-weight-bold">Q{{ anticipo.monto_disponible|floatformat:2 }}</span>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <strong>Porcentaje Aplicado:</strong><br>
+                        <div class="progress" style="height: 20px;">
+                            <div class="progress-bar bg-success" role="progressbar" 
+                                 style="width: {{ anticipo.porcentaje_aplicado }}%"
+                                 aria-valuenow="{{ anticipo.porcentaje_aplicado }}" 
+                                 aria-valuemin="0" aria-valuemax="100">
+                                {{ anticipo.porcentaje_aplicado|floatformat:1 }}%
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <hr>
+                    
+                    <div class="alert alert-info">
+                        <i class="fas fa-lightbulb"></i>
+                        <strong>Consejo:</strong> Solo puedes aplicar este anticipo a facturas del mismo cliente y proyecto.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Formulario de Aplicación -->
+        <div class="col-lg-8">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-file-invoice"></i> Aplicar a Factura
+                    </h6>
+                </div>
+                <div class="card-body">
+                    {% if facturas_aplicables %}
+                        <form method="post" id="formAplicar">
+                            {% csrf_token %}
+                            
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="factura" class="form-label">
+                                        <strong>Seleccionar Factura *</strong>
+                                    </label>
+                                    <select name="factura" id="factura" class="form-control" required>
+                                        <option value="">Selecciona una factura...</option>
+                                        {% for factura in facturas_aplicables %}
+                                        <option value="{{ factura.id }}" 
+                                                data-monto="{{ factura.monto_total }}"
+                                                data-pendiente="{{ factura.monto_pendiente }}">
+                                            {{ factura.numero_factura }} - Q{{ factura.monto_total|floatformat:2 }} 
+                                            (Pendiente: Q{{ factura.monto_pendiente|floatformat:2 }})
+                                        </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                
+                                <div class="col-md-6 mb-3">
+                                    <label for="monto_aplicar" class="form-label">
+                                        <strong>Monto a Aplicar (GTQ) *</strong>
+                                    </label>
+                                    <input type="number" class="form-control" id="monto_aplicar" name="monto_aplicar" 
+                                           step="0.01" min="0.01" max="{{ anticipo.monto_disponible }}" required>
+                                    <small class="form-text text-muted">
+                                        Máximo disponible: Q{{ anticipo.monto_disponible|floatformat:2 }}
+                                    </small>
+                                </div>
+                            </div>
+
+                            <!-- Información de la Factura Seleccionada -->
+                            <div id="infoFactura" class="alert alert-info" style="display: none;">
+                                <h6 class="font-weight-bold">Información de la Factura:</h6>
+                                <div id="detallesFactura"></div>
+                            </div>
+
+                            <!-- Validaciones -->
+                            <div id="validaciones" class="mb-3"></div>
+
+                            <!-- Botones -->
+                            <div class="d-flex justify-content-between">
+                                <a href="{% url 'anticipo_detail' anticipo.id %}" class="btn btn-secondary">
+                                    <i class="fas fa-times"></i> Cancelar
+                                </a>
+                                <button type="submit" class="btn btn-success" id="btnAplicar">
+                                    <i class="fas fa-check"></i> Aplicar Anticipo
+                                </button>
+                            </div>
+                        </form>
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-inbox fa-3x text-gray-300 mb-3"></i>
+                            <h5 class="text-gray-500">No hay facturas aplicables</h5>
+                            <p class="text-gray-400">
+                                No se encontraron facturas del mismo cliente y proyecto donde se pueda aplicar este anticipo.
+                            </p>
+                            <div class="mt-3">
+                                <a href="{% url 'anticipo_detail' anticipo.id %}" class="btn btn-primary">
+                                    <i class="fas fa-arrow-left"></i> Volver al Detalle
+                                </a>
+                            </div>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Lista de Facturas Aplicables -->
+            {% if facturas_aplicables %}
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-list"></i> Facturas Disponibles para Aplicar
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered">
+                            <thead>
+                                <tr>
+                                    <th>Número</th>
+                                    <th>Fecha Emisión</th>
+                                    <th>Monto Total</th>
+                                    <th>Monto Pendiente</th>
+                                    <th>Estado</th>
+                                    <th>Acción</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for factura in facturas_aplicables %}
+                                <tr>
+                                    <td><strong>{{ factura.numero_factura }}</strong></td>
+                                    <td>{{ factura.fecha_emision|date:"d/m/Y" }}</td>
+                                    <td class="text-success">Q{{ factura.monto_total|floatformat:2 }}</td>
+                                    <td class="text-warning">Q{{ factura.monto_pendiente|floatformat:2 }}</td>
+                                    <td>
+                                        {% if factura.estado == 'emitida' %}
+                                            <span class="badge badge-primary">Emitida</span>
+                                        {% elif factura.estado == 'enviada' %}
+                                            <span class="badge badge-info">Enviada</span>
+                                        {% elif factura.estado == 'vencida' %}
+                                            <span class="badge badge-warning">Vencida</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <button type="button" class="btn btn-success btn-sm" 
+                                                onclick="seleccionarFactura('{{ factura.id }}', '{{ factura.numero_factura }}', {{ factura.monto_total }}, {{ factura.monto_pendiente }})">
+                                            <i class="fas fa-check"></i> Seleccionar
+                                        </button>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+$(document).ready(function() {
+    // Validar monto al cambiar
+    $('#monto_aplicar').on('input', function() {
+        var monto = parseFloat($(this).val()) || 0;
+        var disponible = parseFloat('{{ anticipo.monto_disponible }}');
+        var facturaId = $('#factura').val();
+        
+        validarMonto(monto, disponible, facturaId);
+    });
+    
+    // Validar al cambiar factura
+    $('#factura').on('change', function() {
+        var facturaId = $(this).val();
+        var monto = parseFloat($('#monto_aplicar').val()) || 0;
+        var disponible = parseFloat('{{ anticipo.monto_disponible }}');
+        
+        if (facturaId) {
+            mostrarInfoFactura(facturaId);
+            validarMonto(monto, disponible, facturaId);
+        } else {
+            ocultarInfoFactura();
+            limpiarValidaciones();
+        }
+    });
+    
+    // Validar formulario antes de enviar
+    $('#formAplicar').on('submit', function(e) {
+        var monto = parseFloat($('#monto_aplicar').val()) || 0;
+        var disponible = parseFloat('{{ anticipo.monto_disponible }}');
+        var facturaId = $('#factura').val();
+        
+        if (!validarMonto(monto, disponible, facturaId)) {
+            e.preventDefault();
+            return false;
+        }
+        
+        if (!confirm('¿Estás seguro de que quieres aplicar Q' + monto.toFixed(2) + ' del anticipo a la factura seleccionada?')) {
+            e.preventDefault();
+            return false;
+        }
+    });
+});
+
+function seleccionarFactura(facturaId, numeroFactura, montoTotal, montoPendiente) {
+    $('#factura').val(facturaId);
+    $('#factura').trigger('change');
+    
+    // Sugerir monto a aplicar (el mínimo entre disponible y pendiente)
+    var disponible = parseFloat('{{ anticipo.monto_disponible }}');
+    var sugerido = Math.min(disponible, montoPendiente);
+    $('#monto_aplicar').val(sugerido.toFixed(2));
+    
+    // Trigger para validar
+    $('#monto_aplicar').trigger('input');
+}
+
+function mostrarInfoFactura(facturaId) {
+    var option = $('#factura option[value="' + facturaId + '"]');
+    var montoTotal = parseFloat(option.data('monto'));
+    var montoPendiente = parseFloat(option.data('pendiente'));
+    
+    var html = '<div class="row">';
+    html += '<div class="col-md-6"><strong>Monto Total:</strong> Q' + montoTotal.toFixed(2) + '</div>';
+    html += '<div class="col-md-6"><strong>Monto Pendiente:</strong> Q' + montoPendiente.toFixed(2) + '</div>';
+    html += '</div>';
+    
+    $('#detallesFactura').html(html);
+    $('#infoFactura').show();
+}
+
+function ocultarInfoFactura() {
+    $('#infoFactura').hide();
+}
+
+function validarMonto(monto, disponible, facturaId) {
+    var html = '';
+    var esValido = true;
+    
+    if (!facturaId) {
+        html = '<div class="alert alert-warning"><i class="fas fa-exclamation-triangle"></i> Debes seleccionar una factura.</div>';
+        esValido = false;
+    } else if (monto <= 0) {
+        html = '<div class="alert alert-danger"><i class="fas fa-times-circle"></i> El monto debe ser mayor a 0.</div>';
+        esValido = false;
+    } else if (monto > disponible) {
+        html = '<div class="alert alert-danger"><i class="fas fa-times-circle"></i> El monto excede el disponible (Q' + disponible.toFixed(2) + ').</div>';
+        esValido = false;
+    } else {
+        var option = $('#factura option[value="' + facturaId + '"]');
+        var montoPendiente = parseFloat(option.data('pendiente'));
+        
+        if (monto > montoPendiente) {
+            html = '<div class="alert alert-warning"><i class="fas fa-exclamation-triangle"></i> El monto excede el pendiente de la factura (Q' + montoPendiente.toFixed(2) + ').</div>';
+            esValido = false;
+        } else {
+            html = '<div class="alert alert-success"><i class="fas fa-check-circle"></i> Monto válido. Se aplicarán Q' + monto.toFixed(2) + ' del anticipo.</div>';
+        }
+    }
+    
+    $('#validaciones').html(html);
+    $('#btnAplicar').prop('disabled', !esValido);
+    
+    return esValido;
+}
+
+function limpiarValidaciones() {
+    $('#validaciones').html('');
+    $('#btnAplicar').prop('disabled', true);
+}
+</script>
+{% endblock %}

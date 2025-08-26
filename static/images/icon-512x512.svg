@@ -1,0 +1,37 @@
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#2563eb;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#1d4ed8;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Fondo circular -->
+  <circle cx="256" cy="256" r="240" fill="url(#grad1)" stroke="#1e40af" stroke-width="8"/>
+  
+  <!-- Edificios -->
+  <rect x="120" y="200" width="50" height="150" fill="white" opacity="0.9"/>
+  <rect x="190" y="150" width="50" height="200" fill="white" opacity="0.9"/>
+  <rect x="260" y="180" width="50" height="170" fill="white" opacity="0.9"/>
+  
+  <!-- Ventanas -->
+  <rect x="130" y="220" width="20" height="20" fill="#1e40af"/>
+  <rect x="160" y="220" width="20" height="20" fill="#1e40af"/>
+  <rect x="200" y="170" width="20" height="20" fill="#1e40af"/>
+  <rect x="230" y="170" width="20" height="20" fill="#1e40af"/>
+  <rect x="270" y="200" width="20" height="20" fill="#1e40af"/>
+  <rect x="300" y="200" width="20" height="20" fill="#1e40af"/>
+  
+  <!-- Sol -->
+  <circle cx="380" cy="150" r="30" fill="#fbbf24"/>
+  <g fill="#fbbf24">
+    <line x1="380" y1="110" x2="380" y2="90" stroke="#fbbf24" stroke-width="8"/>
+    <line x1="380" y1="210" x2="380" y2="190" stroke="#fbbf24" stroke-width="8"/>
+    <line x1="340" y1="150" x2="320" y2="150" stroke="#fbbf24" stroke-width="8"/>
+    <line x1="440" y1="150" x2="420" y2="150" stroke="#fbbf24" stroke-width="8"/>
+    <line x1="350" y1="120" x2="330" y2="100" stroke="#fbbf24" stroke-width="8"/>
+    <line x1="430" y1="180" x2="410" y2="200" stroke="#fbbf24" stroke-width="8"/>
+    <line x1="350" y1="180" x2="330" y2="200" stroke="#fbbf24" stroke-width="8"/>
+    <line x1="430" y1="120" x2="410" y2="100" stroke="#fbbf24" stroke-width="8"/>
+  </g>
+</svg>

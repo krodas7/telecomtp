@@ -1,0 +1,40 @@
+# Dependencias específicas para SmartASP
+# Sistema de Construcción - Django
+
+# Django y extensiones
+Django>=4.2.0,<5.0
+django-cors-headers>=4.0.0
+django-crispy-forms>=2.0
+crispy-bootstrap5>=0.7
+django-extensions>=3.2.0
+
+# Base de datos SQL Server para SmartASP
+sql_server.pyodbc>=1.1.3
+pyodbc>=4.0.35
+
+# Procesamiento de archivos
+Pillow>=10.0.0
+openpyxl>=3.1.0
+xlsxwriter>=3.1.0
+reportlab>=4.0.0
+
+# Utilidades
+python-dotenv>=1.0.0
+python-dateutil>=2.8.0
+
+# Seguridad
+cryptography>=41.0.0
+
+# Logging y monitoreo
+colorlog>=6.7.0
+psutil>=5.9.0
+
+# Validación de datos
+jsonschema>=4.19.0
+
+# Compresión
+gzip>=1.0.0
+
+# Nota: Estas dependencias están optimizadas para SmartASP
+# y excluyen componentes que pueden no estar disponibles
+# en el entorno de hosting compartido de SmartASP

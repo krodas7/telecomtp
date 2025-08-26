@@ -1,0 +1,210 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Crear Nuevo Usuario{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">
+            <i class="fas fa-user-plus"></i> Crear Nuevo Usuario
+        </h1>
+        <a href="{% url 'usuarios_lista' %}" class="btn btn-secondary btn-sm">
+            <i class="fas fa-arrow-left"></i> Volver a Usuarios
+        </a>
+    </div>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Información del Usuario</h6>
+                </div>
+                <div class="card-body">
+                    <form method="POST">
+                        {% csrf_token %}
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="username" class="form-label">
+                                        <strong>Nombre de Usuario *</strong>
+                                    </label>
+                                    <input type="text" class="form-control" id="username" name="username" 
+                                           required placeholder="juan.perez">
+                                    <div class="form-text">Nombre único para acceder al sistema</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="rol" class="form-label">
+                                        <strong>Rol *</strong>
+                                    </label>
+                                    <select class="form-select" id="rol" name="rol" required>
+                                        <option value="">Seleccionar rol...</option>
+                                        {% for rol in roles %}
+                                            <option value="{{ rol.id }}">{{ rol.nombre }} - {{ rol.descripcion }}</option>
+                                        {% endfor %}
+                                    </select>
+                                    <div class="form-text">Define los permisos del usuario</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="first_name" class="form-label">Nombre</label>
+                                    <input type="text" class="form-control" id="first_name" name="first_name" 
+                                           placeholder="Juan">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="last_name" class="form-label">Apellido</label>
+                                    <input type="text" class="form-control" id="last_name" name="last_name" 
+                                           placeholder="Pérez">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="email" class="form-label">Email</label>
+                                    <input type="email" class="form-control" id="email" name="email" 
+                                           placeholder="juan.perez@empresa.com">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="telefono" class="form-label">Teléfono</label>
+                                    <input type="tel" class="form-control" id="telefono" name="telefono" 
+                                           placeholder="+502 1234-5678">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="direccion" class="form-label">Dirección</label>
+                            <textarea class="form-control" id="direccion" name="direccion" rows="2" 
+                                      placeholder="Dirección completa del usuario"></textarea>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="password" class="form-label">
+                                        <strong>Contraseña *</strong>
+                                    </label>
+                                    <input type="password" class="form-control" id="password" name="password" 
+                                           required placeholder="Contraseña segura">
+                                    <div class="form-text">Mínimo 8 caracteres</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="password_confirm" class="form-label">
+                                        <strong>Confirmar Contraseña *</strong>
+                                    </label>
+                                    <input type="password" class="form-control" id="password_confirm" 
+                                           required placeholder="Repite la contraseña">
+                                    <div class="form-text">Debe coincidir con la contraseña</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <hr>
+
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'usuarios_lista' %}" class="btn btn-secondary">
+                                <i class="fas fa-times"></i> Cancelar
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> Crear Usuario
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-info-circle"></i> Información
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <h6>Roles Disponibles:</h6>
+                    <ul class="list-unstyled">
+                        {% for rol in roles %}
+                            <li class="mb-2">
+                                <strong>{{ rol.nombre }}</strong>
+                                <br><small class="text-muted">{{ rol.descripcion }}</small>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                    
+                    <hr>
+                    
+                    <h6>Campos Obligatorios:</h6>
+                    <ul class="list-unstyled">
+                        <li><i class="fas fa-asterisk text-danger"></i> Nombre de Usuario</li>
+                        <li><i class="fas fa-asterisk text-danger"></i> Contraseña</li>
+                        <li><i class="fas fa-asterisk text-danger"></i> Rol</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    // Validación de contraseñas
+    $('#password_confirm').on('input', function() {
+        const password = $('#password').val();
+        const confirm = $(this).val();
+        
+        if (password !== confirm) {
+            $(this).addClass('is-invalid');
+            $(this).removeClass('is-valid');
+        } else {
+            $(this).removeClass('is-invalid');
+            $(this).addClass('is-valid');
+        }
+    });
+    
+    // Validación del formulario
+    $('form').on('submit', function(e) {
+        const password = $('#password').val();
+        const confirm = $('#password_confirm').val();
+        
+        if (password !== confirm) {
+            e.preventDefault();
+            alert('Las contraseñas no coinciden');
+            return false;
+        }
+        
+        if (password.length < 8) {
+            e.preventDefault();
+            alert('La contraseña debe tener al menos 8 caracteres');
+            return false;
+        }
+    });
+});
+</script>
+{% endblock %}

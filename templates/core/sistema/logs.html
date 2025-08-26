@@ -1,0 +1,209 @@
+{% extends 'base.html' %}
+
+{% block title %}Logs del Sistema - Sistema de Construcción{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="mb-0">
+        <i class="fas fa-clipboard-list me-2"></i>Logs de Actividad del Sistema
+    </h2>
+    <a href="{% url 'sistema' %}" class="btn btn-outline-primary">
+        <i class="fas fa-arrow-left me-2"></i>Volver al Sistema
+    </a>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0">
+            <i class="fas fa-list-alt me-2"></i>Registros de Actividad
+        </h5>
+    </div>
+    <div class="card-body">
+        {% if page_obj %}
+            <!-- Filtros -->
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <div class="input-group">
+                        <span class="input-group-text">
+                            <i class="fas fa-search"></i>
+                        </span>
+                        <input type="text" class="form-control" id="searchInput" placeholder="Buscar en logs...">
+                    </div>
+                </div>
+                <div class="col-md-6 text-end">
+                    <span class="badge bg-info fs-6">
+                        Total: {{ page_obj.paginator.count }} registros
+                    </span>
+                </div>
+            </div>
+
+            <!-- Tabla de logs -->
+            <div class="table-responsive">
+                <table class="table table-striped table-hover" id="logsTable">
+                    <thead>
+                        <tr>
+                            <th>Fecha y Hora</th>
+                            <th>Usuario</th>
+                            <th>Acción</th>
+                            <th>Módulo</th>
+                            <th>Descripción</th>
+                            <th>IP</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for log in page_obj %}
+                        <tr>
+                            <td>
+                                <div class="d-flex flex-column">
+                                    <strong>{{ log.fecha_actividad|date:"d/m/Y" }}</strong>
+                                    <small class="text-muted">{{ log.fecha_actividad|date:"H:i:s" }}</small>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="avatar-sm me-2">
+                                        <i class="fas fa-user-circle fa-lg text-primary"></i>
+                                    </div>
+                                    <div>
+                                        <strong>{{ log.usuario.username }}</strong>
+                                        {% if log.usuario.is_superuser %}
+                                            <span class="badge bg-danger ms-1">Admin</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                {% if log.accion == 'Crear' %}
+                                    <span class="badge bg-success fs-6">{{ log.accion }}</span>
+                                {% elif log.accion == 'Editar' %}
+                                    <span class="badge bg-warning fs-6">{{ log.accion }}</span>
+                                {% elif log.accion == 'Eliminar' %}
+                                    <span class="badge bg-danger fs-6">{{ log.accion }}</span>
+                                {% elif log.accion == 'Login' %}
+                                    <span class="badge bg-info fs-6">{{ log.accion }}</span>
+                                {% elif log.accion == 'Logout' %}
+                                    <span class="badge bg-secondary fs-6">{{ log.accion }}</span>
+                                {% else %}
+                                    <span class="badge bg-primary fs-6">{{ log.accion }}</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="badge bg-outline-secondary">{{ log.modulo }}</span>
+                            </td>
+                            <td>
+                                <div class="text-wrap" style="max-width: 300px;">
+                                    {{ log.descripcion }}
+                                </div>
+                            </td>
+                            <td>
+                                <small class="text-muted font-monospace">{{ log.ip_address|default:"N/A" }}</small>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Paginación -->
+            {% if page_obj.has_other_pages %}
+            <nav aria-label="Navegación de logs">
+                <ul class="pagination justify-content-center">
+                    {% if page_obj.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page=1">
+                                <i class="fas fa-angle-double-left"></i>
+                            </a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.previous_page_number }}">
+                                <i class="fas fa-angle-left"></i>
+                            </a>
+                        </li>
+                    {% endif %}
+
+                    {% for num in page_obj.paginator.page_range %}
+                        {% if page_obj.number == num %}
+                            <li class="page-item active">
+                                <span class="page-link">{{ num }}</span>
+                            </li>
+                        {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                            </li>
+                        {% endif %}
+                    {% endfor %}
+
+                    {% if page_obj.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.next_page_number }}">
+                                <i class="fas fa-angle-right"></i>
+                            </a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}">
+                                <i class="fas fa-angle-double-right"></i>
+                            </a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
+
+            <!-- Información de paginación -->
+            <div class="text-center mt-3">
+                <small class="text-muted">
+                    Mostrando {{ page_obj.start_index }} - {{ page_obj.end_index }} de {{ page_obj.paginator.count }} registros
+                </small>
+            </div>
+
+        {% else %}
+            <div class="text-center py-5">
+                <i class="fas fa-clipboard-list fa-3x text-muted mb-3"></i>
+                <h5 class="text-muted">No hay logs de actividad</h5>
+                <p class="text-muted">El sistema aún no ha registrado ninguna actividad</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Script para búsqueda en tiempo real -->
+<script>
+document.getElementById('searchInput').addEventListener('keyup', function() {
+    const searchTerm = this.value.toLowerCase();
+    const table = document.getElementById('logsTable');
+    const rows = table.getElementsByTagName('tbody')[0].getElementsByTagName('tr');
+    
+    for (let i = 0; i < rows.length; i++) {
+        const row = rows[i];
+        const text = row.textContent.toLowerCase();
+        
+        if (text.includes(searchTerm)) {
+            row.style.display = '';
+        } else {
+            row.style.display = 'none';
+        }
+    }
+});
+</script>
+
+<style>
+.badge.bg-outline-secondary {
+    background-color: transparent !important;
+    color: var(--gris-concreto) !important;
+    border: 1px solid var(--gris-concreto);
+}
+
+.avatar-sm {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.text-wrap {
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+}
+</style>
+{% endblock %}

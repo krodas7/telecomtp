@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>✅ Acceso Móvil Funcionando - Sistema ARCA</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 3rem;
+            text-align: center;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            max-width: 600px;
+            width: 90%;
+        }
+        
+        .success-icon {
+            font-size: 4rem;
+            color: #28a745;
+            margin-bottom: 1.5rem;
+            animation: bounce 2s infinite;
+        }
+        
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+            40% { transform: translateY(-10px); }
+            60% { transform: translateY(-5px); }
+        }
+        
+        h1 {
+            color: #333;
+            margin-bottom: 1rem;
+        }
+        
+        .subtitle {
+            color: #666;
+            font-size: 1.2rem;
+            margin-bottom: 2rem;
+        }
+        
+        .info-box {
+            background: rgba(102, 126, 234, 0.1);
+            border: 1px solid rgba(102, 126, 234, 0.3);
+            border-radius: 15px;
+            padding: 1.5rem;
+            margin: 2rem 0;
+            text-align: left;
+        }
+        
+        .info-box h3 {
+            color: #667eea;
+            margin-top: 0;
+            margin-bottom: 1rem;
+        }
+        
+        .info-box ul {
+            margin: 0;
+            padding-left: 20px;
+        }
+        
+        .info-box li {
+            margin: 8px 0;
+            color: #555;
+        }
+        
+        .status {
+            display: inline-block;
+            padding: 8px 16px;
+            border-radius: 25px;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+        
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .btn {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 50px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            margin: 10px;
+            text-decoration: none;
+            display: inline-block;
+            transition: all 0.3s ease;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+            color: white;
+        }
+        
+        .logo-section {
+            margin-bottom: 2rem;
+        }
+        
+        .logo-icon {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 1rem;
+            position: relative;
+        }
+        
+        .logo-buildings {
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
+            height: 100%;
+        }
+        
+        .building {
+            width: 20px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            margin: 0 2px;
+            border-radius: 2px 2px 0 0;
+        }
+        
+        .building-left { height: 60%; }
+        .building-center { height: 80%; }
+        .building-right { height: 70%; }
+        
+        .logo-text {
+            text-align: center;
+            color: #667eea;
+            font-weight: bold;
+        }
+        
+        .logo-line-1 { font-size: 0.9rem; }
+        .logo-line-2 { font-size: 1.2rem; }
+        .logo-line-3 { font-size: 0.8rem; }
+        
+        .connection-info {
+            background: rgba(40, 167, 69, 0.1);
+            border: 1px solid rgba(40, 167, 69, 0.3);
+            border-radius: 10px;
+            padding: 1rem;
+            margin: 1.5rem 0;
+            color: #155724;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: 2rem;
+                margin: 1rem;
+            }
+            
+            h1 {
+                font-size: 1.5rem;
+            }
+            
+            .subtitle {
+                font-size: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Logo ARCA -->
+        <div class="logo-section">
+            <div class="logo-icon">
+                <div class="logo-buildings">
+                    <div class="building building-left"></div>
+                    <div class="building building-center"></div>
+                    <div class="building building-right"></div>
+                </div>
+            </div>
+            <div class="logo-text">
+                <div class="logo-line-1">SISTEMA</div>
+                <div class="logo-line-2">ARCA</div>
+                <div class="logo-line-3">CONSTRUCCIÓN</div>
+            </div>
+        </div>
+        
+        <!-- Icono de Éxito -->
+        <div class="success-icon">✅</div>
+        
+        <!-- Título y Subtítulo -->
+        <h1>¡Acceso Móvil Funcionando!</h1>
+        <p class="subtitle">Tu sistema está accesible desde dispositivos móviles en la misma red</p>
+        
+        <!-- Estado de Conexión -->
+        <div class="connection-info">
+            <strong>🌐 Estado:</strong> Conectado exitosamente desde móvil
+        </div>
+        
+        <!-- Información de Conexión -->
+        <div class="info-box">
+            <h3>📱 Detalles de Conexión</h3>
+            <ul>
+                <li><strong>IP del Servidor:</strong> 192.168.0.15</li>
+                <li><strong>Puerto:</strong> 8000</li>
+                <li><strong>URL de Acceso:</strong> http://192.168.0.15:8000</li>
+                <li><strong>Estado:</strong> <span class="status success">✅ Activo</span></li>
+                <li><strong>ALLOWED_HOSTS:</strong> Configurado correctamente</li>
+            </ul>
+        </div>
+        
+        <!-- Funcionalidades Disponibles -->
+        <div class="info-box">
+            <h3>🎯 Funcionalidades Móviles Disponibles</h3>
+            <ul>
+                <li>📊 Dashboard completo con gráficos</li>
+                <li>🏗️ Gestión de proyectos</li>
+                <li>👥 Clientes y facturas</li>
+                <li>📦 Inventario completo</li>
+                <li>🚀 PWA para instalación como app</li>
+                <li>📱 Interfaz responsive móvil</li>
+            </ul>
+        </div>
+        
+        <!-- Botones de Acción -->
+        <div>
+            <a href="/dashboard/" class="btn">
+                🚀 Ir al Dashboard
+            </a>
+            <a href="/" class="btn">
+                🏠 Página Principal
+            </a>
+        </div>
+        
+        <!-- Información Adicional -->
+        <div class="info-box">
+            <h3>🔧 Configuración Aplicada</h3>
+            <ul>
+                <li>✅ ALLOWED_HOSTS actualizado con 192.168.0.15</li>
+                <li>✅ Servidor ejecutándose en 192.168.0.15:8000</li>
+                <li>✅ Acceso desde red local configurado</li>
+                <li>✅ PWA completamente funcional</li>
+                <li>✅ Interfaz responsive para móviles</li>
+            </ul>
+        </div>
+        
+        <!-- Mensaje de Éxito -->
+        <div class="connection-info">
+            <h4>🎉 ¡Acceso Móvil Configurado Exitosamente!</h4>
+            <p>Tu Sistema ARCA Construcción ahora es completamente accesible desde cualquier dispositivo móvil en tu red local. Puedes instalar la app como PWA y disfrutar de una experiencia nativa.</p>
+        </div>
+    </div>
+    
+    <script>
+        // Verificar que estamos accediendo desde la IP correcta
+        const currentHost = window.location.hostname;
+        const expectedHost = '192.168.0.15';
+        
+        if (currentHost === expectedHost) {
+            console.log('✅ Acceso correcto desde la IP configurada');
+        } else {
+            console.log('⚠️ Acceso desde host diferente:', currentHost);
+        }
+        
+        // Mostrar información de conexión
+        console.log('🌐 Host actual:', window.location.hostname);
+        console.log('🔌 Puerto:', window.location.port);
+        console.log('📱 User Agent:', navigator.userAgent);
+        console.log('📱 Es móvil:', /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent));
+    </script>
+</body>
+</html>

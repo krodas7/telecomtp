@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+
+{% block title %}Categorías de Gasto - Sistema de Construcción{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">
+        <i class="fas fa-tags me-2"></i>Categorías de Gasto
+    </h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <a href="{% url 'categoria_gasto_create' %}" class="btn btn-primary">
+            <i class="fas fa-plus me-1"></i>Nueva Categoría
+        </a>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0">
+            <i class="fas fa-list me-2"></i>Lista de Categorías de Gasto
+        </h5>
+    </div>
+    <div class="card-body">
+        {% if categorias %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Nombre</th>
+                            <th>Descripción</th>
+                            <th>Gastos Asociados</th>
+                            <th>Total Gastos</th>
+                            <th>Fecha Creación</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for categoria in categorias %}
+                        <tr>
+                            <td>
+                                <strong>{{ categoria.nombre }}</strong>
+                            </td>
+                            <td>
+                                {% if categoria.descripcion %}
+                                    <span class="text-muted">{{ categoria.descripcion|truncatechars:50 }}</span>
+                                {% else %}
+                                    <span class="text-muted">Sin descripción</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="badge bg-info">{{ categoria.gastos.count }}</span>
+                            </td>
+                            <td>
+                                {% if categoria.gastos.count > 0 %}
+                                    <strong class="text-success">
+                                        Q{{ categoria.gastos.all|dictsort:"monto"|last.monto|floatformat:2 }}
+                                    </strong>
+                                {% else %}
+                                    <span class="text-muted">Q0.00</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <small class="text-muted">
+                                    <i class="fas fa-calendar me-1"></i>{{ categoria.creado_en|date:"d/m/Y" }}
+                                </small>
+                            </td>
+                            <td>
+                                <div class="btn-group" role="group">
+                                    <a href="{% url 'categoria_gasto_edit' categoria.id %}" class="btn btn-sm btn-outline-warning" title="Editar">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <a href="{% url 'categoria_gasto_delete' categoria.id %}" class="btn btn-sm btn-outline-danger" title="Eliminar">
+                                        <i class="fas fa-trash"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="text-center py-5">
+                <i class="fas fa-tags fa-3x text-muted mb-3"></i>
+                <h5 class="text-muted">No hay categorías de gasto registradas</h5>
+                <p class="text-muted">Comienza agregando tu primera categoría</p>
+                <a href="{% url 'categoria_gasto_create' %}" class="btn btn-primary">
+                    <i class="fas fa-plus me-1"></i>Agregar Categoría
+                </a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,197 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Resumen de Roles y Permisos - Sistema de Construcción{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-0">
+                <i class="fas fa-shield-alt me-2"></i>Resumen de Roles y Permisos
+            </h1>
+            <p class="text-muted">Vista completa de todos los roles del sistema y sus permisos asignados</p>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{% url 'roles_lista' %}" class="btn btn-outline-primary">
+                <i class="fas fa-list me-1"></i>Lista de Roles
+            </a>
+            <a href="{% url 'usuarios_lista' %}" class="btn btn-outline-success">
+                <i class="fas fa-users me-1"></i>Gestionar Usuarios
+            </a>
+        </div>
+    </div>
+
+    <!-- Estadísticas Generales -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body text-center">
+                    <h3 class="card-title">{{ total_roles }}</h3>
+                    <p class="card-text">Roles Configurados</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body text-center">
+                    <h3 class="card-title">{{ total_modulos }}</h3>
+                    <p class="card-text">Módulos del Sistema</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body text-center">
+                    <h3 class="card-title">{{ total_permisos }}</h3>
+                    <p class="card-text">Permisos Disponibles</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body text-center">
+                    <h3 class="card-title">{{ resumen_roles|length }}</h3>
+                    <p class="card-text">Roles Activos</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Resumen Detallado de Roles -->
+    <div class="row">
+        {% for resumen in resumen_roles %}
+        <div class="col-lg-6 mb-4">
+            <div class="card h-100">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-user-shield me-2"></i>{{ resumen.rol.nombre }}
+                    </h5>
+                    <div class="d-flex gap-2">
+                        <span class="badge bg-primary">{{ resumen.total_permisos }} permisos</span>
+                        <a href="{% url 'rol_permisos' resumen.rol.id %}" class="btn btn-sm btn-outline-primary">
+                            <i class="fas fa-edit me-1"></i>Editar
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    {% if resumen.rol.descripcion %}
+                    <p class="text-muted mb-3">{{ resumen.rol.descripcion }}</p>
+                    {% endif %}
+                    
+                    {% if resumen.permisos_por_modulo %}
+                        <h6 class="text-primary mb-3">
+                            <i class="fas fa-key me-1"></i>Permisos por Módulo:
+                        </h6>
+                        {% for modulo, permisos in resumen.permisos_por_modulo.items %}
+                        <div class="mb-3">
+                            <h6 class="text-success">
+                                <i class="fas fa-cube me-1"></i>{{ modulo }}
+                            </h6>
+                            <div class="d-flex flex-wrap gap-1">
+                                {% for permiso in permisos %}
+                                <span class="badge bg-light text-dark border">
+                                    <i class="fas fa-check me-1"></i>{{ permiso }}
+                                </span>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="text-center py-3">
+                            <i class="fas fa-exclamation-triangle fa-2x text-warning mb-2"></i>
+                            <p class="text-muted mb-0">Este rol no tiene permisos asignados</p>
+                        </div>
+                    {% endif %}
+                </div>
+                <div class="card-footer">
+                    <small class="text-muted">
+                        <i class="fas fa-clock me-1"></i>
+                        Creado: {{ resumen.rol.fecha_creacion|date:"d/m/Y H:i" }}
+                        {% if resumen.rol.activo %}
+                            <span class="badge bg-success ms-2">Activo</span>
+                        {% else %}
+                            <span class="badge bg-danger ms-2">Inactivo</span>
+                        {% endif %}
+                    </small>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12">
+            <div class="text-center py-5">
+                <i class="fas fa-shield-alt fa-3x text-muted mb-3"></i>
+                <h5 class="text-muted">No hay roles configurados</h5>
+                <p class="text-muted">El sistema no tiene roles definidos aún.</p>
+                <a href="{% url 'roles_lista' %}" class="btn btn-primary">
+                    <i class="fas fa-plus me-1"></i>Crear Primer Rol
+                </a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Información del Sistema -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-info-circle me-2"></i>Información del Sistema de Permisos
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6 class="text-primary">¿Cómo funciona?</h6>
+                            <ul class="list-unstyled">
+                                <li><i class="fas fa-check text-success me-2"></i>Los <strong>roles</strong> son conjuntos de permisos predefinidos</li>
+                                <li><i class="fas fa-check text-success me-2"></i>Los <strong>permisos</strong> controlan qué puede hacer cada usuario</li>
+                                <li><i class="fas fa-check text-success me-2"></i>Los <strong>módulos</strong> agrupan funcionalidades relacionadas</li>
+                                <li><i class="fas fa-check text-success me-2"></i>Cada <strong>usuario</strong> tiene un rol asignado</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="text-primary">Acciones Recomendadas</h6>
+                            <ul class="list-unstyled">
+                                <li><i class="fas fa-edit text-info me-2"></i>Revisar permisos de cada rol</li>
+                                <li><i class="fas fa-user-plus text-info me-2"></i>Asignar roles apropiados a usuarios</li>
+                                <li><i class="fas fa-shield-alt text-info me-2"></i>Crear roles personalizados si es necesario</li>
+                                <li><i class="fas fa-sync text-info me-2"></i>Actualizar permisos según necesidades</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('🚀 Página de resumen de roles cargada');
+    
+    // Agregar efectos hover a las tarjetas
+    const cards = document.querySelectorAll('.card');
+    cards.forEach(card => {
+        card.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-5px)';
+            this.style.boxShadow = '0 10px 25px rgba(0,0,0,0.15)';
+        });
+        
+        card.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(0)';
+            this.style.boxShadow = '0 2px 10px rgba(0,0,0,0.1)';
+        });
+    });
+    
+    // Agregar transiciones suaves
+    cards.forEach(card => {
+        card.style.transition = 'all 0.3s ease';
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,471 @@
+{% extends "base.html" %}
+{% load custom_filters %}
+
+{% block title %}Calendario de Pagos - {{ proyecto.nombre }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .calendario-container {
+        background: white;
+        border-radius: 15px;
+        padding: 2rem;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        border: 1px solid rgba(255,255,255,0.2);
+        margin-bottom: 2rem;
+    }
+    
+    .proyecto-header {
+        background: linear-gradient(135deg, #6f42c1 0%, #5a32a3 100%);
+        color: white;
+        padding: 2rem;
+        border-radius: 15px;
+        margin-bottom: 2rem;
+        text-align: center;
+    }
+    
+    .proyecto-header h2 {
+        margin: 0;
+        font-size: 2rem;
+        font-weight: 700;
+    }
+    
+    .controles-calendario {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+    
+    .selector-fecha {
+        display: flex;
+        gap: 1rem;
+        align-items: center;
+    }
+    
+    .selector-fecha select {
+        padding: 0.5rem 1rem;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        background: white;
+        font-size: 1rem;
+    }
+    
+    .btn-calendario {
+        background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+        border: none;
+        color: white;
+        padding: 0.5rem 1rem;
+        border-radius: 8px;
+        font-size: 0.9rem;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .btn-calendario:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(23, 162, 184, 0.4);
+        color: white;
+        text-decoration: none;
+    }
+    
+    .stats-mes {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+    
+    .stat-mes {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        padding: 1.5rem;
+        border-radius: 15px;
+        text-align: center;
+        border: 1px solid #dee2e6;
+    }
+    
+    .stat-mes-number {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #6f42c1;
+        margin-bottom: 0.5rem;
+    }
+    
+    .stat-mes-label {
+        color: #6c757d;
+        font-size: 0.9rem;
+        font-weight: 500;
+    }
+    
+    .calendario-grid {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        gap: 1px;
+        background: #dee2e6;
+        border-radius: 10px;
+        overflow: hidden;
+        margin-bottom: 2rem;
+    }
+    
+    .dia-header {
+        background: linear-gradient(135deg, #6f42c1 0%, #5a32a3 100%);
+        color: white;
+        padding: 1rem 0.5rem;
+        text-align: center;
+        font-weight: 600;
+        font-size: 0.9rem;
+    }
+    
+    .dia-celda {
+        background: white;
+        min-height: 120px;
+        padding: 0.5rem;
+        border: 1px solid #f8f9fa;
+        position: relative;
+    }
+    
+    .dia-celda:hover {
+        background: #f8f9fa;
+        transform: scale(1.02);
+        z-index: 10;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    
+    .dia-numero {
+        font-weight: 700;
+        color: #495057;
+        margin-bottom: 0.5rem;
+        font-size: 1.1rem;
+    }
+    
+    .dia-vacio {
+        background: #f8f9fa;
+        color: #adb5bd;
+    }
+    
+    .evento {
+        margin-bottom: 0.5rem;
+        padding: 0.3rem 0.5rem;
+        border-radius: 6px;
+        font-size: 0.8rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .evento:hover {
+        transform: scale(1.05);
+        box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    }
+    
+    .evento-pago-salario {
+        background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%);
+        color: white;
+    }
+    
+    .evento-anticipo-realizado {
+        background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%);
+        color: #212529;
+    }
+    
+    .evento-anticipo-liquidado {
+        background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+        color: white;
+    }
+    
+    .evento-titulo {
+        font-weight: 600;
+        margin-bottom: 0.2rem;
+    }
+    
+    .evento-descripcion {
+        font-size: 0.7rem;
+        opacity: 0.9;
+    }
+    
+    .evento-multiple {
+        background: linear-gradient(135deg, #6f42c1 0%, #5a32a3 100%);
+        color: white;
+        text-align: center;
+        padding: 0.5rem;
+    }
+    
+    .evento-multiple .badge {
+        background: rgba(255,255,255,0.2);
+        color: white;
+        font-size: 0.7rem;
+    }
+    
+    .resumen-mes {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        border-radius: 15px;
+        padding: 2rem;
+        border: 1px solid #dee2e6;
+    }
+    
+    .resumen-mes h4 {
+        color: #6f42c1;
+        margin-bottom: 1.5rem;
+        text-align: center;
+    }
+    
+    .resumen-detalle {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1.5rem;
+    }
+    
+    .resumen-item {
+        text-align: center;
+        padding: 1rem;
+        background: white;
+        border-radius: 10px;
+        border: 1px solid #dee2e6;
+    }
+    
+    .resumen-item h5 {
+        color: #6c757d;
+        font-size: 0.9rem;
+        margin-bottom: 0.5rem;
+    }
+    
+    .resumen-item .valor {
+        font-size: 1.5rem;
+        font-weight: 700;
+    }
+    
+    .valor-anticipos {
+        color: #ffc107;
+    }
+    
+    .valor-liquidado {
+        color: #28a745;
+    }
+    
+    .valor-pendiente {
+        color: #dc3545;
+    }
+    
+    @media (max-width: 768px) {
+        .controles-calendario {
+            flex-direction: column;
+            align-items: stretch;
+        }
+        
+        .selector-fecha {
+            justify-content: center;
+        }
+        
+        .calendario-grid {
+            font-size: 0.8rem;
+        }
+        
+        .dia-celda {
+            min-height: 100px;
+            padding: 0.3rem;
+        }
+        
+        .evento {
+            font-size: 0.7rem;
+            padding: 0.2rem 0.3rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="proyecto-header">
+    <h2>
+        <i class="fas fa-calendar-alt me-3"></i>Calendario de Pagos
+    </h2>
+    <p class="mb-0 mt-2">{{ proyecto.nombre }}</p>
+</div>
+
+<div class="calendario-container">
+    <!-- Controles del Calendario -->
+    <div class="controles-calendario">
+        <div class="selector-fecha">
+            <label for="mes">Mes:</label>
+            <select id="mes" onchange="cambiarFecha()">
+                {% for num_mes, nombre_mes in meses %}
+                    <option value="{{ num_mes }}" {% if num_mes == mes %}selected{% endif %}>
+                        {{ nombre_mes }}
+                    </option>
+                {% endfor %}
+            </select>
+            
+            <label for="año">Año:</label>
+            <select id="año" onchange="cambiarFecha()">
+                {% for año_opcion in años %}
+                    <option value="{{ año_opcion }}" {% if año_opcion == año %}selected{% endif %}>
+                        {{ año_opcion }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+        
+        <div>
+            <a href="{% url 'planilla_proyecto' proyecto.id %}" class="btn-calendario">
+                <i class="fas fa-clipboard-list me-2"></i>Ver Planilla
+            </a>
+            <a href="{% url 'proyectos_list' %}" class="btn-calendario" style="background: linear-gradient(135deg, #6c757d 0%, #545b62 100%);">
+                <i class="fas fa-arrow-left me-2"></i>Volver
+            </a>
+        </div>
+    </div>
+    
+    <!-- Estadísticas del Mes -->
+    <div class="stats-mes">
+        <div class="stat-mes">
+            <div class="stat-mes-number">{{ total_anticipos_mes|floatformat:2 }}</div>
+            <div class="stat-mes-label">Total Anticipos del Mes</div>
+        </div>
+        <div class="stat-mes">
+            <div class="stat-mes-number">{{ total_liquidado_mes|floatformat:2 }}</div>
+            <div class="stat-mes-label">Total Liquidado del Mes</div>
+        </div>
+        <div class="stat-mes">
+            <div class="stat-mes-number">{{ saldo_pendiente_mes|floatformat:2 }}</div>
+            <div class="stat-mes-label">Saldo Pendiente del Mes</div>
+        </div>
+        <div class="stat-mes">
+            <div class="stat-mes-number">{{ colaboradores|length }}</div>
+            <div class="stat-mes-label">Personal Asignado</div>
+        </div>
+    </div>
+    
+    <!-- Calendario -->
+    <div class="calendario-grid">
+        <!-- Headers de días -->
+        <div class="dia-header">Dom</div>
+        <div class="dia-header">Lun</div>
+        <div class="dia-header">Mar</div>
+        <div class="dia-header">Mié</div>
+        <div class="dia-header">Jue</div>
+        <div class="dia-header">Vie</div>
+        <div class="dia-header">Sáb</div>
+        
+        <!-- Días del mes -->
+        {% for semana in calendario %}
+            {% for dia in semana %}
+                {% if dia == 0 %}
+                    <div class="dia-celda dia-vacio"></div>
+                {% else %}
+                    <div class="dia-celda">
+                        <div class="dia-numero">{{ dia }}</div>
+                        
+                        {% if dia in eventos_calendario %}
+                            {% if eventos_calendario|get_item:dia|is_list %}
+                                {% if eventos_calendario|get_item:dia|length > 2 %}
+                                    <div class="evento evento-multiple">
+                                        <div class="badge">{{ eventos_calendario|get_item:dia|length }} eventos</div>
+                                        <div>Ver detalles</div>
+                                    </div>
+                                {% else %}
+                                    {% for evento in eventos_calendario|get_item:dia %}
+                                        <div class="evento evento-{{ evento.tipo }}" title="{{ evento.descripcion }}">
+                                            <div class="evento-titulo">{{ evento.titulo }}</div>
+                                            <div class="evento-descripcion">{{ evento.descripcion }}</div>
+                                        </div>
+                                    {% endfor %}
+                                {% endif %}
+                            {% else %}
+                                {% with evento=eventos_calendario|get_item:dia %}
+                                    <div class="evento evento-{{ evento.tipo }}" title="{{ evento.descripcion }}">
+                                        <div class="evento-titulo">{{ evento.titulo }}</div>
+                                        <div class="evento-descripcion">{{ evento.descripcion }}</div>
+                                    </div>
+                                {% endwith %}
+                            {% endif %}
+                        {% endif %}
+                    </div>
+                {% endif %}
+            {% endfor %}
+        {% endfor %}
+    </div>
+    
+    <!-- Resumen del Mes -->
+    <div class="resumen-mes">
+        <h4><i class="fas fa-chart-bar me-2"></i>Resumen del Mes de {{ nombre_mes }} {{ año }}</h4>
+        
+        <div class="resumen-detalle">
+            <div class="resumen-item">
+                <h5>Anticipos Realizados</h5>
+                <div class="valor valor-anticipos">Q{{ total_anticipos_mes|floatformat:2 }}</div>
+                <small class="text-muted">{{ anticipos_mes|length }} anticipos</small>
+            </div>
+            
+            <div class="resumen-item">
+                <h5>Anticipos Liquidados</h5>
+                <div class="valor valor-liquidado">Q{{ total_liquidado_mes|floatformat:2 }}</div>
+                <small class="text-muted">{{ anticipos_liquidados_mes|length }} liquidados</small>
+            </div>
+            
+            <div class="resumen-item">
+                <h5>Saldo Pendiente</h5>
+                <div class="valor valor-pendiente">Q{{ saldo_pendiente_mes|floatformat:2 }}</div>
+                <small class="text-muted">Por liquidar</small>
+            </div>
+            
+            <div class="resumen-item">
+                <h5>Próximo Pago</h5>
+                <div class="valor text-success">
+                    {% for semana in calendario %}
+                        {% for dia in semana %}
+                            {% if dia != 0 and dia in eventos_calendario %}
+                                {% with evento=eventos_calendario|get_item:dia %}
+                                    {% if evento.tipo == 'pago_salario' %}
+                                        {{ dia }} {{ nombre_mes }}
+                                    {% endif %}
+                                {% endwith %}
+                            {% endif %}
+                        {% endfor %}
+                    {% endfor %}
+                </div>
+                <small class="text-muted">Salarios mensuales</small>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function cambiarFecha() {
+    const mes = document.getElementById('mes').value;
+    const año = document.getElementById('año').value;
+    const url = new URL(window.location);
+    url.searchParams.set('mes', mes);
+    url.searchParams.set('año', año);
+    window.location.href = url.toString();
+}
+
+// Tooltips para eventos
+document.addEventListener('DOMContentLoaded', function() {
+    const eventos = document.querySelectorAll('.evento');
+    eventos.forEach(evento => {
+        evento.addEventListener('click', function() {
+            const titulo = this.querySelector('.evento-titulo').textContent;
+            const descripcion = this.querySelector('.evento-descripcion').textContent;
+            alert(`${titulo}\n\n${descripcion}`);
+        });
+    });
+    
+    // Animación de entrada
+    const celdas = document.querySelectorAll('.dia-celda:not(.dia-vacio)');
+    celdas.forEach((celda, index) => {
+        celda.style.opacity = '0';
+        celda.style.transform = 'translateY(20px)';
+        
+        setTimeout(() => {
+            celda.style.transition = 'all 0.5s ease';
+            celda.style.opacity = '1';
+            celda.style.transform = 'translateY(0)';
+        }, index * 50);
+    });
+});
+</script>
+{% endblock %}

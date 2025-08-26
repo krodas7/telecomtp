@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+
+{% block title %}Test - Sistema ARCA{% endblock %}
+
+{% block content %}
+<div style="background: red; color: white; padding: 50px; margin: 50px; text-align: center;">
+    <h1>¡PRUEBA FUNCIONANDO!</h1>
+    <p>Si ves esto en ROJO, el sistema está funcionando.</p>
+    <p>Usuario: {{ user.username }}</p>
+    <p>Fecha: {{ now|date:"d/m/Y H:i" }}</p>
+</div>
+
+<div style="background: blue; color: white; padding: 30px; margin: 30px; text-align: center;">
+    <h2>BLOQUE AZUL DE PRUEBA</h2>
+    <p>Este bloque debe aparecer en AZUL.</p>
+</div>
+
+<button onclick="alert('¡JavaScript funciona!')" style="background: green; color: white; padding: 20px; border: none; font-size: 18px; margin: 20px;">
+    HAZ CLIC AQUÍ - DEBE SER VERDE
+</button>
+
+<script>
+console.log('✅ Template de prueba cargado');
+alert('¡JavaScript cargado correctamente!');
+</script>
+{% endblock %}
+

@@ -1,0 +1,231 @@
+{% extends "base.html" %}
+{% block title %}Detalle de Colaborador - Sistema de Construcción{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<div class="hero-section">
+    <div class="hero-content">
+        <h1 class="hero-title">
+            <i class="fas fa-user-tie me-2"></i>Detalle del Colaborador
+        </h1>
+        <p class="hero-subtitle">
+            Información completa del colaborador del sistema
+        </p>
+    </div>
+</div>
+
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <!-- Información del Colaborador -->
+            <div class="card-modern">
+                <div class="card-header-modern">
+                    <div class="card-header-icon">
+                        <i class="fas fa-user-tie"></i>
+                    </div>
+                    <h5 class="card-header-title">Información Personal</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="info-item">
+                                <label class="info-label">Nombre Completo</label>
+                                <p class="info-value">{{ colaborador.nombre }}</p>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="info-item">
+                                <label class="info-label">DPI</label>
+                                <p class="info-value">{{ colaborador.dpi|default:"No especificado" }}</p>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="info-item">
+                                <label class="info-label">Teléfono</label>
+                                <p class="info-value">{{ colaborador.telefono|default:"No especificado" }}</p>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="info-item">
+                                <label class="info-label">Email</label>
+                                <p class="info-value">{{ colaborador.email|default:"No especificado" }}</p>
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <div class="info-item">
+                                <label class="info-label">Dirección</label>
+                                <p class="info-value">{{ colaborador.direccion|default:"No especificada" }}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Información Laboral -->
+            <div class="card-modern mt-4">
+                <div class="card-header-modern">
+                    <div class="card-header-icon">
+                        <i class="fas fa-briefcase"></i>
+                    </div>
+                    <h5 class="card-header-title">Información Laboral</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="info-item">
+                                <label class="info-label">Salario</label>
+                                <p class="info-value">Q{{ colaborador.salario|floatformat:2|default:"No especificado" }}</p>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="info-item">
+                                <label class="info-label">Fecha de Contratación</label>
+                                <p class="info-value">{{ colaborador.fecha_contratacion|date:"d/m/Y"|default:"No especificada" }}</p>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="info-item">
+                                <label class="info-label">Estado</label>
+                                <span class="badge {% if colaborador.activo %}bg-success{% else %}bg-danger{% endif %}">
+                                    {% if colaborador.activo %}Activo{% else %}Inactivo{% endif %}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="info-item">
+                                <label class="info-label">Fecha de Registro</label>
+                                <p class="info-value">{{ colaborador.creado_en|date:"d/m/Y H:i" }}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Acciones -->
+            <div class="card-modern mt-4">
+                <div class="card-header-modern">
+                    <div class="card-header-icon">
+                        <i class="fas fa-cogs"></i>
+                    </div>
+                    <h5 class="card-header-title">Acciones</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-3">
+                        <a href="{% url 'colaborador_edit' colaborador.id %}" class="btn btn-primary">
+                            <i class="fas fa-edit me-2"></i>Editar Colaborador
+                        </a>
+                        <a href="{% url 'colaboradores_list' %}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left me-2"></i>Volver a la Lista
+                        </a>
+                        {% if colaborador.activo %}
+                        <a href="{% url 'colaborador_delete' colaborador.id %}" class="btn btn-danger">
+                            <i class="fas fa-trash me-2"></i>Eliminar Colaborador
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .hero-section {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 4rem 0;
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+    
+    .hero-title {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin-bottom: 1rem;
+    }
+    
+    .hero-subtitle {
+        font-size: 1.2rem;
+        opacity: 0.9;
+        margin-bottom: 2rem;
+    }
+    
+    .card-modern {
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        border: none;
+        overflow: hidden;
+    }
+    
+    .card-header-modern {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        padding: 1.5rem;
+        border-bottom: 1px solid #dee2e6;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+    
+    .card-header-icon {
+        width: 40px;
+        height: 40px;
+        background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1.2rem;
+    }
+    
+    .card-header-title {
+        margin: 0;
+        font-weight: 600;
+        color: #495057;
+    }
+    
+    .card-body {
+        padding: 2rem;
+    }
+    
+    .info-item {
+        margin-bottom: 1.5rem;
+    }
+    
+    .info-label {
+        font-weight: 600;
+        color: #6c757d;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-size: 0.85rem;
+        margin-bottom: 0.5rem;
+        display: block;
+    }
+    
+    .info-value {
+        background-color: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        padding: 0.75rem 1rem;
+        margin: 0;
+        color: #495057;
+        font-weight: 500;
+    }
+    
+    .badge {
+        font-size: 0.9rem;
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+    }
+    
+    .btn {
+        padding: 1rem 2rem;
+        font-size: 1rem;
+        border-radius: 10px;
+        font-weight: 600;
+    }
+</style>
+{% endblock %}

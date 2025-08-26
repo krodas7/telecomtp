@@ -1,0 +1,209 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load custom_filters %}
+
+{% block title %}Gestionar Permisos - {{ rol.nombre }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">
+            <i class="fas fa-cog"></i> Gestionar Permisos: {{ rol.nombre }}
+        </h1>
+        <a href="{% url 'roles_lista' %}" class="btn btn-secondary btn-sm">
+            <i class="fas fa-arrow-left"></i> Volver a Roles
+        </a>
+    </div>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        Configurar Permisos del Rol: <span class="text-info">{{ rol.nombre }}</span>
+                    </h6>
+                    <small class="text-muted">{{ rol.descripcion }}</small>
+                </div>
+                <div class="card-body">
+                    <form method="POST">
+                        {% csrf_token %}
+                        
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle"></i>
+                            <strong>Instrucciones:</strong> Marca los permisos que quieres asignar a este rol. 
+                            Los permisos se organizan por módulo del sistema.
+                        </div>
+
+                        {% for modulo_info in modulos_con_permisos %}
+                            <div class="card mb-3">
+                                <div class="card-header bg-light">
+                                    <h6 class="mb-0">
+                                        <i class="{{ modulo_info.modulo.icono|default:'fas fa-folder' }}"></i>
+                                        {{ modulo_info.modulo.nombre }}
+                                    </h6>
+                                    <small class="text-muted">{{ modulo_info.modulo.descripcion }}</small>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        {% for permiso in modulo_info.permisos %}
+                                            <div class="col-md-6 col-lg-4 mb-2">
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" 
+                                                           name="permisos" value="{{ permiso.id }}" 
+                                                           id="permiso_{{ permiso.id }}"
+                                                           {% if permiso.id in permisos_actuales %}checked{% endif %}>
+                                                    <label class="form-check-label" for="permiso_{{ permiso.id }}">
+                                                        <span class="badge bg-{{ permiso.tipo|permiso_color }} me-1">
+                                                            {{ permiso.tipo|title }}
+                                                        </span>
+                                                        {{ permiso.nombre }}
+                                                    </label>
+                                                </div>
+                                            </div>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+
+                        <hr>
+
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'roles_lista' %}" class="btn btn-secondary">
+                                <i class="fas fa-times"></i> Cancelar
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> Guardar Permisos
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-info-circle"></i> Información del Rol
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <h6>Detalles del Rol:</h6>
+                    <ul class="list-unstyled">
+                        <li><strong>Nombre:</strong> {{ rol.nombre }}</li>
+                        <li><strong>Descripción:</strong> {{ rol.descripcion }}</li>
+                        <li><strong>Fecha Creación:</strong> {{ rol.creado_en|date:"d/m/Y H:i" }}</li>
+                    </ul>
+                    
+                    <hr>
+                    
+                    <h6>Permisos Actuales:</h6>
+                    <div class="mb-2">
+                        <span class="badge bg-primary me-1">Ver</span>
+                        <span class="badge bg-success me-1">Crear</span>
+                        <span class="badge bg-warning me-1">Editar</span>
+                        <span class="badge bg-danger me-1">Eliminar</span>
+                        <span class="badge bg-info me-1">Exportar</span>
+                    </div>
+                    
+                    <hr>
+                    
+                    <h6>Módulos Disponibles:</h6>
+                    <ul class="list-unstyled">
+                        {% for modulo_info in modulos_con_permisos %}
+                            <li class="mb-1">
+                                <i class="{{ modulo_info.modulo.icono|default:'fas fa-folder' }}"></i>
+                                {{ modulo_info.modulo.nombre }}
+                            </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-exclamation-triangle"></i> Advertencia
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <strong>Importante:</strong> Los cambios en los permisos afectarán inmediatamente a todos los usuarios con este rol.
+                    </div>
+                    
+                    <ul class="list-unstyled">
+                        <li><i class="fas fa-check text-success"></i> Los permisos se aplican en tiempo real</li>
+                        <li><i class="fas fa-check text-success"></i> Los usuarios verán los cambios al recargar la página</li>
+                        <li><i class="fas fa-exclamation-triangle text-warning"></i> Ten cuidado al quitar permisos críticos</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    // Contador de permisos seleccionados
+    function actualizarContador() {
+        const total = $('input[name="permisos"]').length;
+        const seleccionados = $('input[name="permisos"]:checked').length;
+        
+        // Actualizar título con contador
+        $('.card-header h6').html(`
+            Configurar Permisos del Rol: <span class="text-info">{{ rol.nombre }}</span>
+            <small class="text-muted">(${seleccionados}/${total} permisos)</small>
+        `);
+    }
+    
+    // Actualizar contador al cambiar checkboxes
+    $('input[name="permisos"]').on('change', actualizarContador);
+    
+    // Contador inicial
+    actualizarContador();
+    
+    // Seleccionar/deseleccionar todos los permisos de un módulo
+    $('.card-header').click(function() {
+        const cardBody = $(this).siblings('.card-body');
+        const checkboxes = cardBody.find('input[type="checkbox"]');
+        const checkedCount = checkboxes.filter(':checked').length;
+        
+        if (checkedCount === checkboxes.length) {
+            // Si todos están marcados, desmarcar todos
+            checkboxes.prop('checked', false);
+        } else {
+            // Si no todos están marcados, marcar todos
+            checkboxes.prop('checked', true);
+        }
+        
+        actualizarContador();
+    });
+    
+    // Confirmar antes de enviar
+    $('form').on('submit', function(e) {
+        const seleccionados = $('input[name="permisos"]:checked').length;
+        
+        if (seleccionados === 0) {
+            e.preventDefault();
+            alert('Debes seleccionar al menos un permiso para este rol.');
+            return false;
+        }
+        
+        return confirm(`¿Estás seguro de que quieres actualizar los permisos del rol "{{ rol.nombre }}"?\n\nSe asignarán ${seleccionados} permisos.`);
+    });
+});
+</script>
+{% endblock %}

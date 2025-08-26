@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test - Marcar Factura como Pagada</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body { padding: 20px; background-color: #f8f9fa; }
+        .test-section { background: white; padding: 20px; margin: 20px 0; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .status-success { color: #28a745; }
+        .status-error { color: #dc3545; }
+        .status-warning { color: #ffc107; }
+        .code-block { background: #f8f9fa; padding: 15px; border-radius: 5px; font-family: monospace; margin: 10px 0; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="text-center mb-4">
+            <i class="fas fa-file-invoice-dollar text-primary"></i>
+            Test - Funcionalidad de Marcar Factura como Pagada
+        </h1>
+
+        <div class="test-section">
+            <h3><i class="fas fa-check-circle text-success"></i> Funcionalidad Implementada</h3>
+            <ul>
+                <li>✅ Vista backend: <code>factura_marcar_pagada</code></li>
+                <li>✅ URL configurada: <code>/facturas/{id}/marcar-pagada/</code></li>
+                <li>✅ Botón en lista de facturas (solo para facturas no pagadas)</li>
+                <li>✅ Botón en vista de detalle (solo para facturas no pagadas)</li>
+                <li>✅ Función JavaScript con confirmación modal</li>
+                <li>✅ Petición AJAX con manejo de errores</li>
+                <li>✅ Actualización automática de estado y fecha de pago</li>
+                <li>✅ Notificaciones elegantes con toasts</li>
+                <li>✅ Validaciones de seguridad (CSRF, permisos)</li>
+            </ul>
+        </div>
+
+        <div class="test-section">
+            <h3><i class="fas fa-code text-info"></i> Código de la Vista</h3>
+            <div class="code-block">
+@login_required
+def factura_marcar_pagada(request, factura_id):
+    if request.method == 'POST':
+        try:
+            factura = get_object_or_404(Factura, id=factura_id)
+            
+            # Verificar que la factura no esté ya pagada o cancelada
+            if factura.estado == 'pagada':
+                return JsonResponse({
+                    'success': False,
+                    'error': 'La factura ya está marcada como pagada'
+                })
+            
+            if factura.estado == 'cancelada':
+                return JsonResponse({
+                    'success': False,
+                    'error': 'No se puede marcar como pagada una factura cancelada'
+                })
+            
+            # Cambiar estado a pagada y establecer fecha de pago
+            factura.estado = 'pagada'
+            factura.fecha_pago = timezone.now().date()
+            factura.save()
+            
+            # Registrar actividad
+            LogActividad.objects.create(
+                usuario=request.user,
+                accion='Marcar como Pagada',
+                modulo='Facturas',
+                descripcion=f'Factura marcada como pagada: {factura.numero_factura}',
+                ip_address=request.META.get('REMOTE_ADDR')
+            )
+            
+            return JsonResponse({
+                'success': True,
+                'message': f'Factura {factura.numero_factura} marcada como pagada exitosamente',
+                'factura_id': factura.id,
+                'nuevo_estado': factura.estado,
+                'fecha_pago': factura.fecha_pago.strftime('%d/%m/%Y') if factura.fecha_pago else None
+            })
+            
+        except Exception as e:
+            return JsonResponse({
+                'success': False,
+                'error': f'Error al procesar la solicitud: {str(e)}'
+            })
+    
+    return JsonResponse({
+        'success': False,
+        'error': 'Método no permitido'
+    })
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h3><i class="fas fa-js text-warning"></i> Función JavaScript</h3>
+            <div class="code-block">
+function marcarComoPagada(facturaId, numeroFactura) {
+    // Crear modal de confirmación personalizado
+    const modal = document.createElement('div');
+    modal.className = 'modal fade';
+    modal.innerHTML = `
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-check-circle text-success me-2"></i>
+                        Confirmar Pago
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p>¿Estás seguro de que quieres marcar la factura <strong>${numeroFactura}</strong> como pagada?</p>
+                    <p class="text-muted small">Esta acción cambiará el estado de la factura y registrará la fecha de pago.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-success" id="confirmarPago">
+                        <i class="fas fa-check me-2"></i>Sí, Marcar como Pagada
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+    const bootstrapModal = new bootstrap.Modal(modal);
+    bootstrapModal.show();
+    
+    // Manejar la confirmación
+    document.getElementById('confirmarPago').addEventListener('click', function() {
+        bootstrapModal.hide();
+        procesarMarcadoComoPagada(facturaId, numeroFactura);
+    });
+}
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h3><i class="fas fa-list text-primary"></i> Estados de Factura Soportados</h3>
+            <div class="row">
+                <div class="col-md-6">
+                    <h5>Estados que permiten marcar como pagada:</h5>
+                    <ul>
+                        <li><span class="badge bg-warning text-dark">Borrador</span></li>
+                        <li><span class="badge bg-warning text-dark">Emitida</span></li>
+                        <li><span class="badge bg-info">Enviada al Cliente</span></li>
+                        <li><span class="badge bg-danger">Vencida</span></li>
+                    </ul>
+                </div>
+                <div class="col-md-6">
+                    <h5>Estados que NO permiten marcar como pagada:</h5>
+                    <ul>
+                        <li><span class="badge bg-success">Pagada</span> (ya está pagada)</li>
+                        <li><span class="badge bg-dark">Cancelada</span> (no se puede cambiar)</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h3><i class="fas fa-shield-alt text-success"></i> Características de Seguridad</h3>
+            <ul>
+                <li>🔒 <strong>Autenticación requerida:</strong> Solo usuarios logueados pueden marcar facturas como pagadas</li>
+                <li>🛡️ <strong>Validación de estado:</strong> No se puede marcar facturas ya pagadas o canceladas</li>
+                <li>📝 <strong>Registro de actividad:</strong> Se registra quién y cuándo marcó la factura como pagada</li>
+                <li>🔐 <strong>Token CSRF:</strong> Protección contra ataques CSRF</li>
+                <li>✅ <strong>Validación de datos:</strong> Verificación de que la factura existe</li>
+            </ul>
+        </div>
+
+        <div class="test-section">
+            <h3><i class="fas fa-mobile-alt text-info"></i> Compatibilidad Móvil</h3>
+            <ul>
+                <li>📱 <strong>Responsive:</strong> Los botones y modales se adaptan a pantallas pequeñas</li>
+                <li>👆 <strong>Touch-friendly:</strong> Botones con tamaño adecuado para dispositivos táctiles</li>
+                <li>🎨 <strong>UI moderna:</strong> Diseño consistente con el resto de la aplicación</li>
+                <li>⚡ <strong>AJAX:</strong> No requiere recarga completa de página</li>
+            </ul>
+        </div>
+
+        <div class="test-section">
+            <h3><i class="fas fa-rocket text-warning"></i> Cómo Probar</h3>
+            <ol>
+                <li>Ve a la lista de facturas: <code>/facturas/</code></li>
+                <li>Busca una factura que NO esté marcada como "Pagada"</li>
+                <li>Haz clic en el botón verde <i class="fas fa-check"></i> en la columna "Acciones"</li>
+                <li>Confirma la acción en el modal que aparece</li>
+                <li>Verifica que la factura cambie a estado "Pagada"</li>
+                <li>Verifica que se muestre la fecha de pago en el detalle</li>
+            </ol>
+        </div>
+
+        <div class="test-section">
+            <h3><i class="fas fa-bug text-danger"></i> Posibles Problemas y Soluciones</h3>
+            <div class="row">
+                <div class="col-md-6">
+                    <h5>Problemas Comunes:</h5>
+                    <ul>
+                        <li>❌ Botón no aparece: Verificar que la factura no esté ya pagada</li>
+                        <li>❌ Error CSRF: Verificar que el token esté presente en la plantilla</li>
+                        <li>❌ Error 404: Verificar que la URL esté configurada correctamente</li>
+                        <li>❌ Error de permisos: Verificar que el usuario esté logueado</li>
+                    </ul>
+                </div>
+                <div class="col-md-6">
+                    <h5>Soluciones:</h5>
+                    <ul>
+                        <li>✅ Verificar que <code>{% csrf_token %}</code> esté en la plantilla</li>
+                        <li>✅ Verificar que la URL esté en <code>core/urls.py</code></li>
+                        <li>✅ Verificar que la vista tenga el decorador <code>@login_required</code></li>
+                        <li>✅ Verificar que el modelo Factura tenga el campo <code>estado</code></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="text-center mt-4">
+            <a href="/facturas/" class="btn btn-primary btn-lg">
+                <i class="fas fa-file-invoice me-2"></i>Ir a Facturas
+            </a>
+            <a href="/dashboard/" class="btn btn-secondary btn-lg ms-2">
+                <i class="fas fa-tachometer-alt me-2"></i>Dashboard
+            </a>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

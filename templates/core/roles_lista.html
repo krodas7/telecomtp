@@ -1,0 +1,171 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Gestión de Roles{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">
+            <i class="fas fa-user-tag"></i> Gestión de Roles
+        </h1>
+        <div class="d-flex gap-2">
+            <a href="{% url 'roles_resumen' %}" class="btn btn-info btn-sm">
+                <i class="fas fa-chart-pie"></i> Resumen de Permisos
+            </a>
+            <a href="{% url 'usuarios_lista' %}" class="btn btn-secondary btn-sm">
+                <i class="fas fa-arrow-left"></i> Volver a Usuarios
+            </a>
+        </div>
+    </div>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">
+                Roles del Sistema ({{ total_roles }})
+            </h6>
+        </div>
+        <div class="card-body">
+            {% if roles_con_permisos %}
+                <div class="row">
+                    {% for rol_info in roles_con_permisos %}
+                        <div class="col-lg-6 col-xl-4 mb-4">
+                            <div class="card border-left-primary shadow h-100 py-2">
+                                <div class="card-body">
+                                    <div class="row no-gutters align-items-center">
+                                        <div class="col mr-2">
+                                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                                {{ rol_info.rol.nombre }}
+                                            </div>
+                                            <div class="h6 mb-0 font-weight-bold text-gray-800">
+                                                {{ rol_info.rol.descripcion }}
+                                            </div>
+                                            <div class="mt-2">
+                                                <span class="badge bg-info me-2">
+                                                    <i class="fas fa-key"></i> {{ rol_info.permisos_count }} permisos
+                                                </span>
+                                                <span class="badge bg-success">
+                                                    <i class="fas fa-users"></i> {{ rol_info.usuarios_count }} usuarios
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <div class="col-auto">
+                                            <i class="fas fa-user-tag fa-2x text-gray-300"></i>
+                                        </div>
+                                    </div>
+                                    <div class="mt-3">
+                                        <a href="{% url 'rol_permisos' rol_info.rol.id %}" 
+                                           class="btn btn-sm btn-outline-primary">
+                                            <i class="fas fa-cog"></i> Gestionar Permisos
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="text-center py-4">
+                    <i class="fas fa-user-tag fa-3x text-gray-300 mb-3"></i>
+                    <h5 class="text-gray-500">No hay roles configurados</h5>
+                    <p class="text-gray-400">El sistema necesita roles para funcionar correctamente</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Información sobre el sistema de roles -->
+    <div class="row">
+        <div class="col-lg-6">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-info-circle"></i> Información del Sistema
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <h6>Roles Predefinidos:</h6>
+                    <ul class="list-unstyled">
+                        <li class="mb-2">
+                            <strong class="text-danger">Superusuario</strong>
+                            <br><small class="text-muted">Acceso completo a todo el sistema</small>
+                        </li>
+                        <li class="mb-2">
+                            <strong class="text-warning">Administrador</strong>
+                            <br><small class="text-muted">Administrador con permisos amplios</small>
+                        </li>
+                        <li class="mb-2">
+                            <strong class="text-info">Encargado de Proyecto</strong>
+                            <br><small class="text-muted">Gestión de proyectos y clientes</small>
+                        </li>
+                        <li class="mb-2">
+                            <strong class="text-secondary">Colaborador</strong>
+                            <br><small class="text-muted">Acceso limitado de solo lectura</small>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-6">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-shield-alt"></i> Permisos del Sistema
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <h6>Tipos de Permisos:</h6>
+                    <ul class="list-unstyled">
+                        <li class="mb-2">
+                            <span class="badge bg-primary me-2">Ver</span>
+                            <small class="text-muted">Acceso de solo lectura</small>
+                        </li>
+                        <li class="mb-2">
+                            <span class="badge bg-success me-2">Crear</span>
+                            <small class="text-muted">Puede crear nuevos registros</small>
+                        </li>
+                        <li class="mb-2">
+                            <span class="badge bg-warning me-2">Editar</span>
+                            <small class="text-muted">Puede modificar registros</small>
+                        </li>
+                        <li class="mb-2">
+                            <span class="badge bg-danger me-2">Eliminar</span>
+                            <small class="text-muted">Puede eliminar registros</small>
+                        </li>
+                        <li class="mb-2">
+                            <span class="badge bg-info me-2">Exportar</span>
+                            <small class="text-muted">Puede exportar datos</small>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    // Agregar efectos hover a las tarjetas de roles
+    $('.card').hover(
+        function() {
+            $(this).addClass('shadow-lg');
+        },
+        function() {
+            $(this).removeClass('shadow-lg');
+        }
+    );
+});
+</script>
+{% endblock %}

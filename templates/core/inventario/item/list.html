@@ -1,0 +1,340 @@
+{% extends "base.html" %}
+
+{% block title %}Items de Inventario - Sistema de Construcción{% endblock %}
+
+{% block extra_css %}
+<style>
+    .inventario-hero {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 3rem 2rem;
+        border-radius: 20px;
+        margin-bottom: 2rem;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .inventario-hero::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="white" opacity="0.1"/><circle cx="75" cy="75" r="1" fill="white" opacity="0.1"/><circle cx="50" cy="10" r="0.5" fill="white" opacity="0.1"/><circle cx="10" cy="60" r="0.5" fill="white" opacity="0.1"/><circle cx="90" cy="40" r="0.5" fill="white" opacity="0.1"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+        opacity: 0.3;
+    }
+    
+    .inventario-hero-content {
+        position: relative;
+        z-index: 2;
+    }
+    
+    .inventario-hero-title {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin-bottom: 1rem;
+        text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    }
+    
+    .inventario-hero-subtitle {
+        font-size: 1.2rem;
+        opacity: 0.9;
+        margin-bottom: 2rem;
+    }
+    
+    .inventario-stats {
+        display: flex;
+        justify-content: center;
+        gap: 2rem;
+        flex-wrap: wrap;
+    }
+    
+    .inventario-stat {
+        background: rgba(255,255,255,0.1);
+        backdrop-filter: blur(10px);
+        padding: 1rem 1.5rem;
+        border-radius: 15px;
+        border: 1px solid rgba(255,255,255,0.2);
+        transition: all 0.3s ease;
+    }
+    
+    .inventario-stat:hover {
+        transform: translateY(-5px);
+        background: rgba(255,255,255,0.2);
+    }
+    
+    .inventario-stat-number {
+        font-size: 2rem;
+        font-weight: 700;
+        display: block;
+    }
+    
+    .inventario-stat-label {
+        font-size: 0.9rem;
+        opacity: 0.8;
+    }
+    
+    .inventario-actions {
+        background: white;
+        border-radius: 15px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        border: 1px solid rgba(255,255,255,0.2);
+    }
+    
+    .inventario-filters {
+        background: white;
+        border-radius: 15px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        border: 1px solid rgba(255,255,255,0.2);
+    }
+    
+    .btn-neostructure {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        color: white;
+        border: none;
+        border-radius: 12px;
+        padding: 12px 24px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+    }
+    
+    .btn-neostructure:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        color: white;
+    }
+    
+    .btn-success-neo {
+        background: linear-gradient(135deg, #43e97b, #38f9d7);
+        color: white;
+        border: none;
+        border-radius: 12px;
+        padding: 12px 24px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(67, 233, 123, 0.3);
+    }
+    
+    .btn-success-neo:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(67, 233, 123, 0.4);
+        color: white;
+    }
+    
+    .card {
+        border-radius: 15px;
+        border: 1px solid rgba(0,0,0,0.1);
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        transition: all 0.3s ease;
+    }
+    
+    .card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+    }
+    
+    .badge {
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .badge-success {
+        background: linear-gradient(135deg, #43e97b, #38f9d7);
+        color: white;
+    }
+    
+    .badge-secondary {
+        background: linear-gradient(135deg, #6c757d, #495057);
+        color: white;
+    }
+    
+    .form-control, .form-select {
+        border-radius: 8px;
+        border: 2px solid #e9ecef;
+        padding: 12px 16px;
+        font-size: 14px;
+        transition: all 0.3s ease;
+    }
+    
+    .form-control:focus, .form-select:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        transform: translateY(-1px);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Hero Banner -->
+    <div class="inventario-hero">
+        <div class="inventario-hero-content">
+            <h1 class="inventario-hero-title">
+                <i class="fas fa-boxes me-2"></i>Gestión de Inventario
+            </h1>
+            <p class="inventario-hero-subtitle">Administra herramientas, maquinaria y equipos del sistema</p>
+            
+            <!-- Estadísticas -->
+            <div class="inventario-stats">
+                <div class="inventario-stat">
+                    <span class="inventario-stat-number">{{ total_items|default:"0" }}</span>
+                    <span class="inventario-stat-label">Total Items</span>
+                </div>
+                <div class="inventario-stat">
+                    <span class="inventario-stat-number">{{ items_activos|default:"0" }}</span>
+                    <span class="inventario-stat-label">Items Activos</span>
+                </div>
+                <div class="inventario-stat">
+                    <span class="inventario-stat-number">{{ categorias_count|default:"0" }}</span>
+                    <span class="inventario-stat-label">Categorías</span>
+                </div>
+                <div class="inventario-stat">
+                    <span class="inventario-stat-number">Q{{ valor_total|default:"0"|floatformat:2 }}</span>
+                    <span class="inventario-stat-label">Valor Total</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Acciones Rápidas -->
+    <div class="inventario-actions">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h5><i class="fas fa-tasks"></i> Acciones Rápidas</h5>
+                <p class="text-muted mb-0">Gestiona tu inventario de construcción</p>
+            </div>
+            <div>
+                <a href="{% url 'item_create' %}" class="btn btn-success-neo me-2">
+                    <i class="fas fa-plus"></i> Nuevo Item
+                </a>
+                <a href="{% url 'dashboard' %}" class="btn btn-neostructure">
+                    <i class="fas fa-tachometer-alt"></i> Dashboard
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filtros y Búsqueda -->
+    <div class="inventario-filters">
+        <form method="get" class="row g-3">
+            <div class="col-md-4">
+                <input type="text" name="q" class="form-control" placeholder="Buscar items..." value="{{ request.GET.q }}">
+            </div>
+            <div class="col-md-3">
+                <select name="categoria" class="form-select">
+                    <option value="">Todas las categorías</option>
+                    {% for cat in categorias %}
+                        <option value="{{ cat.id }}" {% if request.GET.categoria == cat.id|stringformat:"s" %}selected{% endif %}>
+                            {{ cat.nombre }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <select name="estado" class="form-select">
+                    <option value="">Todos los estados</option>
+                    <option value="activo" {% if request.GET.estado == 'activo' %}selected{% endif %}>Activo</option>
+                    <option value="inactivo" {% if request.GET.estado == 'inactivo' %}selected{% endif %}>Inactivo</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-neostructure">
+                        <i class="fas fa-search"></i> Buscar
+                    </button>
+                    <a href="{% url 'item_list' %}" class="btn btn-outline-secondary">
+                        <i class="fas fa-times"></i> Limpiar
+                    </a>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- Lista de Items -->
+    {% if items %}
+        <div class="row">
+            {% for item in items %}
+            <div class="col-md-6 col-lg-4 mb-4">
+                <div class="card h-100">
+                    <div class="card-header bg-transparent">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <h6 class="card-title mb-0">{{ item.nombre }}</h6>
+                            <span class="badge {% if item.activo %}badge-success{% else %}badge-secondary{% endif %}">
+                                {% if item.activo %}Activo{% else %}Inactivo{% endif %}
+                            </span>
+                        </div>
+                        <small class="text-muted">{{ item.codigo }}</small>
+                    </div>
+                    
+                    <div class="card-body">
+                        {% if item.descripcion %}
+                            <p class="card-text text-muted">{{ item.descripcion|truncatewords:10 }}</p>
+                        {% endif %}
+                        
+                        <div class="row text-center mb-3">
+                            <div class="col-4">
+                                <div class="border-end">
+                                    <div class="fw-bold text-primary">{{ item.stock_actual }}</div>
+                                    <small class="text-muted">Stock</small>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="border-end">
+                                    <div class="fw-bold {% if item.stock_disponible <= item.stock_minimo %}text-danger{% else %}text-success{% endif %}">
+                                        {{ item.stock_disponible }}
+                                    </div>
+                                    <small class="text-muted">Disponible</small>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="fw-bold text-warning">Q{{ item.precio_unitario|floatformat:2 }}</div>
+                                <small class="text-muted">Precio</small>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <small class="text-muted">
+                                <i class="fas fa-tag me-1"></i>{{ item.categoria.nombre|default:"Sin categoría" }}
+                            </small>
+                        </div>
+                        
+                        <div class="d-flex gap-2">
+                            <a href="{% url 'item_detail' item.id %}" class="btn btn-sm btn-outline-primary flex-fill">
+                                <i class="fas fa-eye me-1"></i>Ver
+                            </a>
+                            <a href="{% url 'item_edit' item.id %}" class="btn btn-sm btn-outline-warning flex-fill">
+                                <i class="fas fa-edit me-1"></i>Editar
+                            </a>
+                            <a href="{% url 'item_delete' item.id %}" class="btn btn-sm btn-outline-danger flex-fill" onclick="return confirm('¿Estás seguro de que quieres eliminar este item?')">
+                                <i class="fas fa-trash me-1"></i>Eliminar
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="text-center py-5">
+            <i class="fas fa-boxes fa-3x text-muted mb-3"></i>
+            <h5 class="text-muted">No hay items de inventario disponibles</h5>
+            <p class="text-muted">Comienza agregando tu primer item al inventario</p>
+            <a href="{% url 'item_create' %}" class="btn btn-success-neo">
+                <i class="fas fa-plus"></i> Crear Primer Item
+            </a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
+

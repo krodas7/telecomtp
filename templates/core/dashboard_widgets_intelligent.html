@@ -1,0 +1,363 @@
+{% comment %}
+Dashboard Inteligente - Widgets Avanzados
+Este template se incluye en el dashboard principal para agregar funcionalidades inteligentes
+sin afectar el funcionamiento existente.
+{% endcomment %}
+
+<!-- Contenedor principal de widgets inteligentes -->
+<div id="intelligent-widgets-container" class="mt-4">
+    
+    <!-- Header de control de widgets inteligentes -->
+    <div class="row mb-3">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="fas fa-brain me-2 text-primary"></i>
+                    Dashboard Inteligente
+                </h5>
+                <div class="btn-group" role="group">
+                    <button type="button" class="btn btn-outline-primary btn-sm" id="refresh-intelligent-dashboard">
+                        <i class="fas fa-sync-alt me-1"></i>
+                        Actualizar
+                    </button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" id="toggle-intelligent-widgets">
+                        <i class="fas fa-eye-slash me-1"></i>
+                        Ocultar
+                    </button>
+                </div>
+            </div>
+            <hr class="my-2">
+        </div>
+    </div>
+
+    <!-- Grid de widgets inteligentes -->
+    <div class="row g-3">
+        
+        <!-- Widget de Rentabilidad por Proyecto -->
+        <div class="col-lg-6 col-xl-3">
+            <div id="widget-rentabilidad" class="h-100">
+                <!-- El contenido se genera dinámicamente con JavaScript -->
+            </div>
+        </div>
+
+        <!-- Widget de Flujo de Caja -->
+        <div class="col-lg-6 col-xl-3">
+            <div id="widget-flujo-caja" class="h-100">
+                <!-- El contenido se genera dinámicamente con JavaScript -->
+            </div>
+        </div>
+
+        <!-- Widget de Métricas de Productividad -->
+        <div class="col-lg-6 col-xl-3">
+            <div id="widget-productividad" class="h-100">
+                <!-- El contenido se genera dinámicamente con JavaScript -->
+            </div>
+        </div>
+
+        <!-- Widget de KPIs Inteligentes -->
+        <div class="col-lg-6 col-xl-3">
+            <div id="widget-kpis" class="h-100">
+                <!-- El contenido se genera dinámicamente con JavaScript -->
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Fila adicional para widgets más grandes -->
+    <div class="row g-3 mt-3">
+        
+        <!-- Widget de Análisis de Tendencias -->
+        <div class="col-lg-8">
+            <div class="card h-100">
+                <div class="card-header bg-dark text-white">
+                    <h6 class="mb-0">
+                        <i class="fas fa-chart-area me-2"></i>
+                        Análisis de Tendencias del Negocio
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3 text-center mb-3">
+                            <div class="border rounded p-3">
+                                <h4 class="text-success mb-1" id="tendencia-ventas">+12%</h4>
+                                <small class="text-muted">Crecimiento Ventas</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3 text-center mb-3">
+                            <div class="border rounded p-3">
+                                <h4 class="text-info mb-1" id="tendencia-clientes">+8%</h4>
+                                <small class="text-muted">Nuevos Clientes</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3 text-center mb-3">
+                            <div class="border rounded p-3">
+                                <h4 class="text-warning mb-1" id="tendencia-costos">-5%</h4>
+                                <small class="text-muted">Reducción Costos</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3 text-center mb-3">
+                            <div class="border rounded p-3">
+                                <h4 class="text-primary mb-1" id="tendencia-eficiencia">+15%</h4>
+                                <small class="text-muted">Mejora Eficiencia</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <canvas id="chart-tendencias" height="150"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Widget de Alertas Inteligentes -->
+        <div class="col-lg-4">
+            <div class="card h-100">
+                <div class="card-header bg-warning text-dark">
+                    <h6 class="mb-0">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        Alertas Inteligentes
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div id="alertas-container">
+                        <!-- Las alertas se generan dinámicamente -->
+                        <div class="alert alert-info alert-sm mb-2">
+                            <i class="fas fa-info-circle me-1"></i>
+                            <small>Monitoreando rendimiento del sistema...</small>
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <button class="btn btn-outline-warning btn-sm w-100" id="generar-alertas">
+                            <i class="fas fa-magic me-1"></i>
+                            Generar Alertas
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Fila para métricas avanzadas -->
+    <div class="row g-3 mt-3">
+        
+        <!-- Widget de Comparación de Períodos -->
+        <div class="col-lg-6">
+            <div class="card h-100">
+                <div class="card-header bg-success text-white">
+                    <h6 class="mb-0">
+                        <i class="fas fa-balance-scale me-2"></i>
+                        Comparación de Períodos
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center mb-3">
+                        <div class="col-6">
+                            <h5 class="text-muted">Período Anterior</h5>
+                            <h3 class="text-muted" id="periodo-anterior">Q0</h3>
+                        </div>
+                        <div class="col-6">
+                            <h5 class="text-success">Período Actual</h5>
+                            <h3 class="text-success" id="periodo-actual">Q0</h3>
+                        </div>
+                    </div>
+                    <div class="progress mb-2" style="height: 25px;">
+                        <div class="progress-bar bg-success" id="barra-comparacion" role="progressbar" style="width: 0%">
+                            <span id="porcentaje-comparacion">0%</span>
+                        </div>
+                    </div>
+                    <small class="text-muted">Crecimiento respecto al período anterior</small>
+                </div>
+            </div>
+        </div>
+
+        <!-- Widget de Predicciones -->
+        <div class="col-lg-6">
+            <div class="card h-100">
+                <div class="card-header bg-primary text-white">
+                    <h6 class="mb-0">
+                        <i class="fas fa-crystal-ball me-2"></i>
+                        Predicciones del Sistema
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-6 mb-3">
+                            <div class="text-center">
+                                <h5 class="text-primary mb-1" id="prediccion-ventas">Q0</h5>
+                                <small class="text-muted">Ventas Próximo Mes</small>
+                            </div>
+                        </div>
+                        <div class="col-6 mb-3">
+                            <div class="text-center">
+                                <h5 class="text-info mb-1" id="prediccion-rentabilidad">0%</h5>
+                                <small class="text-muted">Rentabilidad Esperada</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <button class="btn btn-outline-primary btn-sm w-100" id="calcular-predicciones">
+                            <i class="fas fa-calculator me-1"></i>
+                            Calcular Predicciones
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+</div>
+
+<!-- Estilos adicionales para los widgets inteligentes -->
+<style>
+.kpi-circle {
+    font-weight: bold;
+    font-size: 14px;
+}
+
+.alert-sm {
+    padding: 0.5rem;
+    margin-bottom: 0.5rem;
+    font-size: 0.875rem;
+}
+
+.progress {
+    background-color: #e9ecef;
+}
+
+.progress-bar {
+    transition: width 0.6s ease;
+}
+
+/* Animaciones para los widgets */
+.card {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .col-lg-6.col-xl-3 {
+        margin-bottom: 1rem;
+    }
+    
+    .kpi-circle {
+        width: 50px !important;
+        height: 50px !important;
+        font-size: 12px;
+    }
+}
+</style>
+
+<!-- Script para inicializar widgets adicionales -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Inicializar widgets adicionales cuando estén disponibles
+    setTimeout(function() {
+        initializeAdditionalWidgets();
+    }, 2000);
+});
+
+function initializeAdditionalWidgets() {
+    // Widget de Tendencias
+    const ctxTendencias = document.getElementById('chart-tendencias');
+    if (ctxTendencias && typeof Chart !== 'undefined') {
+        new Chart(ctxTendencias, {
+            type: 'line',
+            data: {
+                labels: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun'],
+                datasets: [{
+                    label: 'Rendimiento',
+                    data: [65, 70, 75, 80, 85, 90],
+                    borderColor: '#28a745',
+                    backgroundColor: 'rgba(40, 167, 69, 0.1)',
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 100
+                    }
+                }
+            }
+        });
+    }
+
+    // Botón de generar alertas
+    const btnAlertas = document.getElementById('generar-alertas');
+    if (btnAlertas) {
+        btnAlertas.addEventListener('click', function() {
+            generarAlertasInteligentes();
+        });
+    }
+
+    // Botón de calcular predicciones
+    const btnPredicciones = document.getElementById('calcular-predicciones');
+    if (btnPredicciones) {
+        btnPredicciones.addEventListener('click', function() {
+            calcularPredicciones();
+        });
+    }
+}
+
+function generarAlertasInteligentes() {
+    const container = document.getElementById('alertas-container');
+    if (!container) return;
+
+    const alertas = [
+        { tipo: 'success', mensaje: '¡Excelente! Rentabilidad aumentó 15% este mes', icono: 'check-circle' },
+        { tipo: 'warning', mensaje: 'Atención: 3 facturas próximas a vencer', icono: 'exclamation-triangle' },
+        { tipo: 'info', mensaje: 'Nuevo cliente potencial identificado', icono: 'info-circle' },
+        { tipo: 'danger', mensaje: 'Gasto en materiales superó el presupuesto', icono: 'times-circle' }
+    ];
+
+    container.innerHTML = '';
+    alertas.forEach(alerta => {
+        const alertaHtml = `
+            <div class="alert alert-${alerta.tipo} alert-sm mb-2">
+                <i class="fas fa-${alerta.icono} me-1"></i>
+                <small>${alerta.mensaje}</small>
+            </div>
+        `;
+        container.innerHTML += alertaHtml;
+    });
+}
+
+function calcularPredicciones() {
+    // Simular cálculos de predicciones
+    const ventasPrediccion = Math.floor(Math.random() * 20000) + 30000;
+    const rentabilidadPrediccion = Math.floor(Math.random() * 20) + 25;
+    
+    document.getElementById('prediccion-ventas').textContent = 'Q' + ventasPrediccion.toLocaleString();
+    document.getElementById('prediccion-rentabilidad').textContent = rentabilidadPrediccion + '%';
+    
+    // Actualizar comparación de períodos
+    const periodoAnterior = Math.floor(Math.random() * 15000) + 20000;
+    const periodoActual = Math.floor(Math.random() * 20000) + 25000;
+    const crecimiento = ((periodoActual - periodoAnterior) / periodoAnterior * 100).toFixed(1);
+    
+    document.getElementById('periodo-anterior').textContent = 'Q' + periodoAnterior.toLocaleString();
+    document.getElementById('periodo-actual').textContent = 'Q' + periodoActual.toLocaleString();
+    document.getElementById('porcentaje-comparacion').textContent = crecimiento + '%';
+    
+    const barra = document.getElementById('barra-comparacion');
+    if (barra) {
+        barra.style.width = Math.min(Math.abs(crecimiento), 100) + '%';
+        barra.className = 'progress-bar ' + (crecimiento >= 0 ? 'bg-success' : 'bg-danger');
+    }
+}
+</script>

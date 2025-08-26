@@ -1,0 +1,314 @@
+{% if is_paginated %}
+<div class="pagination-container">
+    <div class="pagination-info">
+        <span class="pagination-text">
+            Mostrando {{ start_index }} - {{ end_index }} de {{ total_count }} elementos
+        </span>
+        <span class="pagination-pages">
+            Página {{ current_page }} de {{ total_pages }}
+        </span>
+    </div>
+    
+    <nav aria-label="Navegación de páginas" class="pagination-nav">
+        <ul class="pagination">
+            <!-- Botón Primera Página -->
+            {% if page_obj.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page=1{% for key, value in url_params.items %}&{{ key }}={{ value }}{% endfor %}" aria-label="Primera página">
+                        <i class="fas fa-angle-double-left"></i>
+                    </a>
+                </li>
+            {% else %}
+                <li class="page-item disabled">
+                    <span class="page-link">
+                        <i class="fas fa-angle-double-left"></i>
+                    </span>
+                </li>
+            {% endif %}
+            
+            <!-- Botón Página Anterior -->
+            {% if page_obj.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ previous_page_number }}{% for key, value in url_params.items %}&{{ key }}={{ value }}{% endfor %}" aria-label="Página anterior">
+                        <i class="fas fa-angle-left"></i>
+                    </a>
+                </li>
+            {% else %}
+                <li class="page-item disabled">
+                    <span class="page-link">
+                        <i class="fas fa-angle-left"></i>
+                    </span>
+                </li>
+            {% endif %}
+            
+            <!-- Números de Página -->
+            {% for page_num in page_range %}
+                {% if page_num == current_page %}
+                    <li class="page-item active">
+                        <span class="page-link">{{ page_num }}</span>
+                    </li>
+                {% elif page_num == 1 or page_num == total_pages or page_num|add:"-1" <= current_page and page_num|add:"1" >= current_page %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_num }}{% for key, value in url_params.items %}&{{ key }}={{ value }}{% endfor %}">{{ page_num }}</a>
+                    </li>
+                {% elif page_num == 2 and current_page > 4 %}
+                    <li class="page-item disabled">
+                        <span class="page-link">...</span>
+                    </li>
+                {% elif page_num == total_pages|add:"-1" and current_page < total_pages|add:"-3" %}
+                    <li class="page-item disabled">
+                        <span class="page-link">...</span>
+                    </li>
+                {% endif %}
+            {% endfor %}
+            
+            <!-- Botón Página Siguiente -->
+            {% if page_obj.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ next_page_number }}{% for key, value in url_params.items %}&{{ key }}={{ value }}{% endfor %}" aria-label="Página siguiente">
+                        <i class="fas fa-angle-right"></i>
+                    </a>
+                </li>
+            {% else %}
+                <li class="page-item disabled">
+                    <span class="page-link">
+                        <i class="fas fa-angle-right"></i>
+                    </span>
+                </li>
+            {% endif %}
+            
+            <!-- Botón Última Página -->
+            {% if page_obj.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ total_pages }}{% for key, value in url_params.items %}&{{ key }}={{ value }}{% endfor %}" aria-label="Última página">
+                        <i class="fas fa-angle-double-right"></i>
+                    </a>
+                </li>
+            {% else %}
+                <li class="page-item disabled">
+                    <span class="page-link">
+                        <i class="fas fa-angle-double-right"></i>
+                    </span>
+                </li>
+            {% endif %}
+        </ul>
+    </nav>
+    
+    <!-- Selector de Tamaño de Página -->
+    <div class="page-size-selector">
+        <label for="page-size-select" class="page-size-label">Elementos por página:</label>
+        <select id="page-size-select" class="page-size-select" onchange="changePageSize(this.value)">
+            <option value="10" {% if per_page == 10 %}selected{% endif %}>10</option>
+            <option value="25" {% if per_page == 25 %}selected{% endif %}>25</option>
+            <option value="50" {% if per_page == 50 %}selected{% endif %}>50</option>
+            <option value="100" {% if per_page == 100 %}selected{% endif %}>100</option>
+        </select>
+    </div>
+</div>
+
+<script>
+function changePageSize(newSize) {
+    const urlParams = new URLSearchParams(window.location.search);
+    urlParams.set('per_page', newSize);
+    urlParams.delete('page'); // Reset a primera página
+    window.location.search = urlParams.toString();
+}
+
+// Agregar estilos dinámicos para la paginación
+document.addEventListener('DOMContentLoaded', function() {
+    const paginationContainer = document.querySelector('.pagination-container');
+    if (paginationContainer) {
+        paginationContainer.style.opacity = '0';
+        paginationContainer.style.transform = 'translateY(20px)';
+        
+        setTimeout(() => {
+            paginationContainer.style.transition = 'all 0.3s ease';
+            paginationContainer.style.opacity = '1';
+            paginationContainer.style.transform = 'translateY(0)';
+        }, 100);
+    }
+});
+</script>
+
+<style>
+.pagination-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    margin: 2rem 0;
+    padding: 1.5rem;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-radius: 15px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.pagination-info {
+    display: flex;
+    gap: 2rem;
+    font-size: 0.9rem;
+    color: #6c757d;
+}
+
+.pagination-text, .pagination-pages {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.pagination-nav {
+    margin: 0;
+}
+
+.pagination {
+    display: flex;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    gap: 0.25rem;
+}
+
+.page-item {
+    margin: 0;
+}
+
+.page-link {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 40px;
+    height: 40px;
+    padding: 0.5rem;
+    color: #2563eb;
+    background: white;
+    border: 2px solid #e9ecef;
+    border-radius: 10px;
+    text-decoration: none;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+}
+
+.page-link:hover {
+    color: #1d4ed8;
+    background: #f8f9fa;
+    border-color: #2563eb;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(37, 99, 235, 0.2);
+}
+
+.page-item.active .page-link {
+    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+    color: white;
+    border-color: #2563eb;
+    box-shadow: 0 4px 15px rgba(37, 99, 235, 0.3);
+}
+
+.page-item.disabled .page-link {
+    color: #adb5bd;
+    background: #f8f9fa;
+    border-color: #e9ecef;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+.page-size-selector {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.page-size-label {
+    font-size: 0.9rem;
+    color: #6c757d;
+    font-weight: 500;
+}
+
+.page-size-select {
+    padding: 0.5rem 1rem;
+    border: 2px solid #e9ecef;
+    border-radius: 8px;
+    background: white;
+    color: #495057;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.page-size-select:focus {
+    outline: none;
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.page-size-select:hover {
+    border-color: #2563eb;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .pagination-container {
+        padding: 1rem;
+    }
+    
+    .pagination-info {
+        flex-direction: column;
+        gap: 0.5rem;
+        text-align: center;
+    }
+    
+    .pagination {
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+    
+    .page-link {
+        min-width: 35px;
+        height: 35px;
+        font-size: 0.85rem;
+    }
+    
+    .page-size-selector {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+}
+
+/* Animaciones */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.pagination-container {
+    animation: fadeInUp 0.5s ease-out;
+}
+
+.page-link {
+    position: relative;
+    overflow: hidden;
+}
+
+.page-link::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: left 0.5s;
+}
+
+.page-link:hover::before {
+    left: 100%;
+}
+</style>
+{% endif %}

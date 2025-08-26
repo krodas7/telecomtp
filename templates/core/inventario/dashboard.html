@@ -1,0 +1,518 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard de Inventario - Sistema de Construcción{% endblock %}
+
+{% block extra_css %}
+<style>
+    .inventario-hero {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 60px 0;
+        margin-bottom: 40px;
+        border-radius: 0 0 30px 30px;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .inventario-hero::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="50" cy="50" r="1" fill="rgba(255,255,255,0.1)"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+        opacity: 0.3;
+    }
+    
+    .inventario-hero-content {
+        position: relative;
+        z-index: 1;
+        text-align: center;
+    }
+    
+    .inventario-hero-title {
+        font-size: 3rem;
+        font-weight: 900;
+        margin-bottom: 20px;
+        text-shadow: 0 4px 8px rgba(0,0,0,0.3);
+    }
+    
+    .inventario-hero-subtitle {
+        font-size: 1.2rem;
+        opacity: 0.9;
+        margin-bottom: 40px;
+    }
+    
+    .inventario-actions {
+        display: flex;
+        gap: 15px;
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+    
+    .inventario-action-btn {
+        background: rgba(255,255,255,0.2);
+        border: 2px solid rgba(255,255,255,0.3);
+        color: white;
+        padding: 12px 24px;
+        border-radius: 50px;
+        text-decoration: none;
+        transition: all 0.3s ease;
+        backdrop-filter: blur(10px);
+    }
+    
+    .inventario-action-btn:hover {
+        background: rgba(255,255,255,0.3);
+        border-color: rgba(255,255,255,0.5);
+        transform: translateY(-3px);
+        color: white;
+        text-decoration: none;
+    }
+    
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 20px;
+        margin-bottom: 40px;
+    }
+    
+    .stat-card {
+        background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+        border-radius: 20px;
+        padding: 30px;
+        text-align: center;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        transition: all 0.3s ease;
+    }
+    
+    .stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+    }
+    
+    .stat-icon {
+        font-size: 3rem;
+        margin-bottom: 20px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+    
+    .stat-value {
+        font-size: 2.5rem;
+        font-weight: 900;
+        color: #2C3E50;
+        margin-bottom: 10px;
+    }
+    
+    .stat-label {
+        font-size: 1rem;
+        color: #6c757d;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+    
+    .content-section {
+        background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+        border-radius: 20px;
+        padding: 30px;
+        margin-bottom: 30px;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    
+    .section-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #2C3E50;
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    .section-title i {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+    
+    .item-card {
+        background: white;
+        border-radius: 15px;
+        padding: 20px;
+        margin-bottom: 15px;
+        border: 1px solid #e9ecef;
+        transition: all 0.3s ease;
+    }
+    
+    .item-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+    }
+    
+    .item-header {
+        display: flex;
+        justify-content: between;
+        align-items: center;
+        margin-bottom: 15px;
+    }
+    
+    .item-name {
+        font-weight: 600;
+        color: #2C3E50;
+        margin: 0;
+    }
+    
+    .item-category {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+    
+    .item-details {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+        gap: 15px;
+        margin-bottom: 15px;
+    }
+    
+    .item-detail {
+        text-align: center;
+    }
+    
+    .detail-label {
+        font-size: 0.8rem;
+        color: #6c757d;
+        text-transform: uppercase;
+        margin-bottom: 5px;
+    }
+    
+    .detail-value {
+        font-weight: 600;
+        color: #2C3E50;
+    }
+    
+    .stock-warning {
+        background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+        color: white;
+        padding: 8px 16px;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        text-align: center;
+    }
+    
+    .asignacion-card {
+        background: white;
+        border-radius: 15px;
+        padding: 20px;
+        margin-bottom: 15px;
+        border: 1px solid #e9ecef;
+        transition: all 0.3s ease;
+    }
+    
+    .asignacion-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+    }
+    
+    .asignacion-header {
+        display: flex;
+        justify-content: between;
+        align-items: center;
+        margin-bottom: 15px;
+    }
+    
+    .asignacion-item {
+        font-weight: 600;
+        color: #2C3E50;
+        margin: 0;
+    }
+    
+    .asignacion-estado {
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+    
+    .estado-asignado { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
+    .estado-en_uso { background: linear-gradient(135deg, #28a745 0%, #20c997 100%); color: white; }
+    .estado-devuelto { background: linear-gradient(135deg, #6c757d 0%, #495057 100%); color: white; }
+    .estado-perdido { background: linear-gradient(135deg, #dc3545 0%, #c82333 100%); color: white; }
+    .estado-dañado { background: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%); color: #2C3E50; }
+    
+    .asignacion-details {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 15px;
+    }
+    
+    .asignacion-detail {
+        text-align: center;
+    }
+    
+    .asignacion-detail-label {
+        font-size: 0.8rem;
+        color: #6c757d;
+        text-transform: uppercase;
+        margin-bottom: 5px;
+    }
+    
+    .asignacion-detail-value {
+        font-weight: 600;
+        color: #2C3E50;
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+        color: #6c757d;
+    }
+    
+    .empty-state i {
+        font-size: 4rem;
+        margin-bottom: 20px;
+        opacity: 0.3;
+    }
+    
+    .empty-state h3 {
+        margin-bottom: 10px;
+        color: #2C3E50;
+    }
+    
+    .empty-state p {
+        margin-bottom: 30px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Hero Section del Inventario -->
+<div class="inventario-hero">
+    <div class="inventario-hero-content">
+        <h1 class="inventario-hero-title">
+            <i class="fas fa-boxes me-3"></i>Gestión de Inventario
+        </h1>
+        <p class="inventario-hero-subtitle">
+            Control completo de herramientas, maquinaria y equipos del sistema de construcción
+        </p>
+        
+        <div class="inventario-actions">
+            <a href="{% url 'item_create' %}" class="inventario-action-btn">
+                <i class="fas fa-plus me-2"></i>Nuevo Item
+            </a>
+            <a href="{% url 'categoria_create' %}" class="inventario-action-btn">
+                <i class="fas fa-tags me-2"></i>Nueva Categoría
+            </a>
+            <a href="{% url 'asignacion_create' %}" class="inventario-action-btn">
+                <i class="fas fa-handshake me-2"></i>Nueva Asignación
+            </a>
+            <a href="{% url 'item_list' %}" class="inventario-action-btn">
+                <i class="fas fa-list me-2"></i>Ver Todo
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Estadísticas Principales -->
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-icon">
+            <i class="fas fa-boxes"></i>
+        </div>
+        <div class="stat-value">{{ total_items }}</div>
+        <div class="stat-label">Total Items</div>
+    </div>
+    
+    <div class="stat-card">
+        <div class="stat-icon">
+            <i class="fas fa-tags"></i>
+        </div>
+        <div class="stat-value">{{ total_categorias }}</div>
+        <div class="stat-label">Categorías</div>
+    </div>
+    
+    <div class="stat-card">
+        <div class="stat-icon">
+            <i class="fas fa-exclamation-triangle"></i>
+        </div>
+        <div class="stat-value">{{ items_bajo_stock }}</div>
+        <div class="stat-label">Bajo Stock</div>
+    </div>
+    
+    <div class="stat-card">
+        <div class="stat-icon">
+            <i class="fas fa-dollar-sign"></i>
+        </div>
+        <div class="stat-value">Q{{ valor_total_inventario|floatformat:0 }}</div>
+        <div class="stat-label">Valor Total</div>
+    </div>
+</div>
+
+<!-- Items Más Asignados -->
+<div class="content-section">
+    <h2 class="section-title">
+        <i class="fas fa-chart-bar"></i>
+        Items Más Utilizados
+    </h2>
+    
+    {% if items_mas_asignados %}
+        {% for item in items_mas_asignados %}
+        <div class="item-card">
+            <div class="item-header">
+                <h4 class="item-name">{{ item.nombre }}</h4>
+                <span class="item-category">{{ item.categoria.nombre }}</span>
+            </div>
+            
+            <div class="item-details">
+                <div class="item-detail">
+                    <div class="detail-label">Stock</div>
+                    <div class="detail-value">{{ item.stock_actual }} {{ item.unidad_medida }}</div>
+                </div>
+                <div class="item-detail">
+                    <div class="detail-label">Disponible</div>
+                    <div class="detail-value">{{ item.stock_disponible }} {{ item.unidad_medida }}</div>
+                </div>
+                <div class="item-detail">
+                    <div class="detail-label">Precio</div>
+                    <div class="detail-value">Q{{ item.precio_unitario|floatformat:2 }}</div>
+                </div>
+                <div class="item-detail">
+                    <div class="detail-label">Asignaciones</div>
+                    <div class="detail-value">{{ item.total_asignaciones }}</div>
+                </div>
+            </div>
+            
+            {% if item.stock_actual <= item.stock_minimo %}
+            <div class="stock-warning">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                Stock bajo - Reabastecer
+            </div>
+            {% endif %}
+        </div>
+        {% endfor %}
+    {% else %}
+        <div class="empty-state">
+            <i class="fas fa-boxes"></i>
+            <h3>No hay items en el inventario</h3>
+            <p>Comienza agregando herramientas, maquinaria y equipos al sistema</p>
+            <a href="{% url 'item_create' %}" class="btn btn-primary">
+                <i class="fas fa-plus me-2"></i>Agregar Primer Item
+            </a>
+        </div>
+    {% endif %}
+</div>
+
+<!-- Categorías con Más Items -->
+<div class="content-section">
+    <h2 class="section-title">
+        <i class="fas fa-tags"></i>
+        Distribución por Categorías
+    </h2>
+    
+    {% if categorias_con_items %}
+        <div class="row">
+            {% for categoria in categorias_con_items %}
+            <div class="col-md-6 col-lg-4 mb-3">
+                <div class="item-card">
+                    <div class="item-header">
+                        <h4 class="item-name">{{ categoria.nombre }}</h4>
+                        <span class="item-category">{{ categoria.total_items }} items</span>
+                    </div>
+                    
+                    {% if categoria.descripcion %}
+                    <p class="text-muted mb-3">{{ categoria.descripcion|truncatewords:10 }}</p>
+                    {% endif %}
+                    
+                    <a href="{% url 'categoria_detail' categoria.id %}" class="btn btn-outline-primary btn-sm">
+                        <i class="fas fa-eye me-2"></i>Ver Detalle
+                    </a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="empty-state">
+            <i class="fas fa-tags"></i>
+            <h3>No hay categorías definidas</h3>
+            <p>Crea categorías para organizar mejor tu inventario</p>
+            <a href="{% url 'categoria_create' %}" class="btn btn-primary">
+                <i class="fas fa-plus me-2"></i>Crear Primera Categoría
+            </a>
+        </div>
+    {% endif %}
+</div>
+
+<!-- Asignaciones Recientes -->
+<div class="content-section">
+    <h2 class="section-title">
+        <i class="fas fa-handshake"></i>
+        Asignaciones Recientes
+    </h2>
+    
+    {% if asignaciones_recientes %}
+        {% for asignacion in asignaciones_recientes %}
+        <div class="asignacion-card">
+            <div class="asignacion-header">
+                <h4 class="asignacion-item">{{ asignacion.item.nombre }}</h4>
+                <span class="asignacion-estado estado-{{ asignacion.estado }}">
+                    {{ asignacion.get_estado_display }}
+                </span>
+            </div>
+            
+            <div class="asignacion-details">
+                <div class="asignacion-detail">
+                    <div class="asignacion-detail-label">Proyecto</div>
+                    <div class="asignacion-detail-value">{{ asignacion.proyecto.nombre }}</div>
+                </div>
+                <div class="asignacion-detail">
+                    <div class="asignacion-detail-label">Cantidad</div>
+                    <div class="asignacion-detail-value">{{ asignacion.cantidad_asignada }}</div>
+                </div>
+                <div class="asignacion-detail">
+                    <div class="asignacion-detail-label">Asignado Por</div>
+                    <div class="asignacion-detail-value">{{ asignacion.asignado_por.get_full_name|default:asignacion.asignado_por.username }}</div>
+                </div>
+                <div class="asignacion-detail">
+                    <div class="asignacion-detail-label">Fecha</div>
+                    <div class="asignacion-detail-value">{{ asignacion.fecha_asignacion|date:"d/m/Y" }}</div>
+                </div>
+            </div>
+            
+            {% if asignacion.notas %}
+            <div class="mt-3">
+                <small class="text-muted">
+                    <i class="fas fa-comment me-1"></i>
+                    {{ asignacion.notas|truncatewords:15 }}
+                </small>
+            </div>
+            {% endif %}
+        </div>
+        {% endfor %}
+        
+        <div class="text-center mt-4">
+            <a href="{% url 'asignacion_list' %}" class="btn btn-primary">
+                <i class="fas fa-list me-2"></i>Ver Todas las Asignaciones
+            </a>
+        </div>
+    {% else %}
+        <div class="empty-state">
+            <i class="fas fa-handshake"></i>
+            <h3>No hay asignaciones registradas</h3>
+            <p>Comienza asignando items del inventario a los proyectos</p>
+            <a href="{% url 'asignacion_create' %}" class="btn btn-primary">
+                <i class="fas fa-plus me-2"></i>Crear Primera Asignación
+            </a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

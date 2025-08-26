@@ -1,0 +1,178 @@
+{% extends "base.html" %}
+
+{% block title %}Gastos - Sistema de Construcción{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<div class="hero-section">
+    <div class="hero-content">
+        <h1 class="hero-title">
+            <i class="fas fa-money-bill-wave me-3"></i>Gestión de Gastos
+        </h1>
+        <p class="hero-subtitle">
+            Controla y administra todos los gastos del sistema de construcción
+        </p>
+        
+        <!-- Estadísticas Rápidas -->
+        <div class="hero-stats">
+            <div class="hero-stat">
+                <span class="hero-stat-number">{{ gastos.count }}</span>
+                <span class="hero-stat-label">Total Gastos</span>
+            </div>
+            <div class="hero-stat">
+                <span class="hero-stat-number">{{ gastos|dictsort:"aprobado"|length }}</span>
+                <span class="hero-stat-label">Aprobados</span>
+            </div>
+            <div class="hero-stat">
+                <span class="hero-stat-number">{{ gastos|dictsort:"aprobado"|length }}</span>
+                <span class="hero-stat-label">Pendientes</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Acciones Principales -->
+<div class="card-modern">
+    <div class="card-header-modern">
+        <div class="card-header-icon">
+            <i class="fas fa-tasks"></i>
+        </div>
+        <h4 class="card-header-title">Acciones Rápidas</h4>
+    </div>
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <p class="text-muted mb-0">Gestiona los gastos del sistema</p>
+        </div>
+        <a href="{% url 'gasto_create' %}" class="btn btn-success">
+            <i class="fas fa-plus me-2"></i>Nuevo Gasto
+        </a>
+    </div>
+</div>
+
+<!-- Lista de Gastos -->
+<div class="card-modern">
+    <div class="card-header-modern">
+        <div class="card-header-icon">
+            <i class="fas fa-list"></i>
+        </div>
+        <h4 class="card-header-title">Lista de Gastos</h4>
+    </div>
+    
+    {% if gastos %}
+        <div class="table-responsive">
+            <table class="table-modern">
+                <thead>
+                    <tr>
+                        <th>Descripción</th>
+                        <th>Categoría</th>
+                        <th>Monto</th>
+                        <th>Proyecto</th>
+                        <th>Fecha</th>
+                        <th>Estado</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for gasto in gastos %}
+                    <tr>
+                        <td>
+                            <div class="fw-bold">{{ gasto.descripcion }}</div>
+                            {% if gasto.observaciones %}
+                                <div class="text-muted small">{{ gasto.observaciones|truncatechars:50 }}</div>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <span class="badge-modern info">{{ gasto.categoria.nombre }}</span>
+                        </td>
+                        <td>
+                            <span class="fw-bold text-danger">Q{{ gasto.monto|floatformat:2 }}</span>
+                        </td>
+                        <td>
+                            {% if gasto.proyecto %}
+                                <span class="text-primary">{{ gasto.proyecto.nombre }}</span>
+                            {% else %}
+                                <span class="text-muted">-</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="text-muted">
+                                <i class="fas fa-calendar me-1"></i>{{ gasto.fecha_gasto|date:"d/m/Y" }}
+                            </div>
+                        </td>
+                        <td>
+                            {% if gasto.aprobado %}
+                                <span class="badge-modern success">Aprobado</span>
+                            {% else %}
+                                <span class="badge-modern warning">Pendiente</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="d-flex gap-2 justify-content-center">
+                                <a href="{% url 'gasto_edit' gasto.id %}" class="btn btn-primary btn-sm" title="Editar">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <a href="{% url 'gasto_delete' gasto.id %}" class="btn btn-danger btn-sm" title="Eliminar">
+                                    <i class="fas fa-trash"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <div class="text-center py-5">
+            <i class="fas fa-money-bill-wave fa-4x text-muted mb-3"></i>
+            <h5 class="text-muted">No hay gastos registrados</h5>
+            <p class="text-muted mb-3">Comienza agregando el primer gasto del sistema</p>
+            <a href="{% url 'gasto_create' %}" class="btn btn-success">
+                <i class="fas fa-plus me-2"></i>Agregar Gasto
+            </a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Animación de entrada para las tarjetas
+    const cards = document.querySelectorAll('.card-modern');
+    cards.forEach((card, index) => {
+        card.style.opacity = '0';
+        card.style.transform = 'translateY(30px)';
+        
+        setTimeout(() => {
+            card.style.transition = 'all 0.8s ease';
+            card.style.opacity = '1';
+            card.style.transform = 'translateY(0)';
+        }, index * 200);
+    });
+    
+    // Efecto hover para las estadísticas del hero
+    const heroStats = document.querySelectorAll('.hero-stat');
+    heroStats.forEach(stat => {
+        stat.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-10px) scale(1.05)';
+        });
+        
+        stat.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(0) scale(1)';
+        });
+    });
+    
+    // Efecto hover para las filas de la tabla
+    const tableRows = document.querySelectorAll('.table-modern tbody tr');
+    tableRows.forEach(row => {
+        row.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-2px)';
+        });
+        
+        row.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(0)';
+        });
+    });
+});
+</script>
+{% endblock %}

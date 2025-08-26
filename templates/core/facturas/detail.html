@@ -1,0 +1,325 @@
+{% extends "base.html" %}
+{% block title %}Detalle de Factura - Sistema de Construcción{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<div class="hero-section">
+    <div class="hero-content">
+        <h1 class="hero-title">
+            <i class="fas fa-file-invoice-dollar me-2"></i>Detalle de Factura
+        </h1>
+        <p class="hero-subtitle">
+            Información completa de la factura del sistema
+        </p>
+    </div>
+</div>
+
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <!-- Información de la Factura -->
+            <div class="card-modern">
+                <div class="card-header-modern">
+                    <div class="card-header-icon">
+                        <i class="fas fa-file-invoice-dollar"></i>
+                    </div>
+                    <h5 class="card-header-title">Información de la Factura</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="info-item">
+                                <label class="info-label">Número de Factura</label>
+                                <p class="info-value">{{ factura.numero_factura }}</p>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="info-item">
+                                <label class="info-label">Estado</label>
+                                <span class="badge {% if factura.estado == 'pagada' %}bg-success{% elif factura.estado == 'emitida' %}bg-warning{% else %}bg-danger{% endif %}">
+                                    {{ factura.get_estado_display }}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="info-item">
+                                <label class="info-label">Monto Total</label>
+                                <p class="info-value">Q{{ factura.monto_total|floatformat:2 }}</p>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="info-item">
+                                <label class="info-label">Monto Pagado</label>
+                                <p class="info-value">Q{{ factura.monto_pagado|floatformat:2 }}</p>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="info-item">
+                                <label class="info-label">Fecha de Emisión</label>
+                                <p class="info-value">{{ factura.fecha_emision|date:"d/m/Y" }}</p>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="info-item">
+                                <label class="info-label">Fecha de Vencimiento</label>
+                                <p class="info-value">{{ factura.fecha_vencimiento|date:"d/m/Y" }}</p>
+                            </div>
+                        </div>
+                        {% if factura.estado == 'pagada' and factura.fecha_pago %}
+                        <div class="col-md-6">
+                            <div class="info-item">
+                                <label class="info-label">Fecha de Pago</label>
+                                <p class="info-value text-success">
+                                    <i class="fas fa-check-circle me-2"></i>{{ factura.fecha_pago|date:"d/m/Y" }}
+                                </p>
+                            </div>
+                        </div>
+                        {% endif %}
+                        <div class="col-12">
+                            <div class="info-item">
+                                <label class="info-label">Cliente</label>
+                                <p class="info-value">{{ factura.cliente.razon_social }}</p>
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <div class="info-item">
+                                <label class="info-label">Proyecto</label>
+                                <p class="info-value">{{ factura.proyecto.nombre }}</p>
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <div class="info-item">
+                                <label class="info-label">Creado por</label>
+                                <p class="info-value">
+                                    {% if factura.creado_por %}
+                                        {{ factura.creado_por.get_full_name|default:factura.creado_por.username }}
+                                    {% else %}
+                                        <span class="text-muted">No especificado</span>
+                                    {% endif %}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Información del Proyecto -->
+            <div class="card-modern mt-4">
+                <div class="card-header-modern">
+                    <div class="card-header-icon">
+                        <i class="fas fa-project-diagram"></i>
+                    </div>
+                    <h5 class="card-header-title">Información del Proyecto</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="info-item">
+                                <label class="info-label">Nombre del Proyecto</label>
+                                <p class="info-value">{{ factura.proyecto.nombre }}</p>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="info-item">
+                                <label class="info-label">Estado del Proyecto</label>
+                                <span class="badge {% if factura.proyecto.estado == 'completado' %}bg-success{% elif factura.proyecto.estado == 'en_progreso' %}bg-primary{% elif factura.proyecto.estado == 'pendiente' %}bg-warning{% else %}bg-secondary{% endif %}">
+                                    {{ factura.proyecto.get_estado_display }}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="info-item">
+                                <label class="info-label">Presupuesto del Proyecto</label>
+                                <p class="info-value">Q{{ factura.proyecto.presupuesto|floatformat:2|default:"No especificado" }}</p>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="info-item">
+                                <label class="info-label">Fecha de Inicio</label>
+                                <p class="info-value">{{ factura.proyecto.fecha_inicio|date:"d/m/Y"|default:"No especificada" }}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Acciones -->
+            <div class="card-modern mt-4">
+                <div class="card-header-modern">
+                    <div class="card-header-icon">
+                        <i class="fas fa-cogs"></i>
+                    </div>
+                    <h5 class="card-header-title">Acciones</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-3">
+                        {% if factura.estado != 'pagada' %}
+                            <button type="button" class="btn btn-success" onclick="marcarComoPagada({{ factura.id }}, '{{ factura.numero_factura }}')">
+                                <i class="fas fa-check me-2"></i>Marcar como Pagada
+                            </button>
+                        {% endif %}
+                        <a href="{% url 'factura_edit' factura.id %}" class="btn btn-primary">
+                            <i class="fas fa-edit me-2"></i>Editar Factura
+                        </a>
+                        <a href="{% url 'facturas_list' %}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left me-2"></i>Volver a la Lista
+                        </a>
+                        <a href="{% url 'factura_delete' factura.id %}" class="btn btn-danger">
+                            <i class="fas fa-trash me-2"></i>Eliminar Factura
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Token CSRF para las funciones JavaScript -->
+{% csrf_token %}
+
+<script>
+function marcarComoPagada(facturaId, numeroFactura) {
+    if (confirm(`¿Estás seguro de que quieres marcar la factura ${numeroFactura} como pagada?`)) {
+        // Obtener el token CSRF
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+        
+        // Mostrar indicador de carga
+        const button = event.target.closest('button');
+        const originalContent = button.innerHTML;
+        button.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Procesando...';
+        button.disabled = true;
+        
+        // Realizar petición AJAX
+        fetch(`/facturas/${facturaId}/marcar-pagada/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Mostrar mensaje de éxito
+                alert(data.message);
+                // Recargar la página para mostrar el cambio
+                location.reload();
+            } else {
+                // Mostrar mensaje de error
+                alert('Error: ' + data.error);
+                // Restaurar el botón
+                button.innerHTML = originalContent;
+                button.disabled = false;
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error al procesar la solicitud. Por favor, inténtalo de nuevo.');
+            // Restaurar el botón
+            button.innerHTML = originalContent;
+            button.disabled = false;
+        });
+    }
+}
+</script>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .hero-section {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 4rem 0;
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+    
+    .hero-title {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin-bottom: 1rem;
+    }
+    
+    .hero-subtitle {
+        font-size: 1.2rem;
+        opacity: 0.9;
+        margin-bottom: 2rem;
+    }
+    
+    .card-modern {
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        border: none;
+        overflow: hidden;
+    }
+    
+    .card-header-modern {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        padding: 1.5rem;
+        border-bottom: 1px solid #dee2e6;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+    
+    .card-header-icon {
+        width: 40px;
+        height: 40px;
+        background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1.2rem;
+    }
+    
+    .card-header-title {
+        margin: 0;
+        font-weight: 600;
+        color: #495057;
+    }
+    
+    .card-body {
+        padding: 2rem;
+    }
+    
+    .info-item {
+        margin-bottom: 1.5rem;
+    }
+    
+    .info-label {
+        font-weight: 600;
+        color: #6c757d;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-size: 0.85rem;
+        margin-bottom: 0.5rem;
+        display: block;
+    }
+    
+    .info-value {
+        background-color: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        padding: 0.75rem 1rem;
+        margin: 0;
+        color: #495057;
+        font-weight: 500;
+    }
+    
+    .badge {
+        font-size: 0.9rem;
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+    }
+    
+    .btn {
+        padding: 1rem 2rem;
+        font-size: 1rem;
+        border-radius: 10px;
+        font-weight: 600;
+    }
+</style>
+{% endblock %}

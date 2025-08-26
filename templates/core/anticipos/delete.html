@@ -1,0 +1,150 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Eliminar Anticipo - Sistema de Construcción{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="d-flex align-items-center justify-content-between mb-4">
+        <div>
+            <h1 class="h3 mb-0 text-gray-800">
+                <i class="fas fa-trash text-danger me-2"></i>
+                Eliminar Anticipo
+            </h1>
+            <p class="text-muted mb-0">Confirma la eliminación del anticipo {{ anticipo.numero_anticipo }}</p>
+        </div>
+        <a href="{% url 'anticipo_detail' anticipo.id %}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left me-2"></i>
+            Volver al Detalle
+        </a>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 bg-danger text-white">
+                    <h6 class="m-0 font-weight-bold">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        Confirmar Eliminación
+                    </h6>
+                </div>
+                <div class="card-body text-center">
+                    <div class="mb-4">
+                        <div class="bg-danger text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px;">
+                            <i class="fas fa-trash fa-3x"></i>
+                        </div>
+                        <h4 class="text-danger">¿Estás seguro de que quieres eliminar este anticipo?</h4>
+                        <p class="text-muted">Esta acción no se puede deshacer y eliminará permanentemente todos los datos asociados.</p>
+                    </div>
+
+                    <!-- Información del Anticipo -->
+                    <div class="card border-danger mb-4">
+                        <div class="card-header py-2 bg-light">
+                            <h6 class="mb-0 text-danger">
+                                <i class="fas fa-info-circle me-2"></i>
+                                Información del Anticipo a Eliminar
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6 text-start">
+                                    <p><strong>Número:</strong> {{ anticipo.numero_anticipo }}</p>
+                                    <p><strong>Cliente:</strong> {{ anticipo.cliente.razon_social }}</p>
+                                    <p><strong>Proyecto:</strong> {{ anticipo.proyecto.nombre }}</p>
+                                </div>
+                                <div class="col-md-6 text-start">
+                                    <p><strong>Monto:</strong> <span class="text-success">Q{{ anticipo.monto|floatformat:2 }}</span></p>
+                                    <p><strong>Estado:</strong> 
+                                        {% if anticipo.estado == 'pendiente' %}
+                                            <span class="badge bg-warning text-dark">Pendiente</span>
+                                        {% elif anticipo.estado == 'aplicado' %}
+                                            <span class="badge bg-success">Aplicado</span>
+                                        {% elif anticipo.estado == 'cancelado' %}
+                                            <span class="badge bg-danger">Cancelado</span>
+                                        {% elif anticipo.estado == 'devuelto' %}
+                                            <span class="badge bg-info">Devuelto</span>
+                                        {% endif %}
+                                    </p>
+                                                                         <p><strong>Fecha:</strong> {{ anticipo.fecha_recepcion|date:"d/m/Y" }}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Advertencias -->
+                    <div class="alert alert-warning border-warning mb-4">
+                        <h6 class="text-warning mb-2">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            Advertencias Importantes
+                        </h6>
+                        <ul class="text-start mb-0">
+                            <li>Se eliminará permanentemente toda la información del anticipo</li>
+                            <li>Si tiene aplicaciones a facturas, estas se verán afectadas</li>
+                            <li>No se puede recuperar la información una vez eliminada</li>
+                            <li>Se registrará la eliminación en el historial del sistema</li>
+                        </ul>
+                    </div>
+
+                    <!-- Formulario de confirmación -->
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="d-flex justify-content-center gap-3">
+                            <a href="{% url 'anticipo_detail' anticipo.id %}" class="btn btn-secondary btn-lg">
+                                <i class="fas fa-times me-2"></i>
+                                Cancelar
+                            </a>
+                            <button type="submit" class="btn btn-danger btn-lg">
+                                <i class="fas fa-trash me-2"></i>
+                                Sí, Eliminar Anticipo
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Información adicional -->
+            <div class="card shadow">
+                <div class="card-header py-3 bg-info text-white">
+                    <h6 class="m-0 font-weight-bold">
+                        <i class="fas fa-lightbulb me-2"></i>
+                        Alternativas a la Eliminación
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6 class="text-info">
+                                <i class="fas fa-edit me-2"></i>
+                                Editar en lugar de Eliminar
+                            </h6>
+                            <p class="small text-muted">
+                                Si solo necesitas corregir información, considera editar el anticipo 
+                                en lugar de eliminarlo completamente.
+                            </p>
+                            <a href="{% url 'anticipo_edit' anticipo.id %}" class="btn btn-sm btn-outline-info">
+                                <i class="fas fa-edit me-1"></i>
+                                Editar Anticipo
+                            </a>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="text-success">
+                                <i class="fas fa-archive me-2"></i>
+                                Archivar en lugar de Eliminar
+                            </h6>
+                            <p class="small text-muted">
+                                Para mantener el historial, podrías cambiar el estado a "Cancelado" 
+                                en lugar de eliminar el registro.
+                            </p>
+                            <a href="{% url 'anticipo_edit' anticipo.id %}" class="btn btn-sm btn-outline-success">
+                                <i class="fas fa-archive me-1"></i>
+                                Cambiar Estado
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

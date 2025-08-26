@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ notificacion.titulo }}</title>
+    <style>
+        /* Reset CSS */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f8f9fa;
+        }
+        
+        .email-container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+        
+        .email-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .email-header h1 {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+        
+        .email-header .subtitle {
+            font-size: 16px;
+            opacity: 0.9;
+        }
+        
+        .email-content {
+            padding: 40px 30px;
+        }
+        
+        .notification-card {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 25px;
+            border-left: 5px solid #007bff;
+        }
+        
+        .notification-icon {
+            font-size: 48px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        .notification-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+        
+        .notification-message {
+            font-size: 16px;
+            line-height: 1.7;
+            color: #555;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .notification-meta {
+            background-color: #ffffff;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .meta-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .meta-item:last-child {
+            border-bottom: none;
+        }
+        
+        .meta-label {
+            font-weight: 600;
+            color: #6c757d;
+        }
+        
+        .meta-value {
+            color: #495057;
+        }
+        
+        .action-buttons {
+            text-align: center;
+            margin-top: 30px;
+        }
+        
+        .btn-primary {
+            display: inline-block;
+            background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+            color: white;
+            text-decoration: none;
+            padding: 12px 30px;
+            border-radius: 25px;
+            font-weight: 600;
+            font-size: 16px;
+            margin: 0 10px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 123, 255, 0.3);
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 123, 255, 0.4);
+        }
+        
+        .btn-secondary {
+            display: inline-block;
+            background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
+            color: white;
+            text-decoration: none;
+            padding: 12px 30px;
+            border-radius: 25px;
+            font-weight: 600;
+            font-size: 16px;
+            margin: 0 10px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(108, 117, 125, 0.3);
+        }
+        
+        .btn-secondary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(108, 117, 125, 0.4);
+        }
+        
+        .email-footer {
+            background-color: #f8f9fa;
+            padding: 25px 30px;
+            text-align: center;
+            border-top: 1px solid #e9ecef;
+        }
+        
+        .footer-text {
+            color: #6c757d;
+            font-size: 14px;
+            margin-bottom: 15px;
+        }
+        
+        .footer-links {
+            margin-bottom: 15px;
+        }
+        
+        .footer-links a {
+            color: #007bff;
+            text-decoration: none;
+            margin: 0 10px;
+            font-size: 14px;
+        }
+        
+        .footer-links a:hover {
+            text-decoration: underline;
+        }
+        
+        .priority-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .priority-alta {
+            background-color: #dc3545;
+            color: white;
+        }
+        
+        .priority-normal {
+            background-color: #007bff;
+            color: white;
+        }
+        
+        .priority-baja {
+            background-color: #28a745;
+            color: white;
+        }
+        
+        .priority-urgente {
+            background-color: #fd7e14;
+            color: white;
+        }
+        
+        /* Responsive design */
+        @media only screen and (max-width: 600px) {
+            .email-container {
+                margin: 10px;
+                border-radius: 8px;
+            }
+            
+            .email-header,
+            .email-content,
+            .email-footer {
+                padding: 20px;
+            }
+            
+            .notification-card {
+                padding: 20px;
+            }
+            
+            .btn-primary,
+            .btn-secondary {
+                display: block;
+                margin: 10px auto;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <!-- Header del Email -->
+        <div class="email-header">
+            <h1>🔔 Sistema de Construcción</h1>
+            <p class="subtitle">Notificación del Sistema</p>
+        </div>
+        
+        <!-- Contenido Principal -->
+        <div class="email-content">
+            <div class="notification-card">
+                <div class="notification-icon">
+                    {% if notificacion.tipo == 'factura' %}📄
+                    {% elif notificacion.tipo == 'proyecto' %}🏗️
+                    {% elif notificacion.tipo == 'gasto' %}💰
+                    {% elif notificacion.tipo == 'archivo' %}📁
+                    {% else %}🔔
+                    {% endif %}
+                </div>
+                
+                <h2 class="notification-title">{{ notificacion.titulo }}</h2>
+                <p class="notification-message">{{ notificacion.mensaje }}</p>
+                
+                <!-- Información de la Notificación -->
+                <div class="notification-meta">
+                    <div class="meta-item">
+                        <span class="meta-label">Tipo:</span>
+                        <span class="meta-value">{{ notificacion.get_tipo_display }}</span>
+                    </div>
+                    <div class="meta-item">
+                        <span class="meta-label">Prioridad:</span>
+                        <span class="meta-value">
+                            <span class="priority-badge priority-{{ notificacion.prioridad }}">
+                                {{ notificacion.get_prioridad_display }}
+                            </span>
+                        </span>
+                    </div>
+                    <div class="meta-item">
+                        <span class="meta-label">Fecha:</span>
+                        <span class="meta-value">{{ notificacion.fecha_creacion|date:"d/m/Y H:i" }}</span>
+                    </div>
+                    {% if notificacion.proyecto %}
+                    <div class="meta-item">
+                        <span class="meta-label">Proyecto:</span>
+                        <span class="meta-value">{{ notificacion.proyecto.nombre }}</span>
+                    </div>
+                    {% endif %}
+                    {% if notificacion.factura %}
+                    <div class="meta-item">
+                        <span class="meta-label">Factura:</span>
+                        <span class="meta-value">#{{ notificacion.factura.numero }}</span>
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <!-- Botones de Acción -->
+                <div class="action-buttons">
+                    <a href="{{ base_url }}/notificaciones/" class="btn-primary">
+                        Ver Todas las Notificaciones
+                    </a>
+                    {% if notificacion.proyecto %}
+                    <a href="{{ base_url }}/proyectos/{{ notificacion.proyecto.id }}/" class="btn-secondary">
+                        Ver Proyecto
+                    </a>
+                    {% endif %}
+                    {% if notificacion.factura %}
+                    <a href="{{ base_url }}/facturas/{{ notificacion.factura.id }}/" class="btn-secondary">
+                        Ver Factura
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Footer del Email -->
+        <div class="email-footer">
+            <p class="footer-text">
+                Esta notificación fue enviada automáticamente por el Sistema de Construcción.
+            </p>
+            <div class="footer-links">
+                <a href="{{ base_url }}/notificaciones/configurar/">Configurar Notificaciones</a>
+                <a href="{{ base_url }}/dashboard/">Ir al Dashboard</a>
+            </div>
+            <p class="footer-text">
+                © {% now "Y" %} Sistema de Construcción. Todos los derechos reservados.
+            </p>
+        </div>
+    </div>
+</body>
+</html>

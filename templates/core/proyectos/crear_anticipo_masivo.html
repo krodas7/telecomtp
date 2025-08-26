@@ -1,0 +1,326 @@
+{% extends "base.html" %}
+
+{% block title %}Anticipo Masivo - {{ proyecto.nombre }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .anticipo-container {
+        background: white;
+        border-radius: 15px;
+        padding: 2rem;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        border: 1px solid rgba(255,255,255,0.2);
+        margin-bottom: 2rem;
+    }
+    
+    .proyecto-header {
+        background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+        color: white;
+        padding: 2rem;
+        border-radius: 15px;
+        margin-bottom: 2rem;
+        text-align: center;
+    }
+    
+    .proyecto-header h2 {
+        margin: 0;
+        font-size: 2rem;
+        font-weight: 700;
+    }
+    
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+    
+    .form-label {
+        font-weight: 600;
+        color: #495057;
+        margin-bottom: 0.5rem;
+        display: block;
+    }
+    
+    .form-control {
+        width: 100%;
+        padding: 0.75rem;
+        border: 2px solid #e9ecef;
+        border-radius: 10px;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+    }
+    
+    .form-control:focus {
+        outline: none;
+        border-color: #17a2b8;
+        box-shadow: 0 0 0 3px rgba(23, 162, 184, 0.1);
+    }
+    
+    .btn-crear {
+        background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%);
+        border: none;
+        color: white;
+        padding: 1rem 2rem;
+        border-radius: 10px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
+        cursor: pointer;
+    }
+    
+    .btn-crear:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(40, 167, 69, 0.4);
+        background: linear-gradient(135deg, #1e7e34 0%, #155724 100%);
+    }
+    
+    .btn-cancelar {
+        background: linear-gradient(135deg, #6c757d 0%, #545b62 100%);
+        border: none;
+        color: white;
+        padding: 1rem 2rem;
+        border-radius: 10px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-block;
+        margin-right: 1rem;
+        box-shadow: 0 4px 15px rgba(108, 117, 125, 0.3);
+    }
+    
+    .btn-cancelar:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(108, 117, 125, 0.4);
+        color: white;
+        text-decoration: none;
+    }
+    
+    .info-card {
+        background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+        border: 1px solid #2196f3;
+        border-radius: 15px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    
+    .info-card h5 {
+        color: #1976d2;
+        margin-bottom: 1rem;
+    }
+    
+    .info-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+    
+    .info-list li {
+        padding: 0.5rem 0;
+        border-bottom: 1px solid #e3f2fd;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .info-list li:last-child {
+        border-bottom: none;
+    }
+    
+    .info-label {
+        font-weight: 500;
+        color: #1976d2;
+    }
+    
+    .info-value {
+        font-weight: 600;
+        color: #1565c0;
+    }
+    
+    .total-preview {
+        background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
+        border: 2px solid #ff9800;
+        border-radius: 15px;
+        padding: 1.5rem;
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+    
+    .total-preview h4 {
+        color: #e65100;
+        margin-bottom: 0.5rem;
+    }
+    
+    .total-amount {
+        font-size: 2rem;
+        font-weight: 700;
+        color: #e65100;
+    }
+    
+    @media (max-width: 768px) {
+        .proyecto-header {
+            padding: 1.5rem;
+        }
+        
+        .proyecto-header h2 {
+            font-size: 1.5rem;
+        }
+        
+        .anticipo-container {
+            padding: 1rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="proyecto-header">
+    <h2>
+        <i class="fas fa-money-bill-wave me-3"></i>Anticipo Masivo
+    </h2>
+    <p class="mb-0 mt-2">Proyecto: {{ proyecto.nombre }}</p>
+</div>
+
+<div class="anticipo-container">
+    <!-- Información del Proyecto -->
+    <div class="info-card">
+        <h5>
+            <i class="fas fa-info-circle me-2"></i>Información del Proyecto
+        </h5>
+        <ul class="info-list">
+            <li>
+                <span class="info-label">Nombre del Proyecto:</span>
+                <span class="info-value">{{ proyecto.nombre }}</span>
+            </li>
+            <li>
+                <span class="info-label">Total de Colaboradores:</span>
+                <span class="info-value">{{ total_colaboradores }}</span>
+            </li>
+            <li>
+                <span class="info-label">Cliente:</span>
+                <span class="info-value">{{ proyecto.cliente.razon_social }}</span>
+            </li>
+            <li>
+                <span class="info-label">Estado:</span>
+                <span class="info-value">{{ proyecto.get_estado_display }}</span>
+            </li>
+        </ul>
+    </div>
+    
+    <!-- Vista Previa del Total -->
+    <div class="total-preview" id="totalPreview" style="display: none;">
+        <h4>
+            <i class="fas fa-calculator me-2"></i>Total a Desembolsar
+        </h4>
+        <div class="total-amount" id="totalAmount">Q0.00</div>
+        <p class="text-muted mb-0">
+            <small>Este monto será desembolsado a {{ total_colaboradores }} colaborador{{ total_colaboradores|pluralize:"es" }}</small>
+        </p>
+    </div>
+    
+    <!-- Formulario de Anticipo Masivo -->
+    <form method="post" id="anticipoForm">
+        {% csrf_token %}
+        
+        <div class="form-group">
+            <label for="monto" class="form-label">
+                <i class="fas fa-dollar-sign me-2"></i>Monto por Colaborador (Q)
+            </label>
+            <input type="number" 
+                   id="monto" 
+                   name="monto" 
+                   class="form-control" 
+                   step="0.01" 
+                   min="0.01" 
+                   required 
+                   placeholder="Ej: 200.00"
+                   oninput="calcularTotal()">
+            <small class="text-muted">Ingresa el monto que se dará a cada colaborador</small>
+        </div>
+        
+        <div class="form-group">
+            <label for="concepto" class="form-label">
+                <i class="fas fa-comment me-2"></i>Concepto del Anticipo
+            </label>
+            <input type="text" 
+                   id="concepto" 
+                   name="concepto" 
+                   class="form-control" 
+                   required 
+                   placeholder="Ej: Anticipo para gastos de transporte"
+                   value="Anticipo masivo por proyecto">
+            <small class="text-muted">Descripción del motivo del anticipo</small>
+        </div>
+        
+        <div class="text-center">
+            <a href="{% url 'planilla_proyecto' proyecto.id %}" class="btn-cancelar">
+                <i class="fas fa-arrow-left me-2"></i>Cancelar
+            </a>
+            <button type="submit" class="btn-crear" id="btnCrear" disabled>
+                <i class="fas fa-save me-2"></i>Crear Anticipos
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function calcularTotal() {
+    const monto = parseFloat(document.getElementById('monto').value) || 0;
+    const totalColaboradores = {{ total_colaboradores }};
+    const total = monto * totalColaboradores;
+    
+    const totalPreview = document.getElementById('totalPreview');
+    const totalAmount = document.getElementById('totalAmount');
+    const btnCrear = document.getElementById('btnCrear');
+    
+    if (monto > 0) {
+        totalAmount.textContent = `Q${total.toFixed(2)}`;
+        totalPreview.style.display = 'block';
+        btnCrear.disabled = false;
+    } else {
+        totalPreview.style.display = 'none';
+        btnCrear.disabled = true;
+    }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Animación de entrada
+    const container = document.querySelector('.anticipo-container');
+    container.style.opacity = '0';
+    container.style.transform = 'translateY(30px)';
+    
+    setTimeout(() => {
+        container.style.transition = 'all 0.8s ease';
+        container.style.opacity = '1';
+        container.style.transform = 'translateY(0)';
+    }, 200);
+    
+    // Validación del formulario
+    const form = document.getElementById('anticipoForm');
+    const montoInput = document.getElementById('monto');
+    
+    form.addEventListener('submit', function(e) {
+        const monto = parseFloat(montoInput.value);
+        
+        if (monto <= 0) {
+            e.preventDefault();
+            alert('Por favor ingresa un monto válido mayor a 0');
+            montoInput.focus();
+            return;
+        }
+        
+        if (monto > 10000) {
+            if (!confirm('¿Estás seguro de que quieres crear anticipos por un monto tan alto?')) {
+                e.preventDefault();
+                return;
+            }
+        }
+        
+        // Confirmación final
+        if (!confirm(`¿Confirmas crear anticipos de Q${monto.toFixed(2)} para ${totalColaboradores} colaborador{{ total_colaboradores|pluralize:"es" }}?`)) {
+            e.preventDefault();
+            return;
+        }
+    });
+});
+</script>
+{% endblock %}

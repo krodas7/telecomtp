@@ -1,0 +1,691 @@
+{% extends "base.html" %}
+
+{% block title %}Colaboradores - Sistema de Construcción{% endblock %}
+
+{% block extra_css %}
+<style>
+    .colaboradores-hero {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 3rem 2rem;
+        border-radius: 20px;
+        margin-bottom: 2rem;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .colaboradores-hero::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="white" opacity="0.1"/><circle cx="75" cy="75" r="1" fill="white" opacity="0.1"/><circle cx="50" cy="10" r="0.5" fill="white" opacity="0.1"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+        opacity: 0.3;
+    }
+    
+    .colaboradores-hero-content {
+        position: relative;
+        z-index: 2;
+    }
+    
+    .colaboradores-hero-title {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin-bottom: 1rem;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+    }
+    
+    .colaboradores-hero-subtitle {
+        font-size: 1.2rem;
+        margin-bottom: 2rem;
+        opacity: 0.9;
+    }
+    
+    .colaboradores-stats {
+        display: flex;
+        justify-content: center;
+        gap: 2rem;
+        flex-wrap: wrap;
+    }
+    
+    .colaboradores-stat {
+        background: rgba(255,255,255,0.1);
+        backdrop-filter: blur(10px);
+        padding: 1.5rem;
+        border-radius: 15px;
+        border: 1px solid rgba(255,255,255,0.2);
+        min-width: 120px;
+        transition: all 0.3s ease;
+    }
+    
+    .colaboradores-stat:hover {
+        transform: translateY(-5px);
+        background: rgba(255,255,255,0.2);
+    }
+    
+    .colaboradores-stat-number {
+        display: block;
+        font-size: 2rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+    }
+    
+    .colaboradores-stat-label {
+        font-size: 0.9rem;
+        opacity: 0.8;
+    }
+    
+    .colaboradores-actions {
+        background: white;
+        border-radius: 15px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        border: 1px solid rgba(255,255,255,0.2);
+    }
+    
+    .btn-nuevo-colaborador {
+        background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%);
+        border: none;
+        color: white;
+        padding: 0.75rem 1.5rem;
+        border-radius: 10px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
+    }
+    
+    .btn-nuevo-colaborador:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(40, 167, 69, 0.4);
+        color: white;
+        background: linear-gradient(135deg, #1e7e34 0%, #155724 100%);
+    }
+    
+    .colaboradores-table-container {
+        background: white;
+        border-radius: 15px;
+        padding: 2rem;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        border: 1px solid rgba(255,255,255,0.2);
+    }
+    
+    .colaboradores-table-header {
+        margin-bottom: 1.5rem;
+        padding-bottom: 1rem;
+        border-bottom: 2px solid #dee2e6;
+    }
+    
+    .colaboradores-table-header h5 {
+        color: #495057;
+        margin: 0;
+        font-weight: 600;
+    }
+    
+    .colaboradores-table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+    }
+    
+    .colaboradores-table thead th {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        color: #495057;
+        font-weight: 600;
+        padding: 1rem;
+        text-align: left;
+        border-bottom: 2px solid #dee2e6;
+        position: sticky;
+        top: 0;
+        z-index: 10;
+    }
+    
+    .colaboradores-table thead th:first-child {
+        border-top-left-radius: 10px;
+    }
+    
+    .colaboradores-table thead th:last-child {
+        border-top-right-radius: 10px;
+    }
+    
+    .colaboradores-table tbody tr {
+        transition: all 0.3s ease;
+        border-bottom: 1px solid #f1f3f4;
+    }
+    
+    .colaboradores-table tbody tr:hover {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+    
+    .colaboradores-table tbody td {
+        padding: 1rem;
+        vertical-align: middle;
+    }
+    
+    .colaborador-info {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+    
+    .colaborador-estado {
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        display: inline-block;
+        min-width: 100px;
+        text-align: center;
+    }
+    
+    .estado-activo {
+        background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%);
+        color: white;
+        box-shadow: 0 2px 8px rgba(40, 167, 69, 0.3);
+    }
+    
+    .estado-inactivo {
+        background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+        color: white;
+        box-shadow: 0 2px 8px rgba(220, 53, 69, 0.3);
+    }
+    
+    .colaborador-avatar {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1.2rem;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        box-shadow: 0 2px 8px rgba(0, 123, 255, 0.3);
+    }
+    
+    .colaborador-avatar:hover {
+        transform: scale(1.1) rotate(5deg);
+    }
+    
+    .colaborador-details {
+        flex: 1;
+    }
+    
+    .colaborador-nombre {
+        font-weight: 600;
+        color: #495057;
+        margin-bottom: 0.25rem;
+        font-size: 1.1rem;
+    }
+    
+    .colaborador-cargo {
+        font-size: 0.9rem;
+        color: #6c757d;
+        background: linear-gradient(135deg, #e9ecef 0%, #dee2e6 100%);
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        display: inline-block;
+        border: 1px solid #ced4da;
+    }
+    
+    .colaborador-email {
+        color: #007bff;
+        text-decoration: none;
+        font-size: 0.9rem;
+        transition: all 0.3s ease;
+    }
+    
+    .colaborador-email:hover {
+        color: #0056b3;
+        text-decoration: underline;
+    }
+    
+    .colaborador-telefono {
+        color: #6c757d;
+        font-size: 0.9rem;
+    }
+    
+    .colaborador-proyecto {
+        font-size: 0.85rem;
+        color: #6c757d;
+        background: linear-gradient(135deg, #d1ecf1 0%, #bee5eb 100%);
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        display: inline-block;
+        border: 1px solid #bee5eb;
+    }
+    
+    .colaborador-estado {
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 500;
+        text-align: center;
+        min-width: 100px;
+    }
+    
+    .estado-activo {
+        background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%);
+        color: white;
+        box-shadow: 0 2px 8px rgba(40, 167, 69, 0.3);
+    }
+    
+    .estado-inactivo {
+        background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+        color: white;
+        box-shadow: 0 2px 8px rgba(220, 53, 69, 0.3);
+    }
+    
+    .colaborador-acciones {
+        display: flex;
+        gap: 0.5rem;
+        justify-content: center;
+    }
+    
+    .btn-accion {
+        width: 40px;
+        height: 40px;
+        border-radius: 10px;
+        border: none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s ease;
+        font-size: 1rem;
+        cursor: pointer;
+        text-decoration: none;
+    }
+    
+    .btn-view {
+        background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+        color: white;
+        box-shadow: 0 2px 8px rgba(23, 162, 184, 0.3);
+    }
+    
+    .btn-edit {
+        background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+        color: white;
+        box-shadow: 0 2px 8px rgba(0, 123, 255, 0.3);
+    }
+    
+    .btn-delete {
+        background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+        color: white;
+        box-shadow: 0 2px 8px rgba(220, 53, 69, 0.3);
+    }
+    
+    .btn-accion:hover {
+        transform: translateY(-3px) scale(1.1);
+        box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 3rem 2rem;
+        color: #6c757d;
+    }
+    
+    .empty-state i {
+        font-size: 4rem;
+        margin-bottom: 1rem;
+        opacity: 0.5;
+    }
+    
+    .empty-state h5 {
+        margin-bottom: 1rem;
+        color: #495057;
+    }
+    
+    .empty-state p {
+        margin-bottom: 2rem;
+        font-size: 1.1rem;
+    }
+    
+    @media (max-width: 768px) {
+        .colaboradores-hero {
+            padding: 2rem 1rem;
+        }
+        
+        .colaboradores-hero-title {
+            font-size: 2rem;
+        }
+        
+        .colaboradores-stats {
+            gap: 1rem;
+        }
+        
+        .colaboradores-stat {
+            min-width: 100px;
+            padding: 1rem;
+        }
+        
+        .colaboradores-table-container {
+            padding: 1rem;
+        }
+        
+        .colaboradores-table {
+            font-size: 0.9rem;
+        }
+        
+        .colaboradores-table thead th,
+        .colaboradores-table tbody td {
+            padding: 0.75rem 0.5rem;
+        }
+        
+        .colaborador-info {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 0.5rem;
+        }
+        
+        .colaborador-avatar {
+            width: 40px;
+            height: 40px;
+            font-size: 1rem;
+        }
+        
+        /* Estilos para los filtros */
+        #filtroEstado {
+            border: 2px solid #007bff;
+            border-radius: 8px;
+            padding: 0.5rem 1rem;
+            font-size: 0.9rem;
+            background: white;
+            color: #007bff;
+            transition: all 0.3s ease;
+            min-width: 150px;
+        }
+        
+        #filtroEstado:focus {
+            outline: none;
+            border-color: #ffc107;
+            box-shadow: 0 0 0 3px rgba(255, 193, 7, 0.1);
+        }
+        
+        #filtroEstado:hover {
+            border-color: #ffc107;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<div class="colaboradores-hero">
+    <div class="colaboradores-hero-content">
+        <h1 class="colaboradores-hero-title">
+            <i class="fas fa-users me-3"></i>Gestión de Colaboradores
+        </h1>
+        <p class="colaboradores-hero-subtitle">
+            Administra el equipo de trabajo del sistema de construcción
+        </p>
+        
+        <!-- Estadísticas Rápidas -->
+        <div class="colaboradores-stats">
+            <div class="colaboradores-stat">
+                <span class="colaboradores-stat-number">{{ total_colaboradores }}</span>
+                <span class="colaboradores-stat-label">Total Colaboradores</span>
+            </div>
+            <div class="colaboradores-stat">
+                <span class="colaboradores-stat-number">{{ colaboradores_activos }}</span>
+                <span class="colaboradores-stat-label">Activos</span>
+            </div>
+            <div class="colaboradores-stat">
+                <span class="colaboradores-stat-number">{{ colaboradores_inactivos }}</span>
+                <span class="colaboradores-stat-label">Inactivos</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Acciones Principales -->
+<div class="colaboradores-actions">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h4 class="mb-0">
+                <i class="fas fa-tasks me-2" style="color: #007bff;"></i>
+                Acciones Rápidas
+            </h4>
+            <p class="text-muted mb-0">Gestiona los colaboradores del sistema</p>
+        </div>
+        <a href="{% url 'colaborador_create' %}" class="btn btn-nuevo-colaborador">
+            <i class="fas fa-user-plus me-2"></i>Nuevo Colaborador
+        </a>
+    </div>
+</div>
+
+<!-- Lista de Colaboradores -->
+<div class="colaboradores-table-container">
+    <div class="colaboradores-table-header">
+        <div class="d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">
+                <i class="fas fa-list me-2"></i>Lista de Colaboradores
+            </h5>
+            <div class="d-flex gap-2">
+                <select id="filtroEstado" class="form-select form-select-sm" style="width: auto;">
+                    <option value="todos">Todos los Estados</option>
+                    <option value="activos">Solo Activos</option>
+                    <option value="inactivos">Solo Inactivos</option>
+                </select>
+            </div>
+        </div>
+    </div>
+    
+    {% if colaboradores %}
+        <div class="table-responsive">
+            <div class="mb-3">
+                <small class="text-muted">
+                    <i class="fas fa-info-circle me-1"></i>
+                    Mostrando <span id="contadorColaboradores">{{ colaboradores|length }}</span> de {{ total_colaboradores }} colaboradores
+                </small>
+            </div>
+            <table class="table colaboradores-table">
+                <thead>
+                    <tr>
+                        <th>Colaborador</th>
+                        <th>DPI</th>
+                        <th>Contacto</th>
+                        <th>Proyecto</th>
+                        <th>Estado</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for colaborador in colaboradores %}
+                    <tr>
+                        <td>
+                            <div class="colaborador-info">
+                                <div class="colaborador-avatar">
+                                    {{ colaborador.nombre|first|upper }}
+                                </div>
+                                <div class="colaborador-details">
+                                    <div class="colaborador-nombre">{{ colaborador.nombre }}</div>
+                                    <div class="colaborador-cargo">{{ colaborador.dpi|default:"Sin DPI" }}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="colaborador-cargo">{{ colaborador.dpi|default:"Sin DPI" }}</span>
+                        </td>
+                        <td>
+                            {% if colaborador.email %}
+                                <a href="mailto:{{ colaborador.email }}" class="colaborador-email">{{ colaborador.email }}</a>
+                            {% endif %}
+                            {% if colaborador.telefono %}
+                                <div class="colaborador-telefono">
+                                    <i class="fas fa-phone me-1"></i>{{ colaborador.telefono }}
+                                </div>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if colaborador.proyectos.all %}
+                                {% for proyecto in colaborador.proyectos.all %}
+                                    <span class="colaborador-proyecto">{{ proyecto.nombre }}</span>
+                                    {% if not forloop.last %}<br>{% endif %}
+                                {% endfor %}
+                            {% else %}
+                                <span class="text-muted">Sin proyecto asignado</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <span class="colaborador-estado estado-{% if colaborador.activo %}activo{% else %}inactivo{% endif %}">
+                                {% if colaborador.activo %}Activo{% else %}Inactivo{% endif %}
+                            </span>
+                        </td>
+                        <td>
+                            <div class="colaborador-acciones">
+                                <a href="{% url 'colaborador_detail' colaborador.id %}" class="btn btn-accion btn-view" title="Ver">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                <a href="{% url 'colaborador_edit' colaborador.id %}" class="btn btn-accion btn-edit" title="Editar">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <a href="{% url 'colaborador_delete' colaborador.id %}" class="btn btn-accion btn-delete" title="Eliminar">
+                                    <i class="fas fa-trash"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <div class="empty-state">
+            <i class="fas fa-users"></i>
+            <h5>No hay colaboradores registrados</h5>
+            <p>Comienza agregando el primer colaborador del sistema</p>
+            <a href="{% url 'colaborador_create' %}" class="btn btn-nuevo-colaborador">
+                <i class="fas fa-user-plus me-2"></i>Agregar Colaborador
+            </a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Filtros de colaboradores
+    const filtroEstado = document.getElementById('filtroEstado');
+    const filasColaboradores = document.querySelectorAll('tbody tr');
+    
+    function aplicarFiltros() {
+        const estadoSeleccionado = filtroEstado ? filtroEstado.value : 'todos';
+        let colaboradoresVisibles = 0;
+        
+        filasColaboradores.forEach(fila => {
+            const estadoColaborador = fila.querySelector('.colaborador-estado').textContent.trim();
+            let mostrar = true;
+            
+            // Filtro por estado
+            if (estadoSeleccionado === 'activos') {
+                mostrar = estadoColaborador === 'Activo';
+            } else if (estadoSeleccionado === 'inactivos') {
+                mostrar = estadoColaborador === 'Inactivo';
+            }
+            // Si es 'todos', mostrar = true (por defecto)
+            
+            fila.style.display = mostrar ? '' : 'none';
+            if (mostrar) colaboradoresVisibles++;
+        });
+        
+        // Actualizar contador
+        const contadorElement = document.getElementById('contadorColaboradores');
+        if (contadorElement) {
+            contadorElement.textContent = colaboradoresVisibles;
+        }
+    }
+    
+    // Event listeners para los filtros
+    if (filtroEstado) {
+        filtroEstado.addEventListener('change', aplicarFiltros);
+    }
+    
+    // Animación de entrada para las tarjetas
+    const cards = document.querySelectorAll('.colaboradores-actions, .colaboradores-table-container');
+    cards.forEach((card, index) => {
+        card.style.opacity = '0';
+        card.style.transform = 'translateY(30px)';
+        
+        setTimeout(() => {
+            card.style.transition = 'all 0.8s ease';
+            card.style.opacity = '1';
+            card.style.transform = 'translateY(0)';
+        }, index * 200);
+    });
+    
+    // Efecto hover para las estadísticas del hero
+    const heroStats = document.querySelectorAll('.colaboradores-stat');
+    heroStats.forEach(stat => {
+        stat.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-10px) scale(1.05)';
+        });
+        
+        stat.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(0) scale(1)';
+        });
+    });
+    
+    // Efecto hover para las filas de la tabla
+    const tableRows = document.querySelectorAll('.colaboradores-table tbody tr');
+    tableRows.forEach(row => {
+        row.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-2px)';
+        });
+        
+        row.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(0)';
+        });
+    });
+    
+    // Animación de los botones de acción
+    const actionButtons = document.querySelectorAll('.btn-accion');
+    actionButtons.forEach(button => {
+        button.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-3px) scale(1.05)';
+        });
+        
+        button.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(0) scale(1)';
+        });
+    });
+    
+    // Efecto de pulsación en las tarjetas
+    const actionCards = document.querySelectorAll('.colaboradores-actions, .colaboradores-table-container');
+    actionCards.forEach(card => {
+        card.addEventListener('click', function() {
+            this.style.transform = 'scale(0.98)';
+            setTimeout(() => {
+                this.style.transform = 'scale(1)';
+            }, 150);
+        });
+    });
+    
+    // Efecto hover para los avatares
+    const avatars = document.querySelectorAll('.colaborador-avatar');
+    avatars.forEach(avatar => {
+        avatar.addEventListener('mouseenter', function() {
+            this.style.transform = 'scale(1.1) rotate(5deg)';
+        });
+        
+        avatar.addEventListener('mouseleave', function() {
+            this.style.transform = 'scale(1) rotate(0deg)';
+        });
+    });
+});
+</script>
+{% endblock %}

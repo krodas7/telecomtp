@@ -1,0 +1,608 @@
+{% extends "base.html" %}
+
+{% block title %}Rentabilidad - Sistema de Construcción{% endblock %}
+
+{% block extra_css %}
+<style>
+    .rentabilidad-hero {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 3rem 2rem;
+        border-radius: 20px;
+        margin-bottom: 2rem;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .rentabilidad-hero::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="white" opacity="0.1"/><circle cx="75" cy="75" r="1" fill="white" opacity="0.1"/><circle cx="50" cy="10" r="0.5" fill="white" opacity="0.1"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+        opacity: 0.3;
+    }
+    
+    .rentabilidad-hero-content {
+        position: relative;
+        z-index: 2;
+    }
+    
+    .rentabilidad-hero-title {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin-bottom: 1rem;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+    }
+    
+    .rentabilidad-hero-subtitle {
+        font-size: 1.2rem;
+        margin-bottom: 2rem;
+        opacity: 0.9;
+    }
+    
+    .rentabilidad-stats {
+        display: flex;
+        justify-content: center;
+        gap: 2rem;
+        flex-wrap: wrap;
+    }
+    
+    .rentabilidad-stat {
+        background: rgba(255,255,255,0.1);
+        backdrop-filter: blur(10px);
+        padding: 1.5rem;
+        border-radius: 15px;
+        border: 1px solid rgba(255,255,255,0.2);
+        min-width: 120px;
+        transition: all 0.3s ease;
+    }
+    
+    .rentabilidad-stat:hover {
+        transform: translateY(-5px);
+        background: rgba(255,255,255,0.2);
+    }
+    
+    .rentabilidad-stat-number {
+        display: block;
+        font-size: 2rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+    }
+    
+    .rentabilidad-stat-label {
+        font-size: 0.9rem;
+        opacity: 0.8;
+    }
+    
+    .rentabilidad-container {
+        display: grid;
+        grid-template-columns: 2fr 1fr;
+        gap: 2rem;
+        margin-bottom: 2rem;
+    }
+    
+    .rentabilidad-main {
+        display: flex;
+        flex-direction: column;
+        gap: 2rem;
+    }
+    
+    .rentabilidad-card {
+        background: var(--card-bg);
+        border-radius: 15px;
+        padding: 2rem;
+        box-shadow: var(--card-shadow);
+        border: 1px solid var(--border-color);
+    }
+    
+    .rentabilidad-card-header {
+        margin-bottom: 1.5rem;
+        padding-bottom: 1rem;
+        border-bottom: 2px solid var(--border-color);
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+    
+    .rentabilidad-card-header h4 {
+        color: var(--text-primary);
+        margin: 0;
+        font-weight: 600;
+    }
+    
+    .rentabilidad-card-header i {
+        color: var(--primary-color);
+        font-size: 1.2rem;
+    }
+    
+    .metricas-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    
+    .metrica-item {
+        background: var(--section-bg);
+        border-radius: 10px;
+        padding: 1.5rem;
+        border: 1px solid var(--border-color);
+        text-align: center;
+        transition: all 0.3s ease;
+    }
+    
+    .metrica-item:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+    }
+    
+    .metrica-icon {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-color-dark) 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 1rem;
+        color: white;
+        font-size: 1.5rem;
+    }
+    
+    .metrica-valor {
+        font-size: 1.8rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin-bottom: 0.5rem;
+    }
+    
+    .metrica-label {
+        color: var(--text-secondary);
+        font-size: 0.9rem;
+        font-weight: 500;
+    }
+    
+    .metrica-tendencia {
+        margin-top: 0.5rem;
+        font-size: 0.8rem;
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        display: inline-block;
+    }
+    
+    .tendencia-positiva {
+        background: var(--success-color-light);
+        color: var(--success-color-dark);
+    }
+    
+    .tendencia-negativa {
+        background: var(--danger-color-light);
+        color: var(--danger-color-dark);
+    }
+    
+    .tendencia-neutral {
+        background: var(--warning-color-light);
+        color: var(--warning-color-dark);
+    }
+    
+    .grafico-container {
+        background: var(--section-bg);
+        border-radius: 10px;
+        padding: 1.5rem;
+        border: 1px solid var(--border-color);
+        height: 300px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .grafico-placeholder {
+        text-align: center;
+        color: var(--text-secondary);
+    }
+    
+    .grafico-placeholder i {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+        opacity: 0.5;
+    }
+    
+    .rentabilidad-sidebar {
+        background: var(--card-bg);
+        border-radius: 15px;
+        padding: 2rem;
+        box-shadow: var(--card-shadow);
+        border: 1px solid var(--border-color);
+        height: fit-content;
+        position: sticky;
+        top: 2rem;
+    }
+    
+    .sidebar-section {
+        margin-bottom: 2rem;
+        padding-bottom: 1.5rem;
+        border-bottom: 1px solid var(--border-color);
+    }
+    
+    .sidebar-section:last-child {
+        border-bottom: none;
+        margin-bottom: 0;
+        padding-bottom: 0;
+    }
+    
+    .sidebar-section-title {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .sidebar-section-title i {
+        color: var(--primary-color);
+    }
+    
+    .resumen-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.75rem 0;
+        border-bottom: 1px solid var(--border-color-light);
+    }
+    
+    .resumen-item:last-child {
+        border-bottom: none;
+        font-weight: 600;
+        font-size: 1.1rem;
+        color: var(--primary-color);
+    }
+    
+    .resumen-label {
+        color: var(--text-secondary);
+        font-weight: 500;
+    }
+    
+    .resumen-valor {
+        color: var(--text-primary);
+        font-weight: 600;
+    }
+    
+    .alert-modern {
+        background: var(--info-color-light);
+        border: 1px solid var(--info-color);
+        color: var(--info-color-dark);
+        padding: 1rem;
+        border-radius: 10px;
+        margin-bottom: 1rem;
+    }
+    
+    .alert-modern i {
+        margin-right: 0.5rem;
+        color: var(--info-color);
+    }
+    
+    @media (max-width: 768px) {
+        .rentabilidad-container {
+            grid-template-columns: 1fr;
+            gap: 1rem;
+        }
+        
+        .rentabilidad-hero {
+            padding: 2rem 1rem;
+        }
+        
+        .rentabilidad-hero-title {
+            font-size: 2rem;
+        }
+        
+        .rentabilidad-stats {
+            gap: 1rem;
+        }
+        
+        .rentabilidad-stat {
+            min-width: 100px;
+            padding: 1rem;
+        }
+        
+        .metricas-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .rentabilidad-card,
+        .rentabilidad-sidebar {
+            padding: 1.5rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<div class="rentabilidad-hero">
+    <div class="rentabilidad-hero-content">
+        <h1 class="rentabilidad-hero-title">
+            <i class="fas fa-chart-line me-3"></i>Análisis de Rentabilidad
+        </h1>
+        <p class="rentabilidad-hero-subtitle">
+            Monitorea y analiza el rendimiento financiero del sistema de construcción
+        </p>
+        
+        <!-- Estadísticas Rápidas -->
+        <div class="rentabilidad-stats">
+            <div class="rentabilidad-stat">
+                <span class="rentabilidad-stat-number">{{ rentabilidad_mes|floatformat:2 }}%</span>
+                <span class="rentabilidad-stat-label">Rentabilidad Mes</span>
+            </div>
+            <div class="rentabilidad-stat">
+                <span class="rentabilidad-stat-number">Q{{ ingresos_mes|floatformat:2 }}</span>
+                <span class="rentabilidad-stat-label">Ingresos Mes</span>
+            </div>
+            <div class="rentabilidad-stat">
+                <span class="rentabilidad-stat-number">Q{{ gastos_mes|floatformat:2 }}</span>
+                <span class="rentabilidad-stat-label">Gastos Mes</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="rentabilidad-container">
+    <!-- Contenido Principal -->
+    <div class="rentabilidad-main">
+        <!-- Métricas Principales -->
+        <div class="rentabilidad-card">
+            <div class="rentabilidad-card-header">
+                <i class="fas fa-chart-pie"></i>
+                <h4>Métricas Financieras</h4>
+            </div>
+            
+            <div class="metricas-grid">
+                <div class="metrica-item">
+                    <div class="metrica-icon">
+                        <i class="fas fa-arrow-up"></i>
+                    </div>
+                    <div class="metrica-valor">Q{{ ingresos_mes|floatformat:2 }}</div>
+                    <div class="metrica-label">Ingresos del Mes</div>
+                    <div class="metrica-tendencia tendencia-positiva">
+                        <i class="fas fa-arrow-up"></i> +12.5%
+                    </div>
+                </div>
+                
+                <div class="metrica-item">
+                    <div class="metrica-icon">
+                        <i class="fas fa-arrow-down"></i>
+                    </div>
+                    <div class="metrica-valor">Q{{ gastos_mes|floatformat:2 }}</div>
+                    <div class="metrica-label">Gastos del Mes</div>
+                    <div class="metrica-tendencia tendencia-negativa">
+                        <i class="fas fa-arrow-up"></i> +8.2%
+                    </div>
+                </div>
+                
+                <div class="metrica-item">
+                    <div class="metrica-icon">
+                        <i class="fas fa-percentage"></i>
+                    </div>
+                    <div class="metrica-valor">{{ rentabilidad_mes|floatformat:2 }}%</div>
+                    <div class="metrica-label">Rentabilidad</div>
+                    <div class="metrica-tendencia tendencia-positiva">
+                        <i class="fas fa-arrow-up"></i> +4.3%
+                    </div>
+                </div>
+                
+                <div class="metrica-item">
+                    <div class="metrica-icon">
+                        <i class="fas fa-coins"></i>
+                    </div>
+                    <div class="metrica-valor">Q{{ gastos_fijos|floatformat:2 }}</div>
+                    <div class="metrica-label">Gastos Fijos</div>
+                    <div class="metrica-tendencia tendencia-neutral">
+                        <i class="fas fa-minus"></i> 0.0%
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Gráfico de Rentabilidad -->
+        <div class="rentabilidad-card">
+            <div class="rentabilidad-card-header">
+                <i class="fas fa-chart-line"></i>
+                <h4>Evolución de Rentabilidad</h4>
+            </div>
+            
+            <div class="grafico-container">
+                <div class="grafico-placeholder">
+                    <i class="fas fa-chart-line"></i>
+                    <h5>Gráfico de Rentabilidad</h5>
+                    <p>Aquí se mostrará la evolución de la rentabilidad a lo largo del tiempo</p>
+                    <small>Utiliza Chart.js para visualizaciones interactivas</small>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Análisis Detallado -->
+        <div class="rentabilidad-card">
+            <div class="rentabilidad-card-header">
+                <i class="fas fa-search-dollar"></i>
+                <h4>Análisis Detallado</h4>
+            </div>
+            
+            <div class="alert alert-modern">
+                <i class="fas fa-info-circle"></i>
+                <strong>Análisis del Mes:</strong> La rentabilidad ha mejorado un 4.3% respecto al mes anterior, 
+                principalmente debido al aumento en los ingresos por proyectos completados.
+            </div>
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <h6><i class="fas fa-plus-circle me-2" style="color: var(--success-color);"></i>Factores Positivos</h6>
+                    <ul class="list-unstyled">
+                        <li><i class="fas fa-check me-2" style="color: var(--success-color);"></i>Proyectos completados a tiempo</li>
+                        <li><i class="fas fa-check me-2" style="color: var(--success-color);"></i>Eficiencia en costos de materiales</li>
+                        <li><i class="fas fa-check me-2" style="color: var(--success-color);"></i>Mejor gestión de recursos humanos</li>
+                    </ul>
+                </div>
+                <div class="col-md-6">
+                    <h6><i class="fas fa-exclamation-triangle me-2" style="color: var(--warning-color);"></i>Áreas de Mejora</h6>
+                    <ul class="list-unstyled">
+                        <li><i class="fas fa-arrow-up me-2" style="color: var(--warning-color);"></i>Control de gastos operativos</li>
+                        <li><i class="fas fa-arrow-up me-2" style="color: var(--warning-color);"></i>Optimización de tiempos de proyecto</li>
+                        <li><i class="fas fa-arrow-up me-2" style="color: var(--warning-color);"></i>Gestión de inventarios</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Sidebar Informativo -->
+    <div class="rentabilidad-sidebar">
+        <!-- Resumen Financiero -->
+        <div class="sidebar-section">
+            <div class="sidebar-section-title">
+                <i class="fas fa-calculator"></i>Resumen Financiero
+            </div>
+            <div class="resumen-item">
+                <span class="resumen-label">Ingresos Totales:</span>
+                <span class="resumen-valor">Q{{ ingresos_mes|floatformat:2 }}</span>
+            </div>
+            <div class="resumen-item">
+                <span class="resumen-label">Gastos Totales:</span>
+                <span class="resumen-valor">Q{{ gastos_mes|floatformat:2 }}</span>
+            </div>
+            <div class="resumen-item">
+                <span class="resumen-label">Gastos Fijos:</span>
+                <span class="resumen-valor">Q{{ gastos_fijos|floatformat:2 }}</span>
+            </div>
+            <div class="resumen-item">
+                <span class="resumen-label">Rentabilidad:</span>
+                <span class="resumen-valor">{{ rentabilidad_mes|floatformat:2 }}%</span>
+            </div>
+        </div>
+        
+        <!-- Proyectos Destacados -->
+        <div class="sidebar-section">
+            <div class="sidebar-section-title">
+                <i class="fas fa-star"></i>Proyectos Destacados
+            </div>
+            {% if proyectos_recientes %}
+                {% for proyecto in proyectos_recientes|slice:":3" %}
+                <div class="resumen-item">
+                    <span class="resumen-label">{{ proyecto.nombre|truncatechars:20 }}</span>
+                    <span class="resumen-valor">{{ proyecto.estado|title }}</span>
+                </div>
+                {% endfor %}
+            {% else %}
+                <p class="text-muted small">No hay proyectos recientes</p>
+            {% endif %}
+        </div>
+        
+        <!-- Recomendaciones -->
+        <div class="sidebar-section">
+            <div class="sidebar-section-title">
+                <i class="fas fa-lightbulb"></i>Recomendaciones
+            </div>
+            <div class="alert alert-modern">
+                <i class="fas fa-chart-line"></i>
+                <strong>Optimización:</strong> Considera implementar un sistema de control de costos en tiempo real 
+                para mejorar la rentabilidad.
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Animación de entrada para las tarjetas
+    const cards = document.querySelectorAll('.rentabilidad-card, .rentabilidad-sidebar');
+    cards.forEach((card, index) => {
+        card.style.opacity = '0';
+        card.style.transform = 'translateY(30px)';
+        
+        setTimeout(() => {
+            card.style.transition = 'all 0.8s ease';
+            card.style.opacity = '1';
+            card.style.transform = 'translateY(0)';
+        }, index * 200);
+    });
+    
+    // Efecto hover para las estadísticas del hero
+    const heroStats = document.querySelectorAll('.rentabilidad-stat');
+    heroStats.forEach(stat => {
+        stat.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-10px) scale(1.05)';
+        });
+        
+        stat.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(0) scale(1)';
+        });
+    });
+    
+    // Efecto hover para las métricas
+    const metricas = document.querySelectorAll('.metrica-item');
+    metricas.forEach(metrica => {
+        metrica.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-5px)';
+        });
+        
+        metrica.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(0)';
+        });
+    });
+    
+    // Animación de contadores para las métricas
+    function animateCounters() {
+        const counters = document.querySelectorAll('.metrica-valor');
+        counters.forEach(counter => {
+            const target = parseFloat(counter.textContent.replace('Q', '').replace('%', ''));
+            const increment = target / 100;
+            let current = 0;
+            
+            const updateCounter = () => {
+                if (current < target) {
+                    current += increment;
+                    if (counter.textContent.includes('Q')) {
+                        counter.textContent = 'Q' + current.toFixed(2);
+                    } else if (counter.textContent.includes('%')) {
+                        counter.textContent = current.toFixed(2) + '%';
+                    } else {
+                        counter.textContent = current.toFixed(2);
+                    }
+                    requestAnimationFrame(updateCounter);
+                } else {
+                    if (counter.textContent.includes('Q')) {
+                        counter.textContent = 'Q' + target.toFixed(2);
+                    } else if (counter.textContent.includes('%')) {
+                        counter.textContent = target.toFixed(2) + '%';
+                    } else {
+                        counter.textContent = target.toFixed(2);
+                    }
+                }
+            };
+            
+            updateCounter();
+        });
+    }
+    
+    // Iniciar animación de contadores después de un delay
+    setTimeout(animateCounters, 1000);
+    
+    // Efecto de pulsación en las tarjetas
+    const actionCards = document.querySelectorAll('.rentabilidad-card, .rentabilidad-sidebar');
+    actionCards.forEach(card => {
+        card.addEventListener('click', function() {
+            this.style.transform = 'scale(0.98)';
+            setTimeout(() => {
+                this.style.transform = 'scale(1)';
+            }, 150);
+        });
+    });
+});
+</script>
+{% endblock %}

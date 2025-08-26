@@ -1,0 +1,161 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Eliminar Archivo - Sistema de Construcción{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">
+            <i class="fas fa-trash text-danger"></i>
+            Eliminar Archivo
+        </h1>
+        <a href="{% url 'archivos_proyecto_list' archivo.proyecto.id %}" class="btn btn-secondary btn-sm">
+            <i class="fas fa-arrow-left fa-sm"></i> Volver a Archivos
+        </a>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 bg-danger text-white">
+                    <h6 class="m-0 font-weight-bold">
+                        <i class="fas fa-exclamation-triangle"></i> Confirmar Eliminación
+                    </h6>
+                </div>
+                <div class="card-body text-center">
+                    <div class="mb-4">
+                        <i class="fas fa-trash fa-3x text-danger mb-3"></i>
+                        <h4 class="text-danger">¿Estás seguro de que quieres eliminar este archivo?</h4>
+                        <p class="text-muted">Esta acción no se puede deshacer.</p>
+                    </div>
+
+                    <!-- Información del Archivo -->
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <div class="card border-left-primary">
+                                <div class="card-body">
+                                    <h6 class="font-weight-bold text-primary">Información del Archivo</h6>
+                                    <p class="mb-1"><strong>Nombre:</strong> {{ archivo.nombre }}</p>
+                                    <p class="mb-1"><strong>Tipo:</strong> {{ archivo.get_tipo_display }}</p>
+                                    <p class="mb-1"><strong>Proyecto:</strong> {{ archivo.proyecto.nombre }}</p>
+                                    <p class="mb-0"><strong>Cliente:</strong> {{ archivo.proyecto.cliente.razon_social }}</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card border-left-info">
+                                <div class="card-body">
+                                    <h6 class="font-weight-bold text-info">Detalles Técnicos</h6>
+                                    <p class="mb-1"><strong>Tamaño:</strong> {{ archivo.get_tamaño_archivo }}</p>
+                                    <p class="mb-1"><strong>Extensión:</strong> {{ archivo.get_extension|upper }}</p>
+                                    <p class="mb-1"><strong>Subido por:</strong> {{ archivo.subido_por.get_full_name|default:archivo.subido_por.username }}</p>
+                                    <p class="mb-0"><strong>Fecha:</strong> {{ archivo.fecha_subida|date:"d/m/Y H:i" }}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Descripción del Archivo -->
+                    {% if archivo.descripcion %}
+                    <div class="alert alert-info text-left">
+                        <h6 class="font-weight-bold">Descripción del Archivo:</h6>
+                        <p class="mb-0">{{ archivo.descripcion }}</p>
+                    </div>
+                    {% endif %}
+
+                    <!-- Advertencias -->
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <strong>¡ADVERTENCIA!</strong> Al eliminar este archivo:
+                        <ul class="mb-0 mt-2">
+                            <li>Se eliminará permanentemente del servidor</li>
+                            <li>No se podrá recuperar</li>
+                            <li>Se perderá el historial de descargas</li>
+                        </ul>
+                    </div>
+
+                    <!-- Formulario de Confirmación -->
+                    <form method="post" class="mt-4">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label for="confirmacion" class="form-label">
+                                <strong>Escribe "ELIMINAR" para confirmar:</strong>
+                            </label>
+                            <input type="text" class="form-control" id="confirmacion" name="confirmacion" 
+                                   placeholder="Escribe ELIMINAR aquí" required>
+                            <div class="form-text">Esta medida de seguridad previene eliminaciones accidentales.</div>
+                        </div>
+
+                        <div class="d-flex justify-content-center gap-2">
+                            <a href="{% url 'archivos_proyecto_list' archivo.proyecto.id %}" class="btn btn-secondary btn-lg">
+                                <i class="fas fa-times"></i> Cancelar
+                            </a>
+                            <button type="submit" class="btn btn-danger btn-lg" id="btnEliminar" disabled>
+                                <i class="fas fa-trash"></i> Eliminar Archivo
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Información Adicional -->
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-info-circle"></i> Alternativas a la Eliminación
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6 class="font-weight-bold text-primary">Descargar el Archivo</h6>
+                            <p class="text-muted">Antes de eliminar, considera descargar una copia para respaldo.</p>
+                            <a href="{% url 'archivo_download' archivo.id %}" class="btn btn-success btn-sm">
+                                <i class="fas fa-download"></i> Descargar Copia
+                            </a>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="font-weight-bold text-primary">Vista Previa</h6>
+                            <p class="text-muted">Revisa el contenido del archivo antes de decidir eliminarlo.</p>
+                            <a href="{% url 'archivo_preview' archivo.id %}" class="btn btn-info btn-sm">
+                                <i class="fas fa-eye"></i> Ver Contenido
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+$(document).ready(function() {
+    // Habilitar botón solo cuando se escriba "ELIMINAR"
+    $('#confirmacion').on('input', function() {
+        var confirmacion = $(this).val().toUpperCase();
+        if (confirmacion === 'ELIMINAR') {
+            $('#btnEliminar').prop('disabled', false).removeClass('btn-secondary').addClass('btn-danger');
+        } else {
+            $('#btnEliminar').prop('disabled', true).removeClass('btn-danger').addClass('btn-secondary');
+        }
+    });
+    
+    // Confirmación adicional antes de enviar
+    $('form').on('submit', function(e) {
+        var confirmacion = $('#confirmacion').val().toUpperCase();
+        if (confirmacion !== 'ELIMINAR') {
+            e.preventDefault();
+            alert('Debes escribir "ELIMINAR" para confirmar la eliminación.');
+            return false;
+        }
+        
+        if (!confirm('¿Estás completamente seguro de que quieres eliminar este archivo? Esta acción no se puede deshacer.')) {
+            e.preventDefault();
+            return false;
+        }
+    });
+});
+</script>
+{% endblock %}

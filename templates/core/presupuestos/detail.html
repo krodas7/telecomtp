@@ -1,0 +1,919 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ presupuesto.nombre }} - Sistema de Construcción{% endblock %}
+
+{% block extra_css %}
+<style>
+    .hero-section {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 3rem 2rem;
+        border-radius: 20px;
+        margin-bottom: 2rem;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .hero-section::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="white" opacity="0.1"/><circle cx="75" cy="75" r="1" fill="white" opacity="0.1"/><circle cx="50" cy="10" r="0.5" fill="white" opacity="0.1"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+    }
+    
+    .hero-content {
+        position: relative;
+        z-index: 1;
+    }
+    
+    .hero-title {
+        font-size: 2.5rem;
+        font-weight: 800;
+        margin-bottom: 1rem;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+    }
+    
+    .hero-subtitle {
+        font-size: 1.2rem;
+        opacity: 0.9;
+        margin-bottom: 2rem;
+    }
+    
+    .hero-stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 2rem;
+        margin-top: 2rem;
+    }
+    
+    .hero-stat {
+        text-align: center;
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 15px;
+        padding: 1.5rem;
+    }
+    
+    .hero-stat-number {
+        font-size: 2rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+    }
+    
+    .hero-stat-label {
+        font-size: 0.9rem;
+        opacity: 0.8;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+    
+    .info-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 2rem;
+        margin-bottom: 2rem;
+    }
+    
+    .info-card {
+        background: white;
+        border-radius: 16px;
+        padding: 2rem;
+        box-shadow: 0 4px 20px rgba(44, 62, 80, 0.08);
+        transition: all 0.3s ease;
+        border: none;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .info-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, var(--azul-acero) 0%, var(--amarillo-ocre) 100%);
+    }
+    
+    .info-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 12px 40px rgba(44, 62, 80, 0.15);
+    }
+    
+    .info-card-header {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+        padding-bottom: 1rem;
+        border-bottom: 2px solid var(--blanco-humo);
+    }
+    
+    .info-card-icon {
+        width: 50px;
+        height: 50px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        color: white;
+    }
+    
+    .icon-info { background: linear-gradient(135deg, #3498db 0%, #2980b9 100%); }
+    .icon-finance { background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%); }
+    .icon-list { background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%); }
+    
+    .info-card-title {
+        font-size: 1.3rem;
+        font-weight: 700;
+        color: var(--azul-acero);
+        margin: 0;
+    }
+    
+    .info-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    
+    .info-table tr {
+        border-bottom: 1px solid var(--blanco-humo);
+    }
+    
+    .info-table tr:last-child {
+        border-bottom: none;
+    }
+    
+    .info-table td {
+        padding: 1rem 0;
+        vertical-align: top;
+    }
+    
+    .info-table td:first-child {
+        font-weight: 600;
+        color: var(--azul-acero);
+        width: 40%;
+    }
+    
+    .info-table td:last-child {
+        color: var(--gris-concreto);
+    }
+    
+    .status-badge {
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        display: inline-block;
+    }
+    
+    .status-borrador { background: linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%); color: white; }
+    .status-en_revision { background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%); color: white; }
+    .status-aprobado { background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%); color: white; }
+    .status-rechazado { background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%); color: white; }
+    
+    .version-badge {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+    
+    .partidas-section {
+        background: white;
+        border-radius: 16px;
+        padding: 2rem;
+        box-shadow: 0 4px 20px rgba(44, 62, 80, 0.08);
+        margin-bottom: 2rem;
+    }
+    
+    .partidas-header {
+        display: flex;
+        justify-content: between;
+        align-items: center;
+        margin-bottom: 2rem;
+        padding-bottom: 1rem;
+        border-bottom: 2px solid var(--blanco-humo);
+    }
+    
+    .partidas-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--azul-acero);
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+    
+    .partidas-title i {
+        background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%);
+        color: white;
+        width: 40px;
+        height: 40px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .partidas-table {
+        width: 100%;
+        border-collapse: collapse;
+        background: white;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    }
+    
+    .partidas-table thead th {
+        background: linear-gradient(135deg, var(--azul-acero) 0%, var(--azul-acero-claro) 100%);
+        color: white;
+        padding: 1.2rem 1rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-size: 0.85rem;
+        border: none;
+    }
+    
+    .partidas-table tbody tr {
+        transition: all 0.2s ease;
+        border-bottom: 1px solid var(--blanco-humo);
+    }
+    
+    .partidas-table tbody tr:hover {
+        background-color: rgba(243, 156, 18, 0.05);
+        transform: scale(1.01);
+    }
+    
+    .partidas-table tbody tr:last-child {
+        border-bottom: none;
+    }
+    
+    .partidas-table td {
+        padding: 1rem;
+        vertical-align: middle;
+    }
+    
+    .partida-codigo {
+        font-weight: 700;
+        color: var(--azul-acero);
+        font-family: 'Courier New', monospace;
+        background: var(--blanco-humo);
+        padding: 0.3rem 0.6rem;
+        border-radius: 6px;
+        font-size: 0.9rem;
+    }
+    
+    .partida-categoria {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 0.3rem 0.8rem;
+        border-radius: 15px;
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+    
+    .partida-monto {
+        font-weight: 700;
+        color: var(--azul-acero);
+        font-size: 1.1rem;
+    }
+    
+    .partidas-total {
+        background: linear-gradient(135deg, var(--azul-acero) 0%, var(--azul-acero-claro) 100%);
+        color: white;
+        font-weight: 700;
+        font-size: 1.2rem;
+    }
+    
+    .empty-partidas {
+        text-align: center;
+        padding: 4rem 2rem;
+        color: var(--gris-concreto);
+    }
+    
+    .empty-partidas i {
+        font-size: 4rem;
+        margin-bottom: 1rem;
+        opacity: 0.5;
+    }
+    
+    .empty-partidas h6 {
+        color: var(--azul-acero);
+        margin-bottom: 1rem;
+    }
+    
+    .observaciones-section {
+        background: white;
+        border-radius: 16px;
+        padding: 2rem;
+        box-shadow: 0 4px 20px rgba(44, 62, 80, 0.08);
+        margin-bottom: 2rem;
+    }
+    
+    .observaciones-header {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+        padding-bottom: 1rem;
+        border-bottom: 2px solid var(--blanco-humo);
+    }
+    
+    .observaciones-icon {
+        background: linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%);
+        color: white;
+        width: 40px;
+        height: 40px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .observaciones-title {
+        font-size: 1.3rem;
+        font-weight: 700;
+        color: var(--azul-acero);
+        margin: 0;
+    }
+    
+    .observaciones-content {
+        color: var(--gris-concreto);
+        font-size: 1.1rem;
+        line-height: 1.6;
+        font-style: italic;
+    }
+    
+    .actions-section {
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        border-radius: 16px;
+        padding: 2rem;
+        color: white;
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+    
+    .actions-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        margin-bottom: 1rem;
+    }
+    
+    .actions-description {
+        font-size: 1.1rem;
+        opacity: 0.9;
+        margin-bottom: 2rem;
+    }
+    
+    .action-buttons {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+    
+    .action-btn {
+        padding: 1rem 2rem;
+        border-radius: 25px;
+        font-weight: 600;
+        text-decoration: none;
+        transition: all 0.3s ease;
+        border: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 1rem;
+    }
+    
+    .action-btn:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+        text-decoration: none;
+    }
+    
+    .btn-add-partida {
+        background: rgba(255, 255, 255, 0.2);
+        color: white;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+    }
+    
+    .btn-edit-presupuesto {
+        background: rgba(255, 255, 255, 0.2);
+        color: white;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+    }
+    
+    .btn-back {
+        background: rgba(255, 255, 255, 0.1);
+        color: white;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    
+    .variacion-chart {
+        background: white;
+        border-radius: 16px;
+        padding: 2rem;
+        box-shadow: 0 4px 20px rgba(44, 62, 80, 0.08);
+        margin-bottom: 2rem;
+    }
+    
+    .chart-header {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 2rem;
+        padding-bottom: 1rem;
+        border-bottom: 2px solid var(--blanco-humo);
+    }
+    
+    .chart-icon {
+        background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+        color: white;
+        width: 40px;
+        height: 40px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .chart-title {
+        font-size: 1.3rem;
+        font-weight: 700;
+        color: var(--azul-acero);
+        margin: 0;
+    }
+    
+    .variacion-summary {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 2rem;
+        margin-bottom: 2rem;
+    }
+    
+    .variacion-item {
+        text-align: center;
+        padding: 1.5rem;
+        background: var(--blanco-humo);
+        border-radius: 12px;
+        border: 2px solid transparent;
+        transition: all 0.3s ease;
+    }
+    
+    .variacion-item:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+    }
+    
+    .variacion-positiva .variacion-item {
+        border-color: #e74c3c;
+        background: rgba(231, 76, 60, 0.05);
+    }
+    
+    .variacion-negativa .variacion-item {
+        border-color: #27ae60;
+        background: rgba(39, 174, 96, 0.05);
+    }
+    
+    .variacion-neutral .variacion-item {
+        border-color: var(--gris-concreto);
+        background: rgba(189, 195, 199, 0.05);
+    }
+    
+    .variacion-number {
+        font-size: 2rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+    }
+    
+    .variacion-positiva .variacion-number { color: #e74c3c; }
+    .variacion-negativa .variacion-number { color: #27ae60; }
+    .variacion-neutral .variacion-number { color: var(--gris-concreto); }
+    
+    .variacion-label {
+        font-size: 0.9rem;
+        color: var(--gris-concreto);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    @media (max-width: 768px) {
+        .hero-section {
+            padding: 2rem 1rem;
+        }
+        
+        .hero-title {
+            font-size: 2rem;
+        }
+        
+        .hero-stats {
+            grid-template-columns: 1fr;
+        }
+        
+        .info-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .action-buttons {
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .partidas-table {
+            font-size: 0.9rem;
+        }
+        
+        .partidas-table td,
+        .partidas-table th {
+            padding: 0.8rem 0.5rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<div class="hero-section">
+    <div class="hero-content">
+        <h1 class="hero-title">{{ presupuesto.nombre }}</h1>
+        <p class="hero-subtitle">
+            <i class="fas fa-project-diagram me-2"></i>
+            Proyecto: {{ presupuesto.proyecto.nombre }}
+        </p>
+        
+        <div class="hero-stats">
+            <div class="hero-stat">
+                <div class="hero-stat-number">${{ presupuesto.monto_total|floatformat:2 }}</div>
+                <div class="hero-stat-label">Presupuesto Total</div>
+            </div>
+            <div class="hero-stat">
+                <div class="hero-stat-number">${{ presupuesto.monto_aprobado|floatformat:2 }}</div>
+                <div class="hero-stat-label">Monto Aprobado</div>
+            </div>
+            <div class="hero-stat">
+                <div class="hero-stat-number">{{ presupuesto.partidas.count }}</div>
+                <div class="hero-stat-label">Partidas</div>
+            </div>
+            <div class="hero-stat">
+                <div class="hero-stat-number">{{ presupuesto.get_estado_display }}</div>
+                <div class="hero-stat-label">Estado</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Información General -->
+<div class="info-grid">
+    <!-- Información del Presupuesto -->
+    <div class="info-card">
+        <div class="info-card-header">
+            <div class="info-card-icon icon-info">
+                <i class="fas fa-info-circle"></i>
+            </div>
+            <h3 class="info-card-title">Información General</h3>
+        </div>
+        
+        <table class="info-table">
+            <tr>
+                <td>Proyecto:</td>
+                <td><strong>{{ presupuesto.proyecto.nombre }}</strong></td>
+            </tr>
+            <tr>
+                <td>Versión:</td>
+                <td><span class="version-badge">{{ presupuesto.version }}</span></td>
+            </tr>
+            <tr>
+                <td>Estado:</td>
+                <td><span class="status-badge status-{{ presupuesto.estado }}">{{ presupuesto.get_estado_display }}</span></td>
+            </tr>
+            <tr>
+                <td>Creado por:</td>
+                <td>{{ presupuesto.creado_por.get_full_name|default:presupuesto.creado_por.username }}</td>
+            </tr>
+            <tr>
+                <td>Fecha creación:</td>
+                <td>{{ presupuesto.fecha_creacion|date:"d/m/Y H:i" }}</td>
+            </tr>
+            {% if presupuesto.fecha_aprobacion %}
+            <tr>
+                <td>Aprobado por:</td>
+                <td>{{ presupuesto.aprobado_por.get_full_name|default:presupuesto.aprobado_por.username }}</td>
+            </tr>
+            <tr>
+                <td>Fecha aprobación:</td>
+                <td>{{ presupuesto.fecha_aprobacion|date:"d/m/Y H:i" }}</td>
+            </tr>
+            {% endif %}
+        </table>
+    </div>
+    
+    <!-- Resumen Financiero -->
+    <div class="info-card">
+        <div class="info-card-header">
+            <div class="info-card-icon icon-finance">
+                <i class="fas fa-chart-pie"></i>
+            </div>
+            <h3 class="info-card-title">Resumen Financiero</h3>
+        </div>
+        
+        <div class="text-center mb-4">
+            <div class="display-4 text-primary mb-2">${{ presupuesto.monto_total|floatformat:2 }}</div>
+            <p class="text-muted mb-0">Presupuesto Total</p>
+        </div>
+        
+        <div class="row text-center">
+            <div class="col-6">
+                <div class="border-end">
+                    <h4 class="text-success mb-1">${{ presupuesto.monto_aprobado|floatformat:2 }}</h4>
+                    <small class="text-muted">Monto Aprobado</small>
+                </div>
+            </div>
+            <div class="col-6">
+                <h4 class="text-info mb-1">{{ presupuesto.partidas.count }}</h4>
+                <small class="text-muted">Total Partidas</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Análisis de Variaciones -->
+{% if variacion_data %}
+<div class="variacion-chart">
+    <div class="chart-header">
+        <div class="chart-icon">
+            <i class="fas fa-chart-line"></i>
+        </div>
+        <h3 class="chart-title">Análisis de Variaciones</h3>
+    </div>
+    
+    <div class="variacion-summary">
+        <div class="variacion-item">
+            <div class="variacion-number">
+                {% if variacion_data and variacion_data.variacion > 0 %}
+                    +${{ variacion_data.variacion|floatformat:2 }}
+                {% elif variacion_data and variacion_data.variacion < 0 %}
+                    ${{ variacion_data.variacion|floatformat:2 }}
+                {% else %}
+                    $0.00
+                {% endif %}
+            </div>
+            <div class="variacion-label">Variación Total</div>
+        </div>
+        
+        <div class="variacion-item">
+            <div class="variacion-number">{{ variacion_data.porcentaje_variacion|default:0|floatformat:1 }}%</div>
+            <div class="variacion-label">Porcentaje de Variación</div>
+        </div>
+        
+        <div class="variacion-item">
+            <div class="variacion-number">
+                {% if variacion_data and variacion_data.variacion > 0 %}
+                    <i class="fas fa-arrow-up text-danger"></i>
+                {% elif variacion_data and variacion_data.variacion < 0 %}
+                    <i class="fas fa-arrow-down text-success"></i>
+                {% else %}
+                    <i class="fas fa-equals text-muted"></i>
+                {% endif %}
+            </div>
+            <div class="variacion-label">Tendencia</div>
+        </div>
+    </div>
+    
+    <div class="alert {% if variacion_data and variacion_data.variacion > 0 %}alert-danger{% elif variacion_data and variacion_data.variacion < 0 %}alert-success{% else %}alert-info{% endif %}">
+        <h6><i class="fas fa-info-circle me-2"></i>Interpretación:</h6>
+        {% if variacion_data and variacion_data.variacion > 0 %}
+            <p class="mb-0">Los gastos reales exceden el presupuesto en <strong>${{ variacion_data.variacion|floatformat:2 }}</strong> ({{ variacion_data.porcentaje_variacion|floatformat:1 }}%). Se recomienda revisar los costos y considerar ajustes.</p>
+        {% elif variacion_data and variacion_data.variacion < 0 %}
+            <p class="mb-0">El presupuesto excede los gastos reales en <strong>${{ variacion_data.variacion_abs|default:0|floatformat:2 }}</strong> ({{ variacion_data.porcentaje_variacion_abs|default:0|floatformat:1 }}%). Excelente control de costos.</p>
+        {% else %}
+            <p class="mb-0">El presupuesto y los gastos reales están perfectamente balanceados. No hay variaciones significativas.</p>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
+
+<!-- Partidas del Presupuesto -->
+<div class="partidas-section">
+    <div class="partidas-header">
+        <h3 class="partidas-title">
+            <i class="fas fa-list"></i>
+            Partidas del Presupuesto
+        </h3>
+        <a href="{% url 'partida_create' presupuesto.id %}" class="btn btn-success">
+            <i class="fas fa-plus me-2"></i>Agregar Partida
+        </a>
+    </div>
+    
+    {% if partidas %}
+        <div class="table-responsive">
+            <table class="partidas-table">
+                <thead>
+                    <tr>
+                        <th>Código</th>
+                        <th>Descripción</th>
+                        <th>Unidad</th>
+                        <th>Cantidad</th>
+                        <th>Precio Unit.</th>
+                        <th>Monto Estimado</th>
+                        <th>Categoría</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for partida in partidas %}
+                    <tr>
+                        <td><span class="partida-codigo">{{ partida.codigo }}</span></td>
+                        <td>{{ partida.descripcion }}</td>
+                        <td>{{ partida.unidad }}</td>
+                        <td>{{ partida.cantidad }}</td>
+                        <td>${{ partida.precio_unitario|floatformat:2 }}</td>
+                        <td class="partida-monto">${{ partida.monto_estimado|floatformat:2 }}</td>
+                        <td>
+                            {% if partida.categoria %}
+                                <span class="partida-categoria">{{ partida.categoria.nombre }}</span>
+                            {% else %}
+                                <span class="text-muted">Sin categoría</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="btn-group" role="group">
+                                <button class="btn btn-sm btn-outline-primary" title="Ver detalle">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                                <button class="btn btn-sm btn-outline-warning" title="Editar">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+                <tfoot>
+                    <tr class="partidas-total">
+                        <td colspan="5" class="text-end"><strong>TOTAL:</strong></td>
+                        <td colspan="3"><strong>${{ presupuesto.monto_total|floatformat:2 }}</strong></td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    {% else %}
+        <div class="empty-partidas">
+            <i class="fas fa-list"></i>
+            <h6>No hay partidas registradas</h6>
+            <p>Agrega partidas para detallar el presupuesto y obtener un control más preciso de los costos.</p>
+            <a href="{% url 'partida_create' presupuesto.id %}" class="btn btn-primary btn-lg">
+                <i class="fas fa-plus me-2"></i>Agregar Primera Partida
+            </a>
+        </div>
+    {% endif %}
+</div>
+
+<!-- Observaciones -->
+{% if presupuesto.observaciones %}
+<div class="observaciones-section">
+    <div class="observaciones-header">
+        <div class="observaciones-icon">
+            <i class="fas fa-comment"></i>
+        </div>
+        <h3 class="observaciones-title">Observaciones</h3>
+    </div>
+    <div class="observaciones-content">
+        {{ presupuesto.observaciones }}
+    </div>
+</div>
+{% endif %}
+
+<!-- Acciones -->
+{% if presupuesto.estado == 'en_revision' %}
+<div class="actions-section">
+    <h3 class="actions-title">
+        <i class="fas fa-clock me-2"></i>Presupuesto en Revisión
+    </h3>
+    <p class="actions-description">
+        Este presupuesto está listo para ser revisado y aprobado. Una vez aprobado, podrás hacer seguimiento de las variaciones y generar reportes de rentabilidad.
+    </p>
+    <div class="action-buttons">
+        <a href="{% url 'presupuesto_aprobar' presupuesto.id %}" class="action-btn btn-add-partida">
+            <i class="fas fa-check me-2"></i>Aprobar Presupuesto
+        </a>
+    </div>
+</div>
+{% endif %}
+
+<!-- Botones de Acción -->
+<div class="actions-section">
+    <h3 class="actions-title">
+        <i class="fas fa-tools me-2"></i>Acciones Disponibles
+    </h3>
+    <p class="actions-description">
+        Gestiona tu presupuesto, agrega partidas y mantén el control financiero de tu proyecto.
+    </p>
+    <div class="action-buttons">
+        <a href="{% url 'partida_create' presupuesto.id %}" class="action-btn btn-add-partida">
+            <i class="fas fa-plus me-2"></i>Agregar Partida
+        </a>
+        <a href="{% url 'presupuesto_edit' presupuesto.id %}" class="action-btn btn-edit-presupuesto">
+            <i class="fas fa-edit me-2"></i>Editar Presupuesto
+        </a>
+        <a href="{% url 'presupuestos_list' %}" class="action-btn btn-back">
+            <i class="fas fa-arrow-left me-2"></i>Volver a Presupuestos
+        </a>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Animación de entrada para las tarjetas
+    const cards = document.querySelectorAll('.info-card, .partidas-section, .variacion-chart, .observaciones-section, .actions-section');
+    cards.forEach((card, index) => {
+        card.style.opacity = '0';
+        card.style.transform = 'translateY(30px)';
+        
+        setTimeout(() => {
+            card.style.transition = 'all 0.8s ease';
+            card.style.opacity = '1';
+            card.style.transform = 'translateY(0)';
+        }, index * 200);
+    });
+    
+    // Efecto hover mejorado para las estadísticas del hero
+    const heroStats = document.querySelectorAll('.hero-stat');
+    heroStats.forEach(stat => {
+        stat.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-10px) scale(1.05)';
+            this.style.background = 'rgba(255, 255, 255, 0.2)';
+        });
+        
+        stat.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(0) scale(1)';
+            this.style.background = 'rgba(255, 255, 255, 0.1)';
+        });
+    });
+    
+    // Efecto hover para las partidas
+    const partidaRows = document.querySelectorAll('.partidas-table tbody tr');
+    partidaRows.forEach(row => {
+        row.addEventListener('mouseenter', function() {
+            this.style.transform = 'scale(1.02)';
+            this.style.boxShadow = '0 4px 15px rgba(0, 0, 0, 0.1)';
+        });
+        
+        row.addEventListener('mouseleave', function() {
+            this.style.transform = 'scale(1)';
+            this.style.boxShadow = 'none';
+        });
+    });
+    
+    // Contador animado para los montos
+    function animateCounter(element, target, duration = 2000) {
+        const start = 0;
+        const increment = target / (duration / 16);
+        let current = start;
+        
+        const timer = setInterval(() => {
+            current += increment;
+            if (current >= target) {
+                current = target;
+                clearInterval(timer);
+            }
+            element.textContent = '$' + current.toFixed(2);
+        }, 16);
+    }
+    
+    // Animar contadores cuando sean visibles
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                const element = entry.target;
+                const target = parseFloat(element.textContent.replace('$', '').replace(',', ''));
+                if (!isNaN(target)) {
+                    element.textContent = '$0.00';
+                    animateCounter(element, target);
+                }
+                observer.unobserve(element);
+            }
+        });
+    });
+    
+    document.querySelectorAll('.partida-monto, .variacion-number').forEach(el => {
+        observer.observe(el);
+    });
+});
+</script>
+{% endblock %}

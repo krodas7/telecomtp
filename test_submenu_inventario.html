@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prueba Submenú Inventario</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        
+        .test-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .test-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+        
+        .test-title {
+            color: #333;
+            border-bottom: 2px solid #007bff;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .url-test {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        
+        .url-test a {
+            color: #007bff;
+            text-decoration: none;
+            font-weight: bold;
+        }
+        
+        .url-test a:hover {
+            text-decoration: underline;
+        }
+        
+        .status {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .status.warning {
+            background: #fff3cd;
+            color: #856404;
+        }
+        
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        .instructions {
+            background: #e7f3ff;
+            border-left: 4px solid #007bff;
+            padding: 15px;
+            margin: 20px 0;
+        }
+        
+        .instructions h4 {
+            margin-top: 0;
+            color: #0056b3;
+        }
+        
+        .instructions ol {
+            margin: 10px 0;
+            padding-left: 20px;
+        }
+        
+        .instructions li {
+            margin: 8px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1 class="test-title">🧪 Prueba del Submenú de Inventario</h1>
+        
+        <div class="instructions">
+            <h4>📋 Instrucciones de Prueba:</h4>
+            <ol>
+                <li>Ve al dashboard principal del sistema</li>
+                <li>En la barra lateral izquierda, busca "Inventario"</li>
+                <li>Haz clic en "Inventario" - debería aparecer un submenú desplegable</li>
+                <li>El submenú debe mostrar: Dashboard, Items, Categorías, Asignaciones</li>
+                <li>Prueba hacer clic en cada opción del submenú</li>
+            </ol>
+        </div>
+        
+        <div class="test-section">
+            <h3 class="test-title">🔗 URLs del Submenú de Inventario</h3>
+            
+            <div class="url-test">
+                <strong>Dashboard:</strong> 
+                <a href="/inventario/dashboard/" target="_blank">/inventario/dashboard/</a>
+                <span class="status success">✅ Implementado</span>
+            </div>
+            
+            <div class="url-test">
+                <strong>Items:</strong> 
+                <a href="/inventario/items/" target="_blank">/inventario/items/</a>
+                <span class="status success">✅ Implementado</span>
+            </div>
+            
+            <div class="url-test">
+                <strong>Categorías:</strong> 
+                <a href="/inventario/categorias/" target="_blank">/inventario/categorias/</a>
+                <span class="status success">✅ Implementado</span>
+            </div>
+            
+            <div class="url-test">
+                <strong>Asignaciones:</strong> 
+                <a href="/inventario/asignaciones/" target="_blank">/inventario/asignaciones/</a>
+                <span class="status success">✅ Implementado</span>
+            </div>
+        </div>
+        
+        <div class="test-section">
+            <h3 class="test-title">🎯 Funcionalidades Implementadas</h3>
+            
+            <ul>
+                <li><strong>Submenú Desplegable:</strong> Al hacer clic en "Inventario" se despliega un submenú</li>
+                <li><strong>Animación de Flecha:</strong> La flecha rota 180° cuando el submenú está abierto</li>
+                <li><strong>Transición Suave:</strong> El submenú se abre/cierra con animación</li>
+                <li><strong>Cierre Automático:</strong> Al hacer clic fuera del submenú, se cierra automáticamente</li>
+                <li><strong>Un Solo Submenú Abierto:</strong> Solo puede estar abierto un submenú a la vez</li>
+            </ul>
+        </div>
+        
+        <div class="test-section">
+            <h3 class="test-title">🔧 Características Técnicas</h3>
+            
+            <ul>
+                <li><strong>CSS:</strong> Estilos responsivos con transiciones suaves</li>
+                <li><strong>JavaScript:</strong> Funcionalidad interactiva sin recargar la página</li>
+                <li><strong>Accesibilidad:</strong> Navegación por teclado y lectores de pantalla</li>
+                <li><strong>Responsive:</strong> Funciona en dispositivos móviles y desktop</li>
+                <li><strong>Integración:</strong> Perfectamente integrado con el tema Neostructure</li>
+            </ul>
+        </div>
+        
+        <div class="test-section">
+            <h3 class="test-title">📱 Cómo Probar en Móvil</h3>
+            
+            <ol>
+                <li>Abre el sistema en tu dispositivo móvil</li>
+                <li>El sidebar se ocultará automáticamente</li>
+                <li>Haz clic en el botón de menú (☰) para mostrar el sidebar</li>
+                <li>Prueba el submenú de inventario</li>
+                <li>Verifica que las transiciones sean suaves</li>
+            </ol>
+        </div>
+        
+        <div class="test-section">
+            <h3 class="test-title">🐛 Solución de Problemas</h3>
+            
+            <div class="url-test">
+                <strong>Si el submenú no aparece:</strong>
+                <ul>
+                    <li>Verifica que JavaScript esté habilitado</li>
+                    <li>Revisa la consola del navegador para errores</li>
+                    <li>Asegúrate de que el archivo base.html se haya actualizado</li>
+                </ul>
+            </div>
+            
+            <div class="url-test">
+                <strong>Si los enlaces no funcionan:</strong>
+                <ul>
+                    <li>Verifica que el servidor Django esté corriendo</li>
+                    <li>Confirma que las URLs estén correctamente configuradas</li>
+                    <li>Revisa que las vistas existan en core/views.py</li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="instructions">
+            <h4>🎉 ¡Submenú de Inventario Implementado Exitosamente!</h4>
+            <p>El sistema ahora incluye un submenú desplegable completo para el módulo de inventario, con acceso directo a todas las funcionalidades: Dashboard, Items, Categorías y Asignaciones.</p>
+        </div>
+    </div>
+</body>
+</html>

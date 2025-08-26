@@ -1,0 +1,277 @@
+{% extends "base.html" %}
+
+{% block title %}Asignar Colaboradores - {{ proyecto.nombre }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .asignacion-container {
+        background: white;
+        border-radius: 15px;
+        padding: 2rem;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        border: 1px solid rgba(255,255,255,0.2);
+        margin-bottom: 2rem;
+    }
+    
+    .proyecto-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 2rem;
+        border-radius: 15px;
+        margin-bottom: 2rem;
+        text-align: center;
+    }
+    
+    .proyecto-header h2 {
+        margin: 0;
+        font-size: 2rem;
+        font-weight: 700;
+    }
+    
+    .colaboradores-section {
+        margin-bottom: 2rem;
+    }
+    
+    .colaboradores-section h4 {
+        color: #495057;
+        margin-bottom: 1rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 2px solid #dee2e6;
+    }
+    
+    .colaborador-item {
+        display: flex;
+        align-items: center;
+        padding: 1rem;
+        border: 1px solid #e9ecef;
+        border-radius: 10px;
+        margin-bottom: 0.5rem;
+        transition: all 0.3s ease;
+        background: #f8f9fa;
+    }
+    
+    .colaborador-item:hover {
+        background: white;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        transform: translateY(-2px);
+    }
+    
+    .colaborador-item input[type="checkbox"] {
+        margin-right: 1rem;
+        transform: scale(1.2);
+    }
+    
+    .colaborador-info {
+        flex: 1;
+    }
+    
+    .colaborador-nombre {
+        font-weight: 600;
+        color: #495057;
+        margin-bottom: 0.25rem;
+    }
+    
+    .colaborador-dpi {
+        font-size: 0.9rem;
+        color: #6c757d;
+    }
+    
+    .colaborador-email {
+        font-size: 0.85rem;
+        color: #007bff;
+    }
+    
+    .btn-asignar {
+        background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%);
+        border: none;
+        color: white;
+        padding: 1rem 2rem;
+        border-radius: 10px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
+    }
+    
+    .btn-asignar:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(40, 167, 69, 0.4);
+        background: linear-gradient(135deg, #1e7e34 0%, #155724 100%);
+    }
+    
+    .btn-cancelar {
+        background: linear-gradient(135deg, #6c757d 0%, #545b62 100%);
+        border: none;
+        color: white;
+        padding: 1rem 2rem;
+        border-radius: 10px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-block;
+        margin-right: 1rem;
+        box-shadow: 0 4px 15px rgba(108, 117, 125, 0.3);
+    }
+    
+    .btn-cancelar:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(108, 117, 125, 0.4);
+        color: white;
+        text-decoration: none;
+    }
+    
+    .estado-asignado {
+        background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%);
+        color: white;
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 500;
+        margin-left: auto;
+    }
+    
+         .estado-no-asignado {
+         background: linear-gradient(135deg, #6c757d 0%, #545b62 100%);
+         color: white;
+         padding: 0.25rem 0.75rem;
+         border-radius: 20px;
+         font-size: 0.8rem;
+         font-weight: 500;
+         margin-left: auto;
+     }
+     
+     .badge {
+         font-size: 0.7rem;
+         padding: 0.25rem 0.5rem;
+         border-radius: 10px;
+     }
+     
+     .bg-warning {
+         background-color: #ffc107 !important;
+         color: #212529 !important;
+     }
+     
+     .text-center .d-flex {
+         flex-wrap: wrap;
+         gap: 0.5rem;
+     }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="proyecto-header">
+    <h2>
+        <i class="fas fa-users me-3"></i>Asignar Colaboradores
+    </h2>
+    <p class="mb-0 mt-2">Proyecto: {{ proyecto.nombre }}</p>
+</div>
+
+<div class="asignacion-container">
+    <form method="post">
+        {% csrf_token %}
+        
+                 <div class="colaboradores-section">
+             <div class="d-flex justify-content-between align-items-center mb-3">
+                 <div>
+                     <h4 class="mb-0">
+                         <i class="fas fa-user-check me-2"></i>Colaboradores Disponibles
+                     </h4>
+                     <p class="text-muted mb-0">
+                         {% if colaboradores_disponibles %}
+                             Selecciona los colaboradores que deseas asignar al proyecto
+                         {% else %}
+                             No hay colaboradores disponibles. Crea algunos para poder asignarlos.
+                         {% endif %}
+                     </p>
+                 </div>
+                 <a href="{% url 'colaborador_create' %}" class="btn btn-asignar" style="background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);">
+                     <i class="fas fa-user-plus me-2"></i>Crear Colaborador
+                     {% if not colaboradores_disponibles %}
+                         <span class="badge bg-warning text-dark ms-2">Requerido</span>
+                     {% endif %}
+                 </a>
+             </div>
+            
+            {% if colaboradores_disponibles %}
+                {% for colaborador in colaboradores_disponibles %}
+                <div class="colaborador-item">
+                    <input type="checkbox" name="colaboradores" value="{{ colaborador.id }}" 
+                           id="colaborador_{{ colaborador.id }}"
+                           {% if colaborador in colaboradores_asignados %}checked{% endif %}>
+                    
+                    <div class="colaborador-info">
+                        <div class="colaborador-nombre">{{ colaborador.nombre }}</div>
+                        {% if colaborador.dpi %}
+                            <div class="colaborador-dpi">DPI: {{ colaborador.dpi }}</div>
+                        {% endif %}
+                        {% if colaborador.email %}
+                            <div class="colaborador-email">{{ colaborador.email }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    {% if colaborador in colaboradores_asignados %}
+                        <span class="estado-asignado">Asignado</span>
+                    {% else %}
+                        <span class="estado-no-asignado">No Asignado</span>
+                    {% endif %}
+                </div>
+                {% endfor %}
+                         {% else %}
+                 <div class="text-center text-muted py-4">
+                     <i class="fas fa-users fa-3x mb-3"></i>
+                     <p class="h5 mb-3">No hay colaboradores disponibles para asignar</p>
+                     <p class="mb-3">Primero necesitas crear colaboradores en el sistema</p>
+                     <div class="d-flex gap-2 justify-content-center">
+                         <a href="{% url 'colaborador_create' %}" class="btn btn-asignar">
+                             <i class="fas fa-user-plus me-2"></i>Crear Nuevo Colaborador
+                         </a>
+                         <a href="{% url 'colaboradores_list' %}" class="btn btn-cancelar" style="background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);">
+                             <i class="fas fa-list me-2"></i>Ver Lista de Colaboradores
+                         </a>
+                     </div>
+                 </div>
+             {% endif %}
+        </div>
+        
+                          <div class="text-center">
+             <a href="{% url 'proyectos_list' %}" class="btn btn-cancelar">
+                 <i class="fas fa-arrow-left me-2"></i>Cancelar
+             </a>
+             <a href="{% url 'colaboradores_list' %}" class="btn btn-cancelar" style="background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);">
+                 <i class="fas fa-users me-2"></i>Ver Colaboradores
+             </a>
+             <button type="submit" class="btn btn-asignar">
+                 <i class="fas fa-save me-2"></i>Guardar Asignaciones
+             </button>
+         </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Efecto hover para los items de colaboradores
+    const colaboradorItems = document.querySelectorAll('.colaborador-item');
+    colaboradorItems.forEach(item => {
+        item.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-2px)';
+        });
+        
+        item.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(0)';
+        });
+    });
+    
+    // Animación de entrada
+    const container = document.querySelector('.asignacion-container');
+    container.style.opacity = '0';
+    container.style.transform = 'translateY(30px)';
+    
+    setTimeout(() => {
+        container.style.transition = 'all 0.8s ease';
+        container.style.opacity = '1';
+        container.style.transform = 'translateY(0)';
+    }, 200);
+});
+</script>
+{% endblock %}

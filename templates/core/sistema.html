@@ -1,0 +1,540 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Configuración del Sistema{% endblock %}
+
+{% block extra_css %}
+<style>
+    .sistema-hero {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 3rem 2rem;
+        border-radius: 20px;
+        margin-bottom: 2rem;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .sistema-hero::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="white" opacity="0.1"/><circle cx="75" cy="75" r="1" fill="white" opacity="0.1"/><circle cx="50" cy="10" r="0.5" fill="white" opacity="0.1"/><circle cx="10" cy="60" r="0.5" fill="white" opacity="0.1"/><circle cx="90" cy="40" r="0.5" fill="white" opacity="0.1"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+        opacity: 0.3;
+    }
+    
+    .sistema-hero-content {
+        position: relative;
+        z-index: 2;
+    }
+    
+    .sistema-hero-title {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin-bottom: 1rem;
+        text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    }
+    
+    .sistema-hero-subtitle {
+        font-size: 1.2rem;
+        opacity: 0.9;
+        margin-bottom: 2rem;
+    }
+    
+    .sistema-stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 2rem;
+        margin-top: 2rem;
+    }
+    
+    .sistema-stat {
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 15px;
+        padding: 1.5rem;
+        text-align: center;
+        transition: all 0.3s ease;
+    }
+    
+    .sistema-stat:hover {
+        transform: translateY(-5px);
+        background: rgba(255, 255, 255, 0.2);
+    }
+    
+    .sistema-stat-icon {
+        font-size: 2.5rem;
+        margin-bottom: 1rem;
+        opacity: 0.9;
+    }
+    
+    .sistema-stat-number {
+        font-size: 2rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+    }
+    
+    .sistema-stat-label {
+        font-size: 0.9rem;
+        opacity: 0.8;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+    
+    .config-container {
+        background: white;
+        border-radius: 20px;
+        padding: 2.5rem;
+        box-shadow: 0 8px 30px rgba(44, 62, 80, 0.1);
+        margin-bottom: 2rem;
+        border: none;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .config-container::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, var(--azul-acero) 0%, var(--amarillo-ocre) 100%);
+    }
+    
+    .config-header {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 2rem;
+        padding-bottom: 1.5rem;
+        border-bottom: 2px solid var(--blanco-humo);
+    }
+    
+    .config-header-icon {
+        background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+        color: white;
+        width: 50px;
+        height: 50px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+    }
+    
+    .config-header-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--azul-acero);
+        margin: 0;
+    }
+    
+    .config-section {
+        margin-bottom: 2rem;
+        padding: 1.5rem;
+        background: var(--blanco-humo);
+        border-radius: 15px;
+        border-left: 4px solid var(--azul-acero);
+    }
+    
+    .config-section-title {
+        font-size: 1.2rem;
+        font-weight: 600;
+        color: var(--azul-acero);
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .config-section-title i {
+        color: var(--amarillo-ocre);
+    }
+    
+    .config-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1rem 0;
+        border-bottom: 1px solid rgba(0,0,0,0.1);
+    }
+    
+    .config-item:last-child {
+        border-bottom: none;
+    }
+    
+    .config-label {
+        font-weight: 600;
+        color: var(--azul-acero);
+    }
+    
+    .config-value {
+        color: var(--gris-concreto);
+        text-align: right;
+    }
+    
+    .btn-modern {
+        padding: 0.75rem 1.5rem;
+        border-radius: 25px;
+        font-weight: 600;
+        text-decoration: none;
+        transition: all 0.3s ease;
+        border: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.9rem;
+        cursor: pointer;
+    }
+    
+    .btn-modern:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        text-decoration: none;
+    }
+    
+    .btn-primary-modern {
+        background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+        color: white;
+    }
+    
+    .btn-primary-modern:hover {
+        background: linear-gradient(135deg, #2980b9 0%, #1f5f8b 100%);
+    }
+    
+    .btn-success-modern {
+        background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%);
+        color: white;
+    }
+    
+    .btn-success-modern:hover {
+        background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%);
+    }
+    
+    .alert-modern {
+        border-radius: 15px;
+        border: none;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    }
+    
+    .alert-success-modern {
+        background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+        color: #155724;
+        border-left: 4px solid #28a745;
+    }
+    
+    .alert-info-modern {
+        background: linear-gradient(135deg, #d1ecf1 0%, #bee5eb 100%);
+        color: #0c5460;
+        border-left: 4px solid #17a2b8;
+    }
+    
+    .alert-warning-modern {
+        background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+        color: #856404;
+        border-left: 4px solid #ffc107;
+    }
+    
+    .alert-danger-modern {
+        background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
+        color: #721c24;
+        border-left: 4px solid #dc3545;
+    }
+    
+    .status-indicator {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 1rem;
+        border-radius: 25px;
+        font-weight: 600;
+        font-size: 0.9rem;
+    }
+    
+    .status-operativo {
+        background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%);
+        color: white;
+    }
+    
+    .status-mantenimiento {
+        background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%);
+        color: white;
+    }
+    
+    .status-error {
+        background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+        color: white;
+    }
+    
+    @media (max-width: 768px) {
+        .sistema-hero {
+            padding: 2rem 1rem;
+        }
+        
+        .sistema-hero-title {
+            font-size: 2rem;
+        }
+        
+        .sistema-stats {
+            grid-template-columns: 1fr;
+        }
+        
+        .config-container {
+            padding: 1.5rem;
+        }
+        
+        .config-item {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 0.5rem;
+        }
+        
+        .config-value {
+            text-align: left;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<div class="sistema-hero">
+    <div class="sistema-hero-content">
+        <h1 class="sistema-hero-title">
+            <i class="fas fa-cogs me-2"></i>Configuración del Sistema
+        </h1>
+        <p class="sistema-hero-subtitle">
+            Administra y configura todos los aspectos del sistema de construcción
+        </p>
+        
+        <div class="sistema-stats">
+            <div class="sistema-stat">
+                <div class="sistema-stat-icon">
+                    <i class="fas fa-users"></i>
+                </div>
+                <div class="sistema-stat-number">{{ total_usuarios|default:"0" }}</div>
+                <div class="sistema-stat-label">Total Usuarios</div>
+            </div>
+            
+            <div class="sistema-stat">
+                <div class="sistema-stat-icon">
+                    <i class="fas fa-clipboard-list"></i>
+                </div>
+                <div class="sistema-stat-number">{{ total_logs|default:"0" }}</div>
+                <div class="sistema-stat-label">Total Actividades</div>
+            </div>
+            
+            <div class="sistema-stat">
+                <div class="sistema-stat-icon">
+                    <i class="fas fa-server"></i>
+                </div>
+                <div class="sistema-stat-number">1.0.0</div>
+                <div class="sistema-stat-label">Versión del Sistema</div>
+            </div>
+            
+            <div class="sistema-stat">
+                <div class="sistema-stat-icon">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <div class="sistema-stat-number">100%</div>
+                <div class="sistema-stat-label">Uptime</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Alertas -->
+{% if messages %}
+    {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} alert-modern alert-{% if message.tags == 'success' %}success{% elif message.tags == 'info' %}info{% elif message.tags == 'warning' %}warning{% elif message.tags == 'error' %}danger{% endif %}-modern" role="alert">
+            <div class="d-flex align-items-center">
+                <i class="fas fa-{% if message.tags == 'success' %}check-circle{% elif message.tags == 'info' %}info-circle{% elif message.tags == 'warning' %}exclamation-triangle{% elif message.tags == 'error' %}times-circle{% endif %} me-2"></i>
+                {{ message }}
+            </div>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    {% endfor %}
+{% endif %}
+
+<!-- Configuración Principal -->
+<div class="config-container">
+    <div class="config-header">
+        <div class="config-header-icon">
+            <i class="fas fa-cogs"></i>
+        </div>
+        <h3 class="config-header-title">Configuración General del Sistema</h3>
+    </div>
+    
+    <!-- Estado del Sistema -->
+    <div class="config-section">
+        <h4 class="config-section-title">
+            <i class="fas fa-server"></i>Estado del Sistema
+        </h4>
+        
+        <div class="config-item">
+            <span class="config-label">Estado Actual:</span>
+            <span class="status-indicator status-operativo">
+                <i class="fas fa-check-circle"></i>Operativo
+            </span>
+        </div>
+        
+        <div class="config-item">
+            <span class="config-label">Última Verificación:</span>
+            <span class="config-value">{{ "now"|date:"d/m/Y H:i" }}</span>
+        </div>
+        
+        <div class="config-item">
+            <span class="config-label">Tiempo de Respuesta:</span>
+            <span class="config-value">< 100ms</span>
+        </div>
+    </div>
+    
+    <!-- Información del Sistema -->
+    <div class="config-section">
+        <h4 class="config-section-title">
+            <i class="fas fa-info-circle"></i>Información del Sistema
+        </h4>
+        
+        <div class="config-item">
+            <span class="config-label">Versión:</span>
+            <span class="config-value">1.0.0</span>
+        </div>
+        
+        <div class="config-item">
+            <span class="config-label">Framework:</span>
+            <span class="config-value">Django 5.2.5</span>
+        </div>
+        
+        <div class="config-item">
+            <span class="config-label">Base de Datos:</span>
+            <span class="config-value">SQLite</span>
+        </div>
+        
+        <div class="config-item">
+            <span class="config-label">Servidor Web:</span>
+            <span class="config-value">Development Server</span>
+        </div>
+    </div>
+    
+    <!-- Estadísticas del Sistema -->
+    <div class="config-section">
+        <h4 class="config-section-title">
+            <i class="fas fa-chart-bar"></i>Estadísticas del Sistema
+        </h4>
+        
+        <div class="config-item">
+            <span class="config-label">Total Usuarios:</span>
+            <span class="config-value">{{ total_usuarios|default:"0" }}</span>
+        </div>
+        
+        <div class="config-item">
+            <span class="config-label">Total Proyectos:</span>
+            <span class="config-value">{{ total_proyectos|default:"0" }}</span>
+        </div>
+        
+        <div class="config-item">
+            <span class="config-label">Total Clientes:</span>
+            <span class="config-value">{{ total_clientes|default:"0" }}</span>
+        </div>
+        
+        <div class="config-item">
+            <span class="config-label">Total Facturas:</span>
+            <span class="config-value">{{ total_facturas|default:"0" }}</span>
+        </div>
+    </div>
+    
+    <!-- Acciones del Sistema -->
+    <div class="config-section">
+        <h4 class="config-section-title">
+            <i class="fas fa-tools"></i>Acciones del Sistema
+        </h4>
+        
+        <div class="d-flex gap-2 flex-wrap">
+            <button type="button" class="btn btn-primary-modern btn-modern" data-bs-toggle="modal" data-bs-target="#configModal">
+                <i class="fas fa-edit"></i>Editar Configuración
+            </button>
+            
+            <button type="button" class="btn btn-success-modern btn-modern" onclick="window.location.href='{% url 'sistema_logs' %}'">
+                <i class="fas fa-list"></i>Ver Logs del Sistema
+            </button>
+            
+            <button type="button" class="btn btn-primary-modern btn-modern" onclick="window.location.href='{% url 'sistema_index' %}'">
+                <i class="fas fa-home"></i>Panel Principal
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Configuración -->
+<div class="modal fade" id="configModal" tabindex="-1" aria-labelledby="configModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="configModalLabel">
+                    <i class="fas fa-cogs me-2"></i>Editar Configuración del Sistema
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-muted">
+                    <i class="fas fa-info-circle me-2"></i>
+                    Esta funcionalidad estará disponible en futuras versiones del sistema.
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Animación de entrada para las tarjetas
+    const cards = document.querySelectorAll('.sistema-stat, .config-container');
+    cards.forEach((card, index) => {
+        card.style.opacity = '0';
+        card.style.transform = 'translateY(30px)';
+        
+        setTimeout(() => {
+            card.style.transition = 'all 0.8s ease';
+            card.style.opacity = '1';
+            card.style.transform = 'translateY(0)';
+        }, index * 200);
+    });
+    
+    // Efecto hover para las estadísticas
+    const stats = document.querySelectorAll('.sistema-stat');
+    stats.forEach(stat => {
+        stat.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-10px) scale(1.05)';
+        });
+        
+        stat.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(0) scale(1)';
+        });
+    });
+    
+    // Actualización en tiempo real del estado del sistema
+    function updateSystemStatus() {
+        const statusElement = document.querySelector('.status-operativo');
+        if (statusElement) {
+            statusElement.innerHTML = '<i class="fas fa-check-circle"></i>Operativo';
+        }
+    }
+    
+    // Actualizar cada 30 segundos
+    setInterval(updateSystemStatus, 30000);
+});
+</script>
+{% endblock %}

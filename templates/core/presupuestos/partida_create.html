@@ -1,0 +1,899 @@
+{% extends 'base.html' %}
+
+{% block title %}Agregar Partida - {{ presupuesto.nombre }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .partida-hero {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 3rem 2rem;
+        border-radius: 20px;
+        margin-bottom: 2rem;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .partida-hero::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="white" opacity="0.1"/><circle cx="75" cy="75" r="1" fill="white" opacity="0.1"/><circle cx="50" cy="10" r="0.5" fill="white" opacity="0.1"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+    }
+    
+    .partida-hero-content {
+        position: relative;
+        z-index: 1;
+    }
+    
+    .partida-hero-title {
+        font-size: 2.5rem;
+        font-weight: 800;
+        margin-bottom: 1rem;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+    }
+    
+    .partida-hero-subtitle {
+        font-size: 1.2rem;
+        opacity: 0.9;
+        margin-bottom: 2rem;
+    }
+    
+    .partida-hero-stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 2rem;
+        margin-top: 2rem;
+    }
+    
+    .partida-hero-stat {
+        text-align: center;
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 15px;
+        padding: 1.5rem;
+        transition: all 0.3s ease;
+    }
+    
+    .partida-hero-stat:hover {
+        transform: translateY(-5px);
+        background: rgba(255, 255, 255, 0.2);
+    }
+    
+    .partida-hero-stat-number {
+        font-size: 2rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+    }
+    
+    .partida-hero-stat-label {
+        font-size: 0.9rem;
+        opacity: 0.8;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+    
+    .form-container {
+        background: white;
+        border-radius: 20px;
+        padding: 2.5rem;
+        box-shadow: 0 8px 30px rgba(44, 62, 80, 0.1);
+        margin-bottom: 2rem;
+        border: none;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .form-container::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, var(--azul-acero) 0%, var(--amarillo-ocre) 100%);
+    }
+    
+    .form-header {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 2rem;
+        padding-bottom: 1.5rem;
+        border-bottom: 2px solid var(--blanco-humo);
+    }
+    
+    .form-header-icon {
+        background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%);
+        color: white;
+        width: 50px;
+        height: 50px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+    }
+    
+    .form-header-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--azul-acero);
+        margin: 0;
+    }
+    
+    .form-group {
+        margin-bottom: 2rem;
+        position: relative;
+    }
+    
+    .form-label {
+        font-weight: 600;
+        color: var(--azul-acero);
+        margin-bottom: 0.8rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .form-label i {
+        color: var(--amarillo-ocre);
+        font-size: 1.1rem;
+    }
+    
+    .form-control, .form-select {
+        border: 2px solid var(--blanco-humo);
+        border-radius: 12px;
+        padding: 1rem 1.2rem;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+        background: white;
+    }
+    
+    .form-control:focus, .form-select:focus {
+        border-color: var(--azul-acero);
+        box-shadow: 0 0 0 0.2rem rgba(52, 152, 219, 0.25);
+        outline: none;
+    }
+    
+    .form-control:hover, .form-select:hover {
+        border-color: var(--azul-acero-claro);
+    }
+    
+    .form-textarea {
+        min-height: 120px;
+        resize: vertical;
+    }
+    
+    .form-row {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1.5rem;
+    }
+    
+    .form-text {
+        font-size: 0.85rem;
+        color: var(--gris-concreto);
+        margin-top: 0.5rem;
+        font-style: italic;
+    }
+    
+    .form-actions {
+        display: flex;
+        gap: 1rem;
+        justify-content: flex-end;
+        margin-top: 2rem;
+        padding-top: 2rem;
+        border-top: 2px solid var(--blanco-humo);
+        flex-wrap: wrap;
+    }
+    
+    .btn {
+        padding: 1rem 2rem;
+        border-radius: 25px;
+        font-weight: 600;
+        text-decoration: none;
+        transition: all 0.3s ease;
+        border: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 1rem;
+        cursor: pointer;
+    }
+    
+    .btn:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+        text-decoration: none;
+    }
+    
+    .btn-cancel {
+        background: var(--blanco-humo);
+        color: var(--gris-concreto);
+        border: 2px solid var(--blanco-humo);
+    }
+    
+    .btn-cancel:hover {
+        background: var(--gris-concreto);
+        color: white;
+        border-color: var(--gris-concreto);
+    }
+    
+    .btn-save {
+        background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%);
+        color: white;
+    }
+    
+    .btn-save:hover {
+        background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%);
+    }
+    
+    .info-sidebar {
+        background: white;
+        border-radius: 20px;
+        padding: 2rem;
+        box-shadow: 0 4px 20px rgba(44, 62, 80, 0.08);
+        height: fit-content;
+        position: sticky;
+        top: 2rem;
+    }
+    
+    .info-header {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+        padding-bottom: 1rem;
+        border-bottom: 2px solid var(--blanco-humo);
+    }
+    
+    .info-header-icon {
+        background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+        color: white;
+        width: 40px;
+        height: 40px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .info-header-title {
+        font-size: 1.2rem;
+        font-weight: 700;
+        color: var(--azul-acero);
+        margin: 0;
+    }
+    
+    .info-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1rem 0;
+        border-bottom: 1px solid var(--blanco-humo);
+    }
+    
+    .info-item:last-child {
+        border-bottom: none;
+    }
+    
+    .info-label {
+        font-weight: 600;
+        color: var(--azul-acero);
+    }
+    
+    .info-value {
+        color: var(--gris-concreto);
+        text-align: right;
+    }
+    
+    .info-tips {
+        background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+        color: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-top: 1.5rem;
+    }
+    
+    .info-tips i {
+        font-size: 2rem;
+        margin-bottom: 1rem;
+        display: block;
+    }
+    
+    .info-tips h6 {
+        margin-bottom: 1rem;
+        font-weight: 700;
+    }
+    
+    .info-tips ul {
+        margin: 0;
+        padding-left: 1.5rem;
+    }
+    
+    .info-tips li {
+        margin-bottom: 0.5rem;
+        opacity: 0.9;
+    }
+    
+    .info-tips li:last-child {
+        margin-bottom: 0;
+    }
+    
+    .calculation-preview {
+        background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%);
+        color: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-top: 1.5rem;
+        text-align: center;
+    }
+    
+    .calculation-preview h6 {
+        margin-bottom: 1rem;
+        font-weight: 700;
+    }
+    
+    .calculation-result {
+        font-size: 1.5rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+    }
+    
+    .calculation-formula {
+        font-size: 0.9rem;
+        opacity: 0.8;
+    }
+    
+    .form-validation {
+        margin-top: 0.5rem;
+        font-size: 0.85rem;
+    }
+    
+    .form-validation.error {
+        color: #e74c3c;
+    }
+    
+    .form-validation.success {
+        color: #27ae60;
+    }
+    
+    .required-field::after {
+        content: ' *';
+        color: #e74c3c;
+        font-weight: bold;
+    }
+    
+    @media (max-width: 768px) {
+        .partida-hero {
+            padding: 2rem 1rem;
+        }
+        
+        .partida-hero-title {
+            font-size: 2rem;
+        }
+        
+        .partida-hero-stats {
+            grid-template-columns: 1fr;
+        }
+        
+        .form-container {
+            padding: 1.5rem;
+        }
+        
+        .form-row {
+            grid-template-columns: 1fr;
+        }
+        
+        .form-actions {
+            flex-direction: column;
+            align-items: stretch;
+        }
+        
+        .btn {
+            justify-content: center;
+        }
+        
+        .info-sidebar {
+            position: static;
+            margin-top: 2rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<div class="partida-hero">
+    <div class="partida-hero-content">
+        <h1 class="partida-hero-title">
+            <i class="fas fa-plus me-2"></i>Agregar Partida
+        </h1>
+        <p class="partida-hero-subtitle">
+            Nueva partida para el presupuesto "{{ presupuesto.nombre }}"
+        </p>
+        
+        <div class="partida-hero-stats">
+            <div class="partida-hero-stat">
+                <div class="partida-hero-stat-number">{{ presupuesto.proyecto.nombre|truncatechars:15 }}</div>
+                <div class="partida-hero-stat-label">Proyecto</div>
+            </div>
+            <div class="partida-hero-stat">
+                <div class="partida-hero-stat-number">${{ presupuesto.monto_total|floatformat:2 }}</div>
+                <div class="partida-hero-stat-label">Presupuesto Actual</div>
+            </div>
+            <div class="partida-hero-stat">
+                <div class="partida-hero-stat-number">{{ presupuesto.partidas.count }}</div>
+                <div class="partida-hero-stat-label">Partidas Existentes</div>
+            </div>
+            <div class="partida-hero-stat">
+                <div class="partida-hero-stat-number">{{ presupuesto.get_estado_display }}</div>
+                <div class="partida-hero-stat-label">Estado</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Formulario Principal -->
+    <div class="col-lg-8">
+        <div class="form-container">
+            <div class="form-header">
+                <div class="form-header-icon">
+                    <i class="fas fa-plus"></i>
+                </div>
+                <h3 class="form-header-title">Nueva Partida del Presupuesto</h3>
+            </div>
+            
+            <form method="post" id="partidaForm">
+                {% csrf_token %}
+                
+                <!-- Código y Orden -->
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="{{ form.codigo.id_for_label }}" class="form-label required-field">
+                            <i class="fas fa-hashtag"></i>Código de Partida
+                        </label>
+                        {{ form.codigo }}
+                        <div class="form-validation" id="codigoValidation"></div>
+                        <div class="form-text">Código único de la partida (ej: 001, A1, etc.)</div>
+                        {% if form.codigo.errors %}
+                            <div class="form-validation error">
+                                {% for error in form.codigo.errors %}
+                                    <i class="fas fa-exclamation-circle me-1"></i>{{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="{{ form.orden.id_for_label }}" class="form-label">
+                            <i class="fas fa-sort-numeric-up"></i>Orden
+                        </label>
+                        {{ form.orden }}
+                        <div class="form-validation" id="ordenValidation"></div>
+                        <div class="form-text">Orden de presentación en el presupuesto</div>
+                        {% if form.orden.errors %}
+                            <div class="form-validation error">
+                                {% for error in form.orden.errors %}
+                                    <i class="fas fa-exclamation-circle me-1"></i>{{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Descripción -->
+                <div class="form-group">
+                    <label for="{{ form.descripcion.id_for_label }}" class="form-label required-field">
+                        <i class="fas fa-align-left"></i>Descripción
+                    </label>
+                    {{ form.descripcion }}
+                    <div class="form-validation" id="descripcionValidation"></div>
+                    <div class="form-text">Descripción detallada de la partida</div>
+                    {% if form.descripcion.errors %}
+                        <div class="form-validation error">
+                            {% for error in form.descripcion.errors %}
+                                <i class="fas fa-exclamation-circle me-1"></i>{{ error }}
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <!-- Unidad, Cantidad y Precio -->
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="{{ form.unidad.id_for_label }}" class="form-label required-field">
+                            <i class="fas fa-ruler"></i>Unidad
+                        </label>
+                        {{ form.unidad }}
+                        <div class="form-validation" id="unidadValidation"></div>
+                        <div class="form-text">Unidad de medida (m², m³, kg, etc.)</div>
+                        {% if form.unidad.errors %}
+                            <div class="form-validation error">
+                                {% for error in form.unidad.errors %}
+                                    <i class="fas fa-exclamation-circle me-1"></i>{{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="{{ form.cantidad.id_for_label }}" class="form-label required-field">
+                            <i class="fas fa-calculator"></i>Cantidad
+                        </label>
+                        {{ form.cantidad }}
+                        <div class="form-validation" id="cantidadValidation"></div>
+                        <div class="form-text">Cantidad de unidades</div>
+                        {% if form.cantidad.errors %}
+                            <div class="form-validation error">
+                                {% for error in form.cantidad.errors %}
+                                    <i class="fas fa-exclamation-circle me-1"></i>{{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="{{ form.precio_unitario.id_for_label }}" class="form-label required-field">
+                            <i class="fas fa-dollar-sign"></i>Precio Unitario
+                        </label>
+                        {{ form.precio_unitario }}
+                        <div class="form-validation" id="precioValidation"></div>
+                        <div class="form-text">Precio por unidad</div>
+                        {% if form.precio_unitario.errors %}
+                            <div class="form-validation error">
+                                {% for error in form.precio_unitario.errors %}
+                                    <i class="fas fa-exclamation-circle me-1"></i>{{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Categoría y Subcategoría -->
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="{{ form.categoria.id_for_label }}" class="form-label">
+                            <i class="fas fa-tags"></i>Categoría
+                        </label>
+                        {{ form.categoria }}
+                        <div class="form-validation" id="categoriaValidation"></div>
+                        <div class="form-text">Categoría de gasto para agrupación</div>
+                        {% if form.categoria.errors %}
+                            <div class="form-validation error">
+                                {% for error in form.categoria.errors %}
+                                    <i class="fas fa-exclamation-circle me-1"></i>{{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="{{ form.subcategoria.id_for_label }}" class="form-label">
+                            <i class="fas fa-tag"></i>Subcategoría
+                        </label>
+                        {{ form.subcategoria }}
+                        <div class="form-validation" id="subcategoriaValidation"></div>
+                        <div class="form-text">Subcategoría específica</div>
+                        {% if form.subcategoria.errors %}
+                            <div class="form-validation error">
+                                {% for error in form.subcategoria.errors %}
+                                    <i class="fas fa-exclamation-circle me-1"></i>{{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Notas -->
+                <div class="form-group">
+                    <label for="{{ form.notas.id_for_label }}" class="form-label">
+                        <i class="fas fa-sticky-note"></i>Notas
+                    </label>
+                    {{ form.notas }}
+                    <div class="form-validation" id="notasValidation"></div>
+                    <div class="form-text">Notas adicionales sobre la partida</div>
+                    {% if form.notas.errors %}
+                        <div class="form-validation error">
+                            {% for error in form.notas.errors %}
+                                <i class="fas fa-exclamation-circle me-1"></i>{{ error }}
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <!-- Acciones del Formulario -->
+                <div class="form-actions">
+                    <a href="{% url 'presupuesto_detail' presupuesto.id %}" class="btn btn-cancel">
+                        <i class="fas fa-times"></i>Cancelar
+                    </a>
+                    <button type="submit" class="btn btn-save" id="saveButton">
+                        <i class="fas fa-save"></i>Agregar Partida
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Sidebar de Información -->
+    <div class="col-lg-4">
+        <div class="info-sidebar">
+            <div class="info-header">
+                <div class="info-header-icon">
+                    <i class="fas fa-info-circle"></i>
+                </div>
+                <h4 class="info-header-title">Información del Presupuesto</h4>
+            </div>
+            
+            <div class="info-item">
+                <span class="info-label">Nombre:</span>
+                <span class="info-value">{{ presupuesto.nombre }}</span>
+            </div>
+            
+            <div class="info-item">
+                <span class="info-label">Proyecto:</span>
+                <span class="info-value">{{ presupuesto.proyecto.nombre }}</span>
+            </div>
+            
+            <div class="info-item">
+                <span class="info-label">Versión:</span>
+                <span class="info-value">{{ presupuesto.version }}</span>
+            </div>
+            
+            <div class="info-item">
+                <span class="info-label">Estado:</span>
+                <span class="info-value">
+                    <span class="badge bg-{% if presupuesto.estado == 'aprobado' %}success{% elif presupuesto.estado == 'en_revision' %}warning{% elif presupuesto.estado == 'borrador' %}secondary{% else %}info{% endif %}">
+                        {{ presupuesto.get_estado_display }}
+                    </span>
+                </span>
+            </div>
+            
+            <div class="info-item">
+                <span class="info-label">Partidas:</span>
+                <span class="info-value">{{ presupuesto.partidas.count }}</span>
+            </div>
+            
+            <!-- Vista Previa del Cálculo -->
+            <div class="calculation-preview">
+                <h6><i class="fas fa-calculator me-2"></i>Vista Previa</h6>
+                <div class="calculation-result" id="calculationResult">$0.00</div>
+                <div class="calculation-formula" id="calculationFormula">Cantidad × Precio Unitario</div>
+            </div>
+            
+            <div class="info-tips">
+                <i class="fas fa-lightbulb"></i>
+                <h6>Consejos para Partidas</h6>
+                <ul>
+                    <li>Usa códigos consistentes y secuenciales</li>
+                    <li>Describe claramente cada partida</li>
+                    <li>Verifica unidades y cantidades</li>
+                    <li>El monto se calcula automáticamente</li>
+                    <li>Agrupa por categorías lógicas</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('partidaForm');
+    const saveButton = document.getElementById('saveButton');
+    
+    // Campos del formulario
+    const cantidadInput = document.getElementById('{{ form.cantidad.id_for_label }}');
+    const precioInput = document.getElementById('{{ form.precio_unitario.id_for_label }}');
+    const codigoInput = document.getElementById('{{ form.codigo.id_for_label }}');
+    const descripcionInput = document.getElementById('{{ form.descripcion.id_for_label }}');
+    const unidadInput = document.getElementById('{{ form.unidad.id_for_label }}');
+    
+    // Animación de entrada para las tarjetas
+    const cards = document.querySelectorAll('.form-container, .info-sidebar');
+    cards.forEach((card, index) => {
+        card.style.opacity = '0';
+        card.style.transform = 'translateY(30px)';
+        
+        setTimeout(() => {
+            card.style.transition = 'all 0.8s ease';
+            card.style.opacity = '1';
+            card.style.transform = 'translateY(0)';
+        }, index * 200);
+    });
+    
+    // Efecto hover para las estadísticas del hero
+    const heroStats = document.querySelectorAll('.partida-hero-stat');
+    heroStats.forEach(stat => {
+        stat.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-10px) scale(1.05)';
+        });
+        
+        stat.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(0) scale(1)';
+        });
+    });
+    
+    // Cálculo automático del monto
+    function calculateAmount() {
+        const cantidad = parseFloat(cantidadInput.value) || 0;
+        const precio = parseFloat(precioInput.value) || 0;
+        const monto = cantidad * precio;
+        
+        const resultElement = document.getElementById('calculationResult');
+        const formulaElement = document.getElementById('calculationFormula');
+        
+        resultElement.textContent = '$' + monto.toFixed(2);
+        formulaElement.textContent = `${cantidad} × $${precio.toFixed(2)} = $${monto.toFixed(2)}`;
+        
+        // Cambiar color según el monto
+        if (monto > 0) {
+            resultElement.style.color = '#2ecc71';
+        } else {
+            resultElement.style.color = 'white';
+        }
+    }
+    
+    // Aplicar cálculo en tiempo real
+    if (cantidadInput && precioInput) {
+        cantidadInput.addEventListener('input', calculateAmount);
+        precioInput.addEventListener('input', calculateAmount);
+        cantidadInput.addEventListener('blur', calculateAmount);
+        precioInput.addEventListener('blur', calculateAmount);
+    }
+    
+    // Validación en tiempo real
+    function validateField(input, validationElement, fieldName) {
+        const value = input.value.trim();
+        let isValid = true;
+        let message = '';
+        
+        if (fieldName === 'codigo') {
+            if (value.length < 1) {
+                isValid = false;
+                message = 'El código es obligatorio';
+            } else if (value.length > 20) {
+                isValid = false;
+                message = 'El código no puede exceder 20 caracteres';
+            }
+        } else if (fieldName === 'descripcion') {
+            if (value.length < 3) {
+                isValid = false;
+                message = 'La descripción debe tener al menos 3 caracteres';
+            } else if (value.length > 500) {
+                isValid = false;
+                message = 'La descripción no puede exceder 500 caracteres';
+            }
+        } else if (fieldName === 'cantidad') {
+            if (value <= 0) {
+                isValid = false;
+                message = 'La cantidad debe ser mayor a 0';
+            }
+        } else if (fieldName === 'precio_unitario') {
+            if (value <= 0) {
+                isValid = false;
+                message = 'El precio debe ser mayor a 0';
+            }
+        } else if (fieldName === 'unidad') {
+            if (value.length < 1) {
+                isValid = false;
+                message = 'La unidad es obligatoria';
+            }
+        }
+        
+        if (isValid) {
+            validationElement.className = 'form-validation success';
+            validationElement.innerHTML = '<i class="fas fa-check-circle me-1"></i>Campo válido';
+        } else {
+            validationElement.className = 'form-validation error';
+            validationElement.innerHTML = '<i class="fas fa-exclamation-circle me-1"></i>' + message;
+        }
+        
+        return isValid;
+    }
+    
+    // Aplicar validación en tiempo real
+    if (codigoInput) {
+        codigoInput.addEventListener('input', () => validateField(codigoInput, document.getElementById('codigoValidation'), 'codigo'));
+        codigoInput.addEventListener('blur', () => validateField(codigoInput, document.getElementById('codigoValidation'), 'codigo'));
+    }
+    
+    if (descripcionInput) {
+        descripcionInput.addEventListener('input', () => validateField(descripcionInput, document.getElementById('descripcionValidation'), 'descripcion'));
+        descripcionInput.addEventListener('blur', () => validateField(descripcionInput, document.getElementById('descripcionValidation'), 'descripcion'));
+    }
+    
+    if (cantidadInput) {
+        cantidadInput.addEventListener('input', () => validateField(cantidadInput, document.getElementById('cantidadValidation'), 'cantidad'));
+        cantidadInput.addEventListener('blur', () => validateField(cantidadInput, document.getElementById('cantidadValidation'), 'cantidad'));
+    }
+    
+    if (precioInput) {
+        precioInput.addEventListener('input', () => validateField(precioInput, document.getElementById('precioValidation'), 'precio_unitario'));
+        precioInput.addEventListener('blur', () => validateField(precioInput, document.getElementById('precioValidation'), 'precio_unitario'));
+    }
+    
+    if (unidadInput) {
+        unidadInput.addEventListener('input', () => validateField(unidadInput, document.getElementById('unidadValidation'), 'unidad'));
+        unidadInput.addEventListener('blur', () => validateField(unidadInput, document.getElementById('unidadValidation'), 'unidad'));
+    }
+    
+    // Validación del formulario antes de enviar
+    form.addEventListener('submit', function(e) {
+        let isValid = true;
+        
+        // Validar todos los campos obligatorios
+        if (codigoInput && !validateField(codigoInput, document.getElementById('codigoValidation'), 'codigo')) {
+            isValid = false;
+        }
+        if (descripcionInput && !validateField(descripcionInput, document.getElementById('descripcionValidation'), 'descripcion')) {
+            isValid = false;
+        }
+        if (cantidadInput && !validateField(cantidadInput, document.getElementById('cantidadValidation'), 'cantidad')) {
+            isValid = false;
+        }
+        if (precioInput && !validateField(precioInput, document.getElementById('precioValidation'), 'precio_unitario')) {
+            isValid = false;
+        }
+        if (unidadInput && !validateField(unidadInput, document.getElementById('unidadValidation'), 'unidad')) {
+            isValid = false;
+        }
+        
+        if (!isValid) {
+            e.preventDefault();
+            
+            // Mostrar mensaje de error
+            saveButton.innerHTML = '<i class="fas fa-exclamation-triangle me-2"></i>Corrige los errores';
+            saveButton.style.background = 'linear-gradient(135deg, #e74c3c 0%, #c0392b 100%)';
+            
+            setTimeout(() => {
+                saveButton.innerHTML = '<i class="fas fa-save me-2"></i>Agregar Partida';
+                saveButton.style.background = 'linear-gradient(135deg, #27ae60 0%, #2ecc71 100%)';
+            }, 3000);
+            
+            // Scroll al primer error
+            const firstError = document.querySelector('.form-validation.error');
+            if (firstError) {
+                firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        } else {
+            // Mostrar estado de carga
+            saveButton.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Guardando...';
+            saveButton.disabled = true;
+        }
+    });
+    
+    // Efecto de focus en los campos
+    const formInputs = document.querySelectorAll('.form-control, .form-select');
+    formInputs.forEach(input => {
+        input.addEventListener('focus', function() {
+            this.parentElement.style.transform = 'translateY(-2px)';
+        });
+        
+        input.addEventListener('blur', function() {
+            this.parentElement.style.transform = 'translateY(0)';
+        });
+    });
+    
+    // Animación del botón de guardar
+    saveButton.addEventListener('mouseenter', function() {
+        this.style.transform = 'translateY(-3px) scale(1.02)';
+    });
+    
+    saveButton.addEventListener('mouseleave', function() {
+        this.style.transform = 'translateY(0) scale(1)';
+    });
+    
+    // Inicializar cálculo
+    calculateAmount();
+});
+</script>
+{% endblock %}

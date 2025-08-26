@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+
+{% block title %}Nuevo Colaborador - Sistema de Construcción{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">
+        <i class="fas fa-user-plus me-2"></i>Nuevo Colaborador
+    </h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <a href="{% url 'colaboradores_list' %}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-1"></i>Volver
+        </a>
+    </div>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-info-circle me-2"></i>Información del Colaborador
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="nombre" class="form-label">
+                                <i class="fas fa-user me-1"></i>Nombre Completo *
+                            </label>
+                            <input type="text" class="form-control" id="nombre" name="nombre" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="dpi" class="form-label">
+                                <i class="fas fa-id-card me-1"></i>DPI
+                            </label>
+                            <input type="text" class="form-control" id="dpi" name="dpi">
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="email" class="form-label">
+                                <i class="fas fa-envelope me-1"></i>Email
+                            </label>
+                            <input type="email" class="form-control" id="email" name="email">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="telefono" class="form-label">
+                                <i class="fas fa-phone me-1"></i>Teléfono
+                            </label>
+                            <input type="tel" class="form-control" id="telefono" name="telefono">
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="direccion" class="form-label">
+                            <i class="fas fa-map-marker-alt me-1"></i>Dirección
+                        </label>
+                        <textarea class="form-control" id="direccion" name="direccion" rows="3"></textarea>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="salario" class="form-label">
+                                <i class="fas fa-dollar-sign me-1"></i>Salario (Q)
+                            </label>
+                            <input type="number" class="form-control" id="salario" name="salario" step="0.01" min="0">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="fecha_contratacion" class="form-label">
+                                <i class="fas fa-calendar me-1"></i>Fecha de Contratación
+                            </label>
+                            <input type="date" class="form-control" id="fecha_contratacion" name="fecha_contratacion">
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="fecha_vencimiento_contrato" class="form-label">
+                            <i class="fas fa-clock me-1"></i>Fecha de Vencimiento del Contrato
+                        </label>
+                        <input type="date" class="form-control" id="fecha_vencimiento_contrato" name="fecha_vencimiento_contrato">
+                    </div>
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{% url 'colaboradores_list' %}" class="btn btn-outline-secondary me-md-2">
+                            <i class="fas fa-times me-1"></i>Cancelar
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-1"></i>Guardar Colaborador
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,215 @@
+{% extends "base.html" %}
+
+{% block title %}Editar Gasto - Sistema de Construcción{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<div class="hero-section">
+    <div class="hero-content">
+        <h1 class="hero-title">
+            <i class="fas fa-edit me-3"></i>Editar Gasto
+        </h1>
+        <p class="hero-subtitle">
+            Modifica la información del gasto seleccionado
+        </p>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="form-container">
+            <div class="form-header">
+                <div class="form-header-icon">
+                    <i class="fas fa-edit"></i>
+                </div>
+                <h4 class="form-header-title">Editar Información del Gasto</h4>
+            </div>
+            
+            <form method="post">
+                {% csrf_token %}
+                
+                <!-- Sección de Información Básica -->
+                <div class="card-modern mb-4">
+                    <div class="card-header-modern">
+                        <div class="card-header-icon">
+                            <i class="fas fa-info-circle"></i>
+                        </div>
+                        <h5 class="card-header-title">Información Básica</h5>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="{{ form.descripcion.id_for_label }}" class="form-label">
+                                <i class="fas fa-tag me-1"></i>{{ form.descripcion.label }}
+                            </label>
+                            {{ form.descripcion }}
+                            {% if form.descripcion.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.descripcion.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="{{ form.categoria.id_for_label }}" class="form-label">
+                                <i class="fas fa-folder me-1"></i>{{ form.categoria.label }}
+                            </label>
+                            {{ form.categoria }}
+                            {% if form.categoria.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.categoria.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="{{ form.monto.id_for_label }}" class="form-label">
+                                <i class="fas fa-dollar-sign me-1"></i>{{ form.monto.label }}
+                            </label>
+                            {{ form.monto }}
+                            {% if form.monto.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.monto.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="{{ form.fecha_gasto.id_for_label }}" class="form-label">
+                                <i class="fas fa-calendar me-1"></i>{{ form.fecha_gasto.label }}
+                            </label>
+                            {{ form.fecha_gasto }}
+                            {% if form.fecha_gasto.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.fecha_gasto.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="{{ form.proyecto.id_for_label }}" class="form-label">
+                            <i class="fas fa-building me-1"></i>{{ form.proyecto.label }}
+                        </label>
+                        {{ form.proyecto }}
+                        {% if form.proyecto.errors %}
+                            <div class="invalid-feedback d-block">
+                                {% for error in form.proyecto.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="{{ form.observaciones.id_for_label }}" class="form-label">
+                            <i class="fas fa-sticky-note me-1"></i>{{ form.observaciones.label }}
+                        </label>
+                        {{ form.observaciones }}
+                        {% if form.observaciones.errors %}
+                            <div class="invalid-feedback d-block">
+                                {% for error in form.observaciones.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="d-flex gap-3">
+                    <button type="submit" class="btn btn-success">
+                        <i class="fas fa-save me-2"></i>Guardar Cambios
+                    </button>
+                    <a href="{% url 'gastos_list' %}" class="btn btn-outline">
+                        <i class="fas fa-arrow-left me-2"></i>Volver
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Sidebar Informativo -->
+    <div class="col-lg-4">
+        <div class="info-sidebar">
+            <!-- Información del Gasto -->
+            <div class="info-section info mb-4">
+                <i class="fas fa-info-circle"></i>
+                <h6>Información del Gasto</h6>
+                <ul>
+                    <li><strong>ID:</strong> {{ gasto.id }}</li>
+                    <li><strong>Creado:</strong> {{ gasto.creado_en|date:"d/m/Y" }}</li>
+                    <li><strong>Estado:</strong> 
+                        {% if gasto.aprobado %}
+                            <span class="badge-modern success">Aprobado</span>
+                        {% else %}
+                            <span class="badge-modern warning">Pendiente</span>
+                        {% endif %}
+                    </li>
+                </ul>
+            </div>
+            
+            <!-- Acciones -->
+            <div class="info-section warning mb-4">
+                <i class="fas fa-exclamation-triangle"></i>
+                <h6>Acciones Disponibles</h6>
+                <ul>
+                    <li>Modifica la información del gasto</li>
+                    <li>Cambia el estado de aprobación</li>
+                    <li>Actualiza el monto si es necesario</li>
+                    <li>Asigna a un proyecto diferente</li>
+                </ul>
+            </div>
+            
+            <!-- Ayuda -->
+            <div class="info-section info">
+                <i class="fas fa-question-circle"></i>
+                <h6>Ayuda</h6>
+                <ul>
+                    <li>Verifica que todos los campos sean correctos</li>
+                    <li>El monto debe ser un valor positivo</li>
+                    <li>La descripción debe ser clara y específica</li>
+                    <li>Guarda los cambios antes de salir</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Aplicar estilos a los campos del formulario
+    const formFields = document.querySelectorAll('input, select, textarea');
+    formFields.forEach(field => {
+        if (field) {
+            field.classList.add('form-control');
+        }
+    });
+    
+    // Validación en tiempo real
+    const montoInput = document.getElementById('{{ form.monto.id_for_label }}');
+    if (montoInput) {
+        montoInput.addEventListener('input', function() {
+            const value = this.value.trim();
+            if (value !== '' && (isNaN(parseFloat(value)) || parseFloat(value) <= 0)) {
+                this.classList.add('is-invalid');
+            } else {
+                this.classList.remove('is-invalid');
+                this.classList.add('is-valid');
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

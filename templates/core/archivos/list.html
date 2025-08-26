@@ -1,0 +1,583 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Archivos - {{ proyecto.nombre }} - Sistema de Construcción{% endblock %}
+
+{% block extra_css %}
+<style>
+    :root {
+        --primary-color: #667eea;
+        --primary-dark: #5a6fd8;
+        --secondary-color: #6c757d;
+        --secondary-dark: #5a6268;
+        --success-color: #28a745;
+        --success-color-dark: #1e7e34;
+        --info-color: #17a2b8;
+        --warning-color: #ffc107;
+        --danger-color: #dc3545;
+        --text-primary: #2d3748;
+        --text-secondary: #718096;
+        --card-bg: #ffffff;
+        --card-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
+        --border-color: #e2e8f0;
+        --table-header-bg: #f8f9fa;
+        --table-hover-bg: #f8f9fa;
+    }
+    
+    .archivos-hero {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 3rem 2rem;
+        border-radius: 20px;
+        margin-bottom: 2rem;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .archivos-hero::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="white" opacity="0.1"/><circle cx="75" cy="75" r="1" fill="white" opacity="0.1"/><circle cx="50" cy="10" r="0.5" fill="white" opacity="0.1"/><circle cx="10" cy="60" r="0.5" fill="white" opacity="0.1"/><circle cx="90" cy="40" r="0.5" fill="white" opacity="0.1"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+        opacity: 0.3;
+    }
+    
+    .archivos-hero-content {
+        position: relative;
+        z-index: 2;
+    }
+    
+    .archivos-hero-title {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin-bottom: 1rem;
+        text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    }
+    
+    .archivos-hero-subtitle {
+        font-size: 1.2rem;
+        opacity: 0.9;
+        margin-bottom: 2rem;
+    }
+    
+    .archivos-stats {
+        display: flex;
+        justify-content: center;
+        gap: 2rem;
+        flex-wrap: wrap;
+    }
+    
+    .archivos-stat {
+        background: rgba(255,255,255,0.1);
+        backdrop-filter: blur(10px);
+        padding: 1.5rem;
+        border-radius: 15px;
+        border: 1px solid rgba(255,255,255,0.2);
+        min-width: 120px;
+        transition: all 0.3s ease;
+    }
+    
+    .archivos-stat:hover {
+        transform: translateY(-5px);
+        background: rgba(255,255,255,0.2);
+    }
+    
+    .archivos-stat-number {
+        display: block;
+        font-size: 2rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+    }
+    
+    .archivos-stat-label {
+        font-size: 0.9rem;
+        opacity: 0.8;
+    }
+    
+    .archivos-actions {
+        background: var(--card-bg);
+        border-radius: 15px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: var(--card-shadow);
+        border: 1px solid var(--border-color);
+    }
+    
+    .btn-subir-archivo {
+        background: linear-gradient(135deg, var(--success-color) 0%, var(--success-color-dark) 100%);
+        border: none;
+        color: white;
+        padding: 0.75rem 1.5rem;
+        border-radius: 10px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .btn-subir-archivo:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+        color: white;
+        text-decoration: none;
+    }
+    
+    .btn-volver {
+        background: linear-gradient(135deg, var(--secondary-color) 0%, var(--secondary-color-dark) 100%);
+        border: none;
+        color: white;
+        padding: 0.75rem 1.5rem;
+        border-radius: 10px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .btn-volver:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+        color: white;
+        text-decoration: none;
+    }
+    
+    .archivos-table-container {
+        background: var(--card-bg);
+        border-radius: 20px;
+        overflow: hidden;
+        box-shadow: var(--card-shadow);
+        border: 1px solid var(--border-color);
+    }
+    
+    .archivos-table-header {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        padding: 1.5rem;
+        border-bottom: 1px solid var(--border-color);
+    }
+    
+    .archivos-table {
+        margin: 0;
+    }
+    
+    .archivos-table th {
+        background: var(--table-header-bg);
+        color: var(--text-primary);
+        font-weight: 600;
+        padding: 1rem;
+        border: none;
+        font-size: 0.9rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .archivos-table td {
+        padding: 1rem;
+        border-bottom: 1px solid var(--border-color);
+        vertical-align: middle;
+    }
+    
+    .archivos-table tr:hover {
+        background: var(--table-hover-bg);
+    }
+    
+    .archivo-tipo {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+    
+    .archivo-tipo.planos {
+        background: var(--info-color);
+        color: white;
+    }
+    
+    .archivo-tipo.documentos {
+        background: var(--success-color);
+        color: white;
+    }
+    
+    .archivo-tipo.imagenes {
+        background: var(--warning-color);
+        color: white;
+    }
+    
+    .archivo-actions {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+    }
+    
+    .btn-archivo {
+        padding: 0.5rem 1rem;
+        border-radius: 8px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3rem;
+    }
+    
+    .btn-archivo:hover {
+        transform: translateY(-2px);
+        text-decoration: none;
+    }
+    
+    .btn-preview {
+        background: var(--info-color);
+        color: white;
+        border: none;
+    }
+    
+    .btn-download {
+        background: var(--success-color);
+        color: white;
+        border: none;
+    }
+    
+    .btn-delete {
+        background: var(--danger-color);
+        color: white;
+        border: none;
+    }
+    
+    .archivo-empty {
+        text-align: center;
+        padding: 3rem 2rem;
+        color: var(--text-secondary);
+    }
+    
+    .archivo-empty-icon {
+        font-size: 4rem;
+        margin-bottom: 1rem;
+        opacity: 0.3;
+    }
+    
+    .archivo-empty-title {
+        font-size: 1.5rem;
+        font-weight: 600;
+        margin-bottom: 1rem;
+    }
+    
+    .archivo-empty-text {
+        font-size: 1rem;
+        margin-bottom: 2rem;
+    }
+
+    .archivo-thumbnail {
+        width: 50px;
+        height: 50px;
+        object-fit: cover;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        transition: transform 0.3s ease;
+        cursor: pointer;
+    }
+    
+    .archivo-thumbnail:hover {
+        transform: scale(1.1);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    }
+    
+    .archivo-icon {
+        width: 50px;
+        height: 50px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 8px;
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        transition: all 0.3s ease;
+    }
+    
+    .archivo-icon:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+    }
+    
+    .archivo-icon i {
+        font-size: 1.5rem;
+    }
+    
+    .archivo-preview-modal {
+        display: none;
+        position: fixed;
+        z-index: 9999;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0,0,0,0.8);
+        backdrop-filter: blur(5px);
+    }
+    
+    .archivo-preview-content {
+        position: relative;
+        margin: 5% auto;
+        padding: 20px;
+        width: 90%;
+        max-width: 800px;
+        background: white;
+        border-radius: 20px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    }
+    
+    .archivo-preview-close {
+        position: absolute;
+        top: 15px;
+        right: 20px;
+        font-size: 2rem;
+        cursor: pointer;
+        color: #666;
+        transition: color 0.3s ease;
+    }
+    
+    .archivo-preview-close:hover {
+        color: #000;
+    }
+    
+    .archivo-preview-image {
+        width: 100%;
+        max-height: 70vh;
+        object-fit: contain;
+        border-radius: 10px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Hero Section -->
+    <div class="archivos-hero">
+        <div class="archivos-hero-content">
+            <h1 class="archivos-hero-title">
+                <i class="fas fa-folder-open me-3"></i>
+                Archivos del Proyecto
+            </h1>
+            <p class="archivos-hero-subtitle">
+                Gestiona todos los documentos, planos e imágenes de tu proyecto
+            </p>
+            <div class="archivos-stats">
+                <div class="archivos-stat">
+                    <span class="archivos-stat-number">{{ total_archivos }}</span>
+                    <span class="archivos-stat-label">Total Archivos</span>
+                </div>
+                <div class="archivos-stat">
+                    <span class="archivos-stat-number">{{ archivos|dictsort:"tipo"|length|default:0 }}</span>
+                    <span class="archivos-stat-label">Planos</span>
+                </div>
+                <div class="archivos-stat">
+                    <span class="archivos-stat-number">{{ archivos|dictsort:"tipo"|length|default:0 }}</span>
+                    <span class="archivos-stat-label">Documentos</span>
+                </div>
+                <div class="archivos-stat">
+                    <span class="archivos-stat-number">{{ archivos|dictsort:"tipo"|length|default:0 }}</span>
+                    <span class="archivos-stat-label">Imágenes</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Acciones -->
+    <div class="archivos-actions">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+            <div>
+                <h2 class="h4 mb-0 text-gray-800">
+                    <i class="fas fa-folder-open text-primary me-2"></i>
+                    {{ proyecto.nombre }}
+                </h2>
+                <p class="text-muted mb-0">Gestiona los archivos de este proyecto</p>
+            </div>
+            <div class="d-flex gap-2 flex-wrap">
+                <a href="{% url 'archivo_upload' proyecto.id %}" class="btn-subir-archivo">
+                    <i class="fas fa-upload"></i>
+                    Subir Archivo
+                </a>
+                <a href="{% url 'proyecto_dashboard' proyecto.id %}" class="btn-volver">
+                    <i class="fas fa-arrow-left"></i>
+                    Volver al Dashboard
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabla de Archivos -->
+    <div class="archivos-table-container">
+        {% if archivos %}
+            <div class="archivos-table-header">
+                <h3 class="h5 mb-0 text-gray-800">
+                    <i class="fas fa-list me-2"></i>
+                    Lista de Archivos
+                </h3>
+            </div>
+            <div class="table-responsive">
+                <table class="table archivos-table mb-0">
+                    <thead>
+                        <tr>
+                            <th>Nombre</th>
+                            <th>Tipo</th>
+                            <th>Tamaño</th>
+                            <th>Fecha</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for archivo in archivos %}
+                        <tr>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    {% if archivo.thumbnail %}
+                                        <img src="{{ archivo.thumbnail.url }}" alt="{{ archivo.nombre }}" class="archivo-thumbnail me-3">
+                                    {% elif archivo.es_imagen %}
+                                        <div class="archivo-icon me-3">
+                                            <i class="fas fa-image text-primary"></i>
+                                        </div>
+                                    {% elif archivo.es_documento %}
+                                        <div class="archivo-icon me-3">
+                                            <i class="fas fa-file-alt text-success"></i>
+                                        </div>
+                                    {% elif archivo.es_plano %}
+                                        <div class="archivo-icon me-3">
+                                            <i class="fas fa-drafting-compass text-info"></i>
+                                        </div>
+                                    {% else %}
+                                        <div class="archivo-icon me-3">
+                                            <i class="fas fa-file text-secondary"></i>
+                                        </div>
+                                    {% endif %}
+                                    <div>
+                                        <div class="fw-bold">{{ archivo.nombre }}</div>
+                                        <small class="text-muted">{{ archivo.descripcion|default:"Sin descripción" }}</small>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="archivo-tipo {{ archivo.tipo|lower }}">
+                                    <i class="fas fa-{% if archivo.tipo == 'planos' %}drafting-compass{% elif archivo.tipo == 'documentos' %}file-alt{% else %}image{% endif %}"></i>
+                                    {{ archivo.tipo }}
+                                </span>
+                            </td>
+                            <td>
+                                <span class="text-muted">{{ archivo.archivo.size|filesizeformat }}</span>
+                            </td>
+                            <td>
+                                <span class="text-muted">{{ archivo.fecha_subida|date:"d/m/Y H:i" }}</span>
+                            </td>
+                            <td>
+                                <div class="archivo-actions">
+                                    <a href="{% url 'archivo_preview' archivo.id %}" class="btn-archivo btn-preview" title="Vista previa">
+                                        <i class="fas fa-eye"></i>
+                                        Ver
+                                    </a>
+                                    <a href="{{ archivo.archivo.url }}" class="btn-archivo btn-download" download title="Descargar">
+                                        <i class="fas fa-download"></i>
+                                        Descargar
+                                    </a>
+                                    <a href="{% url 'archivo_delete' archivo.id %}" class="btn-archivo btn-delete" title="Eliminar" 
+                                       onclick="return confirm('¿Estás seguro de que quieres eliminar este archivo?')">
+                                        <i class="fas fa-trash"></i>
+                                        Eliminar
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="archivo-empty">
+                <div class="archivo-empty-icon">
+                    <i class="fas fa-folder-open"></i>
+                </div>
+                <h3 class="archivo-empty-title">No hay archivos aún</h3>
+                <p class="archivo-empty-text">
+                    Este proyecto no tiene archivos subidos. Comienza subiendo planos, documentos o imágenes.
+                </p>
+                <a href="{% url 'archivo_upload' proyecto.id %}" class="btn-subir-archivo">
+                    <i class="fas fa-upload"></i>
+                    Subir Primer Archivo
+                </a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Modal de Previsualización -->
+<div id="archivoPreviewModal" class="archivo-preview-modal">
+    <div class="archivo-preview-content">
+        <span class="archivo-preview-close" onclick="closePreviewModal()">&times;</span>
+        <div id="previewContent"></div>
+    </div>
+</div>
+
+<script>
+    function openPreviewModal(archivoUrl, archivoNombre) {
+        const modal = document.getElementById('archivoPreviewModal');
+        const content = document.getElementById('previewContent');
+        
+        // Determinar si es una imagen
+        const extension = archivoUrl.split('.').pop().toLowerCase();
+        const esImagen = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'].includes(extension);
+        
+        if (esImagen) {
+            content.innerHTML = `
+                <h3 class="mb-3">${archivoNombre}</h3>
+                <img src="${archivoUrl}" alt="${archivoNombre}" class="archivo-preview-image">
+            `;
+        } else {
+            content.innerHTML = `
+                <h3 class="mb-3">${archivoNombre}</h3>
+                <div class="text-center p-4">
+                    <i class="fas fa-file fa-4x text-muted mb-3"></i>
+                    <p class="text-muted">Vista previa no disponible para este tipo de archivo</p>
+                    <a href="${archivoUrl}" class="btn btn-primary" download>
+                        <i class="fas fa-download"></i> Descargar
+                    </a>
+                </div>
+            `;
+        }
+        
+        modal.style.display = 'block';
+    }
+    
+    function closePreviewModal() {
+        document.getElementById('archivoPreviewModal').style.display = 'none';
+    }
+    
+    // Cerrar modal al hacer clic fuera del contenido
+    window.onclick = function(event) {
+        const modal = document.getElementById('archivoPreviewModal');
+        if (event.target === modal) {
+            modal.style.display = 'none';
+        }
+    }
+    
+    // Hacer las miniaturas clickeables
+    document.addEventListener('DOMContentLoaded', function() {
+        const thumbnails = document.querySelectorAll('.archivo-thumbnail');
+        thumbnails.forEach(thumbnail => {
+            thumbnail.addEventListener('click', function() {
+                const archivoUrl = this.src;
+                const archivoNombre = this.alt;
+                openPreviewModal(archivoUrl, archivoNombre);
+            });
+        });
+    });
+</script>
+{% endblock %}

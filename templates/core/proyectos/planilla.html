@@ -1,0 +1,494 @@
+{% extends "base.html" %}
+
+{% block title %}Planilla del Proyecto - {{ proyecto.nombre }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .planilla-container {
+        background: white;
+        border-radius: 15px;
+        padding: 2rem;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        border: 1px solid rgba(255,255,255,0.2);
+        margin-bottom: 2rem;
+    }
+    
+    .proyecto-header {
+        background: linear-gradient(135deg, #6f42c1 0%, #5a32a3 100%);
+        color: white;
+        padding: 2rem;
+        border-radius: 15px;
+        margin-bottom: 2rem;
+        text-align: center;
+    }
+    
+    .proyecto-header h2 {
+        margin: 0;
+        font-size: 2rem;
+        font-weight: 700;
+    }
+    
+    .stats-row {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+    
+    .stat-card {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        padding: 1.5rem;
+        border-radius: 15px;
+        text-align: center;
+        border: 1px solid #dee2e6;
+    }
+    
+    .stat-number {
+        font-size: 2rem;
+        font-weight: 700;
+        color: #6f42c1;
+        margin-bottom: 0.5rem;
+    }
+    
+    .stat-label {
+        color: #6c757d;
+        font-size: 0.9rem;
+        font-weight: 500;
+    }
+    
+    .actions-row {
+        display: flex;
+        gap: 1rem;
+        margin-bottom: 2rem;
+        flex-wrap: wrap;
+    }
+    
+    .btn-planilla {
+        background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%);
+        border: none;
+        color: white;
+        padding: 0.75rem 1.5rem;
+        border-radius: 10px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
+    }
+    
+    .btn-planilla:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(40, 167, 69, 0.4);
+        color: white;
+        text-decoration: none;
+    }
+    
+    .btn-anticipo-masivo {
+        background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+        border: none;
+        color: white;
+        padding: 0.75rem 1.5rem;
+        border-radius: 10px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        box-shadow: 0 4px 15px rgba(23, 162, 184, 0.3);
+    }
+    
+    .btn-anticipo-masivo:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(23, 162, 184, 0.4);
+        color: white;
+        text-decoration: none;
+    }
+    
+    .btn-anticipo-individual {
+        background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%);
+        border: none;
+        color: #212529;
+        padding: 0.75rem 1.5rem;
+        border-radius: 10px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        box-shadow: 0 4px 15px rgba(255, 193, 7, 0.3);
+    }
+    
+    .btn-anticipo-individual:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(255, 193, 7, 0.4);
+        color: #212529;
+        text-decoration: none;
+    }
+    
+    .planilla-table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+        margin-top: 1rem;
+    }
+    
+    .planilla-table th {
+        background: linear-gradient(135deg, #6f42c1 0%, #5a32a3 100%);
+        color: white;
+        padding: 1rem;
+        font-weight: 600;
+        text-align: left;
+        border-radius: 10px 10px 0 0;
+    }
+    
+    .planilla-table td {
+        padding: 1rem;
+        border-bottom: 1px solid #e9ecef;
+        vertical-align: middle;
+    }
+    
+    .planilla-table tbody tr:hover {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    
+    .estado-anticipo {
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 500;
+        text-align: center;
+        min-width: 100px;
+    }
+    
+    .estado-pendiente {
+        background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%);
+        color: #212529;
+    }
+    
+    .estado-liquidado {
+        background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%);
+        color: white;
+    }
+    
+         .estado-cancelado {
+         background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+         color: white;
+     }
+     
+     .estado-sin_anticipos {
+         background: linear-gradient(135deg, #6c757d 0%, #545b62 100%);
+         color: white;
+     }
+    
+    .btn-liquidar {
+        background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%);
+        border: none;
+        color: white;
+        padding: 0.5rem 1rem;
+        border-radius: 8px;
+        font-size: 0.8rem;
+        transition: all 0.3s ease;
+        text-decoration: none;
+    }
+    
+    .btn-liquidar:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(40, 167, 69, 0.4);
+        color: white;
+        text-decoration: none;
+    }
+    
+         .btn-liquidar:disabled {
+         background: #6c757d;
+         cursor: not-allowed;
+         transform: none;
+         box-shadow: none;
+     }
+     
+     .table-summary {
+         background: linear-gradient(135deg, #6f42c1 0%, #5a32a3 100%);
+         color: white;
+         font-weight: 600;
+     }
+     
+     .table-summary-details {
+         background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+         border-top: 2px solid #6f42c1;
+     }
+     
+     .table-summary-details .col-md-4 {
+         padding: 1rem;
+         border-right: 1px solid #dee2e6;
+     }
+     
+     .table-summary-details .col-md-4:last-child {
+         border-right: none;
+     }
+    
+    .empty-state {
+        text-align: center;
+        padding: 3rem 2rem;
+        color: #6c757d;
+    }
+    
+    .empty-state i {
+        font-size: 4rem;
+        margin-bottom: 1rem;
+        opacity: 0.5;
+    }
+    
+    .empty-state h5 {
+        margin-bottom: 1rem;
+        color: #495057;
+    }
+    
+    .empty-state p {
+        margin-bottom: 2rem;
+        font-size: 1.1rem;
+    }
+    
+    @media (max-width: 768px) {
+        .actions-row {
+            flex-direction: column;
+        }
+        
+        .stats-row {
+            grid-template-columns: 1fr;
+        }
+        
+        .planilla-table {
+            font-size: 0.9rem;
+        }
+        
+        .planilla-table th,
+        .planilla-table td {
+            padding: 0.75rem 0.5rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="proyecto-header">
+    <h2>
+        <i class="fas fa-clipboard-list me-3"></i>Planilla del Proyecto
+    </h2>
+    <p class="mb-0 mt-2">{{ proyecto.nombre }}</p>
+</div>
+
+<div class="planilla-container">
+    <!-- Estadísticas del Proyecto -->
+    <div class="stats-row">
+        <div class="stat-card">
+            <div class="stat-number">{{ colaboradores_asignados|length }}</div>
+            <div class="stat-label">Personal Asignado</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number">Q{{ total_anticipos|floatformat:2 }}</div>
+            <div class="stat-label">Total Anticipos</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number">Q{{ total_liquidado|floatformat:2 }}</div>
+            <div class="stat-label">Total Liquidado</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number">Q{{ saldo_pendiente|floatformat:2 }}</div>
+            <div class="stat-label">Saldo Pendiente</div>
+        </div>
+    </div>
+    
+    <!-- Botones de Acción -->
+    <div class="actions-row">
+        <a href="{% url 'asignar_colaboradores_proyecto' proyecto.id %}" class="btn-planilla">
+            <i class="fas fa-users me-2"></i>Gestionar Personal
+        </a>
+        <a href="{% url 'crear_anticipo_masivo' proyecto.id %}" class="btn-anticipo-masivo">
+            <i class="fas fa-money-bill-wave me-2"></i>Anticipo Masivo
+        </a>
+        <a href="{% url 'crear_anticipo_individual' proyecto.id %}" class="btn-anticipo-individual">
+            <i class="fas fa-user-plus me-2"></i>Anticipo Individual
+        </a>
+        <a href="{% url 'calendario_pagos_proyecto' proyecto.id %}" class="btn-planilla" style="background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);">
+            <i class="fas fa-calendar-alt me-2"></i>Calendario de Pagos
+        </a>
+        <a href="{% url 'proyectos_list' %}" class="btn-planilla" style="background: linear-gradient(135deg, #6c757d 0%, #545b62 100%);">
+            <i class="fas fa-arrow-left me-2"></i>Volver a Proyectos
+        </a>
+    </div>
+    
+    <!-- Planilla de Personal -->
+    {% if colaboradores_asignados %}
+        <h4 class="mb-3">
+            <i class="fas fa-users me-2"></i>Planilla de Personal
+        </h4>
+        
+        <div class="table-responsive">
+            <table class="planilla-table">
+                                 <thead>
+                     <tr>
+                         <th>Colaborador</th>
+                         <th>DPI</th>
+                         <th>Contacto</th>
+                         <th>Salario</th>
+                         <th>Salario Neto</th>
+                         <th>Estado</th>
+                         <th>Acciones</th>
+                     </tr>
+                 </thead>
+                <tbody>
+                    {% for colaborador in colaboradores_asignados %}
+                    <tr>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px;">
+                                    {{ colaborador.nombre|first|upper }}
+                                </div>
+                            <div>
+                                <div class="fw-bold">{{ colaborador.nombre }}</div>
+                            </div>
+                        </td>
+                        <td>{{ colaborador.dpi|default:"Sin DPI" }}</td>
+                        <td>
+                            {% if colaborador.email %}
+                                <div class="text-primary">{{ colaborador.email }}</div>
+                            {% endif %}
+                            {% if colaborador.telefono %}
+                                <div class="text-muted">
+                                    <i class="fas fa-phone me-1"></i>{{ colaborador.telefono }}
+                                </div>
+                            {% endif %}
+                        </td>
+                                                 <td>
+                             <div class="fw-bold text-success">Q{{ colaborador.salario|default:0|floatformat:2 }}</div>
+                             <small class="text-muted">Salario mensual</small>
+                         </td>
+                         <td>
+                             <div class="fw-bold {% if colaborador.salario_neto < 0 %}text-danger{% else %}text-success{% endif %}">
+                                 Q{{ colaborador.salario_neto|floatformat:2 }}
+                             </div>
+                             <small class="text-muted">
+                                 {% if colaborador.anticipos_liquidados > 0 %}
+                                     -Q{{ colaborador.anticipos_liquidados|floatformat:2 }} liquidados
+                                 {% endif %}
+                                 {% if colaborador.deuda_anticipos > 0 %}
+                                     -Q{{ colaborador.deuda_anticipos|floatformat:2 }} pendientes
+                                 {% endif %}
+                             </small>
+                         </td>
+                                                 <td>
+                             <span class="estado-anticipo estado-{{ colaborador.estado_actual }}">
+                                 {{ colaborador.estado_display }}
+                             </span>
+                         </td>
+                        <td>
+                            {% for anticipo in anticipos %}
+                                {% if anticipo.colaborador.id == colaborador.id and anticipo.estado == 'pendiente' %}
+                                    <form method="post" action="{% url 'liquidar_anticipo' anticipo.id %}" style="display: inline;">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn-liquidar" title="Liquidar Anticipo">
+                                            <i class="fas fa-check"></i> Liquidar
+                                        </button>
+                                    </form>
+                                {% endif %}
+                            {% endfor %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                                 </tbody>
+                 <tfoot>
+                     <tr class="table-summary">
+                         <td colspan="3" class="text-end fw-bold">
+                             <strong>TOTALES DE LA PLANILLA:</strong>
+                         </td>
+                         <td class="fw-bold text-success">
+                             Q{{ total_salarios|floatformat:2 }}
+                         </td>
+                         <td class="fw-bold text-success">
+                             Q{{ total_salarios_netos|floatformat:2 }}
+                         </td>
+                         <td colspan="2" class="text-center">
+                             <span class="badge bg-info">Resumen</span>
+                         </td>
+                     </tr>
+                     <tr class="table-summary-details">
+                         <td colspan="7" class="text-center">
+                             <div class="row">
+                                 <div class="col-md-4">
+                                     <small class="text-muted">Total Salarios:</small><br>
+                                     <strong class="text-success">Q{{ total_salarios|floatformat:2 }}</strong>
+                                 </div>
+                                 <div class="col-md-4">
+                                     <small class="text-muted">Total Anticipos:</small><br>
+                                     <strong class="text-warning">Q{{ total_anticipos_aplicados|floatformat:2 }}</strong>
+                                 </div>
+                                 <div class="col-md-4">
+                                     <small class="text-muted">Total a Pagar:</small><br>
+                                     <strong class="text-primary">Q{{ total_salarios_netos|floatformat:2 }}</strong>
+                                 </div>
+                             </div>
+                         </td>
+                     </tr>
+                 </tfoot>
+             </table>
+         </div>
+    {% else %}
+        <div class="empty-state">
+            <i class="fas fa-users"></i>
+            <h5>No hay personal asignado al proyecto</h5>
+            <p>Primero necesitas asignar colaboradores al proyecto para poder gestionar la planilla</p>
+            <a href="{% url 'asignar_colaboradores_proyecto' proyecto.id %}" class="btn-planilla">
+                <i class="fas fa-users me-2"></i>Asignar Colaboradores
+            </a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Animación de entrada para las tarjetas
+    const cards = document.querySelectorAll('.stat-card, .planilla-container');
+    cards.forEach((card, index) => {
+        card.style.opacity = '0';
+        card.style.transform = 'translateY(30px)';
+        
+        setTimeout(() => {
+            card.style.transition = 'all 0.8s ease';
+            card.style.opacity = '1';
+            card.style.transform = 'translateY(0)';
+        }, index * 200);
+    });
+    
+    // Efecto hover para las estadísticas
+    const statCards = document.querySelectorAll('.stat-card');
+    statCards.forEach(card => {
+        card.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-5px) scale(1.02)';
+        });
+        
+        card.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(0) scale(1)';
+        });
+    });
+    
+    // Efecto hover para las filas de la tabla
+    const tableRows = document.querySelectorAll('.planilla-table tbody tr');
+    tableRows.forEach(row => {
+        row.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-2px)';
+        });
+        
+        row.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(0)';
+        });
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,539 @@
+{% extends 'base.html' %}
+
+{% block title %}Presupuestos - Sistema de Construcción{% endblock %}
+
+{% block extra_css %}
+<style>
+    .presupuesto-card {
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        border: none;
+        border-radius: 16px;
+        overflow: hidden;
+        box-shadow: 0 4px 20px rgba(44, 62, 80, 0.08);
+    }
+    
+    .presupuesto-card:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 12px 40px rgba(44, 62, 80, 0.15);
+    }
+    
+    .presupuesto-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 1.5rem;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .presupuesto-header::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="white" opacity="0.1"/><circle cx="75" cy="75" r="1" fill="white" opacity="0.1"/><circle cx="50" cy="10" r="0.5" fill="white" opacity="0.1"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+    }
+    
+    .presupuesto-header h5 {
+        position: relative;
+        z-index: 1;
+        margin: 0;
+        font-weight: 700;
+        font-size: 1.1rem;
+    }
+    
+    .presupuesto-header .badge {
+        position: relative;
+        z-index: 1;
+        background: rgba(255, 255, 255, 0.2);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+    }
+    
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+    
+    .stat-card {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        text-align: center;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        transition: all 0.3s ease;
+    }
+    
+    .stat-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    }
+    
+    .stat-number {
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--azul-acero);
+        margin-bottom: 0.5rem;
+    }
+    
+    .stat-label {
+        color: var(--gris-concreto);
+        font-size: 0.9rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .filters-card {
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        border: none;
+        border-radius: 16px;
+        overflow: hidden;
+    }
+    
+    .filters-card .card-header {
+        background: transparent;
+        border: none;
+        color: white;
+        padding: 1.5rem;
+    }
+    
+    .filters-card .card-body {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+    }
+    
+    .presupuesto-item {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 1rem;
+        border-left: 4px solid var(--azul-acero);
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .presupuesto-item::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 4px;
+        height: 100%;
+        background: linear-gradient(180deg, var(--azul-acero) 0%, var(--amarillo-ocre) 100%);
+        transition: all 0.3s ease;
+    }
+    
+    .presupuesto-item:hover::before {
+        width: 8px;
+    }
+    
+    .presupuesto-item:hover {
+        transform: translateX(8px);
+        box-shadow: 0 8px 30px rgba(44, 62, 80, 0.15);
+    }
+    
+    .presupuesto-meta {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 1rem;
+        flex-wrap: wrap;
+    }
+    
+    .presupuesto-title {
+        font-size: 1.2rem;
+        font-weight: 700;
+        color: var(--azul-acero);
+        margin: 0;
+        flex: 1;
+    }
+    
+    .presupuesto-version {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+    
+    .presupuesto-estado {
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .estado-borrador { background: linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%); color: white; }
+    .estado-en_revision { background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%); color: white; }
+    .estado-aprobado { background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%); color: white; }
+    .estado-rechazado { background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%); color: white; }
+    
+    .presupuesto-info {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 1rem;
+        margin-bottom: 1rem;
+    }
+    
+    .info-item {
+        text-align: center;
+        padding: 1rem;
+        background: var(--blanco-humo);
+        border-radius: 8px;
+        border: 1px solid var(--gris-concreto-claro);
+    }
+    
+    .info-label {
+        font-size: 0.8rem;
+        color: var(--gris-concreto);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 0.5rem;
+    }
+    
+    .info-value {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: var(--azul-acero);
+    }
+    
+    .variacion-indicator {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-weight: 600;
+        font-size: 0.9rem;
+    }
+    
+    .variacion-positiva {
+        background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+        color: white;
+    }
+    
+    .variacion-negativa {
+        background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%);
+        color: white;
+    }
+    
+    .variacion-neutral {
+        background: var(--gris-concreto);
+        color: white;
+    }
+    
+    .presupuesto-actions {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+    }
+    
+    .action-btn {
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        text-decoration: none;
+        transition: all 0.3s ease;
+        border: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .action-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    }
+    
+    .btn-view { background: linear-gradient(135deg, #3498db 0%, #2980b9 100%); color: white; }
+    .btn-edit { background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%); color: white; }
+    .btn-approve { background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%); color: white; }
+    
+    .empty-state {
+        text-align: center;
+        padding: 4rem 2rem;
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 4px 20px rgba(44, 62, 80, 0.08);
+    }
+    
+    .empty-state i {
+        font-size: 4rem;
+        color: var(--gris-concreto);
+        margin-bottom: 1rem;
+        opacity: 0.5;
+    }
+    
+    .empty-state h5 {
+        color: var(--azul-acero);
+        margin-bottom: 1rem;
+    }
+    
+    .empty-state p {
+        color: var(--gris-concreto);
+        margin-bottom: 2rem;
+    }
+    
+    .search-highlight {
+        background: linear-gradient(135deg, #f1c40f 0%, #f39c12 100%);
+        color: white;
+        padding: 0.2rem 0.5rem;
+        border-radius: 4px;
+        font-weight: 600;
+    }
+    
+    @media (max-width: 768px) {
+        .stats-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .presupuesto-info {
+            grid-template-columns: 1fr;
+        }
+        
+        .presupuesto-meta {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+        
+        .presupuesto-actions {
+            justify-content: center;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="mb-0">
+            <i class="fas fa-calculator me-2"></i>Gestión de Presupuestos
+        </h2>
+        <p class="text-muted mb-0">Control y seguimiento de presupuestos de proyectos</p>
+    </div>
+    <a href="{% url 'presupuesto_create' %}" class="btn btn-primary btn-lg">
+        <i class="fas fa-plus me-2"></i>Nuevo Presupuesto
+    </a>
+</div>
+
+<!-- Estadísticas Rápidas -->
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-number">{{ total_presupuestos }}</div>
+        <div class="stat-label">Total Presupuestos</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-number">{{ presupuestos_aprobados }}</div>
+        <div class="stat-label">Aprobados</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-number">{{ presupuestos_revision }}</div>
+        <div class="stat-label">En Revisión</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-number">{{ presupuestos_borrador }}</div>
+        <div class="stat-label">Borradores</div>
+    </div>
+</div>
+
+<!-- Filtros Mejorados -->
+<div class="filters-card mb-4">
+    <div class="card-header">
+        <h6 class="mb-0">
+            <i class="fas fa-filter me-2"></i>Filtros Avanzados
+        </h6>
+    </div>
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <div class="col-md-4">
+                <label for="proyecto" class="form-label text-dark fw-bold">
+                    <i class="fas fa-project-diagram me-1"></i>Proyecto
+                </label>
+                <select name="proyecto" id="proyecto" class="form-select">
+                    <option value="">Todos los proyectos</option>
+                    {% for proyecto in proyectos %}
+                                            <option value="{{ proyecto.id }}" {% if selected_proyecto == proyecto.id|stringformat:"s" %}selected{% endif %}>
+                        {{ proyecto.nombre }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label for="estado" class="form-label text-dark fw-bold">
+                    <i class="fas fa-info-circle me-1"></i>Estado
+                </label>
+                <select name="estado" id="estado" class="form-select">
+                    <option value="">Todos los estados</option>
+                    {% for valor, etiqueta in estados %}
+                        <option value="{{ valor }}" {% if selected_estado == valor %}selected{% endif %}>
+                            {{ etiqueta }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-4 d-flex align-items-end">
+                <button type="submit" class="btn btn-light me-2">
+                    <i class="fas fa-search me-2"></i>Filtrar
+                </button>
+                <a href="{% url 'presupuestos_list' %}" class="btn btn-outline-light">
+                    <i class="fas fa-times me-2"></i>Limpiar
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Lista de Presupuestos -->
+{% if presupuestos %}
+    <div class="presupuesto-list">
+        {% for presupuesto in presupuestos %}
+        <div class="presupuesto-item">
+            <div class="presupuesto-meta">
+                <h5 class="presupuesto-title">{{ presupuesto.nombre }}</h5>
+                <span class="presupuesto-version">v{{ presupuesto.version }}</span>
+                <span class="presupuesto-estado estado-{{ presupuesto.estado }}">
+                    {{ presupuesto.get_estado_display }}
+                </span>
+            </div>
+            
+            <div class="presupuesto-info">
+                <div class="info-item">
+                    <div class="info-label">Proyecto</div>
+                    <div class="info-value">{{ presupuesto.proyecto.nombre }}</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Monto Total</div>
+                    <div class="info-value">${{ presupuesto.monto_total|floatformat:2 }}</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Variación</div>
+                    <div class="info-value">
+                        {% if presupuesto.variacion_data %}
+                            {% with variacion=presupuesto.variacion_data %}
+                                {% if variacion.variacion > 0 %}
+                                    <span class="variacion-indicator variacion-positiva">
+                                        <i class="fas fa-arrow-up"></i>
+                                        +${{ variacion.variacion|floatformat:2 }}
+                                    </span>
+                                {% elif variacion.variacion < 0 %}
+                                    <span class="variacion-indicator variacion-negativa">
+                                        <i class="fas fa-arrow-down"></i>
+                                        ${{ variacion.variacion|floatformat:2 }}
+                                    </span>
+                                {% else %}
+                                    <span class="variacion-indicator variacion-neutral">
+                                        <i class="fas fa-equals"></i>
+                                        $0.00
+                                    </span>
+                                {% endif %}
+                            {% endwith %}
+                        {% else %}
+                            <span class="text-muted">-</span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Creado por</div>
+                    <div class="info-value">{{ presupuesto.creado_por.get_full_name|default:presupuesto.creado_por.username }}</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Fecha</div>
+                    <div class="info-value">{{ presupuesto.fecha_creacion|date:"d/m/Y" }}</div>
+                </div>
+            </div>
+            
+            <div class="presupuesto-actions">
+                <a href="{% url 'presupuesto_detail' presupuesto.id %}" class="action-btn btn-view" title="Ver detalle">
+                    <i class="fas fa-eye"></i>
+                    Ver
+                </a>
+                <a href="{% url 'presupuesto_edit' presupuesto.id %}" class="action-btn btn-edit" title="Editar">
+                    <i class="fas fa-edit"></i>
+                    Editar
+                </a>
+                {% if presupuesto.estado == 'en_revision' %}
+                    <a href="{% url 'presupuesto_aprobar' presupuesto.id %}" class="action-btn btn-approve" title="Aprobar">
+                        <i class="fas fa-check"></i>
+                        Aprobar
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+{% else %}
+    <div class="empty-state">
+        <i class="fas fa-calculator"></i>
+        <h5>No hay presupuestos registrados</h5>
+        <p>Comienza creando tu primer presupuesto para un proyecto y mantén el control financiero de tus obras.</p>
+        <a href="{% url 'presupuesto_create' %}" class="btn btn-primary btn-lg">
+            <i class="fas fa-plus me-2"></i>Crear Primer Presupuesto
+        </a>
+    </div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Animación de entrada para las tarjetas
+    const cards = document.querySelectorAll('.presupuesto-item');
+    cards.forEach((card, index) => {
+        card.style.opacity = '0';
+        card.style.transform = 'translateY(20px)';
+        
+        setTimeout(() => {
+            card.style.transition = 'all 0.6s ease';
+            card.style.opacity = '1';
+            card.style.transform = 'translateY(0)';
+        }, index * 100);
+    });
+    
+    // Efecto hover mejorado para las estadísticas
+    const statCards = document.querySelectorAll('.stat-card');
+    statCards.forEach(card => {
+        card.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-5px) scale(1.02)';
+        });
+        
+        card.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(0) scale(1)';
+        });
+    });
+    
+    // Filtros con búsqueda en tiempo real
+    const searchInputs = document.querySelectorAll('select[name="proyecto"], select[name="estado"]');
+    searchInputs.forEach(input => {
+        input.addEventListener('change', function() {
+            // Resaltar resultados de búsqueda
+            const searchTerm = this.value;
+            if (searchTerm) {
+                highlightSearchResults(searchTerm);
+            }
+        });
+    });
+});
+
+function highlightSearchResults(searchTerm) {
+    const cards = document.querySelectorAll('.presupuesto-item');
+    cards.forEach(card => {
+        const text = card.textContent.toLowerCase();
+        if (text.includes(searchTerm.toLowerCase())) {
+            card.style.border = '2px solid var(--amarillo-ocre)';
+            card.style.boxShadow = '0 8px 30px rgba(243, 156, 18, 0.3)';
+        } else {
+            card.style.border = '1px solid var(--gris-concreto-claro)';
+            card.style.boxShadow = '0 4px 20px rgba(44, 62, 80, 0.08)';
+        }
+    });
+}
+</script>
+{% endblock %}

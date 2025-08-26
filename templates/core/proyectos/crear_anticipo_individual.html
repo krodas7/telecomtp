@@ -1,0 +1,384 @@
+{% extends "base.html" %}
+
+{% block title %}Anticipo Individual - {{ proyecto.nombre }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .anticipo-container {
+        background: white;
+        border-radius: 15px;
+        padding: 2rem;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        border: 1px solid rgba(255,255,255,0.2);
+        margin-bottom: 2rem;
+    }
+    
+    .proyecto-header {
+        background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%);
+        color: #212529;
+        padding: 2rem;
+        border-radius: 15px;
+        margin-bottom: 2rem;
+        text-align: center;
+    }
+    
+    .proyecto-header h2 {
+        margin: 0;
+        font-size: 2rem;
+        font-weight: 700;
+    }
+    
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+    
+    .form-label {
+        font-weight: 600;
+        color: #495057;
+        margin-bottom: 0.5rem;
+        display: block;
+    }
+    
+    .form-control, .form-select {
+        width: 100%;
+        padding: 0.75rem;
+        border: 2px solid #e9ecef;
+        border-radius: 10px;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+    }
+    
+    .form-control:focus, .form-select:focus {
+        outline: none;
+        border-color: #ffc107;
+        box-shadow: 0 0 0 3px rgba(255, 193, 7, 0.1);
+    }
+    
+    .btn-crear {
+        background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%);
+        border: none;
+        color: white;
+        padding: 1rem 2rem;
+        border-radius: 10px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
+        cursor: pointer;
+    }
+    
+    .btn-crear:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(40, 167, 69, 0.4);
+        background: linear-gradient(135deg, #1e7e34 0%, #155724 100%);
+    }
+    
+    .btn-cancelar {
+        background: linear-gradient(135deg, #6c757d 0%, #545b62 100%);
+        border: none;
+        color: white;
+        padding: 1rem 2rem;
+        border-radius: 10px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-block;
+        margin-right: 1rem;
+        box-shadow: 0 4px 15px rgba(108, 117, 125, 0.3);
+    }
+    
+    .btn-cancelar:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(108, 117, 125, 0.4);
+        color: white;
+        text-decoration: none;
+    }
+    
+    .info-card {
+        background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
+        border: 1px solid #ff9800;
+        border-radius: 15px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    
+    .info-card h5 {
+        color: #e65100;
+        margin-bottom: 1rem;
+    }
+    
+    .info-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+    
+    .info-list li {
+        padding: 0.5rem 0;
+        border-bottom: 1px solid #fff3e0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .info-list li:last-child {
+        border-bottom: none;
+    }
+    
+    .info-label {
+        font-weight: 500;
+        color: #e65100;
+    }
+    
+    .info-value {
+        font-weight: 600;
+        color: #bf360c;
+    }
+    
+    .colaborador-preview {
+        background: linear-gradient(135deg, #e8f5e8 0%, #c8e6c9 100%);
+        border: 2px solid #4caf50;
+        border-radius: 15px;
+        padding: 1.5rem;
+        text-align: center;
+        margin-bottom: 2rem;
+        display: none;
+    }
+    
+    .colaborador-preview h4 {
+        color: #2e7d32;
+        margin-bottom: 0.5rem;
+    }
+    
+    .colaborador-info {
+        font-size: 1.1rem;
+        color: #1b5e20;
+        margin-bottom: 0.5rem;
+    }
+    
+    .colaborador-contact {
+        font-size: 0.9rem;
+        color: #388e3c;
+    }
+    
+    @media (max-width: 768px) {
+        .proyecto-header {
+            padding: 1.5rem;
+        }
+        
+        .proyecto-header h2 {
+            font-size: 1.5rem;
+        }
+        
+        .anticipo-container {
+            padding: 1rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="proyecto-header">
+    <h2>
+        <i class="fas fa-user-plus me-3"></i>Anticipo Individual
+    </h2>
+    <p class="mb-0 mt-2">Proyecto: {{ proyecto.nombre }}</p>
+</div>
+
+<div class="anticipo-container">
+    <!-- Información del Proyecto -->
+    <div class="info-card">
+        <h5>
+            <i class="fas fa-info-circle me-2"></i>Información del Proyecto
+        </h5>
+        <ul class="info-list">
+            <li>
+                <span class="info-label">Nombre del Proyecto:</span>
+                <span class="info-value">{{ proyecto.nombre }}</span>
+            </li>
+            <li>
+                <span class="info-label">Total de Colaboradores:</span>
+                <span class="info-value">{{ colaboradores_disponibles|length }}</span>
+            </li>
+            <li>
+                <span class="info-label">Cliente:</span>
+                <span class="info-value">{{ proyecto.cliente.razon_social }}</span>
+            </li>
+            <li>
+                <span class="info-label">Estado:</span>
+                <span class="info-value">{{ proyecto.get_estado_display }}</span>
+            </li>
+        </ul>
+    </div>
+    
+    <!-- Vista Previa del Colaborador -->
+    <div class="colaborador-preview" id="colaboradorPreview">
+        <h4>
+            <i class="fas fa-user me-2"></i>Información del Colaborador
+        </h4>
+        <div class="colaborador-info" id="colaboradorInfo"></div>
+        <div class="colaborador-contact" id="colaboradorContact"></div>
+    </div>
+    
+    <!-- Formulario de Anticipo Individual -->
+    <form method="post" id="anticipoForm">
+        {% csrf_token %}
+        
+        <div class="form-group">
+            <label for="colaborador" class="form-label">
+                <i class="fas fa-user me-2"></i>Seleccionar Colaborador
+            </label>
+            <select id="colaborador" name="colaborador" class="form-select" required onchange="mostrarColaborador()">
+                <option value="">-- Selecciona un colaborador --</option>
+                {% for colaborador in colaboradores_disponibles %}
+                    <option value="{{ colaborador.id }}" 
+                            data-nombre="{{ colaborador.nombre }}"
+                            data-dpi="{{ colaborador.dpi|default:'Sin DPI' }}"
+                            data-email="{{ colaborador.email|default:'Sin email' }}"
+                            data-telefono="{{ colaborador.telefono|default:'Sin teléfono' }}">
+                        {{ colaborador.nombre }} {% if colaborador.dpi %}({{ colaborador.dpi }}){% endif %}
+                    </option>
+                {% endfor %}
+            </select>
+            <small class="text-muted">Elige el colaborador que recibirá el anticipo</small>
+        </div>
+        
+        <div class="form-group">
+            <label for="monto" class="form-label">
+                <i class="fas fa-dollar-sign me-2"></i>Monto del Anticipo (Q)
+            </label>
+            <input type="number" 
+                   id="monto" 
+                   name="monto" 
+                   class="form-control" 
+                   step="0.01" 
+                   min="0.01" 
+                   required 
+                   placeholder="Ej: 200.00">
+            <small class="text-muted">Ingresa el monto del anticipo</small>
+        </div>
+        
+        <div class="form-group">
+            <label for="concepto" class="form-label">
+                <i class="fas fa-comment me-2"></i>Concepto del Anticipo
+            </label>
+            <input type="text" 
+                   id="concepto" 
+                   name="concepto" 
+                   class="form-control" 
+                   required 
+                   placeholder="Ej: Anticipo para gastos personales"
+                   value="Anticipo individual">
+            <small class="text-muted">Descripción del motivo del anticipo</small>
+        </div>
+        
+        <div class="form-group">
+            <label for="observaciones" class="form-label">
+                <i class="fas fa-sticky-note me-2"></i>Observaciones (Opcional)
+            </label>
+            <textarea id="observaciones" 
+                      name="observaciones" 
+                      class="form-control" 
+                      rows="3" 
+                      placeholder="Observaciones adicionales sobre el anticipo..."></textarea>
+            <small class="text-muted">Información adicional sobre el anticipo</small>
+        </div>
+        
+        <div class="text-center">
+            <a href="{% url 'planilla_proyecto' proyecto.id %}" class="btn-cancelar">
+                <i class="fas fa-arrow-left me-2"></i>Cancelar
+            </a>
+            <button type="submit" class="btn-crear" id="btnCrear" disabled>
+                <i class="fas fa-save me-2"></i>Crear Anticipo
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function mostrarColaborador() {
+    const select = document.getElementById('colaborador');
+    const preview = document.getElementById('colaboradorPreview');
+    const info = document.getElementById('colaboradorInfo');
+    const contact = document.getElementById('colaboradorContact');
+    const btnCrear = document.getElementById('btnCrear');
+    
+    if (select.value) {
+        const option = select.options[select.selectedIndex];
+        const nombre = option.getAttribute('data-nombre');
+        const dpi = option.getAttribute('data-dpi');
+        const email = option.getAttribute('data-email');
+        const telefono = option.getAttribute('data-telefono');
+        
+        info.innerHTML = `<strong>${nombre}</strong><br>DPI: ${dpi}`;
+        
+        let contactInfo = '';
+        if (email !== 'Sin email') {
+            contactInfo += `<i class="fas fa-envelope me-1"></i>${email}<br>`;
+        }
+        if (telefono !== 'Sin teléfono') {
+            contactInfo += `<i class="fas fa-phone me-1"></i>${telefono}`;
+        }
+        
+        contact.innerHTML = contactInfo || 'Sin información de contacto';
+        preview.style.display = 'block';
+        btnCrear.disabled = false;
+    } else {
+        preview.style.display = 'none';
+        btnCrear.disabled = true;
+    }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Animación de entrada
+    const container = document.querySelector('.anticipo-container');
+    container.style.opacity = '0';
+    container.style.transform = 'translateY(30px)';
+    
+    setTimeout(() => {
+        container.style.transition = 'all 0.8s ease';
+        container.style.opacity = '1';
+        container.style.transform = 'translateY(0)';
+    }, 200);
+    
+    // Validación del formulario
+    const form = document.getElementById('anticipoForm');
+    const montoInput = document.getElementById('monto');
+    const colaboradorSelect = document.getElementById('colaborador');
+    
+    form.addEventListener('submit', function(e) {
+        const monto = parseFloat(montoInput.value);
+        const colaborador = colaboradorSelect.value;
+        
+        if (!colaborador) {
+            e.preventDefault();
+            alert('Por favor selecciona un colaborador');
+            colaboradorSelect.focus();
+            return;
+        }
+        
+        if (monto <= 0) {
+            e.preventDefault();
+            alert('Por favor ingresa un monto válido mayor a 0');
+            montoInput.focus();
+            return;
+        }
+        
+        if (monto > 10000) {
+            if (!confirm('¿Estás seguro de que quieres crear un anticipo por un monto tan alto?')) {
+                e.preventDefault();
+                return;
+            }
+        }
+        
+        // Confirmación final
+        const colaboradorNombre = colaboradorSelect.options[colaboradorSelect.selectedIndex].text;
+        if (!confirm(`¿Confirmas crear un anticipo de Q${monto.toFixed(2)} para ${colaboradorNombre}?`)) {
+            e.preventDefault();
+            return;
+        }
+    });
+});
+</script>
+{% endblock %}

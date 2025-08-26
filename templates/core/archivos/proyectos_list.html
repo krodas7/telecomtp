@@ -1,0 +1,177 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Gestión de Archivos por Proyecto{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-0 text-gray-800">
+                <i class="fas fa-folder-open text-primary me-2"></i>
+                Gestión de Archivos por Proyecto
+            </h1>
+            <p class="text-muted">Selecciona un proyecto para gestionar sus archivos</p>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left me-2"></i>
+                Volver al Dashboard
+            </a>
+        </div>
+    </div>
+
+    <!-- Estadísticas -->
+    <div class="row mb-4">
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-primary shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                Total de Proyectos
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_proyectos }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-project-diagram fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Lista de Proyectos -->
+    <div class="row">
+        {% for proyecto in proyectos %}
+        <div class="col-xl-4 col-md-6 mb-4">
+            <div class="card border-left-success shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                {{ proyecto.estado|title }}
+                            </div>
+                            <div class="h6 mb-0 font-weight-bold text-gray-800">
+                                {{ proyecto.nombre }}
+                            </div>
+                            <div class="text-xs text-muted mb-2">
+                                Cliente: {{ proyecto.cliente.nombre }}
+                            </div>
+                            <div class="d-flex align-items-center mb-2">
+                                <span class="badge bg-info me-2">
+                                    <i class="fas fa-file me-1"></i>
+                                    {{ proyecto.total_archivos }} archivos
+                                </span>
+                                <span class="badge bg-{{ proyecto.estado|yesno:'success,warning' }}">
+                                    {{ proyecto.estado|title }}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-folder fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-3">
+                        <div class="d-flex gap-2">
+                            <a href="{% url 'archivos_proyecto_list' proyecto.id %}" 
+                               class="btn btn-primary btn-sm flex-fill">
+                                <i class="fas fa-folder-open me-1"></i>
+                                Ver Archivos
+                            </a>
+                            <a href="{% url 'proyecto_dashboard' proyecto.id %}" 
+                               class="btn btn-outline-secondary btn-sm">
+                                <i class="fas fa-chart-bar me-1"></i>
+                                Dashboard
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12">
+            <div class="text-center py-5">
+                <i class="fas fa-folder-open fa-3x text-gray-300 mb-3"></i>
+                <h4 class="text-gray-500">No hay proyectos disponibles</h4>
+                <p class="text-muted">No se encontraron proyectos activos para gestionar archivos.</p>
+                <a href="{% url 'proyecto_create' %}" class="btn btn-primary">
+                    <i class="fas fa-plus me-2"></i>
+                    Crear Proyecto
+                </a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Información adicional -->
+    <div class="row mt-5">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Información sobre la Gestión de Archivos
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <h6 class="text-primary">
+                                <i class="fas fa-upload me-2"></i>
+                                Subir Archivos
+                            </h6>
+                            <p class="text-muted small">
+                                Puedes subir planos, documentos, imágenes y otros archivos relacionados con cada proyecto.
+                            </p>
+                        </div>
+                        <div class="col-md-4">
+                            <h6 class="text-success">
+                                <i class="fas fa-download me-2"></i>
+                                Descargar Archivos
+                            </h6>
+                            <p class="text-muted small">
+                                Accede y descarga todos los archivos del proyecto cuando los necesites.
+                            </p>
+                        </div>
+                        <div class="col-md-4">
+                            <h6 class="text-warning">
+                                <i class="fas fa-eye me-2"></i>
+                                Vista Previa
+                            </h6>
+                            <p class="text-muted small">
+                                Visualiza imágenes y PDFs directamente desde el navegador.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    // Animaciones de entrada
+    $('.card').addClass('fade-in');
+    
+    // Tooltips
+    $('[data-toggle="tooltip"]').tooltip();
+    
+    // Efectos hover en las tarjetas
+    $('.card').hover(
+        function() {
+            $(this).addClass('shadow-lg').removeClass('shadow');
+        },
+        function() {
+            $(this).removeClass('shadow-lg').addClass('shadow');
+        }
+    );
+});
+</script>
+{% endblock %}

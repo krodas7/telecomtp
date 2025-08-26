@@ -1,0 +1,193 @@
+{% extends "base.html" %}
+
+{% block title %}Eliminar Proyecto - Sistema de Construcción{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">
+        <i class="fas fa-trash me-2"></i>Eliminar Proyecto
+    </h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <a href="{% url 'proyectos_list' %}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left me-1"></i>Volver
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card border-danger">
+            <div class="card-header bg-danger text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-exclamation-triangle me-2"></i>Confirmar Eliminación
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-warning">
+                    <h6 class="alert-heading">
+                        <i class="fas fa-exclamation-triangle me-2"></i>¡Atención!
+                    </h6>
+                    <p class="mb-0">
+                        Está a punto de eliminar el proyecto <strong>"{{ proyecto.nombre }}"</strong>. 
+                        Esta acción desactivará el proyecto y no podrá ser utilizado en nuevas operaciones.
+                    </p>
+                </div>
+                
+                <div class="card mb-3">
+                    <div class="card-header">
+                        <h6 class="mb-0">Información del Proyecto a Eliminar</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <p><strong>Nombre:</strong> {{ proyecto.nombre }}</p>
+                                <p><strong>Cliente:</strong> {{ proyecto.cliente.razon_social }}</p>
+                                <p><strong>Estado:</strong> 
+                                    <span class="badge bg-{% if proyecto.estado == 'en_progreso' %}primary{% elif proyecto.estado == 'completado' %}success{% elif proyecto.estado == 'pendiente' %}warning{% else %}secondary{% endif %}">
+                                        {{ proyecto.get_estado_display }}
+                                    </span>
+                                </p>
+                            </div>
+                            <div class="col-md-6">
+                                {% if proyecto.presupuesto %}
+                                    <p><strong>Presupuesto:</strong> Q{{ proyecto.presupuesto|floatformat:2 }}</p>
+                                {% endif %}
+                                {% if proyecto.fecha_inicio %}
+                                    <p><strong>Fecha de Inicio:</strong> {{ proyecto.fecha_inicio|date:"d/m/Y" }}</p>
+                                {% endif %}
+                                <p><strong>Creado:</strong> {{ proyecto.creado_en|date:"d/m/Y H:i" }}</p>
+                            </div>
+                        </div>
+                        
+                        {% if proyecto.descripcion %}
+                            <p><strong>Descripción:</strong> {{ proyecto.descripcion }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="alert alert-info">
+                    <h6 class="alert-heading">
+                        <i class="fas fa-info-circle me-2"></i>Información Importante
+                    </h6>
+                    <ul class="mb-0">
+                        <li>El proyecto será marcado como inactivo, no se eliminará físicamente de la base de datos.</li>
+                        <li>Las facturas y gastos existentes asociados a este proyecto no se verán afectados.</li>
+                        <li>No se podrán crear nuevas facturas o gastos para este proyecto.</li>
+                        <li>Esta acción se puede revertir editando el proyecto y marcándolo como activo.</li>
+                    </ul>
+                </div>
+                
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-danger">
+                            <i class="fas fa-trash me-2"></i>Confirmar Eliminación
+                        </button>
+                        <a href="{% url 'proyectos_list' %}" class="btn btn-secondary">
+                            <i class="fas fa-times me-2"></i>Cancelar
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="fas fa-file-invoice-dollar me-2"></i>Facturas del Proyecto
+                </h6>
+            </div>
+            <div class="card-body">
+                {% if proyecto.facturas.all %}
+                    <p class="text-muted">Este proyecto tiene las siguientes facturas:</p>
+                    <ul class="list-unstyled">
+                        {% for factura in proyecto.facturas.all|slice:":5" %}
+                            <li class="mb-2">
+                                <div class="d-flex align-items-center">
+                                    <i class="fas fa-file-invoice me-2 text-info"></i>
+                                    <div>
+                                        <strong>{{ factura.numero_factura }}</strong>
+                                        <br>
+                                        <small class="text-muted">
+                                            Q{{ factura.total|floatformat:2 }} - 
+                                            <span class="badge bg-{% if factura.estado == 'pagada' %}success{% elif factura.estado == 'pendiente' %}warning{% elif factura.estado == 'vencida' %}danger{% else %}secondary{% endif %}">
+                                                {{ factura.get_estado_display }}
+                                            </span>
+                                        </small>
+                                    </div>
+                                </div>
+                            </li>
+                        {% endfor %}
+                        {% if proyecto.facturas.count > 5 %}
+                            <li class="text-muted">
+                                <small>... y {{ proyecto.facturas.count|add:"-5" }} más</small>
+                            </li>
+                        {% endif %}
+                    </ul>
+                {% else %}
+                    <p class="text-muted">Este proyecto no tiene facturas asociadas.</p>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="card mt-3">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="fas fa-money-bill-wave me-2"></i>Gastos del Proyecto
+                </h6>
+            </div>
+            <div class="card-body">
+                {% if proyecto.gastos.all %}
+                    <p class="text-muted">Este proyecto tiene los siguientes gastos:</p>
+                    <ul class="list-unstyled">
+                        {% for gasto in proyecto.gastos.all|slice:":5" %}
+                            <li class="mb-2">
+                                <div class="d-flex align-items-center">
+                                    <i class="fas fa-money-bill me-2 text-warning"></i>
+                                    <div>
+                                        <strong>{{ gasto.descripcion|truncatechars:30 }}</strong>
+                                        <br>
+                                        <small class="text-muted">
+                                            Q{{ gasto.monto|floatformat:2 }} - 
+                                            <span class="badge bg-{% if gasto.aprobado %}success{% else %}warning{% endif %}">
+                                                {% if gasto.aprobado %}Aprobado{% else %}Pendiente{% endif %}
+                                            </span>
+                                        </small>
+                                    </div>
+                                </div>
+                            </li>
+                        {% endfor %}
+                        {% if proyecto.gastos.count > 5 %}
+                            <li class="text-muted">
+                                <small>... y {{ proyecto.gastos.count|add:"-5" }} más</small>
+                            </li>
+                        {% endif %}
+                    </ul>
+                {% else %}
+                    <p class="text-muted">Este proyecto no tiene gastos asociados.</p>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="card mt-3">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="fas fa-folder me-2"></i>Archivos del Proyecto
+                </h6>
+            </div>
+            <div class="card-body">
+                {% if proyecto.archivos.all %}
+                    <p class="text-muted">Este proyecto tiene {{ proyecto.archivos.count }} archivo(s) asociado(s).</p>
+                    <a href="{% url 'archivos_proyecto_list' proyecto.id %}" class="btn btn-sm btn-outline-primary">
+                        <i class="fas fa-folder-open me-1"></i>Ver Archivos
+                    </a>
+                {% else %}
+                    <p class="text-muted">Este proyecto no tiene archivos asociados.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

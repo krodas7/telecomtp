@@ -1,0 +1,285 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Reset de Aplicación - Sistema{% endblock %}
+
+{% block extra_css %}
+<style>
+    .reset-warning {
+        background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+        color: white;
+        border-radius: 15px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        text-align: center;
+    }
+    
+    .reset-warning i {
+        font-size: 4rem;
+        margin-bottom: 1rem;
+    }
+    
+    .reset-actions {
+        background: #f8f9fa;
+        border-radius: 15px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+    }
+    
+    .reset-action-item {
+        background: white;
+        border-radius: 10px;
+        padding: 1.5rem;
+        margin-bottom: 1rem;
+        border-left: 5px solid #007bff;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .reset-action-item h6 {
+        color: #007bff;
+        margin-bottom: 0.5rem;
+    }
+    
+    .reset-action-item i {
+        color: #28a745;
+        margin-right: 0.5rem;
+    }
+    
+    .reset-form {
+        background: white;
+        border-radius: 15px;
+        padding: 2rem;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+    
+    .confirm-checkbox {
+        background: #fff3cd;
+        border: 2px solid #ffc107;
+        border-radius: 10px;
+        padding: 1rem;
+        margin: 1rem 0;
+    }
+    
+    .danger-zone {
+        background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+        color: white;
+        border-radius: 15px;
+        padding: 2rem;
+        text-align: center;
+        margin-top: 2rem;
+    }
+    
+    .btn-reset {
+        background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+        border: none;
+        color: white;
+        padding: 1rem 2rem;
+        font-size: 1.1rem;
+        border-radius: 10px;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-reset:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(220, 53, 69, 0.4);
+        color: white;
+    }
+    
+    .btn-reset:disabled {
+        background: #6c757d;
+        transform: none;
+        box-shadow: none;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <h1 class="h3 mb-0">
+                    <i class="fas fa-exclamation-triangle text-warning me-2"></i>
+                    Reset de Aplicación
+                </hh1>
+                <a href="{% url 'sistema' %}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left me-2"></i>
+                    Volver al Sistema
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Advertencia Principal -->
+    <div class="row">
+        <div class="col-12">
+            <div class="reset-warning">
+                <i class="fas fa-exclamation-triangle"></i>
+                <h2 class="mb-3">⚠️ ZONA DE PELIGRO ⚠️</h2>
+                <p class="lead mb-0">
+                    Esta acción realizará un <strong>RESET COMPLETO</strong> de la aplicación.<br>
+                    Solo superusuarios pueden acceder a esta función.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Acciones que se Realizarán -->
+    <div class="row">
+        <div class="col-12">
+            <div class="reset-actions">
+                <h4 class="mb-3">
+                    <i class="fas fa-list-check me-2"></i>
+                    Acciones que se Realizarán
+                </h4>
+                
+                <div class="reset-action-item">
+                    <h6><i class="fas fa-check-circle"></i> Limpieza de Caché del Sistema</h6>
+                    <p class="mb-0 text-muted">Se eliminará todo el caché almacenado para liberar memoria y optimizar el rendimiento.</p>
+                </div>
+                
+                <div class="reset-action-item">
+                    <h6><i class="fas fa-check-circle"></i> Optimización de Logs</h6>
+                    <p class="mb-0 text-muted">Se mantendrán solo los últimos 1000 logs del sistema para optimizar la base de datos.</p>
+                </div>
+                
+                <div class="reset-action-item">
+                    <h6><i class="fas fa-check-circle"></i> Reinicio de Contadores</h6>
+                    <p class="mb-0 text-muted">Se reiniciarán los contadores internos del sistema para un funcionamiento limpio.</p>
+                </div>
+                
+                <div class="reset-action-item">
+                    <h6><i class="fas fa-check-circle"></i> Registro de Actividad</h6>
+                    <p class="mb-0 text-muted">Se registrará toda la actividad de reset en los logs del sistema para auditoría.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Formulario de Confirmación -->
+    <div class="row">
+        <div class="col-12">
+            <div class="reset-form">
+                <h4 class="mb-3">
+                    <i class="fas fa-shield-alt me-2"></i>
+                    Confirmación de Seguridad
+                </h4>
+                
+                <form method="POST" id="resetForm">
+                    {% csrf_token %}
+                    
+                    <div class="confirm-checkbox">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="confirmReset" required>
+                            <label class="form-check-label" for="confirmReset">
+                                <strong>Confirmo que entiendo las consecuencias de esta acción</strong>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="confirm-checkbox">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="confirmSuperuser" required>
+                            <label class="form-check-label" for="confirmSuperuser">
+                                <strong>Confirmo que soy un superusuario autorizado</strong>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="confirm-checkbox">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="confirmBackup" required>
+                            <label class="form-check-label" for="confirmBackup">
+                                <strong>Confirmo que he realizado una copia de seguridad si es necesario</strong>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="text-center mt-4">
+                        <button type="submit" class="btn btn-reset" id="btnReset" disabled>
+                            <i class="fas fa-rocket me-2"></i>
+                            EJECUTAR RESET DE APLICACIÓN
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Zona de Peligro -->
+    <div class="row">
+        <div class="col-12">
+            <div class="danger-zone">
+                <h4 class="mb-3">
+                    <i class="fas fa-skull-crossbones me-2"></i>
+                    ZONA DE PELIGRO
+                </h4>
+                <p class="mb-0">
+                    Esta acción es <strong>IRREVERSIBLE</strong> y puede afectar el funcionamiento del sistema.<br>
+                    Solo proceda si está completamente seguro de lo que está haciendo.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const confirmReset = document.getElementById('confirmReset');
+    const confirmSuperuser = document.getElementById('confirmSuperuser');
+    const confirmBackup = document.getElementById('confirmBackup');
+    const btnReset = document.getElementById('btnReset');
+    const resetForm = document.getElementById('resetForm');
+    
+    // Función para verificar si todos los checkboxes están marcados
+    function checkAllConfirmed() {
+        const allConfirmed = confirmReset.checked && confirmSuperuser.checked && confirmBackup.checked;
+        btnReset.disabled = !allConfirmed;
+        
+        if (allConfirmed) {
+            btnReset.classList.remove('btn-secondary');
+            btnReset.classList.add('btn-reset');
+        } else {
+            btnReset.classList.remove('btn-reset');
+            btnReset.classList.add('btn-secondary');
+        }
+    }
+    
+    // Event listeners para los checkboxes
+    confirmReset.addEventListener('change', checkAllConfirmed);
+    confirmSuperuser.addEventListener('change', checkAllConfirmed);
+    confirmBackup.addEventListener('change', checkAllConfirmed);
+    
+    // Confirmación final antes de enviar
+    resetForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const finalConfirm = confirm(
+            '🚨 CONFIRMACIÓN FINAL 🚨\n\n' +
+            '¿Está COMPLETAMENTE seguro de que desea ejecutar el RESET de la aplicación?\n\n' +
+            'Esta acción:\n' +
+            '• Limpiará todo el caché del sistema\n' +
+            '• Optimizará los logs\n' +
+            '• Reiniciará contadores internos\n' +
+            '• Es IRREVERSIBLE\n\n' +
+            '¿Desea continuar?'
+        );
+        
+        if (finalConfirm) {
+            // Mostrar loading en el botón
+            btnReset.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>EJECUTANDO RESET...';
+            btnReset.disabled = true;
+            
+            // Enviar formulario
+            resetForm.submit();
+        }
+    });
+    
+    // Verificar estado inicial
+    checkAllConfirmed();
+});
+</script>
+{% endblock %}

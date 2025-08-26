@@ -1,0 +1,136 @@
+{% extends 'base.html' %}
+
+{% block title %}Eliminar Categoría de Gasto - Sistema de Construcción{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="mb-0">
+        <i class="fas fa-trash me-2"></i>Eliminar Categoría de Gasto
+    </h2>
+    <a href="{% url 'categorias_gasto_list' %}" class="btn btn-outline-secondary">
+        <i class="fas fa-arrow-left me-2"></i>Volver a Categorías
+    </a>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card border-danger">
+            <div class="card-header bg-danger text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-exclamation-triangle me-2"></i>Confirmar Eliminación
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-danger">
+                    <h6 class="alert-heading">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        ¡Atención! Esta acción no se puede deshacer
+                    </h6>
+                    <p class="mb-0">
+                        Estás a punto de eliminar la categoría <strong>"{{ categoria.nombre }}"</strong>. 
+                        Esta acción es irreversible y afectará a todos los gastos asociados.
+                    </p>
+                </div>
+                
+                <!-- Información de la categoría a eliminar -->
+                <div class="card mb-3">
+                    <div class="card-header">
+                        <h6 class="mb-0">
+                            <i class="fas fa-info-circle me-2"></i>Información de la Categoría
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-3">
+                                <strong>Nombre:</strong><br>
+                                <span class="text-primary">{{ categoria.nombre }}</span>
+                            </div>
+                            <div class="col-md-3">
+                                <strong>Color:</strong><br>
+                                <div class="d-flex align-items-center">
+                                    <div class="color-preview me-2" style="width: 16px; height: 16px; background-color: {{ categoria.color }}; border-radius: 3px; border: 1px solid #ddd;"></div>
+                                    <small>{{ categoria.color }}</small>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <strong>Icono:</strong><br>
+                                <i class="{{ categoria.icono }} fa-lg" style="color: {{ categoria.color }};"></i>
+                            </div>
+                            <div class="col-md-3">
+                                <strong>Creada:</strong><br>
+                                <small class="text-muted">{{ categoria.fecha_creacion|date:"d/m/Y" }}</small>
+                            </div>
+                        </div>
+                        
+                        {% if categoria.descripcion %}
+                        <div class="row mt-3">
+                            <div class="col-12">
+                                <strong>Descripción:</strong><br>
+                                <span class="text-muted">{{ categoria.descripcion }}</span>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <!-- Impacto de la eliminación -->
+                <div class="card mb-3">
+                    <div class="card-header">
+                        <h6 class="mb-0">
+                            <i class="fas fa-exclamation-circle me-2"></i>Impacto de la Eliminación
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6 class="text-danger">Gastos Afectados:</h6>
+                                <ul class="list-unstyled">
+                                    <li><i class="fas fa-times text-danger me-2"></i>Los gastos quedarán sin categoría</li>
+                                    <li><i class="fas fa-times text-danger me-2"></i>Se perderá la organización por tipo</li>
+                                    <li><i class="fas fa-times text-danger me-2"></i>Los reportes se verán afectados</li>
+                                </ul>
+                            </div>
+                            <div class="col-md-6">
+                                <h6 class="text-warning">Alternativas Recomendadas:</h6>
+                                <ul class="list-unstyled">
+                                    <li><i class="fas fa-edit text-warning me-2"></i>Editar en lugar de eliminar</li>
+                                    <li><i class="fas fa-archive text-warning me-2"></i>Desactivar temporalmente</li>
+                                    <li><i class="fas fa-merge text-warning me-2"></i>Fusionar con otra categoría</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Formulario de confirmación -->
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="d-flex justify-content-between">
+                        <button type="submit" class="btn btn-danger btn-lg">
+                            <i class="fas fa-trash me-2"></i>Sí, Eliminar Categoría
+                        </button>
+                        <a href="{% url 'categorias_gasto_list' %}" class="btn btn-outline-secondary btn-lg">
+                            <i class="fas fa-times me-2"></i>Cancelar
+                        </a>
+                    </div>
+                </form>
+                
+                <!-- Advertencia final -->
+                <div class="alert alert-warning mt-3">
+                    <i class="fas fa-lightbulb me-2"></i>
+                    <strong>Recomendación:</strong> Considera editar la categoría en lugar de eliminarla. 
+                    Esto mantendrá la integridad de tus datos y la organización de tus gastos.
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.color-preview {
+    display: inline-block;
+    border: 1px solid #ddd;
+    border-radius: 3px;
+}
+</style>
+{% endblock %}

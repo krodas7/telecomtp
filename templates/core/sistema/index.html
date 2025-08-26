@@ -1,0 +1,192 @@
+{% extends 'base.html' %}
+
+{% block title %}Sistema - Sistema de Construcción{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="mb-0">
+        <i class="fas fa-cogs me-2"></i>Administración del Sistema
+    </h2>
+</div>
+
+<!-- Estadísticas del sistema -->
+<div class="row mb-4">
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="card">
+            <div class="card-body text-center">
+                <div class="stat-icon mb-3">
+                    <i class="fas fa-users fa-3x text-primary"></i>
+                </div>
+                <h3 class="mb-1">{{ total_usuarios }}</h3>
+                <p class="text-muted mb-0">Usuarios Totales</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="card">
+            <div class="card-body text-center">
+                <div class="stat-icon mb-3">
+                    <i class="fas fa-clipboard-list fa-3x text-success"></i>
+                </div>
+                <h3 class="mb-1">{{ total_logs }}</h3>
+                <p class="text-muted mb-0">Registros de Actividad</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="card">
+            <div class="card-body text-center">
+                <div class="stat-icon mb-3">
+                    <i class="fas fa-database fa-3x text-warning"></i>
+                </div>
+                <h3 class="mb-1">{{ total_clientes|default:"0" }}</h3>
+                <p class="text-muted mb-0">Clientes Registrados</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="card">
+            <div class="card-body text-center">
+                <div class="stat-icon mb-3">
+                    <i class="fas fa-project-diagram fa-3x text-info"></i>
+                </div>
+                <h3 class="mb-1">{{ total_proyectos|default:"0" }}</h3>
+                <p class="text-muted mb-0">Proyectos Activos</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Acciones del sistema -->
+<div class="row mb-4">
+    <div class="col-lg-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-tools me-2"></i>Acciones del Sistema
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="{% url 'sistema_configurar' %}" class="btn btn-outline-primary">
+                        <i class="fas fa-cog me-2"></i>Configuración del Sistema
+                    </a>
+                    <a href="{% url 'sistema_logs' %}" class="btn btn-outline-info">
+                        <i class="fas fa-clipboard-list me-2"></i>Ver Logs de Actividad
+                    </a>
+                    <a href="{% url 'usuarios_lista' %}" class="btn btn-outline-warning">
+                        <i class="fas fa-user-cog me-2"></i>Gestionar Usuarios
+                    </a>
+                    
+                    <!-- Separador visual -->
+                    <hr class="my-3">
+                    
+                    <!-- Botón de Reset de App - SOLO SUPERUSUARIOS -->
+                    <a href="{% url 'sistema_reset_app' %}" class="btn btn-danger">
+                        <i class="fas fa-exclamation-triangle me-2"></i>Reset de Aplicación
+                    </a>
+                    <small class="text-muted text-center">
+                        <i class="fas fa-shield-alt me-1"></i>
+                        Acceso exclusivo para superusuarios
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-chart-line me-2"></i>Información del Sistema
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-6">
+                        <div class="text-center">
+                            <h6 class="text-muted">Versión Django</h6>
+                            <p class="h5">5.2.5</p>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="text-center">
+                            <h6 class="text-muted">Python</h6>
+                            <p class="h5">3.13.6</p>
+                        </div>
+                    </div>
+                </div>
+                <hr>
+                <div class="text-center">
+                    <h6 class="text-muted">Estado del Sistema</h6>
+                    <span class="badge bg-success fs-6">Operativo</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Logs recientes -->
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">
+            <i class="fas fa-clipboard-list me-2"></i>Actividad Reciente del Sistema
+        </h5>
+        <a href="{% url 'sistema_logs' %}" class="btn btn-sm btn-outline-primary">
+            Ver Todos
+        </a>
+    </div>
+    <div class="card-body">
+        {% if logs_recientes %}
+            <div class="table-responsive">
+                <table class="table table-sm">
+                    <thead>
+                        <tr>
+                            <th>Fecha</th>
+                            <th>Usuario</th>
+                            <th>Acción</th>
+                            <th>Módulo</th>
+                            <th>Descripción</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for log in logs_recientes %}
+                        <tr>
+                            <td>
+                                <small>{{ log.fecha_actividad|date:"d/m/Y H:i" }}</small>
+                            </td>
+                            <td>
+                                <span class="badge bg-secondary">{{ log.usuario.username }}</span>
+                            </td>
+                            <td>
+                                {% if log.accion == 'Crear' %}
+                                    <span class="badge bg-success">{{ log.accion }}</span>
+                                {% elif log.accion == 'Editar' %}
+                                    <span class="badge bg-warning">{{ log.accion }}</span>
+                                {% elif log.accion == 'Eliminar' %}
+                                    <span class="badge bg-danger">{{ log.accion }}</span>
+                                {% else %}
+                                    <span class="badge bg-info">{{ log.accion }}</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ log.modulo }}</td>
+                            <td>
+                                <small class="text-muted">{{ log.descripcion|truncatechars:50 }}</small>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="text-center py-4">
+                <i class="fas fa-clipboard-list fa-2x text-muted mb-3"></i>
+                <p class="text-muted">No hay actividad reciente</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
