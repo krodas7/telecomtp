@@ -27,10 +27,17 @@ from .forms import (
 from django.contrib.auth.models import User
 from django.contrib.auth.forms import UserCreationForm, UserChangeForm
 from django.core.paginator import Paginator
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
 from .services import NotificacionService, SistemaNotificacionesAutomaticas
 # from .optimization import performance_monitor  # ELIMINADO
 from django.conf import settings
+from reportlab.lib.pagesizes import letter, A4
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, PageBreak
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.units import inch
+from reportlab.lib import colors
+from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_RIGHT
+from io import BytesIO
 
 # Configurar logger
 logger = logging.getLogger(__name__)
@@ -90,6 +97,86 @@ def dashboard(request):
         total_proyectos = Proyecto.objects.filter(activo=True).count()
         total_facturado = Factura.objects.aggregate(total=Sum('monto_total'))['total'] or 0
         total_cobrado = Factura.objects.filter(estado='pagada').aggregate(total=Sum('monto_total'))['total'] or 0
+        
+        # ============================================================================
+        # DATOS DE RENTABILIDAD REAL
+        # ============================================================================
+        
+        # Calcular rentabilidad del mes actual
+        hoy = timezone.now()
+        mes_actual = hoy.month
+        año_actual = hoy.year
+        
+        # Ingresos del mes (SOLO facturas pagadas, no facturadas)
+        ingresos_mes = Factura.objects.filter(
+            fecha_emision__month=mes_actual,
+            fecha_emision__year=año_actual,
+            estado='pagada'  # Solo facturas pagadas
+        ).aggregate(total=Sum('monto_total'))['total'] or Decimal('0.00')
+        
+        # DEBUG: Mostrar diferencia en dashboard
+        total_facturado_mes = Factura.objects.filter(
+            fecha_emision__month=mes_actual,
+            fecha_emision__year=año_actual
+        ).aggregate(total=Sum('monto_total'))['total'] or Decimal('0.00')
+        
+        print(f"🔍 DEBUG DASHBOARD - Mes: {mes_actual}/{año_actual}")
+        print(f"🔍 DEBUG DASHBOARD - Facturado: Q{total_facturado_mes}")
+        print(f"🔍 DEBUG DASHBOARD - Cobrado: Q{ingresos_mes}")
+        print(f"🔍 DEBUG DASHBOARD - Pendiente: Q{total_facturado_mes - ingresos_mes}")
+        
+        # Gastos del mes (gastos aprobados)
+        gastos_mes = Gasto.objects.filter(
+            fecha_gasto__month=mes_actual,
+            fecha_gasto__year=año_actual,
+            aprobado=True
+        ).aggregate(total=Sum('monto'))['total'] or Decimal('0.00')
+        
+        # Calcular rentabilidad
+        rentabilidad_mes = ingresos_mes - gastos_mes
+        margen_rentabilidad = (rentabilidad_mes / ingresos_mes * 100) if ingresos_mes > 0 else Decimal('0.00')
+        
+        # Gastos por categoría del mes
+        gastos_categoria_mes = Gasto.objects.filter(
+            fecha_gasto__month=mes_actual,
+            fecha_gasto__year=año_actual,
+            aprobado=True
+        ).values('categoria__nombre').annotate(
+            total=Sum('monto')
+        ).order_by('-total')[:5]
+        
+        # Proyectos más rentables del mes
+        proyectos_rentables = []
+        proyectos_activos = Proyecto.objects.filter(activo=True)
+        
+        for proyecto in proyectos_activos:
+            ingresos_proyecto = Factura.objects.filter(
+                proyecto=proyecto,
+                fecha_emision__month=mes_actual,
+                fecha_emision__year=año_actual,
+                monto_pagado__gt=0
+            ).aggregate(total=Sum('monto_pagado'))['total'] or Decimal('0.00')
+            
+            gastos_proyecto = Gasto.objects.filter(
+                proyecto=proyecto,
+                fecha_gasto__month=mes_actual,
+                fecha_gasto__year=año_actual,
+                aprobado=True
+            ).aggregate(total=Sum('monto'))['total'] or Decimal('0.00')
+            
+            rentabilidad_proyecto = ingresos_proyecto - gastos_proyecto
+            
+            if rentabilidad_proyecto > 0:  # Solo proyectos rentables
+                proyectos_rentables.append({
+                    'nombre': proyecto.nombre,
+                    'rentabilidad': rentabilidad_proyecto,
+                    'ingresos': ingresos_proyecto,
+                    'gastos': gastos_proyecto
+                })
+        
+        # Ordenar por rentabilidad
+        proyectos_rentables.sort(key=lambda x: x['rentabilidad'], reverse=True)
+        proyectos_rentables = proyectos_rentables[:5]  # Top 5
         
         # Calendario con eventos básicos
         eventos_calendario = []
@@ -181,6 +268,15 @@ def dashboard(request):
             'gastos_mensuales': gastos_mensuales,
             'meses_grafico': meses_grafico,
             'periodo_actual': periodo,
+            # ============================================================================
+            # DATOS DE RENTABILIDAD REAL PARA EL DASHBOARD
+            # ============================================================================
+            'ingresos_mes': ingresos_mes,
+            'gastos_mes': gastos_mes,
+            'rentabilidad_mes': rentabilidad_mes,
+            'margen_rentabilidad': margen_rentabilidad,
+            'gastos_categoria_mes': gastos_categoria_mes,
+            'proyectos_rentables': proyectos_rentables,
         }
         
         # DEBUG: Imprimir contexto final
@@ -964,8 +1060,27 @@ def factura_marcar_pagada(request, factura_id):
 @login_required
 def gastos_list(request):
     """Lista de gastos"""
+    # Obtener todos los gastos sin filtros
     gastos = Gasto.objects.all().order_by('-fecha_gasto')
-    return render(request, 'core/gastos/list.html', {'gastos': gastos})
+    
+    # DEBUG: Imprimir información de gastos
+    print(f"🔍 DEBUG - Total gastos en BD: {gastos.count()}")
+    for g in gastos:
+        print(f"   • {g.descripcion} - Q{g.monto} - Aprobado: {g.aprobado} - Fecha: {g.fecha_gasto}")
+    
+    # Calcular estadísticas
+    total_gastos = sum(gasto.monto for gasto in gastos)
+    gastos_aprobados = gastos.filter(aprobado=True).count()
+    gastos_pendientes = gastos.filter(aprobado=False).count()
+    
+    context = {
+        'gastos': gastos,
+        'total_gastos': total_gastos,
+        'gastos_aprobados': gastos_aprobados,
+        'gastos_pendientes': gastos_pendientes,
+    }
+    
+    return render(request, 'core/gastos/list.html', context)
 
 
 @login_required
@@ -1855,138 +1970,195 @@ def sistema_reset_app(request):
 @login_required
 def rentabilidad_view(request):
     """Vista de rentabilidad y análisis financiero"""
-    # Obtener parámetros de filtro
-    periodo = request.GET.get('periodo', 'mes')  # mes, trimestre, año
-    fecha_inicio = request.GET.get('fecha_inicio')
-    fecha_fin = request.GET.get('fecha_fin')
-    
-    # Fechas por defecto
-    hoy = timezone.now()
-    if periodo == 'mes':
-        fecha_inicio = fecha_inicio or (hoy - timedelta(days=30)).strftime('%Y-%m-%d')
-        fecha_fin = fecha_fin or hoy.strftime('%Y-%m-%d')
-    elif periodo == 'trimestre':
-        fecha_inicio = fecha_inicio or (hoy - timedelta(days=90)).strftime('%Y-%m-%d')
-        fecha_fin = fecha_fin or hoy.strftime('%Y-%m-%d')
-    elif periodo == 'año':
-        fecha_inicio = fecha_inicio or (hoy - timedelta(days=365)).strftime('%Y-%m-%d')
-        fecha_fin = fecha_fin or hoy.strftime('%Y-%m-%d')
-    
-    # Convertir fechas a datetime
-    fecha_inicio_dt = timezone.make_aware(datetime.strptime(fecha_inicio, '%Y-%m-%d'))
-    fecha_fin_dt = timezone.make_aware(datetime.strptime(fecha_fin, '%Y-%m-%d'))
-    
-    # Calcular ingresos (usando facturas con pagos realizados)
-    ingresos = Factura.objects.filter(
-        fecha_emision__range=[fecha_inicio_dt, fecha_fin_dt],
-        monto_pagado__gt=0
-    ).aggregate(total=Sum('monto_pagado'))['total'] or Decimal('0.00')
-    
-    # Calcular gastos
-    gastos = Gasto.objects.filter(
-        fecha_gasto__range=[fecha_inicio_dt, fecha_fin_dt],
-        aprobado=True
-    ).aggregate(total=Sum('monto'))['total'] or Decimal('0.00')
-    
-    # Gastos fijos (por ahora 0)
-    gastos_fijos = Decimal('0.00')
-    
-    # Calcular rentabilidad
-    rentabilidad_bruta = ingresos - gastos
-    rentabilidad_neta = rentabilidad_bruta - gastos_fijos
-    
-    # Margen de rentabilidad
-    margen_rentabilidad = (rentabilidad_neta / ingresos * 100) if ingresos > 0 else Decimal('0.00')
-    
-    # Análisis por proyecto
-    proyectos_rentabilidad = []
-    proyectos = Proyecto.objects.filter(activo=True)
-    
-    for proyecto in proyectos:
-        # Ingresos del proyecto (usando facturas con pagos realizados)
-        ingresos_proyecto = Factura.objects.filter(
-            proyecto=proyecto,
-            fecha_emision__range=[fecha_inicio_dt, fecha_fin_dt],
-            monto_pagado__gt=0
-        ).aggregate(total=Sum('monto_pagado'))['total'] or Decimal('0.00')
+    try:
+        # Obtener parámetros de filtro
+        periodo = request.GET.get('periodo', 'mes')  # mes, trimestre, año
+        fecha_inicio = request.GET.get('fecha_inicio')
+        fecha_fin = request.GET.get('fecha_fin')
         
-        # Gastos del proyecto
-        gastos_proyecto = Gasto.objects.filter(
-            proyecto=proyecto,
+        # Fechas por defecto
+        hoy = timezone.now()
+        if periodo == 'mes':
+            fecha_inicio = fecha_inicio or (hoy - timedelta(days=30)).strftime('%Y-%m-%d')
+            fecha_fin = fecha_fin or hoy.strftime('%Y-%m-%d')
+        elif periodo == 'trimestre':
+            fecha_inicio = fecha_inicio or (hoy - timedelta(days=90)).strftime('%Y-%m-%d')
+            fecha_fin = fecha_fin or hoy.strftime('%Y-%m-%d')
+        elif periodo == 'año':
+            fecha_inicio = fecha_inicio or (hoy - timedelta(days=365)).strftime('%Y-%m-%d')
+            fecha_fin = fecha_fin or hoy.strftime('%Y-%m-%d')
+        
+        # Convertir fechas a datetime
+        fecha_inicio_dt = timezone.make_aware(datetime.strptime(fecha_inicio, '%Y-%m-%d'))
+        fecha_fin_dt = timezone.make_aware(datetime.strptime(fecha_fin, '%Y-%m-%d'))
+    
+            # Calcular ingresos (SOLO lo cobrado, no lo facturado)
+        ingresos = Factura.objects.filter(
+            fecha_emision__range=[fecha_inicio_dt, fecha_fin_dt],
+            estado='pagada'  # Solo facturas pagadas
+        ).aggregate(total=Sum('monto_total'))['total'] or Decimal('0.00')
+        
+        # DEBUG: Mostrar diferencia entre facturado y cobrado
+        total_facturado = Factura.objects.filter(
+            fecha_emision__range=[fecha_inicio_dt, fecha_fin_dt]
+        ).aggregate(total=Sum('monto_total'))['total'] or Decimal('0.00')
+        
+        print(f"🔍 DEBUG - Período: {fecha_inicio} a {fecha_fin}")
+        print(f"🔍 DEBUG - Total facturado: Q{total_facturado}")
+        print(f"🔍 DEBUG - Total cobrado (ingresos): Q{ingresos}")
+        print(f"🔍 DEBUG - Diferencia: Q{total_facturado - ingresos}")
+        
+        # Calcular gastos
+        gastos = Gasto.objects.filter(
             fecha_gasto__range=[fecha_inicio_dt, fecha_fin_dt],
             aprobado=True
         ).aggregate(total=Sum('monto'))['total'] or Decimal('0.00')
         
-        rentabilidad_proyecto = ingresos_proyecto - gastos_proyecto
-        margen_proyecto = (rentabilidad_proyecto / ingresos_proyecto * 100) if ingresos_proyecto > 0 else Decimal('0.00')
+        # Gastos fijos (por ahora 0)
+        gastos_fijos = Decimal('0.00')
         
-        proyectos_rentabilidad.append({
-            'proyecto': proyecto,
-            'ingresos': ingresos_proyecto,
-            'gastos': gastos_proyecto,
-            'rentabilidad': rentabilidad_proyecto,
-            'margen': margen_proyecto
-        })
-    
-    # Ordenar por rentabilidad
-    proyectos_rentabilidad.sort(key=lambda x: x['rentabilidad'], reverse=True)
-    
-    # Análisis por categoría de gasto
-    gastos_por_categoria = Gasto.objects.filter(
-        fecha_gasto__range=[fecha_inicio_dt, fecha_fin_dt],
-        aprobado=True
-    ).values('categoria__nombre').annotate(
-        total=Sum('monto'),
-        cantidad=Count('id')
-    ).order_by('-total')
-    
-    # Tendencias mensuales (últimos 12 meses)
-    tendencias_mensuales = []
-    for i in range(12):
-        fecha = hoy - timedelta(days=30*i)
-        mes = fecha.month
-        año = fecha.year
+        # Calcular rentabilidad
+        rentabilidad_bruta = ingresos - gastos
+        rentabilidad_neta = rentabilidad_bruta - gastos_fijos
         
-        ingresos_mes = Factura.objects.filter(
-            fecha_emision__month=mes,
-            fecha_emision__year=año,
+        # Margen de rentabilidad
+        margen_rentabilidad = (rentabilidad_neta / ingresos * 100) if ingresos > 0 else Decimal('0.00')
+        
+        # Análisis por proyecto
+        proyectos_rentabilidad = []
+        proyectos = Proyecto.objects.filter(activo=True)
+        
+        for proyecto in proyectos:
+            # Ingresos del proyecto (usando facturas con pagos realizados)
+            ingresos_proyecto = Factura.objects.filter(
+                proyecto=proyecto,
+                fecha_emision__range=[fecha_inicio_dt, fecha_fin_dt],
+                monto_pagado__gt=0
+            ).aggregate(total=Sum('monto_pagado'))['total'] or Decimal('0.00')
+            
+            # Gastos del proyecto
+            gastos_proyecto = Gasto.objects.filter(
+                proyecto=proyecto,
+                fecha_gasto__range=[fecha_inicio_dt, fecha_fin_dt],
+                aprobado=True
+            ).aggregate(total=Sum('monto'))['total'] or Decimal('0.00')
+            
+            rentabilidad_proyecto = ingresos_proyecto - gastos_proyecto
+            margen_proyecto = (rentabilidad_proyecto / ingresos_proyecto * 100) if ingresos_proyecto > 0 else Decimal('0.00')
+            
+            proyectos_rentabilidad.append({
+                'proyecto': proyecto,
+                'ingresos': ingresos_proyecto,
+                'gastos': gastos_proyecto,
+                'rentabilidad': rentabilidad_proyecto,
+                'margen': margen_proyecto
+            })
+        
+        # Ordenar por rentabilidad
+        proyectos_rentabilidad.sort(key=lambda x: x['rentabilidad'], reverse=True)
+        
+        # Análisis por categoría de gasto
+        gastos_por_categoria = Gasto.objects.filter(
+            fecha_gasto__range=[fecha_inicio_dt, fecha_fin_dt],
+            aprobado=True
+        ).values('categoria__nombre').annotate(
+            total=Sum('monto'),
+            cantidad=Count('id')
+        ).order_by('-total')
+        
+        # Tendencias mensuales (últimos 12 meses)
+        tendencias_mensuales = []
+        for i in range(12):
+            fecha = hoy - timedelta(days=30*i)
+            mes = fecha.month
+            año = fecha.year
+            
+            ingresos_mes = Factura.objects.filter(
+                fecha_emision__month=mes,
+                fecha_emision__year=año,
+                monto_pagado__gt=0
+            ).aggregate(total=Sum('monto_pagado'))['total'] or Decimal('0.00')
+            
+            gastos_mes = Gasto.objects.filter(
+                fecha_gasto__month=mes,
+                fecha_gasto__year=año,
+                aprobado=True
+            ).aggregate(total=Sum('monto'))['total'] or Decimal('0.00')
+            
+            rentabilidad_mes = ingresos_mes - gastos_mes
+            
+            tendencias_mensuales.append({
+                'mes': fecha.strftime('%b %Y'),
+                'ingresos': ingresos_mes,
+                'gastos': gastos_mes,
+                'rentabilidad': rentabilidad_mes
+            })
+        
+        # Ordenar tendencias cronológicamente
+        tendencias_mensuales.reverse()
+        
+        # Calcular rentabilidad del mes actual para el dashboard
+        mes_actual = hoy.month
+        año_actual = hoy.year
+        
+        ingresos_mes_actual = Factura.objects.filter(
+            fecha_emision__month=mes_actual,
+            fecha_emision__year=año_actual,
             monto_pagado__gt=0
         ).aggregate(total=Sum('monto_pagado'))['total'] or Decimal('0.00')
         
-        gastos_mes = Gasto.objects.filter(
-            fecha_gasto__month=mes,
-            fecha_gasto__year=año,
+        gastos_mes_actual = Gasto.objects.filter(
+            fecha_gasto__month=mes_actual,
+            fecha_gasto__year=año_actual,
             aprobado=True
         ).aggregate(total=Sum('monto'))['total'] or Decimal('0.00')
         
-        rentabilidad_mes = ingresos_mes - gastos_mes
+        rentabilidad_mes_actual = ingresos_mes_actual - gastos_mes_actual
+        margen_mes_actual = (rentabilidad_mes_actual / ingresos_mes_actual * 100) if ingresos_mes_actual > 0 else Decimal('0.00')
         
-        tendencias_mensuales.append({
-            'mes': fecha.strftime('%b %Y'),
-            'ingresos': ingresos_mes,
-            'gastos': gastos_mes,
-            'rentabilidad': rentabilidad_mes
-        })
-    
-    # Ordenar tendencias cronológicamente
-    tendencias_mensuales.reverse()
-    
-    context = {
-        'periodo': periodo,
-        'fecha_inicio': fecha_inicio,
-        'fecha_fin': fecha_fin,
-        'ingresos': ingresos,
-        'gastos': gastos,
-        'gastos_fijos': gastos_fijos,
-        'rentabilidad_bruta': rentabilidad_bruta,
-        'rentabilidad_neta': rentabilidad_neta,
-        'margen_rentabilidad': margen_rentabilidad,
-        'proyectos_rentabilidad': proyectos_rentabilidad,
-        'gastos_por_categoria': gastos_por_categoria,
-        'tendencias_mensuales': tendencias_mensuales,
-    }
-    
-    return render(request, 'core/rentabilidad/index.html', context)
+        context = {
+            'periodo': periodo,
+            'fecha_inicio': fecha_inicio,
+            'fecha_fin': fecha_fin,
+            'ingresos': ingresos,
+            'gastos': gastos,
+            'gastos_fijos': gastos_fijos,
+            'rentabilidad_bruta': rentabilidad_bruta,
+            'rentabilidad_neta': rentabilidad_neta,
+            'margen_rentabilidad': margen_rentabilidad,
+            'proyectos_rentabilidad': proyectos_rentabilidad,
+            'gastos_por_categoria': gastos_por_categoria,
+            'tendencias_mensuales': tendencias_mensuales,
+            # Datos para el dashboard
+            'ingresos_mes': ingresos_mes_actual,
+            'gastos_mes': gastos_mes_actual,
+            'rentabilidad_mes': margen_mes_actual,
+        }
+        
+        return render(request, 'core/rentabilidad/index.html', context)
+        
+    except Exception as e:
+        # En caso de error, devolver valores por defecto
+        context = {
+            'periodo': 'mes',
+            'fecha_inicio': (timezone.now() - timedelta(days=30)).strftime('%Y-%m-%d'),
+            'fecha_fin': timezone.now().strftime('%Y-%m-%d'),
+            'ingresos': Decimal('0.00'),
+            'gastos': Decimal('0.00'),
+            'gastos_fijos': Decimal('0.00'),
+            'rentabilidad_bruta': Decimal('0.00'),
+            'rentabilidad_neta': Decimal('0.00'),
+            'margen_rentabilidad': Decimal('0.00'),
+            'proyectos_rentabilidad': [],
+            'gastos_por_categoria': [],
+            'tendencias_mensuales': [],
+            'ingresos_mes': Decimal('0.00'),
+            'gastos_mes': Decimal('0.00'),
+            'rentabilidad_mes': Decimal('0.00'),
+            'error': str(e)
+        }
+        
+        return render(request, 'core/rentabilidad/index.html', context)
  
 # ===== VISTAS DE PRESUPUESTOS =====
 @login_required
@@ -2530,7 +2702,7 @@ def inventario_dashboard(request):
         total_categorias = CategoriaInventario.objects.count()
         items_bajo_stock = ItemInventario.objects.filter(stock_actual__lte=F('stock_minimo')).count()
         valor_total_inventario = ItemInventario.objects.aggregate(
-            total=Sum(F('stock_actual') * F('precio_unitario'))
+            total=Sum('stock_actual')
         )['total'] or 0
         
         # Items más utilizados
@@ -2647,10 +2819,13 @@ def item_list(request):
     orden = request.GET.get('orden', 'nombre')
     if orden == 'stock':
         items = items.order_by('stock_actual')
-    elif orden == 'precio':
-        items = items.order_by('precio_unitario')
     elif orden == 'categoria':
         items = items.order_by('categoria__nombre')
+    
+    # Estadísticas para el dashboard
+    total_items = ItemInventario.objects.count()
+    items_activos = ItemInventario.objects.filter(activo=True).count()
+    categorias_count = CategoriaInventario.objects.count()
     
     categorias = CategoriaInventario.objects.all()
     
@@ -2659,7 +2834,10 @@ def item_list(request):
         'categorias': categorias,
         'categoria_seleccionada': categoria_id,
         'query': query,
-        'orden': orden
+        'orden': orden,
+        'total_items': total_items,
+        'items_activos': items_activos,
+        'categorias_count': categorias_count
     }
     
     return render(request, 'core/inventario/item/list.html', context)
@@ -3375,6 +3553,182 @@ def planilla_proyecto(request, proyecto_id):
 
 
 @login_required
+def planilla_proyecto_pdf(request, proyecto_id):
+    """Generar PDF de la planilla del proyecto"""
+    proyecto = get_object_or_404(Proyecto, id=proyecto_id)
+    
+    # Obtener colaboradores asignados al proyecto
+    colaboradores_asignados = proyecto.colaboradores.all().order_by('nombre')
+    
+    # Obtener anticipos del proyecto
+    anticipos = AnticipoProyecto.objects.filter(proyecto=proyecto).select_related('colaborador')
+    
+    # Calcular totales
+    total_anticipos = anticipos.filter(estado='pendiente').aggregate(
+        total=Sum('monto')
+    )['total'] or 0
+    
+    total_liquidado = anticipos.filter(estado='liquidado').aggregate(
+        total=Sum('monto')
+    )['total'] or 0
+    
+    total_salarios = sum(colaborador.salario or 0 for colaborador in colaboradores_asignados)
+    total_anticipos_aplicados = total_anticipos + total_liquidado
+    total_salarios_netos = total_salarios - total_anticipos_aplicados
+    
+    # Crear el PDF
+    buffer = BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=A4)
+    elements = []
+    
+    # Estilos
+    styles = getSampleStyleSheet()
+    title_style = ParagraphStyle(
+        'CustomTitle',
+        parent=styles['Heading1'],
+        fontSize=18,
+        spaceAfter=30,
+        alignment=TA_CENTER,
+        textColor=colors.darkblue
+    )
+    
+    subtitle_style = ParagraphStyle(
+        'CustomSubtitle',
+        parent=styles['Heading2'],
+        fontSize=14,
+        spaceAfter=20,
+        alignment=TA_CENTER,
+        textColor=colors.darkblue
+    )
+    
+    # Título principal
+    elements.append(Paragraph(f"PLANILLA DE PERSONAL", title_style))
+    elements.append(Paragraph(f"Proyecto: {proyecto.nombre}", subtitle_style))
+    
+    # Información del proyecto
+    info_proyecto = [
+        ['Cliente:', proyecto.cliente.razon_social if proyecto.cliente else 'N/A'],
+        ['Fecha Inicio:', proyecto.fecha_inicio.strftime('%d/%m/%Y') if proyecto.fecha_inicio else 'N/A'],
+        ['Fecha Fin:', proyecto.fecha_fin.strftime('%d/%m/%Y') if proyecto.fecha_fin else 'N/A'],
+        ['Estado:', proyecto.get_estado_display()],
+        ['Presupuesto:', f"Q{proyecto.presupuesto:,.2f}" if proyecto.presupuesto else 'N/A'],
+    ]
+    
+    info_table = Table(info_proyecto, colWidths=[2*inch, 4*inch])
+    info_table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (0, -1), colors.lightgrey),
+        ('TEXTCOLOR', (0, 0), (0, -1), colors.black),
+        ('ALIGN', (0, 0), (0, -1), 'LEFT'),
+        ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (0, -1), 10),
+        ('BOTTOMPADDING', (0, 0), (0, -1), 12),
+        ('BACKGROUND', (1, 0), (1, -1), colors.white),
+        ('GRID', (0, 0), (-1, -1), 1, colors.black),
+    ]))
+    
+    elements.append(info_table)
+    elements.append(Spacer(1, 20))
+    
+    # Tabla de colaboradores
+    if colaboradores_asignados:
+        # Encabezados de la tabla
+        headers = ['Colaborador', 'Cargo', 'Salario Base', 'Anticipos', 'Salario Neto', 'Estado']
+        data = [headers]
+        
+        for colaborador in colaboradores_asignados:
+            salario_base = colaborador.salario or 0
+            
+            # Calcular anticipos del colaborador
+            anticipos_colaborador = anticipos.filter(colaborador=colaborador)
+            anticipos_pendientes = anticipos_colaborador.filter(estado='pendiente').aggregate(
+                total=Sum('monto')
+            )['total'] or 0
+            anticipos_liquidados = anticipos_colaborador.filter(estado='liquidado').aggregate(
+                total=Sum('monto')
+            )['total'] or 0
+            total_anticipos_colaborador = anticipos_pendientes + anticipos_liquidados
+            
+            salario_neto = salario_base - total_anticipos_colaborador
+            
+            # Determinar estado
+            if anticipos_pendientes > 0:
+                estado = 'Pendiente'
+            elif anticipos_liquidados > 0:
+                estado = 'Liquidado'
+            else:
+                estado = 'Sin Anticipos'
+            
+            data.append([
+                colaborador.nombre,
+                colaborador.cargo or 'N/A',
+                f"Q{salario_base:,.2f}",
+                f"Q{total_anticipos_colaborador:,.2f}",
+                f"Q{salario_neto:,.2f}",
+                estado
+            ])
+        
+        # Crear tabla
+        table = Table(data, colWidths=[1.5*inch, 1.2*inch, 1.2*inch, 1.2*inch, 1.2*inch, 1.2*inch])
+        table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.darkblue),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+            ('ALIGN', (0, 0), (-1, 0), 'CENTER'),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, 0), 10),
+            ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+            ('BACKGROUND', (0, 1), (-1, -1), colors.white),
+            ('GRID', (0, 0), (-1, -1), 1, colors.black),
+            ('ALIGN', (2, 1), (-1, -1), 'RIGHT'),  # Alinear números a la derecha
+            ('ALIGN', (0, 1), (1, 1), 'LEFT'),     # Alinear texto a la izquierda
+        ]))
+        
+        elements.append(table)
+        elements.append(Spacer(1, 20))
+    
+    # Resumen financiero
+    resumen_data = [
+        ['CONCEPTO', 'MONTO'],
+        ['Total Salarios Base', f"Q{total_salarios:,.2f}"],
+        ['Total Anticipos', f"Q{total_anticipos_aplicados:,.2f}"],
+        ['Total Salarios Netos', f"Q{total_salarios_netos:,.2f}"],
+        ['Saldo Pendiente', f"Q{total_anticipos:,.2f}"],
+    ]
+    
+    resumen_table = Table(resumen_data, colWidths=[3*inch, 2*inch])
+    resumen_table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (0, -1), colors.lightblue),
+        ('TEXTCOLOR', (0, 0), (0, -1), colors.black),
+        ('ALIGN', (0, 0), (0, -1), 'LEFT'),
+        ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (0, -1), 10),
+        ('BOTTOMPADDING', (0, 0), (0, -1), 12),
+        ('BACKGROUND', (1, 0), (1, -1), colors.white),
+        ('ALIGN', (1, 0), (1, -1), 'RIGHT'),
+        ('GRID', (0, 0), (-1, -1), 1, colors.black),
+    ]))
+    
+    elements.append(resumen_table)
+    
+    # Pie de página
+    elements.append(Spacer(1, 30))
+    fecha_generacion = timezone.now().strftime('%d/%m/%Y %H:%M')
+    elements.append(Paragraph(f"Reporte generado el: {fecha_generacion}", styles['Normal']))
+    elements.append(Paragraph(f"Sistema ARCA Construcción", styles['Normal']))
+    
+    # Generar PDF
+    doc.build(elements)
+    buffer.seek(0)
+    
+    # Crear respuesta HTTP
+    filename = f"planilla_proyecto_{proyecto.nombre.replace(' ', '_')}_{timezone.now().strftime('%Y%m%d')}.pdf"
+    
+    response = HttpResponse(buffer.getvalue(), content_type='application/pdf')
+    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+    
+    return response
+
+
+@login_required
 def crear_anticipo_masivo(request, proyecto_id):
     """Crear anticipo masivo para todos los colaboradores del proyecto"""
     proyecto = get_object_or_404(Proyecto, id=proyecto_id)
@@ -3579,3 +3933,105 @@ def calendario_pagos_proyecto(request, proyecto_id):
     }
     
     return render(request, 'core/proyectos/calendario_pagos.html', context)
+
+
+@login_required
+def administrar_anticipos_proyecto(request, proyecto_id):
+    """Administrar anticipos del proyecto (editar, eliminar, cambiar estado)"""
+    proyecto = get_object_or_404(Proyecto, id=proyecto_id)
+    
+    # Obtener todos los anticipos del proyecto
+    anticipos = AnticipoProyecto.objects.filter(proyecto=proyecto).select_related('colaborador').order_by('-fecha_anticipo')
+    
+    # Estadísticas de anticipos
+    total_anticipos = anticipos.aggregate(total=Sum('monto'))['total'] or 0
+    anticipos_pendientes = anticipos.filter(estado='pendiente').aggregate(total=Sum('monto'))['total'] or 0
+    anticipos_liquidados = anticipos.filter(estado='liquidado').aggregate(total=Sum('monto'))['total'] or 0
+    anticipos_cancelados = anticipos.filter(estado='cancelado').aggregate(total=Sum('monto'))['total'] or 0
+    
+    context = {
+        'proyecto': proyecto,
+        'anticipos': anticipos,
+        'total_anticipos': total_anticipos,
+        'anticipos_pendientes': anticipos_pendientes,
+        'anticipos_liquidados': anticipos_liquidados,
+        'anticipos_cancelados': anticipos_cancelados,
+    }
+    
+    return render(request, 'core/proyectos/administrar_anticipos.html', context)
+
+
+@login_required
+def editar_anticipo(request, anticipo_id):
+    """Editar un anticipo existente"""
+    anticipo = get_object_or_404(AnticipoProyecto, id=anticipo_id)
+    
+    if request.method == 'POST':
+        monto = request.POST.get('monto')
+        concepto = request.POST.get('concepto')
+        estado = request.POST.get('estado')
+        
+        if monto and concepto:
+            try:
+                anticipo.monto = Decimal(monto)
+                anticipo.concepto = concepto
+                anticipo.estado = estado
+                anticipo.save()
+                
+                messages.success(request, f'Anticipo de {anticipo.colaborador.nombre} actualizado exitosamente')
+                return redirect('administrar_anticipos_proyecto', proyecto_id=anticipo.proyecto.id)
+            except ValueError:
+                messages.error(request, 'El monto debe ser un número válido')
+        else:
+            messages.error(request, 'Todos los campos son obligatorios')
+    
+    context = {
+        'anticipo': anticipo,
+        'estados_choices': AnticipoProyecto.ESTADO_CHOICES,
+    }
+    
+    return render(request, 'core/proyectos/editar_anticipo.html', context)
+
+
+@login_required
+def eliminar_anticipo(request, anticipo_id):
+    """Eliminar un anticipo"""
+    anticipo = get_object_or_404(AnticipoProyecto, id=anticipo_id)
+    proyecto_id = anticipo.proyecto.id
+    
+    if request.method == 'POST':
+        colaborador_nombre = anticipo.colaborador.nombre
+        anticipo.delete()
+        messages.success(request, f'Anticipo de {colaborador_nombre} eliminado exitosamente')
+        return redirect('administrar_anticipos_proyecto', proyecto_id=proyecto_id)
+    
+    context = {
+        'anticipo': anticipo,
+    }
+    
+    return render(request, 'core/proyectos/eliminar_anticipo.html', context)
+
+
+@login_required
+def cambiar_estado_anticipo(request, anticipo_id):
+    """Cambiar el estado de un anticipo"""
+    anticipo = get_object_or_404(AnticipoProyecto, id=anticipo_id)
+    
+    if request.method == 'POST':
+        nuevo_estado = request.POST.get('nuevo_estado')
+        if nuevo_estado in ['pendiente', 'liquidado', 'cancelado']:
+            anticipo.estado = nuevo_estado
+            anticipo.save()
+            
+            estado_display = dict(AnticipoProyecto.ESTADO_CHOICES)[nuevo_estado]
+            messages.success(request, f'Estado del anticipo de {anticipo.colaborador.nombre} cambiado a {estado_display}')
+            return redirect('administrar_anticipos_proyecto', proyecto_id=anticipo.proyecto.id)
+        else:
+            messages.error(request, 'Estado no válido')
+    
+    context = {
+        'anticipo': anticipo,
+        'estados_choices': AnticipoProyecto.ESTADO_CHOICES,
+    }
+    
+    return render(request, 'core/proyectos/cambiar_estado_anticipo.html', context)

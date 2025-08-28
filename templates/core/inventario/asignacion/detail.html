@@ -87,7 +87,7 @@
                             <p><strong>Stock Mínimo:</strong> {{ asignacion.item.stock_minimo }}</p>
                         </div>
                         <div class="col-md-6">
-                            <p><strong>Precio Unitario:</strong> Q{{ asignacion.item.precio_unitario|floatformat:2 }}</p>
+                            <p><strong>Stock Disponible:</strong> {{ asignacion.item.stock_disponible }} unidades</p>
                             <p><strong>Unidad de Medida:</strong> {{ asignacion.item.unidad_medida }}</p>
                             <p><strong>Proveedor:</strong> {{ asignacion.item.proveedor|default:"No especificado" }}</p>
                         </div>
@@ -112,7 +112,7 @@
                 <div class="card-body">
                     <div class="row">
                         <div class="col-md-6">
-                            <p><strong>Cliente:</strong> {{ asignacion.proyecto.cliente.nombre }}</p>
+                            <p><strong>Cliente:</strong> {{ asignacion.proyecto.cliente.razon_social }}</p>
                             <p><strong>Estado:</strong> 
                                 <span class="badge bg-secondary">{{ asignacion.proyecto.get_estado_display }}</span>
                             </p>
@@ -176,7 +176,7 @@
                         <a href="{% url 'item_detail' asignacion.item.id %}" class="btn btn-outline-primary btn-sm">
                             <i class="fas fa-box me-2"></i>Ver Item
                         </a>
-                        <a href="{% url 'proyecto_detail' asignacion.proyecto.id %}" class="btn btn-outline-info btn-sm">
+                        <a href="{% url 'proyecto_dashboard' asignacion.proyecto.id %}" class="btn btn-outline-info btn-sm">
                             <i class="fas fa-project-diagram me-2"></i>Ver Proyecto
                         </a>
                     </div>
@@ -195,7 +195,7 @@
                         <p><strong>ID Asignación:</strong> {{ asignacion.id }}</p>
                         <p><strong>ID Item:</strong> {{ asignacion.item.id }}</p>
                         <p><strong>ID Proyecto:</strong> {{ asignacion.proyecto.id }}</p>
-                        <p><strong>Valor Asignado:</strong> Q{{ asignacion.cantidad_asignada|multiply:asignacion.item.precio_unitario|floatformat:2 }}</p>
+                        <p><strong>Cantidad Asignada:</strong> {{ asignacion.cantidad_asignada }} unidades</p>
                     </small>
                 </div>
             </div>

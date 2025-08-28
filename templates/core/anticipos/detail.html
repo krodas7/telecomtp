@@ -286,7 +286,7 @@
                         <strong>Estado:</strong> {{ anticipo.proyecto.estado }}<br>
                         <strong>Presupuesto:</strong> Q{{ anticipo.proyecto.presupuesto|floatformat:2 }}
                     </p>
-                    <a href="{% url 'proyecto_detail' anticipo.proyecto.id %}" class="btn btn-sm btn-outline-success">
+                                            <a href="{% url 'proyecto_dashboard' anticipo.proyecto.id %}" class="btn btn-sm btn-outline-success">
                         <i class="fas fa-external-link-alt me-1"></i>
                         Ver Proyecto
                     </a>
