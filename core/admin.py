@@ -5,7 +5,7 @@ from .models import (
     Rol, PerfilUsuario, Cliente, Colaborador, Proyecto,
     Factura, Pago, CategoriaGasto, Gasto, GastoFijoMensual,
     LogActividad, ArchivoAdjunto, Anticipo, AplicacionAnticipo,
-    ArchivoProyecto
+    ArchivoProyecto, CarpetaProyecto
 )
 
 
@@ -224,4 +224,31 @@ class ArchivoProyectoAdmin(admin.ModelAdmin):
     def save_model(self, request, obj, form, change):
         if not change:  # Si es un nuevo archivo
             obj.subido_por = request.user
+        super().save_model(request, obj, form, change)
+
+
+@admin.register(CarpetaProyecto)
+class CarpetaProyectoAdmin(admin.ModelAdmin):
+    list_display = ['nombre', 'proyecto', 'carpeta_padre', 'color', 'icono', 'creada_por', 'fecha_creacion', 'activa']
+    list_filter = ['activa', 'fecha_creacion', 'proyecto', 'carpeta_padre']
+    search_fields = ['nombre', 'descripcion', 'proyecto__nombre']
+    readonly_fields = ['fecha_creacion', 'creada_por']
+    list_per_page = 25
+    
+    fieldsets = (
+        ('Información de la Carpeta', {
+            'fields': ('proyecto', 'nombre', 'descripcion', 'carpeta_padre')
+        }),
+        ('Personalización', {
+            'fields': ('color', 'icono')
+        }),
+        ('Metadatos', {
+            'fields': ('creada_por', 'fecha_creacion', 'activa'),
+            'classes': ('collapse',)
+        }),
+    )
+    
+    def save_model(self, request, obj, form, change):
+        if not change:  # Si es una nueva carpeta
+            obj.creada_por = request.user
         super().save_model(request, obj, form, change)

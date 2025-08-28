@@ -17,12 +17,14 @@ from .models import (
     Gasto, CategoriaGasto, GastoFijoMensual, LogActividad, Anticipo, AplicacionAnticipo, ArchivoProyecto, Presupuesto, PartidaPresupuesto, VariacionPresupuesto,
     NotificacionSistema, ConfiguracionNotificaciones, HistorialNotificaciones,
     ItemInventario, CategoriaInventario, AsignacionInventario,
-    Rol, PerfilUsuario, Modulo, Permiso, RolPermiso, AnticipoProyecto
+    Rol, PerfilUsuario, Modulo, Permiso, RolPermiso, AnticipoProyecto,
+    CarpetaProyecto
 )
 from .forms import (
     AnticipoForm, ArchivoProyectoForm, ClienteForm, ProyectoForm, 
     ColaboradorForm, FacturaForm, GastoForm, PagoForm, CategoriaGastoForm, PresupuestoForm, PartidaPresupuestoForm, VariacionPresupuestoForm,
-    CategoriaInventarioForm, ItemInventarioForm, AsignacionInventarioForm
+    CategoriaInventarioForm, ItemInventarioForm, AsignacionInventarioForm,
+    CarpetaProyectoForm
 )
 from django.contrib.auth.models import User
 from django.contrib.auth.forms import UserCreationForm, UserChangeForm
@@ -1615,18 +1617,43 @@ def archivos_proyectos_list(request):
 def archivos_proyecto_list(request, proyecto_id):
     """Lista de archivos de un proyecto específico"""
     proyecto = get_object_or_404(Proyecto, id=proyecto_id, activo=True)
-    archivos = ArchivoProyecto.objects.filter(proyecto=proyecto, activo=True)
+    
+    # Obtener carpeta actual (si se especifica)
+    carpeta_id = request.GET.get('carpeta')
+    carpeta_actual = None
+    
+    if carpeta_id:
+        try:
+            carpeta_actual = CarpetaProyecto.objects.get(id=carpeta_id, proyecto=proyecto, activa=True)
+        except CarpetaProyecto.DoesNotExist:
+            pass
+    
+    # Obtener archivos
+    if carpeta_actual:
+        archivos = ArchivoProyecto.objects.filter(proyecto=proyecto, carpeta=carpeta_actual, activo=True)
+        subcarpetas = carpeta_actual.get_subcarpetas_activas()
+    else:
+        # Carpeta raíz - archivos sin carpeta y carpetas raíz
+        archivos = ArchivoProyecto.objects.filter(proyecto=proyecto, carpeta__isnull=True, activo=True)
+        subcarpetas = CarpetaProyecto.objects.filter(proyecto=proyecto, carpeta_padre__isnull=True, activa=True)
     
     # Filtros
     tipo = request.GET.get('tipo')
     if tipo:
         archivos = archivos.filter(tipo=tipo)
     
+    # Obtener todas las carpetas del proyecto para el breadcrumb
+    todas_carpetas = CarpetaProyecto.objects.filter(proyecto=proyecto, activa=True).order_by('nombre')
+    
     context = {
         'proyecto': proyecto,
+        'carpeta_actual': carpeta_actual,
         'archivos': archivos,
+        'subcarpetas': subcarpetas,
+        'todas_carpetas': todas_carpetas,
         'tipos': ArchivoProyecto.TIPO_CHOICES,
         'total_archivos': archivos.count(),
+        'total_subcarpetas': subcarpetas.count(),
     }
     
     return render(request, 'core/archivos/list.html', context)
@@ -1664,7 +1691,7 @@ def archivo_upload(request, proyecto_id):
             messages.success(request, 'Archivo subido exitosamente')
             return redirect('archivos_proyecto_list', proyecto_id=proyecto.id)
     else:
-        form = ArchivoProyectoForm()
+        form = ArchivoProyectoForm(proyecto=proyecto)
     
     context = {
         'form': form,
@@ -1712,35 +1739,20 @@ def archivo_delete(request, archivo_id):
     archivo = get_object_or_404(ArchivoProyecto, id=archivo_id, activo=True)
     
     if request.method == 'POST':
-        nombre_archivo = archivo.nombre
-        proyecto_id = archivo.proyecto.id
-        
-        # Eliminar archivo físico del servidor
-        try:
-            if archivo.archivo and os.path.exists(archivo.archivo.path):
-                os.remove(archivo.archivo.path)
-        except:
-            pass  # Si no se puede eliminar el archivo físico, continuar
-        
-        archivo.delete()
-        
-        # Registrar actividad
+        # Registrar actividad antes de eliminar
         LogActividad.objects.create(
             usuario=request.user,
             accion='Eliminar Archivo',
             modulo='Archivos',
-            descripcion=f'Archivo eliminado: {nombre_archivo}',
+            descripcion=f'Archivo eliminado: {archivo.nombre} del proyecto {archivo.proyecto.nombre}',
             ip_address=request.META.get('REMOTE_ADDR')
         )
         
+        archivo.delete()
         messages.success(request, 'Archivo eliminado exitosamente')
-        return redirect('archivos_proyecto_list', proyecto_id=proyecto_id)
+        return redirect('archivos_proyecto_list', proyecto_id=archivo.proyecto.id)
     
-    context = {
-        'archivo': archivo,
-    }
-    
-    return render(request, 'core/archivos/delete.html', context)
+    return render(request, 'core/archivos/delete.html', {'archivo': archivo})
 
 
 @login_required
@@ -4035,3 +4047,131 @@ def cambiar_estado_anticipo(request, anticipo_id):
     }
     
     return render(request, 'core/proyectos/cambiar_estado_anticipo.html', context)
+
+
+@login_required
+def carpeta_create(request, proyecto_id):
+    """Crear nueva carpeta en un proyecto"""
+    proyecto = get_object_or_404(Proyecto, id=proyecto_id, activo=True)
+    
+    if request.method == 'POST':
+        form = CarpetaProyectoForm(request.POST, proyecto=proyecto)
+        if form.is_valid():
+            carpeta = form.save(commit=False)
+            carpeta.proyecto = proyecto
+            carpeta.creada_por = request.user
+            carpeta.save()
+            
+            # Registrar actividad
+            LogActividad.objects.create(
+                usuario=request.user,
+                accion='Crear Carpeta',
+                modulo='Archivos',
+                descripcion=f'Carpeta creada: {carpeta.nombre} en el proyecto {proyecto.nombre}',
+                ip_address=request.META.get('REMOTE_ADDR')
+            )
+            
+            messages.success(request, 'Carpeta creada exitosamente')
+            return redirect('archivos_proyecto_list', proyecto_id=proyecto.id)
+    else:
+        form = CarpetaProyectoForm(proyecto=proyecto)
+    
+    context = {
+        'form': form,
+        'proyecto': proyecto,
+        'accion': 'Crear',
+        'titulo': 'Nueva Carpeta'
+    }
+    
+    return render(request, 'core/archivos/carpeta_form.html', context)
+
+
+@login_required
+def carpeta_edit(request, carpeta_id):
+    """Editar una carpeta existente"""
+    carpeta = get_object_or_404(CarpetaProyecto, id=carpeta_id, activa=True)
+    
+    if request.method == 'POST':
+        form = CarpetaProyectoForm(request.POST, instance=carpeta, proyecto=carpeta.proyecto, carpeta_actual=carpeta)
+        if form.is_valid():
+            carpeta = form.save()
+            
+            # Registrar actividad
+            LogActividad.objects.create(
+                usuario=request.user,
+                accion='Editar Carpeta',
+                modulo='Archivos',
+                descripcion=f'Carpeta editada: {carpeta.nombre} en el proyecto {carpeta.proyecto.nombre}',
+                ip_address=request.META.get('REMOTE_ADDR')
+            )
+            
+            messages.success(request, 'Carpeta actualizada exitosamente')
+            return redirect('archivos_proyecto_list', proyecto_id=carpeta.proyecto.id)
+    else:
+        form = CarpetaProyectoForm(instance=carpeta, proyecto=carpeta.proyecto, carpeta_actual=carpeta)
+    
+    context = {
+        'form': form,
+        'carpeta': carpeta,
+        'proyecto': carpeta.proyecto,
+        'accion': 'Editar',
+        'titulo': 'Editar Carpeta'
+    }
+    
+    return render(request, 'core/archivos/carpeta_form.html', context)
+
+
+@login_required
+def carpeta_delete(request, carpeta_id):
+    """Eliminar una carpeta"""
+    carpeta = get_object_or_404(CarpetaProyecto, id=carpeta_id, activa=True)
+    
+    if request.method == 'POST':
+        # Verificar que la carpeta se pueda eliminar
+        if not carpeta.puede_eliminarse():
+            messages.error(request, 'No se puede eliminar la carpeta porque contiene archivos o subcarpetas')
+            return redirect('archivos_proyecto_list', proyecto_id=carpeta.proyecto.id)
+        
+        # Registrar actividad antes de eliminar
+        LogActividad.objects.create(
+            usuario=request.user,
+            accion='Eliminar Carpeta',
+            modulo='Archivos',
+            descripcion=f'Carpeta eliminada: {carpeta.nombre} del proyecto {carpeta.proyecto.nombre}',
+            ip_address=request.META.get('REMOTE_ADDR')
+        )
+        
+        carpeta.delete()
+        messages.success(request, 'Carpeta eliminada exitosamente')
+        return redirect('archivos_proyecto_list', proyecto_id=carpeta.proyecto.id)
+    
+    return render(request, 'core/archivos/carpeta_delete.html', {'carpeta': carpeta})
+
+
+@login_required
+def carpeta_detail(request, carpeta_id):
+    """Ver detalles de una carpeta y su contenido"""
+    carpeta = get_object_or_404(CarpetaProyecto, id=carpeta_id, activa=True)
+    
+    # Obtener archivos en esta carpeta
+    archivos = ArchivoProyecto.objects.filter(carpeta=carpeta, activo=True)
+    
+    # Obtener subcarpetas activas
+    subcarpetas = carpeta.get_subcarpetas_activas()
+    
+    # Filtros
+    tipo = request.GET.get('tipo')
+    if tipo:
+        archivos = archivos.filter(tipo=tipo)
+    
+    context = {
+        'carpeta': carpeta,
+        'proyecto': carpeta.proyecto,
+        'archivos': archivos,
+        'subcarpetas': subcarpetas,
+        'tipos': ArchivoProyecto.TIPO_CHOICES,
+        'total_archivos': archivos.count(),
+        'total_subcarpetas': subcarpetas.count(),
+    }
+    
+    return render(request, 'core/archivos/carpeta_detail.html', context)

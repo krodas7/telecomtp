@@ -1,0 +1,330 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ titulo }} - {{ proyecto.nombre }} - Sistema de Construcción{% endblock %}
+
+{% block extra_css %}
+<style>
+    .carpeta-form-container {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 2rem;
+    }
+    
+    .carpeta-form-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 2rem;
+        border-radius: 20px;
+        margin-bottom: 2rem;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .carpeta-form-header::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="white" opacity="0.1"/><circle cx="75" cy="75" r="1" fill="white" opacity="0.1"/><circle cx="50" cy="10" r="0.5" fill="white" opacity="0.1"/><circle cx="10" cy="60" r="0.5" fill="white" opacity="0.1"/><circle cx="90" cy="40" r="0.5" fill="white" opacity="0.1"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+        opacity: 0.3;
+    }
+    
+    .carpeta-form-header-content {
+        position: relative;
+        z-index: 2;
+    }
+    
+    .carpeta-form-title {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin-bottom: 1rem;
+    }
+    
+    .carpeta-form-subtitle {
+        font-size: 1.2rem;
+        opacity: 0.9;
+    }
+    
+    .carpeta-form-card {
+        background: white;
+        border-radius: 20px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+    }
+    
+    .carpeta-form-body {
+        padding: 2rem;
+    }
+    
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+    
+    .form-label {
+        font-weight: 600;
+        color: #2d3748;
+        margin-bottom: 0.5rem;
+        display: block;
+    }
+    
+    .form-control {
+        border: 2px solid #e2e8f0;
+        border-radius: 10px;
+        padding: 0.75rem 1rem;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+    }
+    
+    .form-control:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        outline: none;
+    }
+    
+    .color-preview {
+        width: 40px;
+        height: 40px;
+        border-radius: 8px;
+        border: 2px solid #e2e8f0;
+        display: inline-block;
+        margin-left: 1rem;
+        vertical-align: middle;
+    }
+    
+    .icon-preview {
+        font-size: 1.5rem;
+        margin-left: 1rem;
+        vertical-align: middle;
+        color: #667eea;
+    }
+    
+    .btn-submit {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        padding: 1rem 2rem;
+        border-radius: 10px;
+        font-size: 1.1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        width: 100%;
+    }
+    
+    .btn-submit:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+    }
+    
+    .btn-cancel {
+        background: #e2e8f0;
+        color: #4a5568;
+        border: none;
+        padding: 1rem 2rem;
+        border-radius: 10px;
+        font-size: 1.1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-block;
+        text-align: center;
+        margin-top: 1rem;
+        width: 100%;
+    }
+    
+    .btn-cancel:hover {
+        background: #cbd5e0;
+        color: #2d3748;
+        text-decoration: none;
+    }
+    
+    .breadcrumb-nav {
+        background: #f7fafc;
+        padding: 1rem 2rem;
+        border-bottom: 1px solid #e2e8f0;
+        margin-bottom: 0;
+    }
+    
+    .breadcrumb-item {
+        color: #667eea;
+        text-decoration: none;
+    }
+    
+    .breadcrumb-item:hover {
+        color: #5a67d8;
+        text-decoration: underline;
+    }
+    
+    .breadcrumb-separator {
+        color: #a0aec0;
+        margin: 0 0.5rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Breadcrumb -->
+    <div class="breadcrumb-nav">
+        <a href="{% url 'dashboard' %}" class="breadcrumb-item">Dashboard</a>
+        <span class="breadcrumb-separator">/</span>
+        <a href="{% url 'archivos_proyectos_list' %}" class="breadcrumb-item">Archivos</a>
+        <span class="breadcrumb-separator">/</span>
+        <a href="{% url 'archivos_proyecto_list' proyecto.id %}" class="breadcrumb-item">{{ proyecto.nombre }}</a>
+        <span class="breadcrumb-separator">/</span>
+        <span class="breadcrumb-item">{{ titulo }}</span>
+    </div>
+
+    <div class="carpeta-form-container">
+        <!-- Header -->
+        <div class="carpeta-form-header">
+            <div class="carpeta-form-header-content">
+                <h1 class="carpeta-form-title">
+                    <i class="fas fa-folder-plus me-3"></i>
+                    {{ titulo }}
+                </h1>
+                <p class="carpeta-form-subtitle">
+                    Organiza mejor los archivos de tu proyecto creando carpetas
+                </p>
+            </div>
+        </div>
+
+        <!-- Formulario -->
+        <div class="carpeta-form-card">
+            <div class="carpeta-form-body">
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <div class="form-group">
+                        <label for="{{ form.nombre.id_for_label }}" class="form-label">
+                            <i class="fas fa-folder me-2"></i>Nombre de la Carpeta
+                        </label>
+                        {{ form.nombre }}
+                        {% if form.nombre.errors %}
+                            <div class="text-danger mt-1">
+                                {% for error in form.nombre.errors %}
+                                    <small>{{ error }}</small>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="form-group">
+                        <label for="{{ form.descripcion.id_for_label }}" class="form-label">
+                            <i class="fas fa-align-left me-2"></i>Descripción
+                        </label>
+                        {{ form.descripcion }}
+                        {% if form.descripcion.errors %}
+                            <div class="text-danger mt-1">
+                                {% for error in form.descripcion.errors %}
+                                    <small>{{ error }}</small>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="{{ form.color.id_for_label }}" class="form-label">
+                                    <i class="fas fa-palette me-2"></i>Color
+                                </label>
+                                <div class="d-flex align-items-center">
+                                    {{ form.color }}
+                                    <div class="color-preview" id="colorPreview"></div>
+                                </div>
+                                {% if form.color.errors %}
+                                    <div class="text-danger mt-1">
+                                        {% for error in form.color.errors %}
+                                            <small>{{ error }}</small>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="{{ form.icono.id_for_label }}" class="form-label">
+                                    <i class="fas fa-icons me-2"></i>Icono
+                                </label>
+                                <div class="d-flex align-items-center">
+                                    {{ form.icono }}
+                                    <div class="icon-preview" id="iconPreview"></div>
+                                </div>
+                                {% if form.icono.errors %}
+                                    <div class="text-danger mt-1">
+                                        {% for error in form.icono.errors %}
+                                            <small>{{ error }}</small>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="{{ form.carpeta_padre.id_for_label }}" class="form-label">
+                            <i class="fas fa-level-up-alt me-2"></i>Carpeta Padre
+                        </label>
+                        {{ form.carpeta_padre }}
+                        <small class="form-text text-muted">
+                            Deja vacío para crear una carpeta raíz, o selecciona una carpeta existente para crear una subcarpeta
+                        </small>
+                        {% if form.carpeta_padre.errors %}
+                            <div class="text-danger mt-1">
+                                {% for error in form.carpeta_padre.errors %}
+                                    <small>{{ error }}</small>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="d-flex gap-3">
+                        <button type="submit" class="btn-submit">
+                            <i class="fas fa-save me-2"></i>
+                            {{ accion }} Carpeta
+                        </button>
+                    </div>
+                    
+                    <a href="{% url 'archivos_proyecto_list' proyecto.id %}" class="btn-cancel">
+                        <i class="fas fa-times me-2"></i>
+                        Cancelar
+                    </a>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Actualizar preview del color
+    const colorInput = document.getElementById('{{ form.color.id_for_label }}');
+    const colorPreview = document.getElementById('colorPreview');
+    
+    function updateColorPreview() {
+        colorPreview.style.backgroundColor = colorInput.value;
+    }
+    
+    colorInput.addEventListener('input', updateColorPreview);
+    updateColorPreview();
+    
+    // Actualizar preview del icono
+    const iconInput = document.getElementById('{{ form.icono.id_for_label }}');
+    const iconPreview = document.getElementById('iconPreview');
+    
+    function updateIconPreview() {
+        iconPreview.className = iconInput.value + ' icon-preview';
+    }
+    
+    iconInput.addEventListener('change', updateIconPreview);
+    updateIconPreview();
+});
+</script>
+{% endblock %}

@@ -20,11 +20,12 @@ urlpatterns = [
     # Proyectos
     path('proyectos/', views.proyectos_list, name='proyectos_list'),
     path('proyectos/crear/', views.proyecto_create, name='proyecto_create'),
+    path('proyectos/<int:proyecto_id>/', views.proyecto_dashboard, name='proyecto_dashboard'),
     path('proyectos/<int:proyecto_id>/editar/', views.proyecto_edit, name='proyecto_edit'),
     path('proyectos/<int:proyecto_id>/eliminar/', views.proyecto_delete, name='proyecto_delete'),
     path('proyectos/<int:proyecto_id>/asignar-colaboradores/', views.asignar_colaboradores_proyecto, name='asignar_colaboradores_proyecto'),
     path('proyectos/<int:proyecto_id>/planilla/', views.planilla_proyecto, name='planilla_proyecto'),
-    path('proyectos/<int:proyecto_id>/planilla/pdf/', views.planilla_proyecto_pdf, name='planilla_proyecto_pdf'),
+    path('proyecto/<int:proyecto_id>/planilla/pdf/', views.planilla_proyecto_pdf, name='planilla_proyecto_pdf'),
     path('proyectos/<int:proyecto_id>/administrar-anticipos/', views.administrar_anticipos_proyecto, name='administrar_anticipos_proyecto'),
     path('anticipos/<int:anticipo_id>/editar/', views.editar_anticipo, name='editar_anticipo'),
     path('anticipos/<int:anticipo_id>/eliminar/', views.eliminar_anticipo, name='eliminar_anticipo'),
@@ -91,12 +92,17 @@ urlpatterns = [
 
     # URLs de Archivos de Proyectos
     path('archivos/', views.archivos_proyectos_list, name='archivos_proyectos_list'),
-    path('proyecto/<int:proyecto_id>/dashboard/', views.proyecto_dashboard, name='proyecto_dashboard'),
-    path('proyecto/<int:proyecto_id>/archivos/', views.archivos_proyecto_list, name='archivos_proyecto_list'),
-    path('proyecto/<int:proyecto_id>/archivos/upload/', views.archivo_upload, name='archivo_upload'),
-    path('archivo/<int:archivo_id>/download/', views.archivo_download, name='archivo_download'),
-    path('archivo/<int:archivo_id>/delete/', views.archivo_delete, name='archivo_delete'),
-    path('archivo/<int:archivo_id>/preview/', views.archivo_preview, name='archivo_preview'),
+    path('archivos/proyecto/<int:proyecto_id>/', views.archivos_proyecto_list, name='archivos_proyecto_list'),
+    path('archivos/proyecto/<int:proyecto_id>/subir/', views.archivo_upload, name='archivo_upload'),
+    path('archivos/<int:archivo_id>/descargar/', views.archivo_download, name='archivo_download'),
+    path('archivos/<int:archivo_id>/eliminar/', views.archivo_delete, name='archivo_delete'),
+    path('archivos/<int:archivo_id>/preview/', views.archivo_preview, name='archivo_preview'),
+    
+    # URLs de Carpetas de Proyectos
+    path('archivos/proyecto/<int:proyecto_id>/carpeta/crear/', views.carpeta_create, name='carpeta_create'),
+    path('archivos/carpeta/<int:carpeta_id>/editar/', views.carpeta_edit, name='carpeta_edit'),
+    path('archivos/carpeta/<int:carpeta_id>/eliminar/', views.carpeta_delete, name='carpeta_delete'),
+    path('archivos/carpeta/<int:carpeta_id>/', views.carpeta_detail, name='carpeta_detail'),
 
     # Presupuestos
     path('presupuestos/', views.presupuestos_list, name='presupuestos_list'),

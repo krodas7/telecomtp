@@ -1,0 +1,466 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ carpeta.nombre }} - {{ proyecto.nombre }} - Sistema de Construcción{% endblock %}
+
+{% block extra_css %}
+<style>
+    .carpeta-detail-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 2rem;
+    }
+    
+    .carpeta-detail-header {
+        background: linear-gradient(135deg, {{ carpeta.color }} 0%, {{ carpeta.color }}dd 100%);
+        color: white;
+        padding: 3rem 2rem;
+        border-radius: 20px;
+        margin-bottom: 2rem;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .carpeta-detail-header::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="white" opacity="0.1"/><circle cx="75" cy="75" r="1" fill="white" opacity="0.1"/><circle cx="50" cy="10" r="0.5" fill="white" opacity="0.1"/><circle cx="10" cy="60" r="0.5" fill="white" opacity="0.1"/><circle cx="90" cy="40" r="0.5" fill="white" opacity="0.1"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+        opacity: 0.3;
+    }
+    
+    .carpeta-detail-header-content {
+        position: relative;
+        z-index: 2;
+    }
+    
+    .carpeta-detail-title {
+        font-size: 3rem;
+        font-weight: 700;
+        margin-bottom: 1rem;
+    }
+    
+    .carpeta-detail-subtitle {
+        font-size: 1.3rem;
+        opacity: 0.9;
+        margin-bottom: 2rem;
+    }
+    
+    .carpeta-detail-stats {
+        display: flex;
+        justify-content: center;
+        gap: 3rem;
+        flex-wrap: wrap;
+    }
+    
+    .carpeta-detail-stat {
+        text-align: center;
+        background: rgba(255, 255, 255, 0.2);
+        padding: 1rem 2rem;
+        border-radius: 15px;
+        backdrop-filter: blur(10px);
+    }
+    
+    .carpeta-detail-stat-number {
+        font-size: 2rem;
+        font-weight: 700;
+        display: block;
+        margin-bottom: 0.5rem;
+    }
+    
+    .carpeta-detail-stat-label {
+        font-size: 1rem;
+        opacity: 0.9;
+    }
+    
+    .breadcrumb-nav {
+        background: #f7fafc;
+        padding: 1rem 2rem;
+        border-radius: 10px;
+        border: 1px solid #e9ecef;
+        margin-bottom: 2rem;
+    }
+    
+    .breadcrumb {
+        margin: 0;
+        padding: 0;
+        list-style: none;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .breadcrumb-item {
+        color: #6c757d;
+        font-size: 0.9rem;
+    }
+    
+    .breadcrumb-item a {
+        color: #667eea;
+        text-decoration: none;
+        transition: color 0.3s ease;
+    }
+    
+    .breadcrumb-item a:hover {
+        color: #5a67d8;
+        text-decoration: underline;
+    }
+    
+    .breadcrumb-separator {
+        color: #a0aec0;
+        margin: 0 0.5rem;
+    }
+    
+    .carpeta-actions {
+        background: white;
+        border-radius: 15px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
+        border: 1px solid #e9ecef;
+    }
+    
+    .btn-nueva-carpeta {
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        color: white;
+        border: none;
+        padding: 0.75rem 1.5rem;
+        border-radius: 10px;
+        font-weight: 600;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-nueva-carpeta:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(40, 167, 69, 0.3);
+        color: white;
+        text-decoration: none;
+    }
+    
+    .btn-subir-archivo {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        padding: 0.75rem 1.5rem;
+        border-radius: 10px;
+        font-weight: 600;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-subir-archivo:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+        color: white;
+        text-decoration: none;
+    }
+    
+    .btn-volver {
+        background: #6c757d;
+        color: white;
+        border: none;
+        padding: 0.75rem 1.5rem;
+        border-radius: 10px;
+        font-weight: 600;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-volver:hover {
+        background: #5a6268;
+        color: white;
+        text-decoration: none;
+    }
+    
+    .carpeta-content {
+        background: white;
+        border-radius: 20px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
+        border: 1px solid #e9ecef;
+        overflow: hidden;
+    }
+    
+    .carpeta-content-header {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        padding: 1.5rem;
+        border-bottom: 1px solid #e9ecef;
+    }
+    
+    .carpeta-content-title {
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: #2d3748;
+        margin: 0;
+    }
+    
+    .carpeta-content-body {
+        padding: 2rem;
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 3rem 2rem;
+        color: #718096;
+    }
+    
+    .empty-state-icon {
+        font-size: 4rem;
+        margin-bottom: 1rem;
+        opacity: 0.3;
+    }
+    
+    .empty-state-title {
+        font-size: 1.5rem;
+        font-weight: 600;
+        margin-bottom: 1rem;
+        color: #2d3748;
+    }
+    
+    .empty-state-text {
+        font-size: 1rem;
+        margin-bottom: 2rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Breadcrumb -->
+    <div class="breadcrumb-nav">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item">
+                    <a href="{% url 'dashboard' %}">Dashboard</a>
+                </li>
+                <li class="breadcrumb-item">
+                    <span class="breadcrumb-separator">/</span>
+                    <a href="{% url 'archivos_proyectos_list' %}">Archivos</a>
+                </li>
+                <li class="breadcrumb-item">
+                    <span class="breadcrumb-separator">/</span>
+                    <a href="{% url 'archivos_proyecto_list' proyecto.id %}">{{ proyecto.nombre }}</a>
+                </li>
+                <li class="breadcrumb-item active" aria-current="page">{{ carpeta.nombre }}</li>
+            </ol>
+        </nav>
+    </div>
+
+    <div class="carpeta-detail-container">
+        <!-- Header de la carpeta -->
+        <div class="carpeta-detail-header">
+            <div class="carpeta-detail-header-content">
+                <div class="carpeta-detail-title">
+                    <i class="{{ carpeta.icono }} me-3"></i>
+                    {{ carpeta.nombre }}
+                </div>
+                <p class="carpeta-detail-subtitle">{{ carpeta.descripcion|default:"Sin descripción" }}</p>
+                
+                <div class="carpeta-detail-stats">
+                    <div class="carpeta-detail-stat">
+                        <span class="carpeta-detail-stat-number">{{ total_archivos }}</span>
+                        <span class="carpeta-detail-stat-label">Archivos</span>
+                    </div>
+                    <div class="carpeta-detail-stat">
+                        <span class="carpeta-detail-stat-number">{{ total_subcarpetas }}</span>
+                        <span class="carpeta-detail-stat-label">Subcarpetas</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Acciones -->
+        <div class="carpeta-actions">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+                <div>
+                    <h2 class="h4 mb-0 text-gray-800">
+                        <i class="fas fa-folder-open text-primary me-2"></i>
+                        Contenido de la Carpeta
+                    </h2>
+                    <p class="text-muted mb-0">Gestiona archivos y subcarpetas en "{{ carpeta.nombre }}"</p>
+                </div>
+                <div class="d-flex gap-2 flex-wrap">
+                    <a href="{% url 'carpeta_create' proyecto.id %}?carpeta_padre={{ carpeta.id }}" class="btn-nueva-carpeta">
+                        <i class="fas fa-folder-plus"></i>
+                        Nueva Subcarpeta
+                    </a>
+                    <a href="{% url 'archivo_upload' proyecto.id %}?carpeta={{ carpeta.id }}" class="btn-subir-archivo">
+                        <i class="fas fa-upload"></i>
+                        Subir Archivo
+                    </a>
+                    <a href="{% url 'archivos_proyecto_list' proyecto.id %}" class="btn-volver">
+                        <i class="fas fa-arrow-left"></i>
+                        Volver
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Contenido de la carpeta -->
+        <div class="carpeta-content">
+            {% if subcarpetas or archivos %}
+                <!-- Subcarpetas -->
+                {% if subcarpetas %}
+                <div class="carpeta-content-header">
+                    <h3 class="carpeta-content-title">
+                        <i class="fas fa-folder me-2"></i>
+                        Subcarpetas
+                    </h3>
+                </div>
+                <div class="carpeta-content-body">
+                    <div class="row">
+                        {% for subcarpeta in subcarpetas %}
+                        <div class="col-xl-3 col-lg-4 col-md-6 mb-3">
+                            <div class="carpeta-card" onclick="window.location.href='{% url 'carpeta_detail' subcarpeta.id %}'">
+                                <div class="carpeta-icon" style="background-color: {{ subcarpeta.color }};">
+                                    <i class="{{ subcarpeta.icono }}"></i>
+                                </div>
+                                <div class="carpeta-info">
+                                    <h6 class="carpeta-nombre">{{ subcarpeta.nombre }}</h6>
+                                    <p class="carpeta-descripcion">{{ subcarpeta.descripcion|default:"Sin descripción" }}</p>
+                                    <div class="carpeta-stats">
+                                        <span class="carpeta-archivos">
+                                            <i class="fas fa-file me-1"></i>{{ subcarpeta.get_total_archivos }} archivos
+                                        </span>
+                                        {% if subcarpeta.subcarpetas.count > 0 %}
+                                        <span class="carpeta-subcarpetas">
+                                            <i class="fas fa-folder me-1"></i>{{ subcarpeta.subcarpetas.count }} subcarpetas
+                                        </span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="carpeta-actions">
+                                    <a href="{% url 'carpeta_edit' subcarpeta.id %}" class="btn btn-sm btn-outline-primary" title="Editar carpeta">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    {% if subcarpeta.puede_eliminarse %}
+                                    <a href="{% url 'carpeta_delete' subcarpeta.id %}" class="btn btn-sm btn-outline-danger" title="Eliminar carpeta"
+                                       onclick="return confirm('¿Estás seguro de que quieres eliminar esta carpeta?')">
+                                        <i class="fas fa-trash"></i>
+                                    </a>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Archivos -->
+                {% if archivos %}
+                <div class="carpeta-content-header">
+                    <h3 class="carpeta-content-title">
+                        <i class="fas fa-file me-2"></i>
+                        Archivos
+                    </h3>
+                </div>
+                <div class="carpeta-content-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Nombre</th>
+                                    <th>Tipo</th>
+                                    <th>Tamaño</th>
+                                    <th>Fecha</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for archivo in archivos %}
+                                <tr>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            {% if archivo.thumbnail %}
+                                                <img src="{{ archivo.thumbnail.url }}" alt="{{ archivo.nombre }}" class="archivo-thumbnail me-3">
+                                            {% elif archivo.es_imagen %}
+                                                <div class="archivo-icon me-3">
+                                                    <i class="fas fa-image text-primary"></i>
+                                                </div>
+                                            {% elif archivo.es_documento %}
+                                                <div class="archivo-icon me-3">
+                                                    <i class="fas fa-file-alt text-success"></i>
+                                                </div>
+                                            {% elif archivo.es_plano %}
+                                                <div class="archivo-icon me-3">
+                                                    <i class="fas fa-drafting-compass text-info"></i>
+                                                </div>
+                                            {% else %}
+                                                <div class="archivo-icon me-3">
+                                                    <i class="fas fa-file text-secondary"></i>
+                                                </div>
+                                            {% endif %}
+                                            <div>
+                                                <div class="fw-bold">{{ archivo.nombre }}</div>
+                                                <small class="text-muted">{{ archivo.descripcion|default:"Sin descripción" }}</small>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-primary">{{ archivo.get_tipo_display }}</span>
+                                    </td>
+                                    <td>{{ archivo.get_tamaño_archivo }}</td>
+                                    <td>{{ archivo.fecha_subida|date:"d/m/Y H:i" }}</td>
+                                    <td>
+                                        <div class="btn-group" role="group">
+                                            <a href="{% url 'archivo_preview' archivo.id %}" class="btn btn-sm btn-outline-info" title="Vista previa">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            <a href="{{ archivo.archivo.url }}" class="btn btn-sm btn-outline-success" download title="Descargar">
+                                                <i class="fas fa-download"></i>
+                                            </a>
+                                            <a href="{% url 'archivo_delete' archivo.id %}" class="btn btn-sm btn-outline-danger" title="Eliminar"
+                                               onclick="return confirm('¿Estás seguro de que quieres eliminar este archivo?')">
+                                                <i class="fas fa-trash"></i>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                {% endif %}
+            {% else %}
+                <!-- Estado vacío -->
+                <div class="carpeta-content-body">
+                    <div class="empty-state">
+                        <div class="empty-state-icon">
+                            <i class="{{ carpeta.icono }}"></i>
+                        </div>
+                        <h3 class="empty-state-title">Esta carpeta está vacía</h3>
+                        <p class="empty-state-text">
+                            Comienza a organizar tu proyecto creando subcarpetas o subiendo archivos.
+                        </p>
+                        <div class="d-flex gap-2 justify-content-center">
+                            <a href="{% url 'carpeta_create' proyecto.id %}?carpeta_padre={{ carpeta.id }}" class="btn-nueva-carpeta">
+                                <i class="fas fa-folder-plus"></i>
+                                Crear Subcarpeta
+                            </a>
+                            <a href="{% url 'archivo_upload' proyecto.id %}?carpeta={{ carpeta.id }}" class="btn-subir-archivo">
+                                <i class="fas fa-upload"></i>
+                                Subir Archivo
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

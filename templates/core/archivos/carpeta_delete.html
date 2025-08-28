@@ -1,0 +1,249 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Eliminar Carpeta - {{ carpeta.nombre }} - Sistema de Construcción{% endblock %}
+
+{% block extra_css %}
+<style>
+    .delete-container {
+        max-width: 600px;
+        margin: 0 auto;
+        padding: 2rem;
+    }
+    
+    .delete-header {
+        background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+        color: white;
+        padding: 2rem;
+        border-radius: 20px;
+        margin-bottom: 2rem;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .delete-header::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="white" opacity="0.1"/><circle cx="75" cy="75" r="1" fill="white" opacity="0.1"/><circle cx="50" cy="10" r="0.5" fill="white" opacity="0.1"/><circle cx="10" cy="60" r="0.5" fill="white" opacity="0.1"/><circle cx="90" cy="40" r="0.5" fill="white" opacity="0.1"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+        opacity: 0.3;
+    }
+    
+    .delete-header-content {
+        position: relative;
+        z-index: 2;
+    }
+    
+    .delete-title {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin-bottom: 1rem;
+    }
+    
+    .delete-subtitle {
+        font-size: 1.2rem;
+        opacity: 0.9;
+    }
+    
+    .delete-card {
+        background: white;
+        border-radius: 20px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+    }
+    
+    .delete-body {
+        padding: 2rem;
+    }
+    
+    .carpeta-info {
+        background: #f8f9fa;
+        border: 1px solid #e9ecef;
+        border-radius: 10px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    
+    .carpeta-icon {
+        width: 60px;
+        height: 60px;
+        border-radius: 15px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 1rem;
+        color: white;
+        font-size: 1.5rem;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    }
+    
+    .carpeta-nombre {
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: #2d3748;
+        text-align: center;
+        margin-bottom: 0.5rem;
+    }
+    
+    .carpeta-descripcion {
+        color: #718096;
+        text-align: center;
+        margin-bottom: 1rem;
+    }
+    
+    .carpeta-stats {
+        display: flex;
+        justify-content: center;
+        gap: 2rem;
+        margin-bottom: 1rem;
+    }
+    
+    .stat-item {
+        text-align: center;
+    }
+    
+    .stat-number {
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: #dc3545;
+        display: block;
+    }
+    
+    .stat-label {
+        font-size: 0.9rem;
+        color: #718096;
+    }
+    
+    .warning-message {
+        background: #fff3cd;
+        border: 1px solid #ffeaa7;
+        border-radius: 10px;
+        padding: 1rem;
+        margin-bottom: 2rem;
+        color: #856404;
+    }
+    
+    .warning-message i {
+        color: #f39c12;
+        margin-right: 0.5rem;
+    }
+    
+    .btn-container {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+    }
+    
+    .btn-delete {
+        background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+        color: white;
+        border: none;
+        padding: 1rem 2rem;
+        border-radius: 10px;
+        font-size: 1.1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-delete:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px rgba(220, 53, 69, 0.3);
+    }
+    
+    .btn-cancel {
+        background: #6c757d;
+        color: white;
+        border: none;
+        padding: 1rem 2rem;
+        border-radius: 10px;
+        font-size: 1.1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-block;
+    }
+    
+    .btn-cancel:hover {
+        background: #5a6268;
+        color: white;
+        text-decoration: none;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="delete-container">
+        <!-- Header -->
+        <div class="delete-header">
+            <div class="delete-header-content">
+                <h1 class="delete-title">
+                    <i class="fas fa-exclamation-triangle me-3"></i>
+                    Eliminar Carpeta
+                </h1>
+                <p class="delete-subtitle">
+                    Confirma la eliminación de esta carpeta
+                </p>
+            </div>
+        </div>
+
+        <!-- Formulario de confirmación -->
+        <div class="delete-card">
+            <div class="delete-body">
+                <!-- Información de la carpeta -->
+                <div class="carpeta-info">
+                    <div class="carpeta-icon" style="background-color: {{ carpeta.color }};">
+                        <i class="{{ carpeta.icono }}"></i>
+                    </div>
+                    <h3 class="carpeta-nombre">{{ carpeta.nombre }}</h3>
+                    <p class="carpeta-descripcion">{{ carpeta.descripcion|default:"Sin descripción" }}</p>
+                    
+                    <div class="carpeta-stats">
+                        <div class="stat-item">
+                            <span class="stat-number">{{ carpeta.archivos.count }}</span>
+                            <span class="stat-label">Archivos</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-number">{{ carpeta.subcarpetas.count }}</span>
+                            <span class="stat-label">Subcarpetas</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Mensaje de advertencia -->
+                <div class="warning-message">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <strong>¡Atención!</strong> Esta acción no se puede deshacer. 
+                    {% if carpeta.archivos.count > 0 %}
+                        Los archivos dentro de esta carpeta también serán eliminados.
+                    {% endif %}
+                    {% if carpeta.subcarpetas.count > 0 %}
+                        Las subcarpetas y su contenido también serán eliminados.
+                    {% endif %}
+                </div>
+
+                <!-- Formulario de confirmación -->
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="btn-container">
+                        <button type="submit" class="btn-delete">
+                            <i class="fas fa-trash me-2"></i>
+                            Sí, eliminar carpeta
+                        </button>
+                        <a href="{% url 'archivos_proyecto_list' carpeta.proyecto.id %}" class="btn-cancel">
+                            <i class="fas fa-times me-2"></i>
+                            Cancelar
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

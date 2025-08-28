@@ -8,36 +8,36 @@
         <div class="row justify-content-center">
             <div class="col-md-6 col-lg-4">
                 <div class="card shadow-lg border-0 login-card">
-                    <div class="card-header text-center py-4" style="background: linear-gradient(135deg, var(--azul-acero) 0%, var(--azul-acero-claro) 100%); color: white; border-radius: 12px 12px 0 0;">
+                    <div class="card-header text-center py-4" style="background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%); color: white; border-radius: 12px 12px 0 0;">
                         <h3 class="mb-0">
-                            <i class="fas fa-building" style="color: var(--amarillo-ocre); margin-right: 8px;"></i>
+                            <i class="fas fa-building" style="color: #fbbf24; margin-right: 8px;"></i>
                             Gestión de Proyectos
                         </h3>
-                        <p class="text-muted mb-0" style="color: var(--gris-concreto-claro) !important;">Inicia sesión para continuar</p>
+                        <p class="text-white mb-0" style="opacity: 0.9;">Inicia sesión para continuar</p>
                     </div>
                     <div class="card-body p-4">
                         <form method="post">
                             {% csrf_token %}
                             <div class="mb-3">
                                 <label for="username" class="form-label">
-                                    <i class="fas fa-user me-2" style="color: var(--azul-acero);"></i>Usuario
+                                    <i class="fas fa-user me-2" style="color: #1e3a8a;"></i>Usuario
                                 </label>
                                 <input type="text" class="form-control form-control-lg" id="username" name="username" required>
                             </div>
                             <div class="mb-4">
                                 <label for="password" class="form-label">
-                                    <i class="fas fa-lock me-2" style="color: var(--azul-acero);"></i>Contraseña
+                                    <i class="fas fa-lock me-2" style="color: #1e3a8a;"></i>Contraseña
                                 </label>
                                 <input type="password" class="form-control form-control-lg" id="password" name="password" required>
                             </div>
-                            <button type="submit" class="btn btn-primary btn-lg w-100" style="background: linear-gradient(135deg, var(--azul-acero) 0%, var(--azul-acero-claro) 100%); border: none;">
+                            <button type="submit" class="btn btn-primary btn-lg w-100 login-btn">
                                 <i class="fas fa-sign-in-alt me-2"></i>Iniciar Sesión
                             </button>
                         </form>
                     </div>
-                    <div class="card-footer text-center py-3" style="background-color: var(--gris-concreto-claro); border-top: 1px solid var(--gris-concreto);">
-                        <small class="text-muted" style="color: var(--azul-acero) !important;">
-                            <i class="fas fa-info-circle me-1" style="color: var(--amarillo-ocre);"></i>
+                    <div class="card-footer text-center py-3" style="background-color: #f8f9fa; border-top: 1px solid #dee2e6;">
+                        <small class="text-muted" style="color: #1e3a8a !important;">
+                            <i class="fas fa-info-circle me-1" style="color: #fbbf24;"></i>
                             Software desarrollado por: SELITEC. <br>
                             PROPIEDAD DE: Construcciones Arca S.A.
                         </small>
@@ -53,6 +53,8 @@
     position: relative;
     overflow: hidden;
     background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 50%, #1e40af 100%);
+    min-height: 100vh;
+    width: 100%;
 }
 
 .login-background::before {
@@ -63,10 +65,10 @@
     right: 0;
     bottom: 0;
     background-image: 
-        radial-gradient(circle at 20% 80%, rgba(255, 193, 7, 0.1) 0%, transparent 50%),
-        radial-gradient(circle at 80% 20%, rgba(255, 193, 7, 0.1) 0%, transparent 50%),
-        linear-gradient(45deg, transparent 48%, rgba(255, 193, 7, 0.05) 50%, transparent 52%),
-        linear-gradient(-45deg, transparent 48%, rgba(255, 193, 7, 0.05) 50%, transparent 52%);
+        radial-gradient(circle at 20% 80%, rgba(251, 191, 36, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 80% 20%, rgba(251, 191, 36, 0.1) 0%, transparent 50%),
+        linear-gradient(45deg, transparent 48%, rgba(251, 191, 36, 0.05) 50%, transparent 52%),
+        linear-gradient(-45deg, transparent 48%, rgba(251, 191, 36, 0.05) 50%, transparent 52%);
     background-size: 300px 300px, 400px 400px, 60px 60px, 60px 60px;
     background-position: 0 0, 0 0, 0 0, 0 0;
     animation: backgroundMove 20s ease-in-out infinite;
@@ -89,8 +91,8 @@
     right: 0;
     bottom: 0;
     background-image: 
-        radial-gradient(circle at 10% 90%, rgba(255, 193, 7, 0.15) 0%, transparent 30%),
-        radial-gradient(circle at 90% 10%, rgba(255, 193, 7, 0.15) 0%, transparent 30%);
+        radial-gradient(circle at 10% 90%, rgba(251, 191, 36, 0.15) 0%, transparent 30%),
+        radial-gradient(circle at 90% 10%, rgba(251, 191, 36, 0.15) 0%, transparent 30%);
     background-size: 200px 200px, 250px 250px;
     background-position: 0 0, 0 0;
     animation: float 15s ease-in-out infinite;
@@ -109,7 +111,7 @@
 }
 
 .login-card {
-    border-top: 4px solid var(--amarillo-ocre) !important;
+    border-top: 4px solid #fbbf24 !important;
     background: rgba(255, 255, 255, 0.95);
     backdrop-filter: blur(10px);
     border-radius: 15px;
@@ -126,13 +128,72 @@
 }
 
 .form-control:focus {
-    border-color: var(--amarillo-ocre);
-    box-shadow: 0 0 0 0.2rem rgba(255, 193, 7, 0.25);
+    border-color: #fbbf24;
+    box-shadow: 0 0 0 0.2rem rgba(251, 191, 36, 0.25);
+}
+
+.login-btn {
+    background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%) !important;
+    border: none !important;
+    color: white !important;
+    font-weight: 600;
+    padding: 12px 24px;
+    transition: all 0.3s ease;
+}
+
+.login-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(30, 58, 138, 0.4);
+    background: linear-gradient(135deg, #1e40af 0%, #2563eb 100%) !important;
+}
+
+.login-btn:active {
+    transform: translateY(0);
+}
+
+/* Asegurar que el botón sea visible */
+.btn-primary {
+    background-color: #1e3a8a !important;
+    border-color: #1e3a8a !important;
 }
 
 .btn-primary:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(30, 58, 138, 0.4);
+    background-color: #1e40af !important;
+    border-color: #1e40af !important;
+}
+
+/* Mejorar la visibilidad de los campos de formulario */
+.form-control {
+    border: 2px solid #e5e7eb;
+    transition: all 0.3s ease;
+}
+
+.form-control:focus {
+    border-color: #1e3a8a;
+    box-shadow: 0 0 0 0.2rem rgba(30, 58, 138, 0.25);
+}
+
+/* Asegurar que el fondo cubra toda la pantalla */
+body, html {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+}
+
+.min-vh-100 {
+    min-height: 100vh !important;
+}
+
+/* Ocultar sidebar y navegación superior en login */
+.sidebar, .top-nav {
+    display: none !important;
+}
+
+/* Asegurar que el contenido principal ocupe todo el ancho en login */
+.main-content {
+    margin-left: 0 !important;
+    width: 100% !important;
+    padding: 0 !important;
 }
 </style>
 

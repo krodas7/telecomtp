@@ -661,6 +661,7 @@ class ArchivoProyecto(models.Model):
     ]
     
     proyecto = models.ForeignKey(Proyecto, on_delete=models.CASCADE, related_name='archivos')
+    carpeta = models.ForeignKey('CarpetaProyecto', on_delete=models.CASCADE, related_name='archivos', null=True, blank=True, help_text="Carpeta donde se almacena el archivo")
     nombre = models.CharField(max_length=255, help_text="Nombre descriptivo del archivo")
     archivo = models.FileField(upload_to='proyectos/archivos/', help_text="Archivo a subir")
     thumbnail = models.ImageField(upload_to='proyectos/thumbnails/', blank=True, null=True, help_text="Miniatura generada automáticamente")
@@ -750,8 +751,76 @@ class ArchivoProyecto(models.Model):
             self.save(update_fields=['thumbnail'])
             
         except Exception as e:
-            print(f"Error generando thumbnail: {e}")
+            print(f"Error generando thumbnail para {self.nombre}: {e}")
             pass
+
+
+class CarpetaProyecto(models.Model):
+    """Carpetas para organizar archivos de proyectos"""
+    
+    proyecto = models.ForeignKey(Proyecto, on_delete=models.CASCADE, related_name='carpetas')
+    carpeta_padre = models.ForeignKey('self', on_delete=models.CASCADE, related_name='subcarpetas', null=True, blank=True, help_text="Carpeta padre (dejar vacío para carpeta raíz)")
+    nombre = models.CharField(max_length=255, help_text="Nombre de la carpeta")
+    descripcion = models.TextField(blank=True, help_text="Descripción de la carpeta")
+    color = models.CharField(max_length=7, default='#667eea', help_text="Color de la carpeta (hex)")
+    icono = models.CharField(max_length=50, default='fas fa-folder', help_text="Clase del icono de FontAwesome")
+    fecha_creacion = models.DateTimeField(auto_now_add=True)
+    creada_por = models.ForeignKey(User, on_delete=models.CASCADE, related_name='carpetas_creadas')
+    activa = models.BooleanField(default=True)
+    
+    class Meta:
+        ordering = ['nombre']
+        verbose_name = 'Carpeta de Proyecto'
+        verbose_name_plural = 'Carpetas de Proyecto'
+        unique_together = ['proyecto', 'carpeta_padre', 'nombre']
+    
+    def __str__(self):
+        if self.carpeta_padre:
+            return f"{self.carpeta_padre.nombre} / {self.nombre}"
+        return f"{self.proyecto.nombre} / {self.nombre}"
+    
+    def get_ruta_completa(self):
+        """Obtener la ruta completa de la carpeta"""
+        ruta = [self.nombre]
+        carpeta_actual = self.carpeta_padre
+        
+        while carpeta_actual:
+            ruta.insert(0, carpeta_actual.nombre)
+            carpeta_actual = carpeta_actual.carpeta_padre
+        
+        return " / ".join(ruta)
+    
+    def get_nivel(self):
+        """Obtener el nivel de profundidad de la carpeta"""
+        nivel = 0
+        carpeta_actual = self.carpeta_padre
+        
+        while carpeta_actual:
+            nivel += 1
+            carpeta_actual = carpeta_actual.carpeta_padre
+        
+        return nivel
+    
+    def get_total_archivos(self):
+        """Obtener el total de archivos en esta carpeta y subcarpetas"""
+        total = self.archivos.count()
+        
+        for subcarpeta in self.subcarpetas.filter(activa=True):
+            total += subcarpeta.get_total_archivos()
+        
+        return total
+    
+    def get_subcarpetas_activas(self):
+        """Obtener subcarpetas activas"""
+        return self.subcarpetas.filter(activa=True)
+    
+    def es_carpeta_raiz(self):
+        """Verificar si es una carpeta raíz"""
+        return self.carpeta_padre is None
+    
+    def puede_eliminarse(self):
+        """Verificar si la carpeta puede ser eliminada"""
+        return self.archivos.count() == 0 and self.subcarpetas.filter(activa=True).count() == 0
 
 
 class Presupuesto(models.Model):

@@ -1,6 +1,7 @@
 from django import forms
 from django.core.exceptions import ValidationError
-from .models import Anticipo, Cliente, Proyecto, ArchivoProyecto, Colaborador, Factura, Gasto, Pago, CategoriaGasto, Presupuesto, PartidaPresupuesto, VariacionPresupuesto, CategoriaInventario, ItemInventario, AsignacionInventario
+from .models import Anticipo, Cliente, Proyecto, ArchivoProyecto, Colaborador, Factura, Gasto, Pago, CategoriaGasto, Presupuesto, PartidaPresupuesto, VariacionPresupuesto, CategoriaInventario, ItemInventario, AsignacionInventario, CarpetaProyecto
+from .constants import ICONOS_CARPETAS
 from decimal import Decimal
 
 
@@ -171,7 +172,7 @@ class ArchivoProyectoForm(forms.ModelForm):
     
     class Meta:
         model = ArchivoProyecto
-        fields = ['nombre', 'archivo', 'tipo', 'descripcion']
+        fields = ['nombre', 'archivo', 'tipo', 'descripcion', 'carpeta']
         widgets = {
             'nombre': forms.TextInput(attrs={
                 'class': 'form-control',
@@ -184,12 +185,29 @@ class ArchivoProyectoForm(forms.ModelForm):
             'tipo': forms.Select(attrs={
                 'class': 'form-control'
             }),
+            'carpeta': forms.Select(attrs={
+                'class': 'form-control'
+            }),
             'descripcion': forms.Textarea(attrs={
                 'class': 'form-control',
                 'rows': 3,
                 'placeholder': 'Descripción del archivo (opcional)'
             })
         }
+    
+    def __init__(self, *args, **kwargs):
+        proyecto = kwargs.pop('proyecto', None)
+        super().__init__(*args, **kwargs)
+        
+        if proyecto:
+            # Filtrar carpetas solo del proyecto actual
+            self.fields['carpeta'].queryset = CarpetaProyecto.objects.filter(
+                proyecto=proyecto, 
+                activa=True
+            ).order_by('nombre')
+            
+            # Agregar opción para "Sin carpeta"
+            self.fields['carpeta'].empty_label = "Sin carpeta (carpeta raíz)"
     
     def clean_archivo(self):
         archivo = self.cleaned_data.get('archivo')
@@ -211,6 +229,91 @@ class ArchivoProyectoForm(forms.ModelForm):
                 )
         
         return archivo
+
+
+class CarpetaProyectoForm(forms.ModelForm):
+    """Formulario para crear y editar carpetas de proyectos"""
+    
+    class Meta:
+        model = CarpetaProyecto
+        fields = ['nombre', 'descripcion', 'color', 'icono', 'carpeta_padre']
+        widgets = {
+            'nombre': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Nombre de la carpeta'
+            }),
+            'descripcion': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 3,
+                'placeholder': 'Descripción de la carpeta (opcional)'
+            }),
+            'color': forms.TextInput(attrs={
+                'class': 'form-control',
+                'type': 'color',
+                'title': 'Selecciona un color para la carpeta'
+            }),
+            'icono': forms.Select(attrs={
+                'class': 'form-control'
+            }, choices=ICONOS_CARPETAS),
+            'carpeta_padre': forms.Select(attrs={
+                'class': 'form-control'
+            })
+        }
+    
+    def __init__(self, *args, **kwargs):
+        proyecto = kwargs.pop('proyecto', None)
+        carpeta_actual = kwargs.pop('carpeta_actual', None)
+        super().__init__(*args, **kwargs)
+        
+        if proyecto:
+            # Filtrar carpetas solo del proyecto actual
+            queryset = CarpetaProyecto.objects.filter(proyecto=proyecto, activa=True)
+            
+            # Si estamos editando una carpeta, excluirla y sus subcarpetas para evitar referencias circulares
+            if carpeta_actual:
+                queryset = queryset.exclude(id=carpeta_actual.id)
+                # También excluir subcarpetas para evitar referencias circulares
+                subcarpetas_ids = self._get_subcarpetas_ids(carpeta_actual)
+                queryset = queryset.exclude(id__in=subcarpetas_ids)
+            
+            self.fields['carpeta_padre'].queryset = queryset.order_by('nombre')
+            self.fields['carpeta_padre'].empty_label = "Carpeta raíz (sin carpeta padre)"
+    
+    def _get_subcarpetas_ids(self, carpeta):
+        """Obtener IDs de todas las subcarpetas de una carpeta"""
+        ids = []
+        for subcarpeta in carpeta.subcarpetas.filter(activa=True):
+            ids.append(subcarpeta.id)
+            ids.extend(self._get_subcarpetas_ids(subcarpeta))
+        return ids
+    
+    def clean_nombre(self):
+        nombre = self.cleaned_data.get('nombre')
+        proyecto = self.instance.proyecto if self.instance.pk else None
+        carpeta_padre = self.cleaned_data.get('carpeta_padre')
+        
+        if proyecto:
+            # Verificar que no exista otra carpeta con el mismo nombre en el mismo nivel
+            queryset = CarpetaProyecto.objects.filter(
+                proyecto=proyecto,
+                carpeta_padre=carpeta_padre,
+                activa=True
+            )
+            
+            if self.instance.pk:
+                queryset = queryset.exclude(pk=self.instance.pk)
+            
+            if queryset.filter(nombre=nombre).exists():
+                if carpeta_padre:
+                    raise forms.ValidationError(
+                        f'Ya existe una carpeta llamada "{nombre}" en "{carpeta_padre.nombre}"'
+                    )
+                else:
+                    raise forms.ValidationError(
+                        f'Ya existe una carpeta raíz llamada "{nombre}"'
+                    )
+        
+        return nombre
 
 
 class ClienteForm(forms.ModelForm):

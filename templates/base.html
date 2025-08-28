@@ -43,7 +43,8 @@
     {% block extra_css %}{% endblock %}
 </head>
 <body>
-    <!-- Sidebar -->
+    <!-- Sidebar - Solo mostrar si no es la página de login -->
+    {% if not request.resolver_match.url_name == 'login' %}
     <div class="sidebar" id="sidebar">
         <!-- Header del Sidebar -->
         <div class="sidebar-header">
@@ -188,10 +189,12 @@
             </ul>
         </nav>
     </div>
+    {% endif %}
 
     <!-- Contenido Principal -->
     <div class="main-content" id="mainContent">
-        <!-- Navegación Superior -->
+        <!-- Navegación Superior - Solo mostrar si no es la página de login -->
+        {% if not request.resolver_match.url_name == 'login' %}
         <nav class="top-nav">
             <div class="nav-left">
                 <button class="sidebar-toggle-mobile" id="sidebarToggleMobile">
@@ -207,6 +210,7 @@
                     </div>
                 </div>
             </div>
+        {% endif %}
             
             <style>
                 .user-menu {

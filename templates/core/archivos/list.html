@@ -278,6 +278,212 @@
         margin-bottom: 2rem;
     }
 
+    /* Estilos para carpetas */
+    .carpetas-container {
+        background: white;
+        border-radius: 20px;
+        padding: 2rem;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
+        border: 1px solid var(--border-color);
+    }
+
+    .carpeta-card {
+        background: white;
+        border: 2px solid #e2e8f0;
+        border-radius: 15px;
+        padding: 1.5rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .carpeta-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+        border-color: #667eea;
+    }
+
+    .carpeta-icon {
+        width: 60px;
+        height: 60px;
+        border-radius: 15px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 1rem;
+        color: white;
+        font-size: 1.5rem;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    }
+
+    .carpeta-info {
+        margin-bottom: 1rem;
+    }
+
+    .carpeta-nombre {
+        font-weight: 600;
+        color: #2d3748;
+        margin-bottom: 0.5rem;
+        font-size: 1.1rem;
+    }
+
+    .carpeta-descripcion {
+        color: #718096;
+        font-size: 0.9rem;
+        margin-bottom: 1rem;
+        line-height: 1.4;
+    }
+
+    .carpeta-stats {
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+    }
+
+    .carpeta-archivos,
+    .carpeta-subcarpetas {
+        font-size: 0.8rem;
+        color: #718096;
+        background: #f7fafc;
+        padding: 0.25rem 0.5rem;
+        border-radius: 6px;
+        border: 1px solid #e2e8f0;
+    }
+
+    .carpeta-actions {
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+        display: flex;
+        gap: 0.5rem;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+
+    .carpeta-card:hover .carpeta-actions {
+        opacity: 1;
+    }
+
+    .breadcrumb-container {
+        background: #f8f9fa;
+        padding: 1rem 1.5rem;
+        border-radius: 10px;
+        border: 1px solid #e9ecef;
+    }
+
+    .breadcrumb {
+        margin: 0;
+        padding: 0;
+        list-style: none;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .breadcrumb-item {
+        color: #6c757d;
+        font-size: 0.9rem;
+    }
+
+    .breadcrumb-item a {
+        color: #667eea;
+        text-decoration: none;
+        transition: color 0.3s ease;
+    }
+
+    .breadcrumb-item a:hover {
+        color: #5a67d8;
+        text-decoration: underline;
+    }
+
+    /* Estilos para carpetas */
+    .carpetas-container {
+        background: white;
+        border-radius: 20px;
+        padding: 2rem;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
+        border: 1px solid var(--border-color);
+    }
+
+    .carpeta-card {
+        background: white;
+        border: 2px solid #e2e8f0;
+        border-radius: 15px;
+        padding: 1.5rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .carpeta-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+        border-color: #667eea;
+    }
+
+    .carpeta-icon {
+        width: 60px;
+        height: 60px;
+        border-radius: 15px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 1rem;
+        color: white;
+        font-size: 1.5rem;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    }
+
+    .carpeta-info {
+        margin-bottom: 1rem;
+    }
+
+    .carpeta-nombre {
+        font-weight: 600;
+        color: #2d3748;
+        margin-bottom: 0.5rem;
+        font-size: 1.1rem;
+    }
+
+    .carpeta-descripcion {
+        color: #718096;
+        font-size: 0.9rem;
+        margin-bottom: 1rem;
+        line-height: 1.4;
+    }
+
+    .carpeta-stats {
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+    }
+
+    .carpeta-archivos,
+    .carpeta-subcarpetas {
+        font-size: 0.8rem;
+        color: #718096;
+        background: #f7fafc;
+        padding: 0.25rem 0.5rem;
+        border-radius: 6px;
+        border: 1px solid #e2e8f0;
+    }
+
+    .carpeta-actions {
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+        display: flex;
+        gap: 0.5rem;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+
+    .carpeta-card:hover .carpeta-actions {
+        opacity: 1;
+    }
+
     .archivo-thumbnail {
         width: 50px;
         height: 50px;
@@ -393,17 +599,51 @@
         </div>
     </div>
 
+    <!-- Breadcrumb -->
+    {% if carpeta_actual %}
+    <div class="breadcrumb-container mb-3">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item">
+                    <a href="{% url 'archivos_proyecto_list' proyecto.id %}" class="text-decoration-none">
+                        <i class="fas fa-home me-1"></i>{{ proyecto.nombre }}
+                    </a>
+                </li>
+                {% if carpeta_actual.get_ruta_completa %}
+                    {% for carpeta in carpeta_actual.get_ruta_completa %}
+                        <li class="breadcrumb-item active" aria-current="page">{{ carpeta }}</li>
+                    {% endfor %}
+                {% endif %}
+            </ol>
+        </nav>
+    </div>
+    {% endif %}
+
     <!-- Acciones -->
     <div class="archivos-actions">
         <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
             <div>
                 <h2 class="h4 mb-0 text-gray-800">
                     <i class="fas fa-folder-open text-primary me-2"></i>
-                    {{ proyecto.nombre }}
+                    {% if carpeta_actual %}
+                        {{ carpeta_actual.nombre }}
+                    {% else %}
+                        {{ proyecto.nombre }}
+                    {% endif %}
                 </h2>
-                <p class="text-muted mb-0">Gestiona los archivos de este proyecto</p>
+                <p class="text-muted mb-0">
+                    {% if carpeta_actual %}
+                        Contenido de la carpeta "{{ carpeta_actual.nombre }}"
+                    {% else %}
+                        Gestiona los archivos de este proyecto
+                    {% endif %}
+                </p>
             </div>
             <div class="d-flex gap-2 flex-wrap">
+                <a href="{% url 'carpeta_create' proyecto.id %}" class="btn-subir-archivo" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%);">
+                    <i class="fas fa-folder-plus"></i>
+                    Nueva Carpeta
+                </a>
                 <a href="{% url 'archivo_upload' proyecto.id %}" class="btn-subir-archivo">
                     <i class="fas fa-upload"></i>
                     Subir Archivo
@@ -416,13 +656,65 @@
         </div>
     </div>
 
+    <!-- Carpetas -->
+    {% if subcarpetas %}
+    <div class="carpetas-container mb-4">
+        <div class="carpetas-header">
+            <h3 class="h5 mb-3 text-gray-800">
+                <i class="fas fa-folder me-2"></i>
+                Carpetas
+            </h3>
+        </div>
+        <div class="row">
+            {% for carpeta in subcarpetas %}
+            <div class="col-xl-3 col-lg-4 col-md-6 mb-3">
+                <div class="carpeta-card" data-url="{% url 'archivos_proyecto_list' proyecto.id %}?carpeta={{ carpeta.id }}">
+                    <div class="carpeta-icon" style="background-color: {{ carpeta.color|safe }};">
+                        <i class="{{ carpeta.icono }}"></i>
+                    </div>
+                    <div class="carpeta-info">
+                        <h6 class="carpeta-nombre">{{ carpeta.nombre }}</h6>
+                        <p class="carpeta-descripcion">{{ carpeta.descripcion|default:"Sin descripción" }}</p>
+                        <div class="carpeta-stats">
+                            <span class="carpeta-archivos">
+                                <i class="fas fa-file me-1"></i>{{ carpeta.get_total_archivos }} archivos
+                            </span>
+                            {% if carpeta.subcarpetas.count > 0 %}
+                            <span class="carpeta-subcarpetas">
+                                <i class="fas fa-folder me-1"></i>{{ carpeta.subcarpetas.count }} subcarpetas
+                            </span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="carpeta-actions">
+                        <a href="{% url 'carpeta_edit' carpeta.id %}" class="btn btn-sm btn-outline-primary" title="Editar carpeta">
+                            <i class="fas fa-edit"></i>
+                        </a>
+                        {% if carpeta.puede_eliminarse %}
+                        <a href="{% url 'carpeta_delete' carpeta.id %}" class="btn btn-sm btn-outline-danger" title="Eliminar carpeta"
+                           onclick="return confirm('¿Estás seguro de que quieres eliminar esta carpeta?')">
+                            <i class="fas fa-trash"></i>
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
     <!-- Tabla de Archivos -->
     <div class="archivos-table-container">
-        {% if archivos %}
+        {% if archivos or subcarpetas %}
             <div class="archivos-table-header">
                 <h3 class="h5 mb-0 text-gray-800">
                     <i class="fas fa-list me-2"></i>
-                    Lista de Archivos
+                    {% if carpeta_actual %}
+                        Archivos en esta carpeta
+                    {% else %}
+                        Lista de Archivos
+                    {% endif %}
                 </h3>
             </div>
             <div class="table-responsive">
@@ -578,6 +870,18 @@
                 openPreviewModal(archivoUrl, archivoNombre);
             });
         });
+        
+        // Hacer las tarjetas de carpetas clickeables
+        const carpetaCards = document.querySelectorAll('.carpeta-card');
+        carpetaCards.forEach(card => {
+            card.addEventListener('click', function() {
+                const url = this.getAttribute('data-url');
+                if (url) {
+                    window.location.href = url;
+                }
+            });
+        });
     });
 </script>
 {% endblock %}
+
