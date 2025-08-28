@@ -255,6 +255,7 @@
 
     <!-- Lista de Facturas -->
     <div class="facturas-table-container">
+        {% csrf_token %}
         <div class="facturas-table-header">
             <div class="d-flex justify-content-between align-items-center">
                 <div>
@@ -271,6 +272,10 @@
                         <i class="fas fa-info-circle me-1"></i>
                         <strong>Nota:</strong> El botón verde <i class="fas fa-check"></i> aparece solo en facturas que no están pagadas. 
                         Para que desaparezca, marca la factura como pagada.
+                    </div>
+                    <div class="alert alert-warning alert-sm mt-2 mb-0" style="font-size: 0.85rem;">
+                        <i class="fas fa-calendar-alt me-1"></i>
+                        <strong>Fechas:</strong> Emisión (cuando se creó), Vencimiento (cuando debe pagarse), Creación (cuando se registró en el sistema)
                     </div>
                 </div>
                 <div>
@@ -289,7 +294,9 @@
                             <th>Proyecto</th>
                             <th>Monto</th>
                             <th>Estado</th>
-                            <th>Fecha</th>
+                            <th>Emisión</th>
+                            <th>Vencimiento</th>
+                            <th>Creación</th>
                             <th>Acciones</th>
                         </tr>
                     </thead>
@@ -338,7 +345,38 @@
                                 {% endif %}
                             </td>
                             <td>
-                                {{ factura.fecha_emision|date:"d/m/Y"|default:"N/A" }}
+                                <span class="text-primary">
+                                    <i class="fas fa-calendar-plus me-1"></i>
+                                    {{ factura.fecha_emision|date:"d/m/Y"|default:"N/A" }}
+                                </span>
+                            </td>
+                            <td>
+                                {% if factura.fecha_vencimiento %}
+                                    {% if factura.es_vencida %}
+                                        <span class="text-danger">
+                                            <i class="fas fa-exclamation-triangle me-1"></i>
+                                            {{ factura.fecha_vencimiento|date:"d/m/Y" }}
+                                            <small class="badge bg-danger ms-1">Vencida</small>
+                                        </span>
+                                    {% else %}
+                                        <span class="text-success">
+                                            <i class="fas fa-calendar-check me-1"></i>
+                                            {{ factura.fecha_vencimiento|date:"d/m/Y" }}
+                                            <small class="badge bg-success ms-1">{{ factura.dias_para_vencer }} días</small>
+                                        </span>
+                                    {% endif %}
+                                {% else %}
+                                    <span class="text-muted">
+                                        <i class="fas fa-calendar-times me-1"></i>
+                                        Sin fecha
+                                    </span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="text-muted">
+                                    <i class="fas fa-clock me-1"></i>
+                                    {{ factura.fecha_creacion|date:"d/m/Y H:i"|default:"N/A" }}
+                                </span>
                             </td>
                             <td>
                                 <div class="btn-group" role="group">
@@ -430,15 +468,27 @@ function marcarComoPagada(facturaId, numeroFactura) {
 
 function procesarMarcadoComoPagada(facturaId, numeroFactura) {
         // Obtener el token CSRF
-        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+        const csrfTokenElement = document.querySelector('[name=csrfmiddlewaretoken]');
+        if (!csrfTokenElement) {
+            mostrarToast('danger', 'Error', 'Token CSRF no encontrado. Recarga la página.');
+            return;
+        }
+        const csrfToken = csrfTokenElement.value;
         
         // Mostrar indicador de carga
-        const button = event.target.closest('button');
+        const button = document.querySelector(`button[onclick*="${facturaId}"]`);
+        if (!button) {
+            mostrarToast('danger', 'Error', 'Botón no encontrado. Recarga la página.');
+            return;
+        }
         const originalContent = button.innerHTML;
         button.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
         button.disabled = true;
         
         // Realizar petición AJAX
+        console.log('🔄 Enviando petición para marcar como pagada:', facturaId);
+        console.log('🔑 Token CSRF:', csrfToken);
+        
         fetch(`/facturas/${facturaId}/marcar-pagada/`, {
             method: 'POST',
             headers: {
@@ -471,7 +521,6 @@ function procesarMarcadoComoPagada(facturaId, numeroFactura) {
             button.disabled = false;
         });
     }
-}
 
 // Función para mostrar toasts elegantes
 function mostrarToast(tipo, titulo, mensaje) {

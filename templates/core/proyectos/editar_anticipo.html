@@ -1,0 +1,293 @@
+{% extends "base.html" %}
+
+{% block title %}Editar Anticipo - {{ anticipo.colaborador.nombre }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .edit-container {
+        background: white;
+        border-radius: 15px;
+        padding: 2rem;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        border: 1px solid rgba(255,255,255,0.2);
+        margin-bottom: 2rem;
+        max-width: 600px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+    
+    .anticipo-header {
+        background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+        color: white;
+        padding: 2rem;
+        border-radius: 15px;
+        margin-bottom: 2rem;
+        text-align: center;
+    }
+    
+    .anticipo-header h2 {
+        margin: 0;
+        font-size: 1.8rem;
+        font-weight: 700;
+    }
+    
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+    
+    .form-label {
+        font-weight: 600;
+        color: #495057;
+        margin-bottom: 0.5rem;
+        display: block;
+    }
+    
+    .form-control {
+        width: 100%;
+        padding: 0.75rem;
+        border: 2px solid #e9ecef;
+        border-radius: 10px;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+    }
+    
+    .form-control:focus {
+        outline: none;
+        border-color: #17a2b8;
+        box-shadow: 0 0 0 0.2rem rgba(23, 162, 184, 0.25);
+    }
+    
+    .form-select {
+        width: 100%;
+        padding: 0.75rem;
+        border: 2px solid #e9ecef;
+        border-radius: 10px;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+        background-color: white;
+    }
+    
+    .form-select:focus {
+        outline: none;
+        border-color: #17a2b8;
+        box-shadow: 0 0 0 0.2rem rgba(23, 162, 184, 0.25);
+    }
+    
+    .btn-actions {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+        margin-top: 2rem;
+    }
+    
+    .btn-guardar {
+        background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%);
+        border: none;
+        color: white;
+        padding: 0.75rem 2rem;
+        border-radius: 10px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
+    }
+    
+    .btn-guardar:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(40, 167, 69, 0.4);
+        color: white;
+        text-decoration: none;
+    }
+    
+    .btn-cancelar {
+        background: linear-gradient(135deg, #6c757d 0%, #545b62 100%);
+        border: none;
+        color: white;
+        padding: 0.75rem 2rem;
+        border-radius: 10px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        box-shadow: 0 4px 15px rgba(108, 117, 125, 0.3);
+    }
+    
+    .btn-cancelar:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(108, 117, 125, 0.4);
+        color: white;
+        text-decoration: none;
+    }
+    
+    .anticipo-info {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        padding: 1.5rem;
+        border-radius: 15px;
+        margin-bottom: 2rem;
+        border: 1px solid #dee2e6;
+    }
+    
+    .anticipo-info h5 {
+        color: #495057;
+        margin-bottom: 1rem;
+        font-weight: 600;
+    }
+    
+    .info-row {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 0.5rem;
+        padding: 0.5rem 0;
+        border-bottom: 1px solid #e9ecef;
+    }
+    
+    .info-row:last-child {
+        border-bottom: none;
+    }
+    
+    .info-label {
+        font-weight: 600;
+        color: #6c757d;
+    }
+    
+    .info-value {
+        color: #495057;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="anticipo-header">
+    <h2>
+        <i class="fas fa-edit me-3"></i>Editar Anticipo
+    </h2>
+    <p class="mb-0 mt-2">{{ anticipo.colaborador.nombre }} - {{ anticipo.proyecto.nombre }}</p>
+</div>
+
+<div class="edit-container">
+    <!-- Información del Anticipo -->
+    <div class="anticipo-info">
+        <h5><i class="fas fa-info-circle me-2"></i>Información del Anticipo</h5>
+        <div class="info-row">
+            <span class="info-label">Colaborador:</span>
+            <span class="info-value">{{ anticipo.colaborador.nombre }}</span>
+        </div>
+        <div class="info-row">
+            <span class="info-label">Proyecto:</span>
+            <span class="info-value">{{ anticipo.proyecto.nombre }}</span>
+        </div>
+        <div class="info-row">
+            <span class="info-label">Tipo:</span>
+            <span class="info-value">{{ anticipo.get_tipo_display }}</span>
+        </div>
+        <div class="info-row">
+            <span class="info-label">Fecha Anticipo:</span>
+            <span class="info-value">{{ anticipo.fecha_anticipo|date:"d/m/Y" }}</span>
+        </div>
+    </div>
+    
+    <!-- Formulario de Edición -->
+    <form method="post">
+        {% csrf_token %}
+        
+        <div class="form-group">
+            <label for="monto" class="form-label">Monto (Q)</label>
+            <input type="number" 
+                   id="monto" 
+                   name="monto" 
+                   class="form-control" 
+                   value="{{ anticipo.monto }}" 
+                   step="0.01" 
+                   min="0" 
+                   required>
+        </div>
+        
+        <div class="form-group">
+            <label for="concepto" class="form-label">Concepto</label>
+            <input type="text" 
+                   id="concepto" 
+                   name="concepto" 
+                   class="form-control" 
+                   value="{{ anticipo.concepto }}" 
+                   required>
+        </div>
+        
+        <div class="form-group">
+            <label for="estado" class="form-label">Estado</label>
+            <select id="estado" name="estado" class="form-select" required>
+                {% for value, label in estados_choices %}
+                    <option value="{{ value }}" {% if value == anticipo.estado %}selected{% endif %}>
+                        {{ label }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+        
+        <!-- Botones de Acción -->
+        <div class="btn-actions">
+            <button type="submit" class="btn-guardar">
+                <i class="fas fa-save me-2"></i>Guardar Cambios
+            </button>
+            <a href="{% url 'administrar_anticipos_proyecto' anticipo.proyecto.id %}" class="btn-cancelar">
+                <i class="fas fa-times me-2"></i>Cancelar
+            </a>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Animación de entrada
+    const container = document.querySelector('.edit-container');
+    container.style.opacity = '0';
+    container.style.transform = 'translateY(30px)';
+    
+    setTimeout(() => {
+        container.style.transition = 'all 0.8s ease';
+        container.style.opacity = '1';
+        container.style.transform = 'translateY(0)';
+    }, 200);
+    
+    // Validación del formulario
+    const form = document.querySelector('form');
+    const montoInput = document.getElementById('monto');
+    
+    form.addEventListener('submit', function(e) {
+        const monto = parseFloat(montoInput.value);
+        
+        if (monto <= 0) {
+            e.preventDefault();
+            alert('El monto debe ser mayor a 0');
+            montoInput.focus();
+            return false;
+        }
+        
+        if (isNaN(monto)) {
+            e.preventDefault();
+            alert('El monto debe ser un número válido');
+            montoInput.focus();
+            return false;
+        }
+    });
+    
+    // Efecto hover para los botones
+    const buttons = document.querySelectorAll('.btn-guardar, .btn-cancelar');
+    buttons.forEach(button => {
+        button.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-2px)';
+        });
+        
+        button.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(0)';
+        });
+    });
+});
+</script>
+{% endblock %}

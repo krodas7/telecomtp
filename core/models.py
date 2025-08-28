@@ -321,11 +321,51 @@ class Factura(models.Model):
             self.estado = 'pagada'
             if not self.fecha_pago:
                 self.fecha_pago = timezone.now().date()
-        elif self.fecha_vencimiento and timezone.now().date() > self.fecha_vencimiento.date() if hasattr(self.fecha_vencimiento, 'date') else self.fecha_vencimiento:
+        elif self.fecha_vencimiento and timezone.now().date() > self.fecha_vencimiento:
             if self.estado not in ['pagada', 'cancelada']:
                 self.estado = 'vencida'
         
         super().save(*args, **kwargs)
+    
+    def es_vencida(self):
+        """Verificar si la factura está vencida"""
+        if not self.fecha_vencimiento:
+            return False
+        return timezone.now().date() > self.fecha_vencimiento and self.estado not in ['pagada', 'cancelada']
+    
+    def dias_para_vencer(self):
+        """Calcular días restantes para vencer"""
+        if not self.fecha_vencimiento:
+            return None
+        dias = (self.fecha_vencimiento - timezone.now().date()).days
+        return dias if dias > 0 else 0
+    
+    @property
+    def dias_vencimiento_formateado(self):
+        """Formatear días de vencimiento para mostrar en la UI"""
+        if not self.fecha_vencimiento:
+            return "Sin fecha"
+        
+        dias = self.dias_para_vencer()
+        if dias is None:
+            return "Sin fecha"
+        elif dias == 0:
+            return "Vence hoy"
+        elif dias < 0:
+            return f"Vencida hace {abs(dias)} días"
+        elif dias == 1:
+            return "Vence mañana"
+        elif dias <= 7:
+            return f"Vence en {dias} días"
+        else:
+            return f"Vence en {dias} días"
+    
+    def actualizar_estado_vencimiento(self):
+        """Actualizar estado de vencimiento manualmente"""
+        if self.es_vencida():
+            self.estado = 'vencida'
+            self.save(update_fields=['estado'])
+        return self.estado
     
     @property
     def dias_vencimiento(self):
@@ -1106,9 +1146,9 @@ class ItemInventario(models.Model):
     categoria = models.ForeignKey(CategoriaInventario, on_delete=models.CASCADE)
     stock_actual = models.DecimalField(max_digits=10, decimal_places=2, help_text="Stock actual en unidades")
     stock_disponible = models.DecimalField(max_digits=10, decimal_places=2, help_text="Stock disponible para asignación", default=0)
-    stock_minimo = models.DecimalField(max_digits=10, decimal_places=2, help_text="Stock mínimo recomendado")
-    precio_unitario = models.DecimalField(max_digits=10, decimal_places=2, help_text="Precio por unidad")
-    unidad_medida = models.CharField(max_length=50, help_text="Unidad de medida (m², m³, kg, etc.)")
+    stock_minimo = models.DecimalField(max_digits=10, decimal_places=2, help_text="Stock mínimo recomendado", null=True, blank=True)
+    precio_unitario = models.DecimalField(max_digits=10, decimal_places=2, help_text="Precio por unidad", null=True, blank=True)
+    unidad_medida = models.CharField(max_length=50, help_text="Unidad de medida (m², m³, kg, etc.)", null=True, blank=True)
     proveedor = models.CharField(max_length=200, blank=True)
     fecha_ultima_compra = models.DateField(null=True, blank=True)
     activo = models.BooleanField(default=True)

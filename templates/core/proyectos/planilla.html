@@ -129,6 +129,28 @@
         text-decoration: none;
     }
     
+    .btn-pdf {
+        background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+        border: none;
+        color: white;
+        padding: 0.75rem 1.5rem;
+        border-radius: 10px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        box-shadow: 0 4px 15px rgba(220, 53, 69, 0.3);
+    }
+    
+    .btn-pdf:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(220, 53, 69, 0.4);
+        color: white;
+        text-decoration: none;
+    }
+    
     .planilla-table {
         width: 100%;
         border-collapse: separate;
@@ -316,6 +338,12 @@
         </a>
         <a href="{% url 'calendario_pagos_proyecto' proyecto.id %}" class="btn-planilla" style="background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);">
             <i class="fas fa-calendar-alt me-2"></i>Calendario de Pagos
+        </a>
+        <a href="{% url 'administrar_anticipos_proyecto' proyecto.id %}" class="btn-planilla" style="background: linear-gradient(135deg, #6f42c1 0%, #5a32a3 100%);">
+            <i class="fas fa-cogs me-2"></i>Administrar Anticipos
+        </a>
+        <a href="{% url 'planilla_proyecto_pdf' proyecto.id %}" class="btn-planilla" style="background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);">
+            <i class="fas fa-file-pdf me-2"></i>Descargar PDF
         </a>
         <a href="{% url 'proyectos_list' %}" class="btn-planilla" style="background: linear-gradient(135deg, #6c757d 0%, #545b62 100%);">
             <i class="fas fa-arrow-left me-2"></i>Volver a Proyectos

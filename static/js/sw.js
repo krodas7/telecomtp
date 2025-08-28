@@ -1,5 +1,9 @@
-// Service Worker para Sistema ARCA Construcción
+// Service Worker para Sistema ARCA Construcción - PRODUCCIÓN
 const CACHE_NAME = 'arca-construccion-v1.0.0';
+const STATIC_CACHE = 'arca-static-v1.0.0';
+const DYNAMIC_CACHE = 'arca-dynamic-v1.0.0';
+
+// URLs a cachear estáticamente
 const urlsToCache = [
     '/',
     '/dashboard/',
@@ -11,6 +15,12 @@ const urlsToCache = [
     '/static/js/global-functions.js',
     '/static/images/icon-192x192.png',
     '/static/images/icon-512x512.png',
+    '/static/manifest.json',
+    '/offline/'
+];
+
+// URLs externas a cachear
+const externalUrlsToCache = [
     'https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css',
     'https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js',
     'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css'
@@ -20,18 +30,25 @@ const urlsToCache = [
 self.addEventListener('install', event => {
     console.log('🔄 Service Worker instalándose...');
     event.waitUntil(
-        caches.open(CACHE_NAME)
-            .then(cache => {
-                console.log('📦 Cache abierto');
-                return cache.addAll(urlsToCache);
-            })
-            .then(() => {
-                console.log('✅ Service Worker instalado correctamente');
-                return self.skipWaiting();
-            })
-            .catch(error => {
-                console.error('❌ Error durante la instalación:', error);
-            })
+        Promise.all([
+            // Cachear archivos estáticos
+            caches.open(STATIC_CACHE)
+                .then(cache => {
+                    console.log('📦 Cache estático abierto');
+                    return cache.addAll(urlsToCache);
+                }),
+            // Cachear recursos externos
+            caches.open(STATIC_CACHE)
+                .then(cache => {
+                    console.log('🌐 Cacheando recursos externos...');
+                    return cache.addAll(externalUrlsToCache);
+                })
+        ]).then(() => {
+            console.log('✅ Service Worker instalado correctamente');
+            return self.skipWaiting();
+        }).catch(error => {
+            console.error('❌ Error durante la instalación:', error);
+        })
     );
 });
 
@@ -42,7 +59,7 @@ self.addEventListener('activate', event => {
         caches.keys().then(cacheNames => {
             return Promise.all(
                 cacheNames.map(cacheName => {
-                    if (cacheName !== CACHE_NAME) {
+                    if (cacheName !== STATIC_CACHE && cacheName !== DYNAMIC_CACHE) {
                         console.log('🗑️ Eliminando cache antiguo:', cacheName);
                         return caches.delete(cacheName);
                     }
@@ -57,28 +74,33 @@ self.addEventListener('activate', event => {
 
 // Interceptar peticiones de red
 self.addEventListener('fetch', event => {
+    const { request } = event;
+    
     // Solo manejar peticiones GET
-    if (event.request.method !== 'GET') {
+    if (request.method !== 'GET') {
         return;
     }
 
     // Excluir peticiones a APIs o endpoints dinámicos
-    if (event.request.url.includes('/admin/') || 
-        event.request.url.includes('/api/') ||
-        event.request.url.includes('/static/admin/')) {
+    if (request.url.includes('/admin/') || 
+        request.url.includes('/api/') ||
+        request.url.includes('/static/admin/') ||
+        request.url.includes('/media/') ||
+        request.url.includes('chrome-extension://') ||
+        request.url.includes('moz-extension://')) {
         return;
     }
 
     event.respondWith(
-        caches.match(event.request)
+        caches.match(request)
             .then(response => {
-                // Si está en cache, devolverlo
+                // Si está en cache estático, devolverlo
                 if (response) {
                     return response;
                 }
 
                 // Si no está en cache, hacer la petición a la red
-                return fetch(event.request)
+                return fetch(request)
                     .then(response => {
                         // Verificar que la respuesta sea válida
                         if (!response || response.status !== 200 || response.type !== 'basic') {
@@ -88,72 +110,74 @@ self.addEventListener('fetch', event => {
                         // Clonar la respuesta para poder cachearla
                         const responseToCache = response.clone();
 
-                        caches.open(CACHE_NAME)
+                        // Cachear en cache dinámico
+                        caches.open(DYNAMIC_CACHE)
                             .then(cache => {
-                                cache.put(event.request, responseToCache);
+                                cache.put(request, responseToCache);
+                            })
+                            .catch(error => {
+                                console.warn('⚠️ No se pudo cachear la respuesta:', error);
                             });
 
                         return response;
                     })
                     .catch(() => {
                         // Si falla la red, devolver página offline
-                        if (event.request.destination === 'document') {
-                            return caches.match('/offline.html');
+                        if (request.destination === 'document') {
+                            return caches.match('/offline/');
                         }
+                        
+                        // Para otros recursos, devolver respuesta vacía
+                        return new Response('', {
+                            status: 503,
+                            statusText: 'Service Unavailable',
+                            headers: {
+                                'Content-Type': 'text/plain'
+                            }
+                        });
                     });
             })
     );
 });
 
-// Manejar mensajes del cliente
+// Manejo de mensajes del cliente
 self.addEventListener('message', event => {
     if (event.data && event.data.type === 'SKIP_WAITING') {
         self.skipWaiting();
     }
+    
+    if (event.data && event.data.type === 'GET_VERSION') {
+        event.ports[0].postMessage({
+            version: CACHE_NAME,
+            staticCache: STATIC_CACHE,
+            dynamicCache: DYNAMIC_CACHE
+        });
+    }
 });
 
-// Manejar notificaciones push (para futuras implementaciones)
-self.addEventListener('push', event => {
-    if (event.data) {
-        const data = event.data.json();
-        const options = {
-            body: data.body || 'Nueva notificación del sistema',
-            icon: '/static/images/icon-192x192.png',
-            badge: '/static/images/icon-32x32.png',
-            vibrate: [100, 50, 100],
-            data: {
-                dateOfArrival: Date.now(),
-                primaryKey: 1
-            },
-            actions: [
-                {
-                    action: 'explore',
-                    title: 'Ver',
-                    icon: '/static/images/icon-32x32.png'
-                },
-                {
-                    action: 'close',
-                    title: 'Cerrar',
-                    icon: '/static/images/icon-32x32.png'
+// Limpieza periódica del cache dinámico
+self.addEventListener('activate', event => {
+    event.waitUntil(
+        caches.open(DYNAMIC_CACHE).then(cache => {
+            return cache.keys().then(keys => {
+                // Mantener solo los últimos 100 items
+                if (keys.length > 100) {
+                    const keysToDelete = keys.slice(0, keys.length - 100);
+                    return Promise.all(
+                        keysToDelete.map(key => cache.delete(key))
+                    );
                 }
-            ]
-        };
-
-        event.waitUntil(
-            self.registration.showNotification(data.title || 'Sistema ARCA', options)
-        );
-    }
+            });
+        })
+    );
 });
 
-// Manejar clics en notificaciones
-self.addEventListener('notificationclick', event => {
-    event.notification.close();
-
-    if (event.action === 'explore') {
-        event.waitUntil(
-            clients.openWindow('/dashboard/')
-        );
-    }
+// Manejo de errores global
+self.addEventListener('error', event => {
+    console.error('❌ Error en Service Worker:', event.error);
 });
 
-console.log('🔄 Service Worker cargado correctamente');
+// Manejo de promesas rechazadas
+self.addEventListener('unhandledrejection', event => {
+    console.error('❌ Promesa rechazada en Service Worker:', event.reason);
+});

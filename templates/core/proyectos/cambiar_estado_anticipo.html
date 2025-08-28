@@ -1,0 +1,340 @@
+{% extends "base.html" %}
+
+{% block title %}Cambiar Estado - {{ anticipo.colaborador.nombre }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .status-container {
+        background: white;
+        border-radius: 15px;
+        padding: 2rem;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        border: 1px solid rgba(255,255,255,0.2);
+        margin-bottom: 2rem;
+        max-width: 600px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+    
+    .status-header {
+        background: linear-gradient(135deg, #6c757d 0%, #545b62 100%);
+        color: white;
+        padding: 2rem;
+        border-radius: 15px;
+        margin-bottom: 2rem;
+        text-align: center;
+    }
+    
+    .status-header h2 {
+        margin: 0;
+        font-size: 1.8rem;
+        font-weight: 700;
+    }
+    
+    .status-icon {
+        font-size: 4rem;
+        color: #6c757d;
+        margin-bottom: 1rem;
+        opacity: 0.8;
+    }
+    
+    .anticipo-info {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        padding: 1.5rem;
+        border-radius: 15px;
+        margin-bottom: 2rem;
+        border: 1px solid #dee2e6;
+    }
+    
+    .anticipo-info h5 {
+        color: #495057;
+        margin-bottom: 1rem;
+        font-weight: 600;
+    }
+    
+    .info-row {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 0.5rem;
+        padding: 0.5rem 0;
+        border-bottom: 1px solid #e9ecef;
+    }
+    
+    .info-row:last-child {
+        border-bottom: none;
+    }
+    
+    .info-label {
+        font-weight: 600;
+        color: #6c757d;
+    }
+    
+    .info-value {
+        color: #495057;
+    }
+    
+    .current-status {
+        background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+        border: 2px solid #ffc107;
+        border-radius: 15px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        text-align: center;
+    }
+    
+    .current-status h5 {
+        color: #856404;
+        margin-bottom: 1rem;
+        font-weight: 600;
+    }
+    
+    .current-status .status-badge {
+        display: inline-block;
+        padding: 0.5rem 1.5rem;
+        border-radius: 25px;
+        font-weight: 600;
+        font-size: 1.1rem;
+        margin-top: 0.5rem;
+    }
+    
+    .status-pendiente {
+        background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%);
+        color: #212529;
+    }
+    
+    .status-liquidado {
+        background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%);
+        color: white;
+    }
+    
+    .status-cancelado {
+        background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+        color: white;
+    }
+    
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+    
+    .form-label {
+        font-weight: 600;
+        color: #495057;
+        margin-bottom: 0.5rem;
+        display: block;
+    }
+    
+    .form-select {
+        width: 100%;
+        padding: 0.75rem;
+        border: 2px solid #e9ecef;
+        border-radius: 10px;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+        background-color: white;
+    }
+    
+    .form-select:focus {
+        outline: none;
+        border-color: #6c757d;
+        box-shadow: 0 0 0 0.2rem rgba(108, 117, 125, 0.25);
+    }
+    
+    .btn-actions {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+        margin-top: 2rem;
+    }
+    
+    .btn-cambiar {
+        background: linear-gradient(135deg, #6c757d 0%, #545b62 100%);
+        border: none;
+        color: white;
+        padding: 0.75rem 2rem;
+        border-radius: 10px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        box-shadow: 0 4px 15px rgba(108, 117, 125, 0.3);
+    }
+    
+    .btn-cambiar:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(108, 117, 125, 0.4);
+        color: white;
+        text-decoration: none;
+    }
+    
+    .btn-cancelar {
+        background: linear-gradient(135deg, #6c757d 0%, #545b62 100%);
+        border: none;
+        color: white;
+        padding: 0.75rem 2rem;
+        border-radius: 10px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        box-shadow: 0 4px 15px rgba(108, 117, 125, 0.3);
+        opacity: 0.8;
+    }
+    
+    .btn-cancelar:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(108, 117, 125, 0.4);
+        color: white;
+        text-decoration: none;
+        opacity: 1;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="status-header">
+    <h2>
+        <i class="fas fa-exchange-alt me-3"></i>Cambiar Estado
+    </h2>
+    <p class="mb-0 mt-2">Actualizar estado del anticipo</p>
+</div>
+
+<div class="status-container">
+    <!-- Icono de Estado -->
+    <div class="text-center">
+        <i class="fas fa-exchange-alt status-icon"></i>
+    </div>
+    
+    <!-- Estado Actual -->
+    <div class="current-status">
+        <h5><i class="fas fa-info-circle me-2"></i>Estado Actual</h5>
+        <span class="status-badge status-{{ anticipo.estado }}">
+            {{ anticipo.get_estado_display }}
+        </span>
+    </div>
+    
+    <!-- Información del Anticipo -->
+    <div class="anticipo-info">
+        <h5><i class="fas fa-info-circle me-2"></i>Información del Anticipo</h5>
+        <div class="info-row">
+            <span class="info-label">Colaborador:</span>
+            <span class="info-value">{{ anticipo.colaborador.nombre }}</span>
+        </div>
+        <div class="info-row">
+            <span class="info-label">Proyecto:</span>
+            <span class="info-value">{{ anticipo.proyecto.nombre }}</span>
+        </div>
+        <div class="info-row">
+            <span class="info-label">Monto:</span>
+            <span class="info-value text-success fw-bold">Q{{ anticipo.monto|floatformat:2 }}</span>
+        </div>
+        <div class="info-row">
+            <span class="info-label">Concepto:</span>
+            <span class="info-value">{{ anticipo.concepto }}</span>
+        </div>
+        <div class="info-row">
+            <span class="info-label">Tipo:</span>
+            <span class="info-value">{{ anticipo.get_tipo_display }}</span>
+        </div>
+        <div class="info-row">
+            <span class="info-label">Fecha Anticipo:</span>
+            <span class="info-value">{{ anticipo.fecha_anticipo|date:"d/m/Y" }}</span>
+        </div>
+    </div>
+    
+    <!-- Formulario de Cambio de Estado -->
+    <form method="post">
+        {% csrf_token %}
+        
+        <div class="form-group">
+            <label for="nuevo_estado" class="form-label">Nuevo Estado</label>
+            <select id="nuevo_estado" name="nuevo_estado" class="form-select" required>
+                <option value="">Seleccionar nuevo estado</option>
+                {% for value, label in estados_choices %}
+                    {% if value != anticipo.estado %}
+                        <option value="{{ value }}">{{ label }}</option>
+                    {% endif %}
+                {% endfor %}
+            </select>
+        </div>
+        
+        <!-- Botones de Acción -->
+        <div class="btn-actions">
+            <button type="submit" class="btn-cambiar">
+                <i class="fas fa-save me-2"></i>Cambiar Estado
+            </button>
+            <a href="{% url 'administrar_anticipos_proyecto' anticipo.proyecto.id %}" class="btn-cancelar">
+                <i class="fas fa-times me-2"></i>Cancelar
+            </a>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Animación de entrada
+    const container = document.querySelector('.status-container');
+    container.style.opacity = '0';
+    container.style.transform = 'translateY(30px)';
+    
+    setTimeout(() => {
+        container.style.transition = 'all 0.8s ease';
+        container.style.opacity = '1';
+        container.style.transform = 'translateY(0)';
+    }, 200);
+    
+    // Validación del formulario
+    const form = document.querySelector('form');
+    const estadoSelect = document.getElementById('nuevo_estado');
+    
+    form.addEventListener('submit', function(e) {
+        if (!estadoSelect.value) {
+            e.preventDefault();
+            alert('Debes seleccionar un nuevo estado');
+            estadoSelect.focus();
+            return false;
+        }
+        
+        const confirmacion = confirm('¿Estás seguro de que quieres cambiar el estado del anticipo?');
+        if (!confirmacion) {
+            e.preventDefault();
+            return false;
+        }
+    });
+    
+    // Efecto hover para los botones
+    const buttons = document.querySelectorAll('.btn-cambiar, .btn-cancelar');
+    buttons.forEach(button => {
+        button.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-2px)';
+        });
+        
+        button.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(0)';
+        });
+    });
+    
+    // Efecto de cambio de color en el selector
+    estadoSelect.addEventListener('change', function() {
+        if (this.value) {
+            this.style.borderColor = '#28a745';
+            this.style.boxShadow = '0 0 0 0.2rem rgba(40, 167, 69, 0.25)';
+        } else {
+            this.style.borderColor = '#e9ecef';
+            this.style.boxShadow = 'none';
+        }
+    });
+    
+    // Efecto de parpadeo para el icono de estado
+    const statusIcon = document.querySelector('.status-icon');
+    setInterval(() => {
+        statusIcon.style.opacity = statusIcon.style.opacity === '0.8' ? '0.4' : '0.8';
+    }, 1500);
+});
+</script>
+{% endblock %}

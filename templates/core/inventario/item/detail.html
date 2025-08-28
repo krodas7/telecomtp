@@ -50,11 +50,6 @@
                         </div>
                         <div class="col-md-6">
                             <p><strong>Creado:</strong> {{ item.creado_en|date:"d/m/Y H:i" }}</p>
-                            <p><strong>Unidad de Medida:</strong> {{ item.unidad_medida }}</p>
-                            <p><strong>Proveedor:</strong> {{ item.proveedor|default:"No especificado" }}</p>
-                            {% if item.fecha_ultima_compra %}
-                                <p><strong>Última Compra:</strong> {{ item.fecha_ultima_compra|date:"d/m/Y" }}</p>
-                            {% endif %}
                         </div>
                     </div>
                     
@@ -76,38 +71,17 @@
                 </div>
                 <div class="card-body">
                     <div class="row text-center">
-                        <div class="col-md-3">
+                        <div class="col-md-6">
                             <div class="border-end">
                                 <div class="h3 text-primary">{{ item.stock_actual }}</div>
                                 <small class="text-muted">Stock Actual</small>
                             </div>
                         </div>
-                        <div class="col-md-3">
-                            <div class="border-end">
-                                <div class="h3 {% if item.stock_disponible <= item.stock_minimo %}text-danger{% else %}text-success{% endif %}">
-                                    {{ item.stock_disponible }}
-                                </div>
-                                <small class="text-muted">Stock Disponible</small>
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="border-end">
-                                <div class="h3 text-warning">{{ item.stock_minimo }}</div>
-                                <small class="text-muted">Stock Mínimo</small>
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="h3 text-info">Q{{ item.precio_unitario|floatformat:2 }}</div>
-                            <small class="text-muted">Precio Unitario</small>
+                        <div class="col-md-6">
+                            <div class="h3 text-success">{{ item.stock_disponible }}</div>
+                            <small class="text-muted">Stock Disponible</small>
                         </div>
                     </div>
-                    
-                    {% if item.stock_disponible <= item.stock_minimo %}
-                        <div class="alert alert-warning mt-3">
-                            <i class="fas fa-exclamation-triangle me-2"></i>
-                            <strong>¡Atención!</strong> El stock disponible está por debajo del mínimo recomendado.
-                        </div>
-                    {% endif %}
                 </div>
             </div>
 
@@ -228,7 +202,7 @@
                     <small class="text-muted">
                         <p><strong>ID:</strong> {{ item.id }}</p>
                         <p><strong>Creado:</strong> {{ item.creado_en|date:"d/m/Y" }}</p>
-                        <p><strong>Valor Total:</strong> Q{{ item.stock_actual|multiply:item.precio_unitario|floatformat:2 }}</p>
+                        <p><strong>Stock Total:</strong> {{ item.stock_actual }} unidades</p>
                     </small>
                 </div>
             </div>

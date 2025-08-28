@@ -199,10 +199,6 @@
                     <span class="inventario-stat-number">{{ categorias_count|default:"0" }}</span>
                     <span class="inventario-stat-label">Categorías</span>
                 </div>
-                <div class="inventario-stat">
-                    <span class="inventario-stat-number">Q{{ valor_total|default:"0"|floatformat:2 }}</span>
-                    <span class="inventario-stat-label">Valor Total</span>
-                </div>
             </div>
         </div>
     </div>
@@ -283,23 +279,15 @@
                         {% endif %}
                         
                         <div class="row text-center mb-3">
-                            <div class="col-4">
+                            <div class="col-6">
                                 <div class="border-end">
                                     <div class="fw-bold text-primary">{{ item.stock_actual }}</div>
                                     <small class="text-muted">Stock</small>
                                 </div>
                             </div>
-                            <div class="col-4">
-                                <div class="border-end">
-                                    <div class="fw-bold {% if item.stock_disponible <= item.stock_minimo %}text-danger{% else %}text-success{% endif %}">
-                                        {{ item.stock_disponible }}
-                                    </div>
-                                    <small class="text-muted">Disponible</small>
-                                </div>
-                            </div>
-                            <div class="col-4">
-                                <div class="fw-bold text-warning">Q{{ item.precio_unitario|floatformat:2 }}</div>
-                                <small class="text-muted">Precio</small>
+                            <div class="col-6">
+                                <div class="fw-bold text-success">{{ item.stock_disponible }}</div>
+                                <small class="text-muted">Disponible</small>
                             </div>
                         </div>
                         

@@ -1,0 +1,389 @@
+{% extends "base.html" %}
+
+{% block title %}Administrar Anticipos - {{ proyecto.nombre }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .admin-container {
+        background: white;
+        border-radius: 15px;
+        padding: 2rem;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        border: 1px solid rgba(255,255,255,0.2);
+        margin-bottom: 2rem;
+    }
+    
+    .proyecto-header {
+        background: linear-gradient(135deg, #6f42c1 0%, #5a32a3 100%);
+        color: white;
+        padding: 2rem;
+        border-radius: 15px;
+        margin-bottom: 2rem;
+        text-align: center;
+    }
+    
+    .proyecto-header h2 {
+        margin: 0;
+        font-size: 2rem;
+        font-weight: 700;
+    }
+    
+    .stats-row {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+    
+    .stat-card {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        padding: 1.5rem;
+        border-radius: 15px;
+        text-align: center;
+        border: 1px solid #dee2e6;
+    }
+    
+    .stat-number {
+        font-size: 2rem;
+        font-weight: 700;
+        color: #6f42c1;
+        margin-bottom: 0.5rem;
+    }
+    
+    .stat-label {
+        color: #6c757d;
+        font-size: 0.9rem;
+        font-weight: 500;
+    }
+    
+    .actions-row {
+        display: flex;
+        gap: 1rem;
+        margin-bottom: 2rem;
+        flex-wrap: wrap;
+    }
+    
+    .btn-admin {
+        background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%);
+        border: none;
+        color: white;
+        padding: 0.75rem 1.5rem;
+        border-radius: 10px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
+    }
+    
+    .btn-admin:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(40, 167, 69, 0.4);
+        color: white;
+        text-decoration: none;
+    }
+    
+    .anticipos-table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+        margin-top: 1rem;
+    }
+    
+    .anticipos-table th {
+        background: linear-gradient(135deg, #6f42c1 0%, #5a32a3 100%);
+        color: white;
+        padding: 1rem;
+        font-weight: 600;
+        text-align: left;
+        border-radius: 10px 10px 0 0;
+    }
+    
+    .anticipos-table td {
+        padding: 1rem;
+        border-bottom: 1px solid #e9ecef;
+        vertical-align: middle;
+    }
+    
+    .anticipos-table tbody tr:hover {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    
+    .estado-anticipo {
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 500;
+        text-align: center;
+        min-width: 100px;
+    }
+    
+    .estado-pendiente {
+        background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%);
+        color: #212529;
+    }
+    
+    .estado-liquidado {
+        background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%);
+        color: white;
+    }
+    
+    .estado-cancelado {
+        background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+        color: white;
+    }
+    
+    .btn-accion {
+        padding: 0.5rem 1rem;
+        border-radius: 8px;
+        font-size: 0.8rem;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        margin: 0.2rem;
+        display: inline-block;
+    }
+    
+    .btn-editar {
+        background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+        color: white;
+        border: none;
+    }
+    
+    .btn-eliminar {
+        background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+        color: white;
+        border: none;
+    }
+    
+    .btn-estado {
+        background: linear-gradient(135deg, #6c757d 0%, #545b62 100%);
+        color: white;
+        border: none;
+    }
+    
+    .btn-accion:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        color: white;
+        text-decoration: none;
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 3rem 2rem;
+        color: #6c757d;
+    }
+    
+    .empty-state i {
+        font-size: 4rem;
+        margin-bottom: 1rem;
+        opacity: 0.5;
+    }
+    
+    .empty-state h5 {
+        margin-bottom: 1rem;
+        color: #495057;
+    }
+    
+    .empty-state p {
+        margin-bottom: 2rem;
+        font-size: 1.1rem;
+    }
+    
+    @media (max-width: 768px) {
+        .actions-row {
+            flex-direction: column;
+        }
+        
+        .stats-row {
+            grid-template-columns: 1fr;
+        }
+        
+        .anticipos-table {
+            font-size: 0.9rem;
+        }
+        
+        .anticipos-table th,
+        .anticipos-table td {
+            padding: 0.75rem 0.5rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="proyecto-header">
+    <h2>
+        <i class="fas fa-cogs me-3"></i>Administrar Anticipos
+    </h2>
+    <p class="mb-0 mt-2">{{ proyecto.nombre }}</p>
+</div>
+
+<div class="admin-container">
+    <!-- Estadísticas de Anticipos -->
+    <div class="stats-row">
+        <div class="stat-card">
+            <div class="stat-number">Q{{ total_anticipos|floatformat:2 }}</div>
+            <div class="stat-label">Total Anticipos</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number">Q{{ anticipos_pendientes|floatformat:2 }}</div>
+            <div class="stat-label">Pendientes</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number">Q{{ anticipos_liquidados|floatformat:2 }}</div>
+            <div class="stat-label">Liquidados</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number">Q{{ anticipos_cancelados|floatformat:2 }}</div>
+            <div class="stat-label">Cancelados</div>
+        </div>
+    </div>
+    
+    <!-- Botones de Acción -->
+    <div class="actions-row">
+        <a href="{% url 'crear_anticipo_masivo' proyecto.id %}" class="btn-admin" style="background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);">
+            <i class="fas fa-money-bill-wave me-2"></i>Nuevo Anticipo Masivo
+        </a>
+        <a href="{% url 'crear_anticipo_individual' proyecto.id %}" class="btn-admin" style="background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%);">
+            <i class="fas fa-user-plus me-2"></i>Nuevo Anticipo Individual
+        </a>
+        <a href="{% url 'planilla_proyecto' proyecto.id %}" class="btn-admin" style="background: linear-gradient(135deg, #6c757d 0%, #545b62 100%);">
+            <i class="fas fa-arrow-left me-2"></i>Volver a Planilla
+        </a>
+    </div>
+    
+    <!-- Lista de Anticipos -->
+    {% if anticipos %}
+        <h4 class="mb-3">
+            <i class="fas fa-list me-2"></i>Lista de Anticipos
+        </h4>
+        
+        <div class="table-responsive">
+            <table class="anticipos-table">
+                <thead>
+                    <tr>
+                        <th>Colaborador</th>
+                        <th>Monto</th>
+                        <th>Concepto</th>
+                        <th>Tipo</th>
+                        <th>Estado</th>
+                        <th>Fecha</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for anticipo in anticipos %}
+                    <tr>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px;">
+                                    {{ anticipo.colaborador.nombre|first|upper }}
+                                </div>
+                                <div>
+                                    <div class="fw-bold">{{ anticipo.colaborador.nombre }}</div>
+                                    <small class="text-muted">{{ anticipo.colaborador.dpi|default:"Sin DPI" }}</small>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="fw-bold text-success">Q{{ anticipo.monto|floatformat:2 }}</div>
+                        </td>
+                        <td>
+                            <div class="fw-bold">{{ anticipo.concepto }}</div>
+                            <small class="text-muted">{{ anticipo.get_tipo_display }}</small>
+                        </td>
+                        <td>
+                            <span class="badge bg-info">{{ anticipo.get_tipo_display }}</span>
+                        </td>
+                        <td>
+                            <span class="estado-anticipo estado-{{ anticipo.estado }}">
+                                {{ anticipo.get_estado_display }}
+                            </span>
+                        </td>
+                        <td>
+                            <div class="fw-bold">{{ anticipo.fecha_anticipo|date:"d/m/Y" }}</div>
+                            <small class="text-muted">Fecha del anticipo</small>
+                        </td>
+                        <td>
+                            <div class="d-flex gap-1 flex-wrap">
+                                <a href="{% url 'editar_anticipo' anticipo.id %}" class="btn-accion btn-editar" title="Editar Anticipo">
+                                    <i class="fas fa-edit"></i> Editar
+                                </a>
+                                <a href="{% url 'cambiar_estado_anticipo' anticipo.id %}" class="btn-accion btn-estado" title="Cambiar Estado">
+                                    <i class="fas fa-exchange-alt"></i> Estado
+                                </a>
+                                <a href="{% url 'eliminar_anticipo' anticipo.id %}" class="btn-accion btn-eliminar" title="Eliminar Anticipo">
+                                    <i class="fas fa-trash"></i> Eliminar
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <div class="empty-state">
+            <i class="fas fa-money-bill-wave"></i>
+            <h5>No hay anticipos registrados</h5>
+            <p>Comienza creando el primer anticipo para este proyecto</p>
+            <div class="d-flex gap-2 justify-content-center">
+                <a href="{% url 'crear_anticipo_masivo' proyecto.id %}" class="btn-admin" style="background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);">
+                    <i class="fas fa-money-bill-wave me-2"></i>Anticipo Masivo
+                </a>
+                <a href="{% url 'crear_anticipo_individual' proyecto.id %}" class="btn-admin" style="background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%);">
+                    <i class="fas fa-user-plus me-2"></i>Anticipo Individual
+                </a>
+            </div>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Animación de entrada para las tarjetas
+    const cards = document.querySelectorAll('.stat-card, .admin-container');
+    cards.forEach((card, index) => {
+        card.style.opacity = '0';
+        card.style.transform = 'translateY(30px)';
+        
+        setTimeout(() => {
+            card.style.transition = 'all 0.8s ease';
+            card.style.opacity = '1';
+            card.style.transform = 'translateY(0)';
+        }, index * 200);
+    });
+    
+    // Efecto hover para las estadísticas
+    const statCards = document.querySelectorAll('.stat-card');
+    statCards.forEach(card => {
+        card.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-5px) scale(1.02)';
+        });
+        
+        card.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(0) scale(1)';
+        });
+    });
+    
+    // Efecto hover para las filas de la tabla
+    const tableRows = document.querySelectorAll('.anticipos-table tbody tr');
+    tableRows.forEach(row => {
+        row.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-2px)';
+        });
+        
+        row.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(0)';
+        });
+    });
+});
+</script>
+{% endblock %}

@@ -2,6 +2,12 @@
 # Framework principal
 Django>=5.0
 
+# Servidor WSGI para producción
+gunicorn>=21.0.0
+
+# Base de datos PostgreSQL para producción
+psycopg2-binary>=2.9.0
+
 # Procesamiento de imágenes
 Pillow>=10.0.0
 
@@ -38,7 +44,157 @@ django-cors-headers>=4.0.0
 django-ratelimit>=4.0.0
 django-axes>=6.0.0
 
-# Monitoreo y debugging
+# Monitoreo y debugging (solo desarrollo)
 django-debug-toolbar>=4.0.0
 django-extensions>=3.2.0
 psutil>=5.9.0
+
+# Compresión y optimización
+django-compressor>=4.4.0
+
+# Variables de entorno
+python-dotenv>=1.0.0
+
+# Monitoreo de rendimiento
+django-silk>=5.0.0
+
+# Validación de formularios
+django-widget-tweaks>=1.4.12
+
+# Exportación de datos
+django-import-export>=3.3.0
+
+# Filtros avanzados
+django-filter>=23.0
+
+# Paginación
+django-pure-pagination>=0.3.0
+
+# Cache de consultas
+django-cacheops>=8.0.0
+
+# Optimización de consultas
+django-querycount>=0.8.0
+
+# Monitoreo de base de datos
+django-db-connection-pool>=1.0.0
+
+# Compresión de respuestas
+django-compression-middleware>=1.0.0
+
+# Headers de seguridad
+django-security>=0.15.0
+
+# Validación de archivos
+django-cleanup>=8.0.0
+
+# Manejo de archivos
+django-storages>=1.14.0
+
+# Notificaciones
+django-notifications-hq>=1.8.0
+
+# Tareas en segundo plano
+celery>=5.3.0
+
+# Cache distribuido
+django-redis>=5.4.0
+
+# Monitoreo de salud
+django-health-check>=3.17.0
+
+# Métricas y monitoreo
+django-prometheus>=2.3.0
+
+# Logging estructurado
+structlog>=23.0.0
+
+# Validación de esquemas
+marshmallow>=3.20.0
+
+# Serialización JSON avanzada
+django-jsonfield>=1.4.1
+
+# Manejo de fechas
+python-dateutil>=2.8.0
+pytz>=2023.3
+
+# Validación de emails
+django-email-validator>=2.0.0
+
+# Manejo de archivos CSV
+django-csv>=2.1.0
+
+# Exportación a PDF
+reportlab>=4.0.0
+
+# Manejo de Excel
+xlrd>=2.0.0
+openpyxl>=3.1.0
+
+# Compresión de archivos
+python-magic>=0.4.27
+
+# Validación de archivos
+python-magic>=0.4.27
+
+# Manejo de imágenes
+Pillow>=10.0.0
+Pillow-SIMD>=9.0.0
+
+# Optimización de imágenes
+django-imagekit>=5.0.0
+
+# Cache de imágenes
+django-image-cropping>=1.6.0
+
+# Manejo de archivos grandes
+django-chunked-upload>=2.0.0
+
+# Validación de tipos de archivo
+python-magic>=0.4.27
+
+# Manejo de archivos temporales
+tempfile>=0.0.1
+
+# Compresión de archivos
+gzip>=0.0.1
+
+# Manejo de archivos ZIP
+zipfile36>=0.1.3
+
+# Validación de archivos
+filetype>=1.2.0
+
+# Manejo de metadatos
+exifread>=3.0.0
+
+# Procesamiento de imágenes
+Pillow>=10.0.0
+
+# Optimización de imágenes
+django-imagekit>=5.0.0
+
+# Cache de imágenes
+django-image-cropping>=1.6.0
+
+# Manejo de archivos grandes
+django-chunked-upload>=2.0.0
+
+# Validación de tipos de archivo
+python-magic>=0.4.27
+
+# Manejo de archivos temporales
+tempfile>=0.0.1
+
+# Compresión de archivos
+gzip>=0.0.1
+
+# Manejo de archivos ZIP
+zipfile36>=0.1.3
+
+# Validación de archivos
+filetype>=1.2.0
+
+# Manejo de metadatos
+exifread>=3.0.0

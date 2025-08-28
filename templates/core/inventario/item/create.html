@@ -80,25 +80,6 @@
                             </div>
                             
                             <div class="col-md-6 mb-3">
-                                <label for="{{ form.unidad_medida.id_for_label }}" class="form-label">
-                                    <i class="fas fa-ruler me-1"></i>Unidad de Medida *
-                                </label>
-                                {{ form.unidad_medida }}
-                                {% if form.unidad_medida.errors %}
-                                    <div class="invalid-feedback d-block">
-                                        {% for error in form.unidad_medida.errors %}
-                                            {{ error }}
-                                        {% endfor %}
-                                    </div>
-                                {% endif %}
-                                <div class="form-text">
-                                    Unidad de medida (unidades, kg, m², m³, etc.)
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="row">
-                            <div class="col-md-4 mb-3">
                                 <label for="{{ form.stock_actual.id_for_label }}" class="form-label">
                                     <i class="fas fa-boxes me-1"></i>Stock Actual *
                                 </label>
@@ -112,76 +93,6 @@
                                 {% endif %}
                                 <div class="form-text">
                                     Cantidad actual en inventario
-                                </div>
-                            </div>
-                            
-                            <div class="col-md-4 mb-3">
-                                <label for="{{ form.stock_minimo.id_for_label }}" class="form-label">
-                                    <i class="fas fa-exclamation-triangle me-1"></i>Stock Mínimo *
-                                </label>
-                                {{ form.stock_minimo }}
-                                {% if form.stock_minimo.errors %}
-                                    <div class="invalid-feedback d-block">
-                                        {% for error in form.stock_minimo.errors %}
-                                            {{ error }}
-                                        {% endfor %}
-                                    </div>
-                                {% endif %}
-                                <div class="form-text">
-                                    Nivel mínimo antes de reabastecer
-                                </div>
-                            </div>
-                            
-                            <div class="col-md-4 mb-3">
-                                <label for="{{ form.precio_unitario.id_for_label }}" class="form-label">
-                                    <i class="fas fa-dollar-sign me-1"></i>Precio Unitario *
-                                </label>
-                                {{ form.precio_unitario }}
-                                {% if form.precio_unitario.errors %}
-                                    <div class="invalid-feedback d-block">
-                                        {% for error in form.precio_unitario.errors %}
-                                            {{ error }}
-                                        {% endfor %}
-                                    </div>
-                                {% endif %}
-                                <div class="form-text">
-                                    Precio por unidad en quetzales
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label for="{{ form.proveedor.id_for_label }}" class="form-label">
-                                    <i class="fas fa-truck me-1"></i>Proveedor
-                                </label>
-                                {{ form.proveedor }}
-                                {% if form.proveedor.errors %}
-                                    <div class="invalid-feedback d-block">
-                                        {% for error in form.proveedor.errors %}
-                                            {{ error }}
-                                        {% endfor %}
-                                    </div>
-                                {% endif %}
-                                <div class="form-text">
-                                    Proveedor del item (opcional)
-                                </div>
-                            </div>
-                            
-                            <div class="col-md-6 mb-3">
-                                <label for="{{ form.fecha_ultima_compra.id_for_label }}" class="form-label">
-                                    <i class="fas fa-calendar me-1"></i>Fecha Última Compra
-                                </label>
-                                {{ form.fecha_ultima_compra }}
-                                {% if form.fecha_ultima_compra.errors %}
-                                    <div class="invalid-feedback d-block">
-                                        {% for error in form.fecha_ultima_compra.errors %}
-                                            {{ error }}
-                                        {% endfor %}
-                                    </div>
-                                {% endif %}
-                                <div class="form-text">
-                                    Fecha de la última compra (opcional)
                                 </div>
                             </div>
                         </div>

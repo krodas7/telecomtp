@@ -1,0 +1,263 @@
+{% extends "base.html" %}
+
+{% block title %}Eliminar Anticipo - {{ anticipo.colaborador.nombre }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .delete-container {
+        background: white;
+        border-radius: 15px;
+        padding: 2rem;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        border: 1px solid rgba(255,255,255,0.2);
+        margin-bottom: 2rem;
+        max-width: 600px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+    
+    .delete-header {
+        background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+        color: white;
+        padding: 2rem;
+        border-radius: 15px;
+        margin-bottom: 2rem;
+        text-align: center;
+    }
+    
+    .delete-header h2 {
+        margin: 0;
+        font-size: 1.8rem;
+        font-weight: 700;
+    }
+    
+    .warning-icon {
+        font-size: 4rem;
+        color: #dc3545;
+        margin-bottom: 1rem;
+        opacity: 0.8;
+    }
+    
+    .anticipo-info {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        padding: 1.5rem;
+        border-radius: 15px;
+        margin-bottom: 2rem;
+        border: 1px solid #dee2e6;
+    }
+    
+    .anticipo-info h5 {
+        color: #495057;
+        margin-bottom: 1rem;
+        font-weight: 600;
+    }
+    
+    .info-row {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 0.5rem;
+        padding: 0.5rem 0;
+        border-bottom: 1px solid #e9ecef;
+    }
+    
+    .info-row:last-child {
+        border-bottom: none;
+    }
+    
+    .info-label {
+        font-weight: 600;
+        color: #6c757d;
+    }
+    
+    .info-value {
+        color: #495057;
+    }
+    
+    .warning-message {
+        background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+        border: 2px solid #ffc107;
+        border-radius: 15px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        text-align: center;
+    }
+    
+    .warning-message h5 {
+        color: #856404;
+        margin-bottom: 1rem;
+        font-weight: 600;
+    }
+    
+    .warning-message p {
+        color: #856404;
+        margin: 0;
+        font-size: 1.1rem;
+    }
+    
+    .btn-actions {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+        margin-top: 2rem;
+    }
+    
+    .btn-eliminar {
+        background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+        border: none;
+        color: white;
+        padding: 0.75rem 2rem;
+        border-radius: 10px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        box-shadow: 0 4px 15px rgba(220, 53, 69, 0.3);
+    }
+    
+    .btn-eliminar:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(220, 53, 69, 0.4);
+        color: white;
+        text-decoration: none;
+    }
+    
+    .btn-cancelar {
+        background: linear-gradient(135deg, #6c757d 0%, #545b62 100%);
+        border: none;
+        color: white;
+        padding: 0.75rem 2rem;
+        border-radius: 10px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        box-shadow: 0 4px 15px rgba(108, 117, 125, 0.3);
+    }
+    
+    .btn-cancelar:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(108, 117, 125, 0.4);
+        color: white;
+        text-decoration: none;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="delete-header">
+    <h2>
+        <i class="fas fa-exclamation-triangle me-3"></i>Eliminar Anticipo
+    </h2>
+    <p class="mb-0 mt-2">Confirmar eliminación</p>
+</div>
+
+<div class="delete-container">
+    <!-- Icono de Advertencia -->
+    <div class="text-center">
+        <i class="fas fa-exclamation-triangle warning-icon"></i>
+    </div>
+    
+    <!-- Mensaje de Advertencia -->
+    <div class="warning-message">
+        <h5><i class="fas fa-exclamation-triangle me-2"></i>¡Atención!</h5>
+        <p>Esta acción eliminará permanentemente el anticipo y no se puede deshacer.</p>
+    </div>
+    
+    <!-- Información del Anticipo -->
+    <div class="anticipo-info">
+        <h5><i class="fas fa-info-circle me-2"></i>Información del Anticipo a Eliminar</h5>
+        <div class="info-row">
+            <span class="info-label">Colaborador:</span>
+            <span class="info-value">{{ anticipo.colaborador.nombre }}</span>
+        </div>
+        <div class="info-row">
+            <span class="info-label">Proyecto:</span>
+            <span class="info-value">{{ anticipo.proyecto.nombre }}</span>
+        </div>
+        <div class="info-row">
+            <span class="info-label">Monto:</span>
+            <span class="info-value text-danger fw-bold">Q{{ anticipo.monto|floatformat:2 }}</span>
+        </div>
+        <div class="info-row">
+            <span class="info-label">Concepto:</span>
+            <span class="info-value">{{ anticipo.concepto }}</span>
+        </div>
+        <div class="info-row">
+            <span class="info-label">Tipo:</span>
+            <span class="info-value">{{ anticipo.get_tipo_display }}</span>
+        </div>
+        <div class="info-row">
+            <span class="info-label">Estado:</span>
+            <span class="info-value">{{ anticipo.get_estado_display }}</span>
+        </div>
+        <div class="info-row">
+            <span class="info-label">Fecha Anticipo:</span>
+            <span class="info-value">{{ anticipo.fecha_anticipo|date:"d/m/Y" }}</span>
+        </div>
+    </div>
+    
+    <!-- Formulario de Confirmación -->
+    <form method="post">
+        {% csrf_token %}
+        
+        <!-- Botones de Acción -->
+        <div class="btn-actions">
+            <button type="submit" class="btn-eliminar">
+                <i class="fas fa-trash me-2"></i>Confirmar Eliminación
+            </button>
+            <a href="{% url 'administrar_anticipos_proyecto' anticipo.proyecto.id %}" class="btn-cancelar">
+                <i class="fas fa-times me-2"></i>Cancelar
+            </a>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Animación de entrada
+    const container = document.querySelector('.delete-container');
+    container.style.opacity = '0';
+    container.style.transform = 'translateY(30px)';
+    
+    setTimeout(() => {
+        container.style.transition = 'all 0.8s ease';
+        container.style.opacity = '1';
+        container.style.transform = 'translateY(0)';
+    }, 200);
+    
+    // Confirmación adicional antes de eliminar
+    const form = document.querySelector('form');
+    form.addEventListener('submit', function(e) {
+        const confirmacion = confirm('¿Estás seguro de que quieres eliminar este anticipo? Esta acción no se puede deshacer.');
+        if (!confirmacion) {
+            e.preventDefault();
+            return false;
+        }
+    });
+    
+    // Efecto hover para los botones
+    const buttons = document.querySelectorAll('.btn-eliminar, .btn-cancelar');
+    buttons.forEach(button => {
+        button.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-2px)';
+        });
+        
+        button.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(0)';
+        });
+    });
+    
+    // Efecto de parpadeo para el icono de advertencia
+    const warningIcon = document.querySelector('.warning-icon');
+    setInterval(() => {
+        warningIcon.style.opacity = warningIcon.style.opacity === '0.8' ? '0.4' : '0.8';
+    }, 1000);
+});
+</script>
+{% endblock %}

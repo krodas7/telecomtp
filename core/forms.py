@@ -548,9 +548,7 @@ class ItemInventarioForm(forms.ModelForm):
     class Meta:
         model = ItemInventario
         fields = [
-            'nombre', 'codigo', 'descripcion', 'categoria', 'stock_actual',
-            'stock_minimo', 'precio_unitario', 'unidad_medida', 'proveedor',
-            'fecha_ultima_compra', 'activo'
+            'nombre', 'codigo', 'descripcion', 'categoria', 'stock_actual', 'activo'
         ]
         widgets = {
             'nombre': forms.TextInput(attrs={
@@ -573,28 +571,6 @@ class ItemInventarioForm(forms.ModelForm):
                 'class': 'form-control',
                 'step': '0.01',
                 'min': '0'
-            }),
-            'stock_minimo': forms.NumberInput(attrs={
-                'class': 'form-control',
-                'step': '0.01',
-                'min': '0'
-            }),
-            'precio_unitario': forms.NumberInput(attrs={
-                'class': 'form-control',
-                'step': '0.01',
-                'min': '0'
-            }),
-            'unidad_medida': forms.TextInput(attrs={
-                'class': 'form-control',
-                'placeholder': 'm², m³, kg, unidades, etc.'
-            }),
-            'proveedor': forms.TextInput(attrs={
-                'class': 'form-control',
-                'placeholder': 'Nombre del proveedor'
-            }),
-            'fecha_ultima_compra': forms.DateInput(attrs={
-                'class': 'form-control',
-                'type': 'date'
             }),
             'activo': forms.CheckboxInput(attrs={
                 'class': 'form-check-input'

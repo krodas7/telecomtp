@@ -4,8 +4,8 @@
   "description": "Sistema integral de gestión de construcción con capacidades móviles y PWA",
   "start_url": "/dashboard/",
   "display": "standalone",
-  "background_color": "#667eea",
-  "theme_color": "#667eea",
+  "background_color": "#ffffff",
+  "theme_color": "#0d6efd",
   "orientation": "portrait-primary",
   "scope": "/",
   "lang": "es-GT",
@@ -16,23 +16,25 @@
     {
       "src": "/static/images/icon-16x16.png",
       "sizes": "16x16",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any"
     },
     {
       "src": "/static/images/icon-32x32.png",
       "sizes": "32x32",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any"
     },
     {
-      "src": "/static/images/icon-192x192.svg",
+      "src": "/static/images/icon-192x192.png",
       "sizes": "192x192",
-      "type": "image/svg+xml",
+      "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "/static/images/icon-512x512.svg",
+      "src": "/static/images/icon-512x512.png",
       "sizes": "512x512",
-      "type": "image/svg+xml",
+      "type": "image/png",
       "purpose": "any maskable"
     }
   ],
@@ -60,6 +62,30 @@
           "sizes": "32x32"
         }
       ]
+    },
+    {
+      "name": "Facturas",
+      "short_name": "Facturas",
+      "description": "Gestionar facturas y pagos",
+      "url": "/facturas/",
+      "icons": [
+        {
+          "src": "/static/images/icon-32x32.png",
+          "sizes": "32x32"
+        }
+      ]
+    },
+    {
+      "name": "Clientes",
+      "short_name": "Clientes",
+      "description": "Gestionar clientes",
+      "url": "/clientes/",
+      "icons": [
+        {
+          "src": "/static/images/icon-32x32.png",
+          "sizes": "32x32"
+        }
+      ]
     }
   ],
   "screenshots": [
@@ -68,6 +94,37 @@
       "sizes": "390x844",
       "type": "image/png",
       "form_factor": "narrow"
+    },
+    {
+      "src": "/static/images/screenshot-desktop.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide"
+    }
+  ],
+  "display_override": ["standalone", "minimal-ui", "browser"],
+  "edge_side_panel": {
+    "preferred_width": 400
+  },
+  "launch_handler": {
+    "client_mode": "navigate-existing"
+  },
+  "protocol_handlers": [
+    {
+      "protocol": "web+arca",
+      "url": "/dashboard/?action=%s"
+    }
+  ],
+  "file_handlers": [
+    {
+      "action": "/upload/",
+      "accept": {
+        "application/pdf": [".pdf"],
+        "image/*": [".png", ".jpg", ".jpeg", ".gif"],
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": [".xlsx"],
+        "application/vnd.ms-excel": [".xls"],
+        "text/csv": [".csv"]
+      }
     }
   ]
 }

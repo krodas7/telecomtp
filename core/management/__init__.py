@@ -1,1 +1,1 @@
-# Package for Django management commands
+# Archivo de inicialización para comandos de gestión
