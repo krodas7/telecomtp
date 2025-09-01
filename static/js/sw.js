@@ -1,7 +1,7 @@
 // Service Worker para Sistema ARCA Construcción - PRODUCCIÓN
-const CACHE_NAME = 'arca-construccion-v1.0.1';
-const STATIC_CACHE = 'arca-static-v1.0.1';
-const DYNAMIC_CACHE = 'arca-dynamic-v1.0.1';
+const CACHE_NAME = 'arca-construccion-v1.0.2';
+const STATIC_CACHE = 'arca-static-v1.0.2';
+const DYNAMIC_CACHE = 'arca-dynamic-v1.0.2';
 
 // URLs a cachear estáticamente
 const urlsToCache = [
@@ -13,8 +13,8 @@ const urlsToCache = [
     '/static/css/mobile-styles.css',
     '/static/css/neostructure-enhanced.css',
     '/static/js/global-functions.js',
-    '/static/images/icon-192x192.png',
-    '/static/images/icon-512x512.png',
+    '/static/images/icon-192x192-v2.png',
+    '/static/images/icon-512x512-v2.png',
     '/static/manifest.json?v=2',
     '/offline/'
 ];
