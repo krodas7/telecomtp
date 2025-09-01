@@ -1,0 +1,523 @@
+{% extends "base.html" %}
+
+{% block title %}Reportes de Facturas - Sistema de Construcción{% endblock %}
+
+{% block extra_css %}
+<style>
+    .reportes-hero {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 3rem 2rem;
+        border-radius: 20px;
+        margin-bottom: 2rem;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .reportes-hero::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="white" opacity="0.1"/><circle cx="75" cy="75" r="1" fill="white" opacity="0.1"/><circle cx="50" cy="10" r="0.5" fill="white" opacity="0.1"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+        opacity: 0.3;
+    }
+    
+    .reportes-hero-content {
+        position: relative;
+        z-index: 2;
+    }
+    
+    .reportes-hero-title {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin-bottom: 1rem;
+        text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    }
+    
+    .reportes-hero-subtitle {
+        font-size: 1.2rem;
+        opacity: 0.9;
+        margin-bottom: 2rem;
+    }
+    
+    .reportes-stats {
+        display: flex;
+        justify-content: center;
+        gap: 2rem;
+        flex-wrap: wrap;
+    }
+    
+    .reportes-stat {
+        background: rgba(255,255,255,0.1);
+        backdrop-filter: blur(10px);
+        padding: 1rem 1.5rem;
+        border-radius: 15px;
+        text-align: center;
+        min-width: 150px;
+    }
+    
+    .reportes-stat-number {
+        font-size: 2rem;
+        font-weight: 700;
+        display: block;
+        margin-bottom: 0.5rem;
+    }
+    
+    .reportes-stat-label {
+        font-size: 0.9rem;
+        opacity: 0.9;
+    }
+    
+    .filtros-card {
+        background: white;
+        border-radius: 15px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    }
+    
+    .filtros-title {
+        font-size: 1.3rem;
+        font-weight: 600;
+        margin-bottom: 1.5rem;
+        color: #2c3e50;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .filtros-form {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1.5rem;
+        align-items: end;
+    }
+    
+    .form-group {
+        margin-bottom: 0;
+    }
+    
+    .form-label {
+        font-weight: 600;
+        color: #2c3e50;
+        margin-bottom: 0.5rem;
+        display: block;
+    }
+    
+    .form-control, .form-select {
+        border: 2px solid #e0e0e0;
+        border-radius: 12px;
+        padding: 0.75rem 1rem;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+        background: white;
+        width: 100%;
+    }
+    
+    .form-control:focus, .form-select:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+        outline: none;
+    }
+    
+    .btn-reporte {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        border-radius: 12px;
+        padding: 0.75rem 1.5rem;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .btn-reporte:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        color: white;
+        text-decoration: none;
+    }
+    
+    .btn-pdf {
+        background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+    }
+    
+    .btn-excel {
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    }
+    
+    .btn-detallado {
+        background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+    }
+    
+    .resultados-card {
+        background: white;
+        border-radius: 15px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    }
+    
+    .resultados-header {
+        display: flex;
+        justify-content: between;
+        align-items: center;
+        margin-bottom: 2rem;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+    
+    .resultados-title {
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: #2c3e50;
+        margin: 0;
+    }
+    
+    .resultados-actions {
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+    }
+    
+    .table-modern {
+        width: 100%;
+        border-collapse: collapse;
+        background: white;
+        border-radius: 15px;
+        overflow: hidden;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    }
+    
+    .table-modern thead {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+    }
+    
+    .table-modern th {
+        padding: 1rem;
+        text-align: left;
+        font-weight: 600;
+        font-size: 0.9rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .table-modern tbody tr {
+        border-bottom: 1px solid #f8f9fa;
+        transition: all 0.3s ease;
+    }
+    
+    .table-modern tbody tr:hover {
+        background: linear-gradient(135deg, rgba(78, 205, 196, 0.05), rgba(255, 107, 107, 0.05));
+        transform: scale(1.01);
+    }
+    
+    .table-modern td {
+        padding: 1rem;
+        border: none;
+        border-bottom: 1px solid #f8f9fa;
+        vertical-align: middle;
+    }
+    
+    .badge-modern {
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        display: inline-block;
+    }
+    
+    .badge-modern.success {
+        background: linear-gradient(135deg, #43e97b, #38f9d7);
+        color: white;
+    }
+    
+    .badge-modern.warning {
+        background: linear-gradient(135deg, #fa709a, #fee140);
+        color: white;
+    }
+    
+    .badge-modern.danger {
+        background: linear-gradient(135deg, #ff6b6b, #ee5a52);
+        color: white;
+    }
+    
+    .badge-modern.info {
+        background: linear-gradient(135deg, #4facfe, #00f2fe);
+        color: white;
+    }
+    
+    .badge-modern.secondary {
+        background: linear-gradient(135deg, #6c757d, #495057);
+        color: white;
+    }
+    
+    .badge-modern.dark {
+        background: linear-gradient(135deg, #2c3e50, #34495e);
+        color: white;
+    }
+    
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    
+    .stat-card {
+        background: white;
+        border-radius: 15px;
+        padding: 1.5rem;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        text-align: center;
+    }
+    
+    .stat-card-title {
+        font-size: 1rem;
+        font-weight: 600;
+        color: #6c757d;
+        margin-bottom: 1rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .stat-card-value {
+        font-size: 2rem;
+        font-weight: 700;
+        color: #2c3e50;
+        margin-bottom: 0.5rem;
+    }
+    
+    .stat-card-subtitle {
+        font-size: 0.9rem;
+        color: #6c757d;
+    }
+    
+    @media (max-width: 768px) {
+        .filtros-form {
+            grid-template-columns: 1fr;
+        }
+        
+        .resultados-header {
+            flex-direction: column;
+            align-items: stretch;
+        }
+        
+        .resultados-actions {
+            justify-content: center;
+        }
+        
+        .reportes-stats {
+            gap: 1rem;
+        }
+        
+        .reportes-stat {
+            min-width: 120px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Hero Banner -->
+    <div class="reportes-hero">
+        <div class="reportes-hero-content">
+            <h1 class="reportes-hero-title">
+                <i class="fas fa-chart-bar me-3"></i>Reportes de Facturas
+            </h1>
+            <p class="reportes-hero-subtitle">Genera reportes detallados y análisis de facturación</p>
+            
+            <!-- Estadísticas -->
+            <div class="reportes-stats">
+                <div class="reportes-stat">
+                    <span class="reportes-stat-number">{{ facturas.count }}</span>
+                    <span class="reportes-stat-label">Facturas</span>
+                </div>
+                <div class="reportes-stat">
+                    <span class="reportes-stat-number">Q{{ total_facturado|floatformat:2 }}</span>
+                    <span class="reportes-stat-label">Total Facturado</span>
+                </div>
+                <div class="reportes-stat">
+                    <span class="reportes-stat-number">Q{{ total_cobrado|floatformat:2 }}</span>
+                    <span class="reportes-stat-label">Total Cobrado</span>
+                </div>
+                <div class="reportes-stat">
+                    <span class="reportes-stat-number">Q{{ total_pendiente|floatformat:2 }}</span>
+                    <span class="reportes-stat-label">Total Pendiente</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filtros -->
+    <div class="filtros-card">
+        <h3 class="filtros-title">
+            <i class="fas fa-filter"></i>Filtros de Reporte
+        </h3>
+        
+        <form method="get" class="filtros-form">
+            <div class="form-group">
+                <label class="form-label">Estado</label>
+                <select name="estado" class="form-select">
+                    <option value="">Todos los Estados</option>
+                    <option value="borrador" {% if filtros.estado == 'borrador' %}selected{% endif %}>Borrador</option>
+                    <option value="emitida" {% if filtros.estado == 'emitida' %}selected{% endif %}>Emitida</option>
+                    <option value="enviada" {% if filtros.estado == 'enviada' %}selected{% endif %}>Enviada</option>
+                    <option value="pagada" {% if filtros.estado == 'pagada' %}selected{% endif %}>Pagada</option>
+                    <option value="vencida" {% if filtros.estado == 'vencida' %}selected{% endif %}>Vencida</option>
+                    <option value="cancelada" {% if filtros.estado == 'cancelada' %}selected{% endif %}>Cancelada</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">Cliente</label>
+                <select name="cliente" class="form-select">
+                    <option value="">Todos los Clientes</option>
+                    {% for cliente in clientes %}
+                        <option value="{{ cliente.id }}" {% if filtros.cliente_id == cliente.id|stringformat:"s" %}selected{% endif %}>
+                            {{ cliente.razon_social }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">Fecha Inicio</label>
+                <input type="date" name="fecha_inicio" class="form-control" value="{{ filtros.fecha_inicio }}">
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">Fecha Fin</label>
+                <input type="date" name="fecha_fin" class="form-control" value="{{ filtros.fecha_fin }}">
+            </div>
+            
+            <div class="form-group">
+                <button type="submit" class="btn btn-reporte">
+                    <i class="fas fa-search"></i>Filtrar
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Estadísticas por Estado -->
+    <div class="stats-grid">
+        {% for stat in stats_por_estado %}
+        <div class="stat-card">
+            <div class="stat-card-title">{{ stat.estado|title }}</div>
+            <div class="stat-card-value">{{ stat.cantidad }}</div>
+            <div class="stat-card-subtitle">Q{{ stat.monto_total|floatformat:2 }}</div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Resultados -->
+    <div class="resultados-card">
+        <div class="resultados-header">
+            <h3 class="resultados-title">
+                <i class="fas fa-list"></i>Resultados del Reporte
+            </h3>
+            <div class="resultados-actions">
+                <a href="{% url 'facturas_reporte_pdf' %}?{{ request.GET.urlencode }}" class="btn-reporte btn-pdf">
+                    <i class="fas fa-file-pdf"></i>Exportar PDF
+                </a>
+                <a href="{% url 'facturas_reporte_excel' %}?{{ request.GET.urlencode }}" class="btn-reporte btn-excel">
+                    <i class="fas fa-file-excel"></i>Exportar Excel
+                </a>
+                <a href="{% url 'facturas_reporte_detallado' %}?{{ request.GET.urlencode }}" class="btn-reporte btn-detallado">
+                    <i class="fas fa-chart-line"></i>Reporte Detallado
+                </a>
+            </div>
+        </div>
+        
+        {% if facturas %}
+        <div class="table-responsive">
+            <table class="table-modern">
+                <thead>
+                    <tr>
+                        <th>Número</th>
+                        <th>Cliente</th>
+                        <th>Proyecto</th>
+                        <th>Monto</th>
+                        <th>Estado</th>
+                        <th>Emisión</th>
+                        <th>Vencimiento</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for factura in facturas %}
+                    <tr>
+                        <td>
+                            <strong>{{ factura.numero_factura }}</strong>
+                        </td>
+                        <td>
+                            <div class="fw-bold text-primary">{{ factura.cliente.razon_social|default:"N/A" }}</div>
+                        </td>
+                        <td>
+                            <div class="fw-bold text-info">{{ factura.proyecto.nombre|default:"N/A" }}</div>
+                        </td>
+                        <td>
+                            <strong>Q{{ factura.monto_total|floatformat:2 }}</strong>
+                        </td>
+                        <td>
+                            <div class="text-center">
+                                {% if factura.estado == 'emitida' %}
+                                    <span class="badge-modern warning">
+                                        <i class="fas fa-clock me-1"></i>Emitida
+                                    </span>
+                                {% elif factura.estado == 'pagada' %}
+                                    <span class="badge-modern success">
+                                        <i class="fas fa-check-circle me-1"></i>Pagada
+                                    </span>
+                                {% elif factura.estado == 'vencida' %}
+                                    <span class="badge-modern danger">
+                                        <i class="fas fa-exclamation-triangle me-1"></i>Vencida
+                                    </span>
+                                {% elif factura.estado == 'borrador' %}
+                                    <span class="badge-modern secondary">
+                                        <i class="fas fa-edit me-1"></i>Borrador
+                                    </span>
+                                {% elif factura.estado == 'enviada' %}
+                                    <span class="badge-modern info">
+                                        <i class="fas fa-paper-plane me-1"></i>Enviada
+                                    </span>
+                                {% elif factura.estado == 'cancelada' %}
+                                    <span class="badge-modern dark">
+                                        <i class="fas fa-ban me-1"></i>Cancelada
+                                    </span>
+                                {% else %}
+                                    <span class="badge-modern secondary">{{ factura.estado|title }}</span>
+                                {% endif %}
+                            </div>
+                        </td>
+                        <td>
+                            {{ factura.fecha_emision|date:"d/m/Y"|default:"N/A" }}
+                        </td>
+                        <td>
+                            {{ factura.fecha_vencimiento|date:"d/m/Y"|default:"N/A" }}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-5">
+            <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+            <h4 class="text-muted">No se encontraron facturas</h4>
+            <p class="text-muted">Intenta ajustar los filtros para ver más resultados</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

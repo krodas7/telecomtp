@@ -136,24 +136,67 @@
     
     .form-control, .form-select {
         border-radius: 10px;
-        border: 2px solid var(--gris-concreto-claro);
+        border: 2px solid #e0e0e0;
         padding: 1rem 1.2rem;
         font-size: 1rem;
         transition: all 0.3s ease;
         background: white;
+        color: #333;
+        width: 100%;
+        box-sizing: border-box;
     }
     
     .form-control:focus, .form-select:focus {
-        border-color: var(--amarillo-ocre);
+        border-color: #f39c12;
         box-shadow: 0 0 0 0.3rem rgba(243, 156, 18, 0.15);
         transform: translateY(-2px);
+        outline: none;
+    }
+    
+    .form-control::placeholder {
+        color: #999;
+    }
+    
+    .form-select option {
+        color: #333;
+        background: white;
     }
     
     .form-text {
-        color: var(--gris-concreto);
+        color: #666;
         font-size: 0.9rem;
         margin-top: 0.5rem;
         font-style: italic;
+    }
+    
+    /* Estilos adicionales para asegurar visibilidad */
+    input[type="text"], 
+    input[type="email"], 
+    input[type="number"], 
+    input[type="date"], 
+    input[type="password"],
+    textarea,
+    select {
+        border: 2px solid #e0e0e0 !important;
+        color: #333 !important;
+        background: white !important;
+    }
+    
+    input[type="text"]:focus, 
+    input[type="email"]:focus, 
+    input[type="number"]:focus, 
+    input[type="date"]:focus, 
+    input[type="password"]:focus,
+    textarea:focus,
+    select:focus {
+        border-color: #f39c12 !important;
+        box-shadow: 0 0 0 0.3rem rgba(243, 156, 18, 0.15) !important;
+    }
+    
+    /* Estilos específicos para textarea */
+    textarea {
+        min-height: 100px;
+        resize: vertical;
     }
     
     .invalid-feedback {
@@ -346,20 +389,32 @@
     .project-select {
         background: rgba(255, 255, 255, 0.95);
         backdrop-filter: blur(10px);
-        border: 1px solid rgba(255, 255, 255, 0.3);
-        color: var(--azul-acero);
+        border: 2px solid rgba(255, 255, 255, 0.5);
+        color: #333;
         border-radius: 10px;
         padding: 1rem 1.2rem;
         font-size: 1rem;
         width: 100%;
         transition: all 0.3s ease;
+        box-sizing: border-box;
     }
     
     .project-select:focus {
         background: white;
-        border-color: var(--amarillo-ocre);
+        border-color: #f39c12;
         box-shadow: 0 0 0 0.3rem rgba(243, 156, 18, 0.25);
         transform: translateY(-2px);
+        outline: none;
+    }
+    
+    .project-select option {
+        color: #333;
+        background: white;
+        padding: 0.5rem;
+    }
+    
+    .project-select option:hover {
+        background: #f8f9fa;
     }
     
     .form-progress {
@@ -491,25 +546,6 @@
 
 <div class="row">
     <div class="col-lg-8">
-        <!-- Project Selector -->
-        <div class="project-selector">
-            <div class="project-selector-header">
-                <div class="project-selector-icon">
-                    <i class="fas fa-project-diagram"></i>
-                </div>
-                <h3 class="project-selector-title">Selección de Proyecto</h3>
-            </div>
-            <p class="project-selector-description">
-                Selecciona el proyecto para el cual crearás el presupuesto. Esta selección determinará el contexto y la información disponible.
-            </p>
-            <select name="proyecto" id="proyecto" class="project-select" required>
-                <option value="">Selecciona un proyecto</option>
-                {% for proyecto in proyectos %}
-                    <option value="{{ proyecto.id }}">{{ proyecto.nombre }}</option>
-                {% endfor %}
-            </select>
-        </div>
-
         <!-- Main Form -->
         <div class="form-container">
             <div class="form-header">
@@ -521,6 +557,25 @@
             
             <form method="post" id="presupuestoForm">
                 {% csrf_token %}
+                
+                <!-- Project Selector -->
+                <div class="project-selector">
+                    <div class="project-selector-header">
+                        <div class="project-selector-icon">
+                            <i class="fas fa-project-diagram"></i>
+                        </div>
+                        <h3 class="project-selector-title">Selección de Proyecto</h3>
+                    </div>
+                    <p class="project-selector-description">
+                        Selecciona el proyecto para el cual crearás el presupuesto. Esta selección determinará el contexto y la información disponible.
+                    </p>
+                    <select name="proyecto" id="proyecto" class="project-select" required>
+                        <option value="">Selecciona un proyecto</option>
+                        {% for proyecto in proyectos %}
+                            <option value="{{ proyecto.id }}">{{ proyecto.nombre }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
                 
                 <!-- Nombre del Presupuesto -->
                 <div class="form-section">

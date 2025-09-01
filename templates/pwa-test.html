@@ -1,0 +1,295 @@
+{% extends 'base.html' %}
+
+{% block title %}Prueba PWA - Sistema ARCA{% endblock %}
+
+{% block extra_css %}
+<style>
+    .pwa-test-container {
+        max-width: 800px;
+        margin: 2rem auto;
+        padding: 2rem;
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 4px 20px rgba(44, 62, 80, 0.08);
+    }
+    
+    .test-section {
+        margin-bottom: 2rem;
+        padding: 1.5rem;
+        border-radius: 12px;
+        border-left: 4px solid #007bff;
+        background: #f8f9fa;
+    }
+    
+    .test-result {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin: 1rem 0;
+        padding: 1rem;
+        border-radius: 8px;
+        background: white;
+    }
+    
+    .test-result.success {
+        border-left: 4px solid #28a745;
+        background: #d4edda;
+    }
+    
+    .test-result.error {
+        border-left: 4px solid #dc3545;
+        background: #f8d7da;
+    }
+    
+    .test-result.warning {
+        border-left: 4px solid #ffc107;
+        background: #fff3cd;
+    }
+    
+    .status-icon {
+        font-size: 1.5rem;
+    }
+    
+    .test-button {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        padding: 0.75rem 1.5rem;
+        border-radius: 25px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .test-button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+    }
+    
+    .install-button {
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        color: white;
+        border: none;
+        padding: 1rem 2rem;
+        border-radius: 25px;
+        font-weight: 600;
+        font-size: 1.1rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: none;
+    }
+    
+    .install-button:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 12px 35px rgba(40, 167, 69, 0.4);
+    }
+    
+    .console-output {
+        background: #1e1e1e;
+        color: #00ff00;
+        padding: 1rem;
+        border-radius: 8px;
+        font-family: 'Courier New', monospace;
+        font-size: 0.9rem;
+        max-height: 300px;
+        overflow-y: auto;
+        margin-top: 1rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="pwa-test-container">
+    <h1 class="text-center mb-4">
+        <i class="fas fa-mobile-alt me-2"></i>
+        Prueba de PWA - Sistema ARCA
+    </h1>
+    
+    <div class="alert alert-info">
+        <i class="fas fa-info-circle me-2"></i>
+        Esta página te permite verificar si la PWA está funcionando correctamente. 
+        Abre las herramientas de desarrollador (F12) para ver los logs detallados.
+    </div>
+    
+    <!-- Sección de Pruebas Automáticas -->
+    <div class="test-section">
+        <h3><i class="fas fa-robot me-2"></i>Pruebas Automáticas</h3>
+        <div id="auto-tests">
+            <div class="test-result">
+                <i class="fas fa-spinner fa-spin status-icon"></i>
+                <span>Ejecutando pruebas...</span>
+            </div>
+        </div>
+        <button class="test-button" onclick="runPWADiagnostic()">
+            <i class="fas fa-redo me-2"></i>Ejecutar Pruebas
+        </button>
+    </div>
+    
+    <!-- Sección de Instalación -->
+    <div class="test-section">
+        <h3><i class="fas fa-download me-2"></i>Instalación PWA</h3>
+        <div id="install-status">
+            <div class="test-result warning">
+                <i class="fas fa-question-circle status-icon"></i>
+                <span>Verificando si la PWA es instalable...</span>
+            </div>
+        </div>
+        <button id="install-button" class="install-button" onclick="installPWA()">
+            <i class="fas fa-download me-2"></i>Instalar App
+        </button>
+    </div>
+    
+    <!-- Sección de Cache -->
+    <div class="test-section">
+        <h3><i class="fas fa-database me-2"></i>Estado del Cache</h3>
+        <div id="cache-status">
+            <div class="test-result">
+                <i class="fas fa-spinner fa-spin status-icon"></i>
+                <span>Verificando cache...</span>
+            </div>
+        </div>
+        <button class="test-button" onclick="checkCache()">
+            <i class="fas fa-sync me-2"></i>Verificar Cache
+        </button>
+    </div>
+    
+    <!-- Consola de Salida -->
+    <div class="test-section">
+        <h3><i class="fas fa-terminal me-2"></i>Consola de Salida</h3>
+        <div id="console-output" class="console-output">
+            Iniciando diagnóstico PWA...
+        </div>
+        <button class="test-button" onclick="clearConsole()">
+            <i class="fas fa-trash me-2"></i>Limpiar Consola
+        </button>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let deferredPrompt;
+let installButton = document.getElementById('install-button');
+
+// Interceptar console.log para mostrar en la página
+const originalLog = console.log;
+const originalError = console.error;
+const consoleOutput = document.getElementById('console-output');
+
+function addToConsole(message, type = 'log') {
+    const timestamp = new Date().toLocaleTimeString();
+    const color = type === 'error' ? '#ff6b6b' : '#00ff00';
+    consoleOutput.innerHTML += `<div style="color: ${color}">[${timestamp}] ${message}</div>`;
+    consoleOutput.scrollTop = consoleOutput.scrollHeight;
+}
+
+console.log = function(...args) {
+    originalLog.apply(console, args);
+    addToConsole(args.join(' '));
+};
+
+console.error = function(...args) {
+    originalError.apply(console, args);
+    addToConsole(args.join(' '), 'error');
+};
+
+// Escuchar evento de instalación
+window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+    
+    const installStatus = document.getElementById('install-status');
+    installStatus.innerHTML = `
+        <div class="test-result success">
+            <i class="fas fa-check-circle status-icon"></i>
+            <span>¡PWA lista para instalar!</span>
+        </div>
+    `;
+    
+    installButton.style.display = 'inline-block';
+    console.log('✅ PWA es instalable');
+});
+
+// Función para instalar PWA
+async function installPWA() {
+    if (!deferredPrompt) {
+        console.error('❌ No se puede instalar la PWA');
+        return;
+    }
+    
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    
+    if (outcome === 'accepted') {
+        console.log('✅ Usuario aceptó instalar la PWA');
+        installButton.style.display = 'none';
+    } else {
+        console.log('❌ Usuario rechazó instalar la PWA');
+    }
+    
+    deferredPrompt = null;
+}
+
+// Función para verificar cache
+async function checkCache() {
+    if (!('caches' in window)) {
+        console.error('❌ Cache API no soportada');
+        return;
+    }
+    
+    try {
+        const cacheNames = await caches.keys();
+        const arcaCaches = cacheNames.filter(name => name.includes('arca'));
+        
+        const cacheStatus = document.getElementById('cache-status');
+        
+        if (arcaCaches.length > 0) {
+            cacheStatus.innerHTML = `
+                <div class="test-result success">
+                    <i class="fas fa-check-circle status-icon"></i>
+                    <span>Cache encontrado: ${arcaCaches.join(', ')}</span>
+                </div>
+            `;
+            console.log('✅ Caches encontrados:', arcaCaches);
+        } else {
+            cacheStatus.innerHTML = `
+                <div class="test-result error">
+                    <i class="fas fa-times-circle status-icon"></i>
+                    <span>No se encontraron caches de ARCA</span>
+                </div>
+            `;
+            console.error('❌ No se encontraron caches de ARCA');
+        }
+    } catch (error) {
+        console.error('❌ Error verificando cache:', error);
+    }
+}
+
+// Función para limpiar consola
+function clearConsole() {
+    consoleOutput.innerHTML = '';
+}
+
+// Ejecutar pruebas automáticas al cargar
+document.addEventListener('DOMContentLoaded', () => {
+    setTimeout(() => {
+        runPWADiagnostic();
+        checkCache();
+    }, 1000);
+});
+
+// Detectar si la PWA ya está instalada
+window.addEventListener('appinstalled', (e) => {
+    console.log('✅ PWA instalada exitosamente');
+    installButton.style.display = 'none';
+    
+    const installStatus = document.getElementById('install-status');
+    installStatus.innerHTML = `
+        <div class="test-result success">
+            <i class="fas fa-check-circle status-icon"></i>
+            <span>¡PWA instalada exitosamente!</span>
+        </div>
+    `;
+});
+</script>
+{% endblock %}

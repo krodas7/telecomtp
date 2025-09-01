@@ -99,6 +99,116 @@
         border-bottom: 1px solid #dee2e6;
     }
     
+    /* Badges Modernos */
+    .badge-modern {
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .badge-modern.info {
+        background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+        color: white;
+    }
+    
+    .badge-modern.primary {
+        background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+        color: white;
+    }
+    
+    .badge-modern.success {
+        background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%);
+        color: white;
+    }
+    
+    .badge-modern.warning {
+        background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%);
+        color: #212529;
+    }
+    
+    .badge-modern.danger {
+        background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+        color: white;
+    }
+    
+    .badge-modern.secondary {
+        background: linear-gradient(135deg, #6c757d 0%, #545b62 100%);
+        color: white;
+    }
+    
+    .badge-modern.dark {
+        background: linear-gradient(135deg, #343a40 0%, #212529 100%);
+        color: white;
+    }
+    
+    /* Botones Modernos */
+    .btn {
+        padding: 0.75rem 1.5rem;
+        border-radius: 12px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        border: none;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .btn-success {
+        background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%);
+        color: white;
+        box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
+    }
+    
+    .btn-success:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(40, 167, 69, 0.4);
+        color: white;
+        text-decoration: none;
+    }
+    
+    .btn-primary {
+        background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+        color: white;
+        box-shadow: 0 4px 15px rgba(0, 123, 255, 0.3);
+    }
+    
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(0, 123, 255, 0.4);
+        color: white;
+        text-decoration: none;
+    }
+    
+    .btn-warning {
+        background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%);
+        color: #212529;
+        box-shadow: 0 4px 15px rgba(255, 193, 7, 0.3);
+    }
+    
+    .btn-warning:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(255, 193, 7, 0.4);
+        color: #212529;
+        text-decoration: none;
+    }
+    
+    .btn-danger {
+        background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+        color: white;
+        box-shadow: 0 4px 15px rgba(220, 53, 69, 0.3);
+    }
+    
+    .btn-danger:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(220, 53, 69, 0.4);
+        color: white;
+        text-decoration: none;
+    }
+    
     .btn-neostructure {
         background: linear-gradient(135deg, #667eea, #764ba2);
         color: white;
@@ -157,6 +267,24 @@
         padding: 18px 20px;
         border-bottom: 1px solid #f1f3f4;
         vertical-align: middle;
+    }
+    
+    /* Estilos para columnas específicas */
+    .table tbody td:nth-child(2), /* Cliente */
+    .table tbody td:nth-child(3) { /* Proyecto */
+        max-width: 200px;
+        word-wrap: break-word;
+        white-space: normal;
+    }
+    
+    .table tbody td:nth-child(5) { /* Estado */
+        text-align: center;
+        min-width: 120px;
+    }
+    
+    .table tbody td:nth-child(7) { /* Acciones */
+        text-align: center;
+        min-width: 160px;
     }
     
     .badge {
@@ -243,6 +371,9 @@
                 <a href="{% url 'factura_create' %}" class="btn btn-success-neo me-2">
                     <i class="fas fa-plus"></i> Nueva Factura
                 </a>
+                <a href="{% url 'facturas_reporte_lista' %}" class="btn btn-info me-2">
+                    <i class="fas fa-chart-bar"></i> Reportes
+                </a>
                 <a href="{% url 'dashboard' %}" class="btn btn-neostructure me-2">
                     <i class="fas fa-tachometer-alt"></i> Dashboard
                 </a>
@@ -278,8 +409,16 @@
                         <strong>Fechas:</strong> Emisión (cuando se creó), Vencimiento (cuando debe pagarse), Creación (cuando se registró en el sistema)
                     </div>
                 </div>
-                <div>
-                    <span class="badge badge-primary">Todos los Estados</span>
+                <div class="d-flex gap-2">
+                    <select id="filtroEstado" class="form-select form-select-sm" style="width: auto;">
+                        <option value="todos">Todos los Estados</option>
+                        <option value="borrador">Solo Borradores</option>
+                        <option value="emitida">Solo Emitidas</option>
+                        <option value="enviada">Solo Enviadas</option>
+                        <option value="pagada">Solo Pagadas</option>
+                        <option value="vencida">Solo Vencidas</option>
+                        <option value="cancelada">Solo Canceladas</option>
+                    </select>
                 </div>
             </div>
         </div>
@@ -294,9 +433,7 @@
                             <th>Proyecto</th>
                             <th>Monto</th>
                             <th>Estado</th>
-                            <th>Emisión</th>
-                            <th>Vencimiento</th>
-                            <th>Creación</th>
+                            <th>Fechas</th>
                             <th>Acciones</th>
                         </tr>
                     </thead>
@@ -307,96 +444,78 @@
                                 <strong>{{ factura.numero_factura }}</strong>
                             </td>
                             <td>
-                                <span class="badge badge-info">{{ factura.cliente.razon_social|default:"N/A" }}</span>
+                                <div class="fw-bold text-primary">{{ factura.cliente.razon_social|default:"N/A" }}</div>
                             </td>
                             <td>
-                                <span class="badge badge-primary">{{ factura.proyecto.nombre|default:"N/A" }}</span>
+                                <div class="fw-bold text-info">{{ factura.proyecto.nombre|default:"N/A" }}</div>
                             </td>
                             <td>
                                 <strong>Q{{ factura.monto_total|default:"0"|floatformat:2 }}</strong>
                             </td>
                             <td>
-                                {% if factura.estado == 'emitida' %}
-                                    <span class="badge bg-warning text-dark">
-                                        <i class="fas fa-clock me-1"></i>Emitida
-                                    </span>
-                                {% elif factura.estado == 'pagada' %}
-                                    <span class="badge bg-success">
-                                        <i class="fas fa-check-circle me-1"></i>Pagada
-                                    </span>
-                                {% elif factura.estado == 'vencida' %}
-                                    <span class="badge bg-danger">
-                                        <i class="fas fa-exclamation-triangle me-1"></i>Vencida
-                                    </span>
-                                {% elif factura.estado == 'borrador' %}
-                                    <span class="badge bg-secondary">
-                                        <i class="fas fa-edit me-1"></i>Borrador
-                                    </span>
-                                {% elif factura.estado == 'enviada' %}
-                                    <span class="badge bg-info">
-                                        <i class="fas fa-paper-plane me-1"></i>Enviada
-                                    </span>
-                                {% elif factura.estado == 'cancelada' %}
-                                    <span class="badge bg-dark">
-                                        <i class="fas fa-ban me-1"></i>Cancelada
-                                    </span>
-                                {% else %}
-                                    <span class="badge bg-secondary">{{ factura.estado|title }}</span>
-                                {% endif %}
-                            </td>
-                            <td>
-                                <span class="text-primary">
-                                    <i class="fas fa-calendar-plus me-1"></i>
-                                    {{ factura.fecha_emision|date:"d/m/Y"|default:"N/A" }}
-                                </span>
-                            </td>
-                            <td>
-                                {% if factura.fecha_vencimiento %}
-                                    {% if factura.es_vencida %}
-                                        <span class="text-danger">
-                                            <i class="fas fa-exclamation-triangle me-1"></i>
-                                            {{ factura.fecha_vencimiento|date:"d/m/Y" }}
-                                            <small class="badge bg-danger ms-1">Vencida</small>
+                                <div class="text-center">
+                                    {% if factura.estado == 'emitida' %}
+                                        <span class="badge-modern warning">
+                                            <i class="fas fa-clock me-1"></i>Emitida
+                                        </span>
+                                    {% elif factura.estado == 'pagada' %}
+                                        <span class="badge-modern success">
+                                            <i class="fas fa-check-circle me-1"></i>Pagada
+                                        </span>
+                                    {% elif factura.estado == 'vencida' %}
+                                        <span class="badge-modern danger">
+                                            <i class="fas fa-exclamation-triangle me-1"></i>Vencida
+                                        </span>
+                                    {% elif factura.estado == 'borrador' %}
+                                        <span class="badge-modern secondary">
+                                            <i class="fas fa-edit me-1"></i>Borrador
+                                        </span>
+                                    {% elif factura.estado == 'enviada' %}
+                                        <span class="badge-modern info">
+                                            <i class="fas fa-paper-plane me-1"></i>Enviada
+                                        </span>
+                                    {% elif factura.estado == 'cancelada' %}
+                                        <span class="badge-modern dark">
+                                            <i class="fas fa-ban me-1"></i>Cancelada
                                         </span>
                                     {% else %}
-                                        <span class="text-success">
-                                            <i class="fas fa-calendar-check me-1"></i>
-                                            {{ factura.fecha_vencimiento|date:"d/m/Y" }}
-                                            <small class="badge bg-success ms-1">{{ factura.dias_para_vencer }} días</small>
-                                        </span>
+                                        <span class="badge-modern secondary">{{ factura.estado|title }}</span>
                                     {% endif %}
-                                {% else %}
-                                    <span class="text-muted">
-                                        <i class="fas fa-calendar-times me-1"></i>
-                                        Sin fecha
-                                    </span>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="fw-bold text-primary">
+                                    <i class="fas fa-calendar-plus me-1"></i>{{ factura.fecha_emision|date:"d/m/Y"|default:"N/A" }}
+                                </div>
+                                {% if factura.fecha_vencimiento %}
+                                    <div class="text-muted small">
+                                        <i class="fas fa-calendar-check me-1"></i>Vence: {{ factura.fecha_vencimiento|date:"d/m/Y" }}
+                                        {% if factura.es_vencida %}
+                                            <span class="badge-modern danger ms-1">Vencida</span>
+                                        {% else %}
+                                            <span class="badge-modern success ms-1">{{ factura.dias_para_vencer }} días</span>
+                                        {% endif %}
+                                    </div>
                                 {% endif %}
+                                <div class="text-muted small">
+                                    <i class="fas fa-clock me-1"></i>Creada: {{ factura.fecha_creacion|date:"d/m/Y H:i"|default:"N/A" }}
+                                </div>
                             </td>
                             <td>
-                                <span class="text-muted">
-                                    <i class="fas fa-clock me-1"></i>
-                                    {{ factura.fecha_creacion|date:"d/m/Y H:i"|default:"N/A" }}
-                                </span>
-                            </td>
-                            <td>
-                                <div class="btn-group" role="group">
-                                    <a href="{% url 'factura_detail' factura.id %}" class="btn btn-sm btn-outline-primary" title="Ver Detalles">
+                                <div class="d-flex gap-2 justify-content-center">
+                                    <a href="{% url 'factura_detail' factura.id %}" class="btn btn-primary btn-sm" title="Ver Detalles">
                                         <i class="fas fa-eye"></i>
                                     </a>
-                                    <a href="{% url 'factura_edit' factura.id %}" class="btn btn-sm btn-outline-warning" title="Editar">
+                                    <a href="{% url 'factura_edit' factura.id %}" class="btn btn-warning btn-sm" title="Editar">
                                         <i class="fas fa-edit"></i>
                                     </a>
                                     {% if factura.estado != 'pagada' %}
-                                        <button type="button" class="btn btn-sm btn-outline-success" title="Marcar como Pagada" 
+                                        <button type="button" class="btn btn-success btn-sm" title="Marcar como Pagada" 
                                                 onclick="marcarComoPagada({{ factura.id }}, '{{ factura.numero_factura }}')">
                                             <i class="fas fa-check"></i>
                                         </button>
-                                    {% else %}
-                                        <span class="badge bg-success text-white" title="Factura ya pagada">
-                                            <i class="fas fa-check-circle me-1"></i>Pagada
-                                        </span>
                                     {% endif %}
-                                    <a href="{% url 'factura_delete' factura.id %}" class="btn btn-sm btn-outline-danger" title="Eliminar" onclick="return confirm('¿Estás seguro de que quieres eliminar esta factura?')">
+                                    <a href="{% url 'factura_delete' factura.id %}" class="btn btn-danger btn-sm" title="Eliminar" onclick="return confirm('¿Estás seguro de que quieres eliminar esta factura?')">
                                         <i class="fas fa-trash"></i>
                                     </a>
                                 </div>
@@ -420,6 +539,52 @@
 </div>
 
 <script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Filtros de facturas
+    const filtroEstado = document.getElementById('filtroEstado');
+    const filasFacturas = document.querySelectorAll('tbody tr');
+    
+    function aplicarFiltros() {
+        const estadoSeleccionado = filtroEstado ? filtroEstado.value : 'todos';
+        let facturasVisibles = 0;
+        
+        filasFacturas.forEach(fila => {
+            const estadoFactura = fila.querySelector('td:nth-child(5) .badge-modern').textContent.trim();
+            let mostrar = true;
+            
+            // Filtro por estado
+            if (estadoSeleccionado === 'borrador') {
+                mostrar = estadoFactura.includes('Borrador');
+            } else if (estadoSeleccionado === 'emitida') {
+                mostrar = estadoFactura.includes('Emitida');
+            } else if (estadoSeleccionado === 'enviada') {
+                mostrar = estadoFactura.includes('Enviada');
+            } else if (estadoSeleccionado === 'pagada') {
+                mostrar = estadoFactura.includes('Pagada');
+            } else if (estadoSeleccionado === 'vencida') {
+                mostrar = estadoFactura.includes('Vencida');
+            } else if (estadoSeleccionado === 'cancelada') {
+                mostrar = estadoFactura.includes('Cancelada');
+            }
+            // Si es 'todos', mostrar = true (por defecto)
+            
+            fila.style.display = mostrar ? '' : 'none';
+            if (mostrar) facturasVisibles++;
+        });
+        
+        // Actualizar contador
+        const contadorElement = document.querySelector('.text-muted');
+        if (contadorElement) {
+            contadorElement.textContent = `Mostrando ${facturasVisibles} de ${filasFacturas.length} facturas`;
+        }
+    }
+    
+    // Event listeners para los filtros
+    if (filtroEstado) {
+        filtroEstado.addEventListener('change', aplicarFiltros);
+    }
+});
+
 function marcarComoPagada(facturaId, numeroFactura) {
     // Crear un modal de confirmación personalizado
     const modal = document.createElement('div');

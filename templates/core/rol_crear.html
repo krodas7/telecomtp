@@ -1,0 +1,101 @@
+{% extends 'base.html' %}
+
+{% block title %}Crear Rol - Sistema de Construcción{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">
+            <i class="fas fa-user-plus"></i> Crear Nuevo Rol
+        </h1>
+        <a href="{% url 'roles_lista' %}" class="btn btn-secondary btn-sm">
+            <i class="fas fa-arrow-left"></i> Volver a Roles
+        </a>
+    </div>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-info-circle"></i> Información del Rol
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label for="nombre" class="form-label">
+                                <strong>Nombre del Rol *</strong>
+                            </label>
+                            <input type="text" class="form-control" id="nombre" name="nombre" 
+                                   placeholder="Ej: Supervisor de Obra" required>
+                            <div class="form-text">
+                                El nombre debe ser único y descriptivo del rol.
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="descripcion" class="form-label">
+                                <strong>Descripción</strong>
+                            </label>
+                            <textarea class="form-control" id="descripcion" name="descripcion" 
+                                      rows="4" placeholder="Describe las responsabilidades y permisos de este rol..."></textarea>
+                            <div class="form-text">
+                                Describe las funciones y responsabilidades de este rol en el sistema.
+                            </div>
+                        </div>
+                        
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> Crear Rol
+                            </button>
+                            <a href="{% url 'roles_lista' %}" class="btn btn-secondary">
+                                <i class="fas fa-times"></i> Cancelar
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Información adicional -->
+            <div class="card shadow mt-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-info">
+                        <i class="fas fa-lightbulb"></i> Consejos para Crear Roles
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled mb-0">
+                        <li class="mb-2">
+                            <i class="fas fa-check-circle text-success me-2"></i>
+                            <strong>Usa nombres descriptivos:</strong> "Supervisor de Obra" en lugar de "Rol 1"
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-check-circle text-success me-2"></i>
+                            <strong>Define claramente las responsabilidades</strong> en la descripción
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-check-circle text-success me-2"></i>
+                            <strong>Considera el principio de menor privilegio:</strong> solo los permisos necesarios
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-check-circle text-success me-2"></i>
+                            <strong>Después de crear el rol,</strong> configura sus permisos específicos
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

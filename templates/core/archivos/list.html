@@ -563,6 +563,11 @@
         object-fit: contain;
         border-radius: 10px;
     }
+    
+    /* Dynamic background color for folder icons */
+    .carpeta-icon[data-color] {
+        background-color: var(--folder-color, #667eea) !important;
+    }
 </style>
 {% endblock %}
 
@@ -669,7 +674,7 @@
             {% for carpeta in subcarpetas %}
             <div class="col-xl-3 col-lg-4 col-md-6 mb-3">
                 <div class="carpeta-card" data-url="{% url 'archivos_proyecto_list' proyecto.id %}?carpeta={{ carpeta.id }}">
-                    <div class="carpeta-icon" style="background-color: {{ carpeta.color|safe }};">
+                    <div class="carpeta-icon" data-color="{{ carpeta.color|safe }}">
                         <i class="{{ carpeta.icono }}"></i>
                     </div>
                     <div class="carpeta-info">
@@ -880,6 +885,15 @@
                     window.location.href = url;
                 }
             });
+        });
+        
+        // Aplicar colores dinámicos a los iconos de carpetas
+        const carpetaIcons = document.querySelectorAll('.carpeta-icon[data-color]');
+        carpetaIcons.forEach(icon => {
+            const color = icon.getAttribute('data-color');
+            if (color) {
+                icon.style.setProperty('--folder-color', color);
+            }
         });
     });
 </script>

@@ -147,26 +147,66 @@
     }
     
     .form-control, .form-select {
-        border: 2px solid var(--blanco-humo);
+        border: 2px solid #e0e0e0;
         border-radius: 12px;
         padding: 1rem 1.2rem;
         font-size: 1rem;
         transition: all 0.3s ease;
         background: white;
+        color: #333;
+        width: 100%;
+        box-sizing: border-box;
     }
     
     .form-control:focus, .form-select:focus {
-        border-color: var(--azul-acero);
-        box-shadow: 0 0 0 0.2rem rgba(52, 152, 219, 0.25);
+        border-color: #f39c12;
+        box-shadow: 0 0 0 0.3rem rgba(243, 156, 18, 0.15);
         outline: none;
+        transform: translateY(-2px);
     }
     
     .form-control:hover, .form-select:hover {
-        border-color: var(--azul-acero-claro);
+        border-color: #f39c12;
+    }
+    
+    .form-control::placeholder {
+        color: #999;
+    }
+    
+    .form-select option {
+        color: #333;
+        background: white;
     }
     
     .form-textarea {
         min-height: 120px;
+        resize: vertical;
+    }
+    
+    /* Estilos adicionales para asegurar visibilidad */
+    input[type="text"], 
+    input[type="email"], 
+    input[type="number"], 
+    input[type="date"], 
+    input[type="password"],
+    textarea,
+    select {
+        border: 2px solid #e0e0e0 !important;
+        color: #333 !important;
+        background: white !important;
+    }
+    input[type="text"]:focus, 
+    input[type="email"]:focus, 
+    input[type="number"]:focus, 
+    input[type="date"]:focus, 
+    input[type="password"]:focus,
+    textarea:focus,
+    select:focus {
+        border-color: #f39c12 !important;
+        box-shadow: 0 0 0 0.3rem rgba(243, 156, 18, 0.15) !important;
+    }
+    textarea {
+        min-height: 100px;
         resize: vertical;
     }
     

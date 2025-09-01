@@ -1,0 +1,96 @@
+{% extends 'base.html' %}
+
+{% block title %}Editar Rol - Sistema de Construcción{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">
+            <i class="fas fa-user-edit"></i> Editar Rol: {{ rol.nombre }}
+        </h1>
+        <a href="{% url 'roles_lista' %}" class="btn btn-secondary btn-sm">
+            <i class="fas fa-arrow-left"></i> Volver a Roles
+        </a>
+    </div>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-info-circle"></i> Información del Rol
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label for="nombre" class="form-label">
+                                <strong>Nombre del Rol *</strong>
+                            </label>
+                            <input type="text" class="form-control" id="nombre" name="nombre" 
+                                   value="{{ rol.nombre }}" placeholder="Ej: Supervisor de Obra" required>
+                            <div class="form-text">
+                                El nombre debe ser único y descriptivo del rol.
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="descripcion" class="form-label">
+                                <strong>Descripción</strong>
+                            </label>
+                            <textarea class="form-control" id="descripcion" name="descripcion" 
+                                      rows="4" placeholder="Describe las responsabilidades y permisos de este rol...">{{ rol.descripcion }}</textarea>
+                            <div class="form-text">
+                                Describe las funciones y responsabilidades de este rol en el sistema.
+                            </div>
+                        </div>
+                        
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> Guardar Cambios
+                            </button>
+                            <a href="{% url 'roles_lista' %}" class="btn btn-secondary">
+                                <i class="fas fa-times"></i> Cancelar
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Información del rol -->
+            <div class="card shadow mt-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-info">
+                        <i class="fas fa-info-circle"></i> Información del Rol
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>Creado:</strong> {{ rol.creado_en|date:"d/m/Y H:i" }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>Última modificación:</strong> {{ rol.creado_en|date:"d/m/Y H:i" }}</p>
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <a href="{% url 'rol_permisos' rol.id %}" class="btn btn-outline-primary">
+                            <i class="fas fa-cog"></i> Gestionar Permisos
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

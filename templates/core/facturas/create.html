@@ -148,22 +148,64 @@
     }
     
     .form-control, .form-select {
-        border: 2px solid var(--blanco-humo);
-        border-radius: 12px;
-        padding: 1rem 1.2rem;
-        font-size: 1rem;
-        transition: all 0.3s ease;
-        background: white;
+        border: 2px solid #e0e0e0 !important;
+        border-radius: 12px !important;
+        padding: 1rem 1.2rem !important;
+        font-size: 1rem !important;
+        transition: all 0.3s ease !important;
+        background: white !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
     }
     
     .form-control:focus, .form-select:focus {
-        border-color: var(--azul-acero);
-        box-shadow: 0 0 0 0.2rem rgba(52, 152, 219, 0.25);
-        outline: none;
+        border-color: #3498db !important;
+        box-shadow: 0 0 0 0.2rem rgba(52, 152, 219, 0.25) !important;
+        outline: none !important;
     }
     
     .form-control:hover, .form-select:hover {
-        border-color: var(--azul-acero-claro);
+        border-color: #5dade2 !important;
+    }
+    
+    /* Asegurar que los campos tengan bordes visibles por defecto */
+    input[type="text"], 
+    input[type="number"], 
+    input[type="date"], 
+    input[type="email"], 
+    input[type="password"],
+    textarea,
+    select {
+        border: 2px solid #e0e0e0 !important;
+        border-radius: 12px !important;
+        padding: 1rem 1.2rem !important;
+        font-size: 1rem !important;
+        transition: all 0.3s ease !important;
+        background: white !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+    }
+    
+    input[type="text"]:focus, 
+    input[type="number"]:focus, 
+    input[type="date"]:focus, 
+    input[type="email"]:focus, 
+    input[type="password"]:focus,
+    textarea:focus,
+    select:focus {
+        border-color: #3498db !important;
+        box-shadow: 0 0 0 0.2rem rgba(52, 152, 219, 0.25) !important;
+        outline: none !important;
+    }
+    
+    input[type="text"]:hover, 
+    input[type="number"]:hover, 
+    input[type="date"]:hover, 
+    input[type="email"]:hover, 
+    input[type="password"]:hover,
+    textarea:hover,
+    select:hover {
+        border-color: #5dade2 !important;
     }
     
     .form-row {
@@ -785,10 +827,14 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     if (clienteInput) {
+        console.log('✅ Event listener agregado al select de cliente');
         clienteInput.addEventListener('change', () => {
+            console.log('🔄 Cliente cambiado, ejecutando filtrado...');
             validateField(clienteInput, document.getElementById('clienteValidation'), 'cliente');
             filtrarProyectosPorCliente();
         });
+    } else {
+        console.log('❌ No se encontró el select de cliente');
     }
     
     if (proyectoInput) {
@@ -956,8 +1002,13 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Función para filtrar proyectos por cliente
     function filtrarProyectosPorCliente() {
+        console.log('🔄 Función filtrarProyectosPorCliente ejecutada');
+        
         const clienteId = clienteInput.value;
         const proyectoSelect = document.getElementById('proyecto');
+        
+        console.log('🔍 Cliente seleccionado ID:', clienteId);
+        console.log('🔍 Select de proyectos encontrado:', proyectoSelect);
         
         // Limpiar opciones actuales
         proyectoSelect.innerHTML = '<option value="">Seleccionar proyecto...</option>';
@@ -966,20 +1017,33 @@ document.addEventListener('DOMContentLoaded', function() {
             // Obtener proyectos del cliente seleccionado
             const proyectosCliente = proyectosPorCliente[clienteId] || [];
             
+            console.log('🔍 Proyectos encontrados para cliente', clienteId, ':', proyectosCliente);
+            
             proyectosCliente.forEach(proyecto => {
                 const option = document.createElement('option');
                 option.value = proyecto.id;
                 option.textContent = proyecto.nombre;
                 proyectoSelect.appendChild(option);
+                console.log('✅ Agregado proyecto:', proyecto.nombre, 'con ID:', proyecto.id);
             });
             
             // Resetear validación del proyecto
-            validateField(proyectoInput, document.getElementById('proyectoValidation'), 'proyecto');
+            if (proyectoInput) {
+                validateField(proyectoInput, document.getElementById('proyectoValidation'), 'proyecto');
+            }
+        } else {
+            console.log('⚠️ No se seleccionó ningún cliente');
         }
     }
     
     // Datos de proyectos por cliente (se pasan desde la vista)
     const proyectosPorCliente = {{ proyectos_por_cliente|safe }};
+    
+    // Debug: Verificar que los datos se cargaron correctamente
+    console.log('🔍 Proyectos por cliente cargados:', proyectosPorCliente);
+    
+    // Verificar que la función de filtrado esté disponible globalmente
+    window.filtrarProyectosPorCliente = filtrarProyectosPorCliente;
 });
 </script>
 {% endblock %}

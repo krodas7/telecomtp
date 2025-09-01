@@ -423,6 +423,18 @@
         border: 1px solid rgba(255, 255, 255, 0.2);
     }
     
+    .btn-approve {
+        background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%);
+        color: white;
+        border: none;
+    }
+    
+    .btn-approve:hover {
+        background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%);
+        transform: translateY(-3px);
+        box-shadow: 0 8px 25px rgba(39, 174, 96, 0.3);
+    }
+    
     .variacion-chart {
         background: white;
         border-radius: 16px;
@@ -797,17 +809,17 @@
 </div>
 {% endif %}
 
-<!-- Acciones -->
-{% if presupuesto.estado == 'en_revision' %}
+<!-- Acciones de Aprobación -->
+{% if presupuesto.estado == 'borrador' or presupuesto.estado == 'en_revision' %}
 <div class="actions-section">
     <h3 class="actions-title">
-        <i class="fas fa-clock me-2"></i>Presupuesto en Revisión
+        <i class="fas fa-clock me-2"></i>Presupuesto Pendiente de Aprobación
     </h3>
     <p class="actions-description">
         Este presupuesto está listo para ser revisado y aprobado. Una vez aprobado, podrás hacer seguimiento de las variaciones y generar reportes de rentabilidad.
     </p>
     <div class="action-buttons">
-        <a href="{% url 'presupuesto_aprobar' presupuesto.id %}" class="action-btn btn-add-partida">
+        <a href="{% url 'presupuesto_aprobar' presupuesto.id %}" class="action-btn btn-approve">
             <i class="fas fa-check me-2"></i>Aprobar Presupuesto
         </a>
     </div>

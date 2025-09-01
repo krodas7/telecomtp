@@ -50,11 +50,18 @@ urlpatterns = [
     path('facturas/<int:factura_id>/eliminar/', views.factura_delete, name='factura_delete'),
     path('facturas/<int:factura_id>/marcar-pagada/', views.factura_marcar_pagada, name='factura_marcar_pagada'),
     
+    # Reportes de Facturas
+    path('facturas/reportes/', views.facturas_reporte_lista, name='facturas_reporte_lista'),
+    path('facturas/reportes/pdf/', views.facturas_reporte_pdf, name='facturas_reporte_pdf'),
+    path('facturas/reportes/excel/', views.facturas_reporte_excel, name='facturas_reporte_excel'),
+    path('facturas/reportes/detallado/', views.facturas_reporte_detallado, name='facturas_reporte_detallado'),
+    
     # Gastos
     path('gastos/', views.gastos_list, name='gastos_list'),
     path('gastos/crear/', views.gasto_create, name='gasto_create'),
     path('gastos/<int:gasto_id>/editar/', views.gasto_edit, name='gasto_edit'),
     path('gastos/<int:gasto_id>/eliminar/', views.gasto_delete, name='gasto_delete'),
+    path('gastos/<int:gasto_id>/aprobar/', views.gasto_aprobar, name='gasto_aprobar'),
     
     # Pagos
     path('pagos/', views.pagos_list, name='pagos_list'),
@@ -163,8 +170,14 @@ urlpatterns = [
     
     # URLs para Gestión de Usuarios y Roles
     path('roles/', views.roles_lista, name='roles_lista'),
+    path('roles/crear/', views.rol_crear, name='rol_crear'),
+    path('roles/<int:rol_id>/editar/', views.rol_editar, name='rol_editar'),
+    path('roles/<int:rol_id>/eliminar/', views.rol_eliminar, name='rol_eliminar'),
     path('roles/resumen/', views.roles_resumen, name='roles_resumen'),
     path('roles/<int:rol_id>/permisos/', views.rol_permisos, name='rol_permisos'),
+    
+    # PWA Test
+    path('pwa-test/', views.pwa_test, name='pwa_test'),
     
     # ==================== DASHBOARD INTELIGENTE ====================
     path('api/dashboard-intelligent-data/', views.dashboard_intelligent_data, name='dashboard_intelligent_data'),

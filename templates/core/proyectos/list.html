@@ -236,8 +236,14 @@
                         {% endif %}
                     </p>
                 </div>
-                <div>
-                    <span class="badge badge-primary">Todos los Estados</span>
+                <div class="d-flex gap-2">
+                    <select id="filtroEstado" class="form-select form-select-sm" style="width: auto;">
+                        <option value="todos">Todos los Estados</option>
+                        <option value="pendiente">Solo Pendientes</option>
+                        <option value="en_progreso">Solo En Progreso</option>
+                        <option value="completado">Solo Completados</option>
+                        <option value="cancelado">Solo Cancelados</option>
+                    </select>
                 </div>
             </div>
         </div>
@@ -312,4 +318,49 @@
         </div>
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Filtros de proyectos
+    const filtroEstado = document.getElementById('filtroEstado');
+    const filasProyectos = document.querySelectorAll('tbody tr');
+    
+    function aplicarFiltros() {
+        const estadoSeleccionado = filtroEstado ? filtroEstado.value : 'todos';
+        let proyectosVisibles = 0;
+        
+        filasProyectos.forEach(fila => {
+            const estadoProyecto = fila.querySelector('td:nth-child(3) .badge').textContent.trim();
+            let mostrar = true;
+            
+            // Filtro por estado
+            if (estadoSeleccionado === 'pendiente') {
+                mostrar = estadoProyecto.includes('Pendiente');
+            } else if (estadoSeleccionado === 'en_progreso') {
+                mostrar = estadoProyecto.includes('En Progreso');
+            } else if (estadoSeleccionado === 'completado') {
+                mostrar = estadoProyecto.includes('Completado');
+            } else if (estadoSeleccionado === 'cancelado') {
+                mostrar = estadoProyecto.includes('Cancelado');
+            }
+            // Si es 'todos', mostrar = true (por defecto)
+            
+            fila.style.display = mostrar ? '' : 'none';
+            if (mostrar) proyectosVisibles++;
+        });
+        
+        // Actualizar contador
+        const contadorElement = document.querySelector('.text-muted');
+        if (contadorElement) {
+            contadorElement.textContent = `Mostrando ${proyectosVisibles} de ${filasProyectos.length} proyectos`;
+        }
+    }
+    
+    // Event listeners para los filtros
+    if (filtroEstado) {
+        filtroEstado.addEventListener('change', aplicarFiltros);
+    }
+});
+</script>
+
 {% endblock %}

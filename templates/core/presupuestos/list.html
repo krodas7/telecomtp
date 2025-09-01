@@ -459,7 +459,7 @@
                     <i class="fas fa-edit"></i>
                     Editar
                 </a>
-                {% if presupuesto.estado == 'en_revision' %}
+                {% if presupuesto.estado == 'borrador' or presupuesto.estado == 'en_revision' %}
                     <a href="{% url 'presupuesto_aprobar' presupuesto.id %}" class="action-btn btn-approve" title="Aprobar">
                         <i class="fas fa-check"></i>
                         Aprobar

@@ -1159,6 +1159,43 @@ def gasto_delete(request, gasto_id):
     return render(request, 'core/gastos/delete.html', {'gasto': gasto})
 
 
+@login_required
+def gasto_aprobar(request, gasto_id):
+    """Aprobar gasto"""
+    gasto = get_object_or_404(Gasto, id=gasto_id)
+    
+    if request.method == 'POST':
+        # Cambiar estado de aprobación
+        if gasto.aprobado:
+            # Si ya está aprobado, desaprobar
+            gasto.aprobado = False
+            gasto.aprobado_por = None
+            accion = 'Desaprobar'
+            mensaje = 'Gasto desaprobado exitosamente'
+        else:
+            # Si no está aprobado, aprobar
+            gasto.aprobado = True
+            gasto.aprobado_por = request.user
+            accion = 'Aprobar'
+            mensaje = 'Gasto aprobado exitosamente'
+        
+        gasto.save()
+        
+        # Registrar actividad
+        LogActividad.objects.create(
+            usuario=request.user,
+            accion=accion,
+            modulo='Gastos',
+            descripcion=f'Gasto {accion.lower()}do: {gasto.descripcion} - Q{gasto.monto}',
+            ip_address=request.META.get('REMOTE_ADDR')
+        )
+        
+        messages.success(request, mensaje)
+        return redirect('gastos_list')
+    
+    return render(request, 'core/gastos/delete.html', {'gasto': gasto})
+
+
 # ===== CRUD PAGOS =====
 @login_required
 def pagos_list(request):
@@ -2217,9 +2254,31 @@ def presupuesto_create(request):
     """Crear nuevo presupuesto"""
     if request.method == 'POST':
         form = PresupuestoForm(request.POST)
+        proyecto_id = request.POST.get('proyecto')
+        
+        # Validar que se seleccionó un proyecto
+        if not proyecto_id:
+            messages.error(request, 'Debes seleccionar un proyecto para crear el presupuesto')
+            context = {
+                'form': form,
+                'proyectos': Proyecto.objects.filter(activo=True),
+            }
+            return render(request, 'core/presupuestos/create.html', context)
+        
+        # Verificar que el proyecto existe
+        try:
+            proyecto = Proyecto.objects.get(id=proyecto_id, activo=True)
+        except Proyecto.DoesNotExist:
+            messages.error(request, 'El proyecto seleccionado no existe o no está activo')
+            context = {
+                'form': form,
+                'proyectos': Proyecto.objects.filter(activo=True),
+            }
+            return render(request, 'core/presupuestos/create.html', context)
+        
         if form.is_valid():
             presupuesto = form.save(commit=False)
-            presupuesto.proyecto_id = request.POST.get('proyecto')
+            presupuesto.proyecto = proyecto
             presupuesto.creado_por = request.user
             presupuesto.save()
             
@@ -2234,6 +2293,8 @@ def presupuesto_create(request):
             
             messages.success(request, 'Presupuesto creado exitosamente')
             return redirect('presupuesto_detail', presupuesto_id=presupuesto.id)
+        else:
+            messages.error(request, 'Por favor, corrige los errores en el formulario')
     else:
         form = PresupuestoForm()
     
@@ -2313,6 +2374,11 @@ def partida_create(request, presupuesto_id):
     """Crear nueva partida en un presupuesto"""
     presupuesto = get_object_or_404(Presupuesto, id=presupuesto_id, activo=True)
     
+    # Verificar que el presupuesto puede recibir partidas
+    if presupuesto.estado in ['aprobado', 'rechazado', 'obsoleto']:
+        messages.error(request, f'No se pueden agregar partidas a un presupuesto en estado "{presupuesto.get_estado_display()}"')
+        return redirect('presupuesto_detail', presupuesto_id=presupuesto.id)
+    
     if request.method == 'POST':
         form = PartidaPresupuestoForm(request.POST)
         if form.is_valid():
@@ -2320,16 +2386,22 @@ def partida_create(request, presupuesto_id):
             partida.presupuesto = presupuesto
             partida.save()
             
+            # Si es la primera partida y el presupuesto está en borrador, cambiar a en_revision
+            if presupuesto.estado == 'borrador' and presupuesto.partidas.count() == 1:
+                presupuesto.estado = 'en_revision'
+                presupuesto.save()
+                messages.info(request, 'El presupuesto ha sido marcado como "En Revisión" automáticamente')
+            
             # Registrar actividad
             LogActividad.objects.create(
                 usuario=request.user,
                 accion='Crear Partida',
                 modulo='Presupuestos',
-                descripcion=f'Partida creada: {partida.descripcion} en presupuesto {presupuesto.nombre}',
+                descripcion=f'Partida creada: {partida.descripcion} - Q{partida.monto_estimado} en presupuesto {presupuesto.nombre}',
                 ip_address=request.META.get('REMOTE_ADDR')
             )
             
-            messages.success(request, 'Partida creada exitosamente')
+            messages.success(request, f'Partida "{partida.descripcion}" creada exitosamente por Q{partida.monto_estimado}')
             return redirect('presupuesto_detail', presupuesto_id=presupuesto.id)
     else:
         form = PartidaPresupuestoForm()
@@ -2337,6 +2409,7 @@ def partida_create(request, presupuesto_id):
     context = {
         'form': form,
         'presupuesto': presupuesto,
+        'partidas_count': presupuesto.partidas.count(),
     }
     
     return render(request, 'core/presupuestos/partida_create.html', context)
@@ -2346,26 +2419,46 @@ def presupuesto_aprobar(request, presupuesto_id):
     """Aprobar un presupuesto"""
     presupuesto = get_object_or_404(Presupuesto, id=presupuesto_id, activo=True)
     
-    if request.method == 'POST':
-        presupuesto.estado = 'aprobado'
-        presupuesto.fecha_aprobacion = timezone.now()
-        presupuesto.aprobado_por = request.user
-        presupuesto.monto_aprobado = presupuesto.monto_total
-        presupuesto.save()
-        
-        # Registrar actividad
-        LogActividad.objects.create(
-            usuario=request.user,
-            accion='Aprobar',
-            modulo='Presupuestos',
-            descripcion=f'Presupuesto aprobado: {presupuesto.nombre}',
-            ip_address=request.META.get('REMOTE_ADDR')
-        )
-        
-        messages.success(request, 'Presupuesto aprobado exitosamente')
+    # Verificar que el presupuesto puede ser aprobado
+    if presupuesto.estado not in ['borrador', 'en_revision']:
+        messages.error(request, f'No se puede aprobar un presupuesto en estado "{presupuesto.get_estado_display()}"')
         return redirect('presupuesto_detail', presupuesto_id=presupuesto.id)
     
-    return render(request, 'core/presupuestos/aprobar.html', {'presupuesto': presupuesto})
+    # Verificar que el presupuesto tiene partidas
+    if presupuesto.partidas.count() == 0:
+        messages.warning(request, 'El presupuesto no tiene partidas. Se recomienda agregar partidas antes de aprobar.')
+    
+    if request.method == 'POST':
+        try:
+            presupuesto.estado = 'aprobado'
+            presupuesto.fecha_aprobacion = timezone.now()
+            presupuesto.aprobado_por = request.user
+            presupuesto.monto_aprobado = presupuesto.monto_total
+            presupuesto.save()
+            
+            # Registrar actividad
+            LogActividad.objects.create(
+                usuario=request.user,
+                accion='Aprobar',
+                modulo='Presupuestos',
+                descripcion=f'Presupuesto aprobado: {presupuesto.nombre} - Q{presupuesto.monto_total}',
+                ip_address=request.META.get('REMOTE_ADDR')
+            )
+            
+            messages.success(request, f'Presupuesto "{presupuesto.nombre}" aprobado exitosamente por Q{presupuesto.monto_total}')
+            return redirect('presupuesto_detail', presupuesto_id=presupuesto.id)
+            
+        except Exception as e:
+            messages.error(request, f'Error al aprobar el presupuesto: {str(e)}')
+            return redirect('presupuesto_detail', presupuesto_id=presupuesto.id)
+    
+    context = {
+        'presupuesto': presupuesto,
+        'partidas_count': presupuesto.partidas.count(),
+        'monto_total': presupuesto.monto_total,
+    }
+    
+    return render(request, 'core/presupuestos/aprobar.html', context)
  
 # ==================== VISTAS DE NOTIFICACIONES ====================
 
@@ -3150,6 +3243,110 @@ def roles_lista(request):
     }
     
     return render(request, 'core/roles_lista.html', context)
+
+
+@login_required
+def rol_crear(request):
+    """Crear nuevo rol - SOLO SUPERUSUARIOS"""
+    if not request.user.is_superuser:
+        messages.error(request, 'No tienes permisos para acceder a esta sección')
+        return redirect('dashboard')
+    
+    if request.method == 'POST':
+        nombre = request.POST.get('nombre')
+        descripcion = request.POST.get('descripcion')
+        
+        if nombre:
+            # Verificar que el nombre no exista
+            if Rol.objects.filter(nombre=nombre).exists():
+                messages.error(request, 'Ya existe un rol con ese nombre')
+            else:
+                rol = Rol.objects.create(
+                    nombre=nombre,
+                    descripcion=descripcion
+                )
+                messages.success(request, f'Rol "{rol.nombre}" creado exitosamente')
+                return redirect('roles_lista')
+        else:
+            messages.error(request, 'El nombre del rol es obligatorio')
+    
+    return render(request, 'core/rol_crear.html')
+
+
+@login_required
+def rol_editar(request, rol_id):
+    """Editar rol - SOLO SUPERUSUARIOS"""
+    if not request.user.is_superuser:
+        messages.error(request, 'No tienes permisos para acceder a esta sección')
+        return redirect('dashboard')
+    
+    try:
+        rol = Rol.objects.get(id=rol_id)
+        
+        if request.method == 'POST':
+            nombre = request.POST.get('nombre')
+            descripcion = request.POST.get('descripcion')
+            
+            if nombre:
+                # Verificar que el nombre no exista en otro rol
+                if Rol.objects.filter(nombre=nombre).exclude(id=rol_id).exists():
+                    messages.error(request, 'Ya existe un rol con ese nombre')
+                else:
+                    rol.nombre = nombre
+                    rol.descripcion = descripcion
+                    rol.save()
+                    messages.success(request, f'Rol "{rol.nombre}" actualizado exitosamente')
+                    return redirect('roles_lista')
+            else:
+                messages.error(request, 'El nombre del rol es obligatorio')
+        
+        context = {'rol': rol}
+        return render(request, 'core/rol_editar.html', context)
+        
+    except Rol.DoesNotExist:
+        messages.error(request, 'Rol no encontrado')
+        return redirect('roles_lista')
+
+
+@login_required
+def rol_eliminar(request, rol_id):
+    """Eliminar rol - SOLO SUPERUSUARIOS"""
+    if not request.user.is_superuser:
+        messages.error(request, 'No tienes permisos para acceder a esta sección')
+        return redirect('dashboard')
+    
+    try:
+        rol = Rol.objects.get(id=rol_id)
+        
+        # Verificar si hay usuarios usando este rol
+        usuarios_con_rol = PerfilUsuario.objects.filter(rol=rol).count()
+        
+        if request.method == 'POST':
+            if usuarios_con_rol > 0:
+                messages.error(request, f'No se puede eliminar el rol "{rol.nombre}" porque tiene {usuarios_con_rol} usuario(s) asignado(s)')
+            else:
+                # Eliminar permisos del rol
+                RolPermiso.objects.filter(rol=rol).delete()
+                # Eliminar el rol
+                rol.delete()
+                messages.success(request, f'Rol "{rol.nombre}" eliminado exitosamente')
+            return redirect('roles_lista')
+        
+        context = {
+            'rol': rol,
+            'usuarios_con_rol': usuarios_con_rol
+        }
+        return render(request, 'core/rol_eliminar.html', context)
+        
+    except Rol.DoesNotExist:
+        messages.error(request, 'Rol no encontrado')
+        return redirect('roles_lista')
+
+
+@login_required
+def pwa_test(request):
+    """Página de prueba para verificar el estado de la PWA"""
+    return render(request, 'pwa-test.html')
 
 
 @login_required
@@ -4175,3 +4372,344 @@ def carpeta_detail(request, carpeta_id):
     }
     
     return render(request, 'core/archivos/carpeta_detail.html', context)
+
+# ===== REPORTES DE FACTURAS =====
+
+@login_required
+def facturas_reporte_lista(request):
+    """Vista para generar reportes de facturas"""
+    # Obtener filtros de la URL
+    estado = request.GET.get('estado', '')
+    cliente_id = request.GET.get('cliente', '')
+    fecha_inicio = request.GET.get('fecha_inicio', '')
+    fecha_fin = request.GET.get('fecha_fin', '')
+    tipo_reporte = request.GET.get('tipo', 'lista')
+    
+    # Filtrar facturas
+    facturas = Factura.objects.select_related('cliente', 'proyecto').all()
+    
+    if estado:
+        facturas = facturas.filter(estado=estado)
+    if cliente_id:
+        facturas = facturas.filter(cliente_id=cliente_id)
+    if fecha_inicio:
+        facturas = facturas.filter(fecha_emision__gte=fecha_inicio)
+    if fecha_fin:
+        facturas = facturas.filter(fecha_emision__lte=fecha_fin)
+    
+    # Ordenar por fecha de emisión (más recientes primero)
+    facturas = facturas.order_by('-fecha_emision')
+    
+    # Calcular estadísticas
+    total_facturado = facturas.aggregate(total=Sum('monto_total'))['total'] or 0
+    total_cobrado = facturas.aggregate(total=Sum('monto_pagado'))['total'] or 0
+    total_pendiente = total_facturado - total_cobrado
+    
+    # Estadísticas por estado
+    stats_por_estado = facturas.values('estado').annotate(
+        cantidad=Count('id'),
+        monto_total=Sum('monto_total')
+    ).order_by('estado')
+    
+    # Obtener clientes para el filtro
+    clientes = Cliente.objects.filter(activo=True).order_by('razon_social')
+    
+    context = {
+        'facturas': facturas,
+        'clientes': clientes,
+        'total_facturado': total_facturado,
+        'total_cobrado': total_cobrado,
+        'total_pendiente': total_pendiente,
+        'stats_por_estado': stats_por_estado,
+        'filtros': {
+            'estado': estado,
+            'cliente_id': cliente_id,
+            'fecha_inicio': fecha_inicio,
+            'fecha_fin': fecha_fin,
+            'tipo_reporte': tipo_reporte
+        }
+    }
+    
+    return render(request, 'core/facturas/reportes/lista.html', context)
+
+
+@login_required
+def facturas_reporte_pdf(request):
+    """Generar reporte PDF de facturas"""
+    # Obtener filtros
+    estado = request.GET.get('estado', '')
+    cliente_id = request.GET.get('cliente', '')
+    fecha_inicio = request.GET.get('fecha_inicio', '')
+    fecha_fin = request.GET.get('fecha_fin', '')
+    
+    # Filtrar facturas
+    facturas = Factura.objects.select_related('cliente', 'proyecto').all()
+    
+    if estado:
+        facturas = facturas.filter(estado=estado)
+    if cliente_id:
+        facturas = facturas.filter(cliente_id=cliente_id)
+    if fecha_inicio:
+        facturas = facturas.filter(fecha_emision__gte=fecha_inicio)
+    if fecha_fin:
+        facturas = facturas.filter(fecha_emision__lte=fecha_fin)
+    
+    facturas = facturas.order_by('-fecha_emision')
+    
+    # Calcular totales
+    total_facturado = facturas.aggregate(total=Sum('monto_total'))['total'] or 0
+    total_cobrado = facturas.aggregate(total=Sum('monto_pagado'))['total'] or 0
+    total_pendiente = total_facturado - total_cobrado
+    
+    # Crear PDF
+    buffer = BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=A4)
+    elements = []
+    
+    # Estilos
+    styles = getSampleStyleSheet()
+    title_style = ParagraphStyle(
+        'CustomTitle',
+        parent=styles['Heading1'],
+        fontSize=18,
+        spaceAfter=30,
+        alignment=TA_CENTER,
+        textColor=colors.darkblue
+    )
+    
+    subtitle_style = ParagraphStyle(
+        'CustomSubtitle',
+        parent=styles['Heading2'],
+        fontSize=14,
+        spaceAfter=20,
+        alignment=TA_CENTER,
+        textColor=colors.darkblue
+    )
+    
+    # Título
+    elements.append(Paragraph("REPORTE DE FACTURAS", title_style))
+    
+    # Información del reporte
+    filtros_info = []
+    if estado:
+        filtros_info.append(f"Estado: {dict(Factura.ESTADO_CHOICES).get(estado, estado)}")
+    if cliente_id:
+        cliente = Cliente.objects.get(id=cliente_id)
+        filtros_info.append(f"Cliente: {cliente.razon_social}")
+    if fecha_inicio:
+        filtros_info.append(f"Desde: {fecha_inicio}")
+    if fecha_fin:
+        filtros_info.append(f"Hasta: {fecha_fin}")
+    
+    if filtros_info:
+        filtros_text = " | ".join(filtros_info)
+        elements.append(Paragraph(filtros_text, subtitle_style))
+    
+    # Resumen financiero
+    resumen_data = [
+        ['CONCEPTO', 'MONTO'],
+        ['Total Facturado', f"Q{total_facturado:,.2f}"],
+        ['Total Cobrado', f"Q{total_cobrado:,.2f}"],
+        ['Total Pendiente', f"Q{total_pendiente:,.2f}"],
+        ['Cantidad Facturas', str(facturas.count())],
+    ]
+    
+    resumen_table = Table(resumen_data, colWidths=[3*inch, 2*inch])
+    resumen_table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (0, -1), colors.lightblue),
+        ('TEXTCOLOR', (0, 0), (0, -1), colors.black),
+        ('ALIGN', (0, 0), (0, -1), 'LEFT'),
+        ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (0, -1), 10),
+        ('BOTTOMPADDING', (0, 0), (0, -1), 12),
+        ('BACKGROUND', (1, 0), (1, -1), colors.white),
+        ('ALIGN', (1, 0), (1, -1), 'RIGHT'),
+        ('GRID', (0, 0), (-1, -1), 1, colors.black),
+    ]))
+    
+    elements.append(resumen_table)
+    elements.append(Spacer(1, 20))
+    
+    # Tabla de facturas
+    if facturas:
+        headers = ['Número', 'Cliente', 'Proyecto', 'Monto', 'Estado', 'Emisión', 'Vencimiento']
+        data = [headers]
+        
+        for factura in facturas:
+            data.append([
+                factura.numero_factura,
+                factura.cliente.razon_social if factura.cliente else 'N/A',
+                factura.proyecto.nombre if factura.proyecto else 'N/A',
+                f"Q{factura.monto_total:,.2f}",
+                factura.get_estado_display(),
+                factura.fecha_emision.strftime('%d/%m/%Y') if factura.fecha_emision else 'N/A',
+                factura.fecha_vencimiento.strftime('%d/%m/%Y') if factura.fecha_vencimiento else 'N/A',
+            ])
+        
+        # Crear tabla
+        table = Table(data, colWidths=[1*inch, 1.5*inch, 1.5*inch, 1*inch, 1*inch, 1*inch, 1*inch])
+        table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.darkblue),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+            ('ALIGN', (0, 0), (-1, 0), 'CENTER'),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, 0), 8),
+            ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+            ('BACKGROUND', (0, 1), (-1, -1), colors.white),
+            ('GRID', (0, 0), (-1, -1), 1, colors.black),
+            ('ALIGN', (3, 1), (3, -1), 'RIGHT'),  # Alinear montos a la derecha
+            ('FONTSIZE', (0, 1), (-1, -1), 8),
+        ]))
+        
+        elements.append(table)
+    
+    # Pie de página
+    elements.append(Spacer(1, 30))
+    fecha_generacion = timezone.now().strftime('%d/%m/%Y %H:%M')
+    elements.append(Paragraph(f"Reporte generado el: {fecha_generacion}", styles['Normal']))
+    elements.append(Paragraph(f"Sistema ARCA Construcción", styles['Normal']))
+    
+    # Generar PDF
+    doc.build(elements)
+    buffer.seek(0)
+    
+    # Crear respuesta HTTP
+    filename = f"reporte_facturas_{timezone.now().strftime('%Y%m%d_%H%M')}.pdf"
+    
+    response = HttpResponse(buffer.getvalue(), content_type='application/pdf')
+    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+    
+    return response
+
+
+@login_required
+def facturas_reporte_excel(request):
+    """Generar reporte Excel de facturas"""
+    import csv
+    
+    # Obtener filtros
+    estado = request.GET.get('estado', '')
+    cliente_id = request.GET.get('cliente', '')
+    fecha_inicio = request.GET.get('fecha_inicio', '')
+    fecha_fin = request.GET.get('fecha_fin', '')
+    
+    # Filtrar facturas
+    facturas = Factura.objects.select_related('cliente', 'proyecto').all()
+    
+    if estado:
+        facturas = facturas.filter(estado=estado)
+    if cliente_id:
+        facturas = facturas.filter(cliente_id=cliente_id)
+    if fecha_inicio:
+        facturas = facturas.filter(fecha_emision__gte=fecha_inicio)
+    if fecha_fin:
+        facturas = facturas.filter(fecha_emision__lte=fecha_fin)
+    
+    facturas = facturas.order_by('-fecha_emision')
+    
+    # Crear respuesta CSV
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = f'attachment; filename="reporte_facturas_{timezone.now().strftime("%Y%m%d_%H%M")}.csv"'
+    
+    # Crear writer CSV
+    writer = csv.writer(response)
+    
+    # Escribir encabezados
+    writer.writerow([
+        'Número Factura',
+        'Cliente',
+        'Proyecto',
+        'Monto Total',
+        'Monto Pagado',
+        'Monto Pendiente',
+        'Estado',
+        'Fecha Emisión',
+        'Fecha Vencimiento',
+        'Fecha Creación'
+    ])
+    
+    # Escribir datos
+    for factura in facturas:
+        writer.writerow([
+            factura.numero_factura,
+            factura.cliente.razon_social if factura.cliente else 'N/A',
+            factura.proyecto.nombre if factura.proyecto else 'N/A',
+            factura.monto_total,
+            factura.monto_pagado,
+            factura.monto_pendiente,
+            factura.get_estado_display(),
+            factura.fecha_emision.strftime('%d/%m/%Y') if factura.fecha_emision else 'N/A',
+            factura.fecha_vencimiento.strftime('%d/%m/%Y') if factura.fecha_vencimiento else 'N/A',
+            factura.fecha_creacion.strftime('%d/%m/%Y %H:%M') if factura.fecha_creacion else 'N/A',
+        ])
+    
+    return response
+
+
+@login_required
+def facturas_reporte_detallado(request):
+    """Reporte detallado de facturas con análisis"""
+    # Obtener filtros
+    estado = request.GET.get('estado', '')
+    cliente_id = request.GET.get('cliente', '')
+    fecha_inicio = request.GET.get('fecha_inicio', '')
+    fecha_fin = request.GET.get('fecha_fin', '')
+    
+    # Filtrar facturas
+    facturas = Factura.objects.select_related('cliente', 'proyecto').all()
+    
+    if estado:
+        facturas = facturas.filter(estado=estado)
+    if cliente_id:
+        facturas = facturas.filter(cliente_id=cliente_id)
+    if fecha_inicio:
+        facturas = facturas.filter(fecha_emision__gte=fecha_inicio)
+    if fecha_fin:
+        facturas = facturas.filter(fecha_emision__lte=fecha_fin)
+    
+    # Calcular estadísticas
+    total_facturado = facturas.aggregate(total=Sum('monto_total'))['total'] or 0
+    total_cobrado = facturas.aggregate(total=Sum('monto_pagado'))['total'] or 0
+    total_pendiente = total_facturado - total_cobrado
+    
+    # Estadísticas por estado
+    stats_por_estado = facturas.values('estado').annotate(
+        cantidad=Count('id'),
+        monto_total=Sum('monto_total'),
+        monto_pagado=Sum('monto_pagado')
+    ).order_by('estado')
+    
+    # Estadísticas por cliente
+    stats_por_cliente = facturas.values('cliente__razon_social').annotate(
+        cantidad=Count('id'),
+        monto_total=Sum('monto_total'),
+        monto_pagado=Sum('monto_pagado')
+    ).order_by('-monto_total')
+    
+    # Facturas vencidas
+    facturas_vencidas = facturas.filter(
+        estado__in=['emitida', 'enviada'],
+        fecha_vencimiento__lt=timezone.now().date()
+    )
+    
+    # Obtener clientes para el filtro
+    clientes = Cliente.objects.filter(activo=True).order_by('razon_social')
+    
+    context = {
+        'facturas': facturas,
+        'clientes': clientes,
+        'total_facturado': total_facturado,
+        'total_cobrado': total_cobrado,
+        'total_pendiente': total_pendiente,
+        'stats_por_estado': stats_por_estado,
+        'stats_por_cliente': stats_por_cliente,
+        'facturas_vencidas': facturas_vencidas,
+        'filtros': {
+            'estado': estado,
+            'cliente_id': cliente_id,
+            'fecha_inicio': fecha_inicio,
+            'fecha_fin': fecha_fin,
+        }
+    }
+    
+    return render(request, 'core/facturas/reportes/detallado.html', context)

@@ -279,25 +279,55 @@
         margin-right: auto;
     }
     
-    /* Responsive */
-    @media (max-width: 768px) {
-        .hero-title {
-            font-size: 2rem;
-        }
-        
-        .hero-stats {
-            grid-template-columns: 1fr;
-        }
-        
-        .card-modern {
-            padding: 1.5rem;
-        }
-        
-        .table-modern th,
-        .table-modern td {
-            padding: 0.75rem 0.5rem;
-        }
-    }
+         /* Responsive */
+     @media (max-width: 768px) {
+         .hero-title {
+             font-size: 2rem;
+         }
+         
+         .hero-stats {
+             grid-template-columns: 1fr;
+         }
+         
+         .card-modern {
+             padding: 1.5rem;
+         }
+         
+         .table-modern th,
+         .table-modern td {
+             padding: 0.75rem 0.5rem;
+         }
+     }
+     
+     /* Estilos personalizados para SweetAlert2 */
+     .swal2-custom-popup {
+         border-radius: 20px !important;
+         font-family: inherit !important;
+     }
+     
+     .swal2-custom-confirm {
+         border-radius: 12px !important;
+         font-weight: 600 !important;
+         padding: 12px 24px !important;
+         transition: all 0.3s ease !important;
+     }
+     
+     .swal2-custom-confirm:hover {
+         transform: translateY(-2px) !important;
+         box-shadow: 0 6px 20px rgba(0,0,0,0.2) !important;
+     }
+     
+     .swal2-custom-cancel {
+         border-radius: 12px !important;
+         font-weight: 600 !important;
+         padding: 12px 24px !important;
+         transition: all 0.3s ease !important;
+     }
+     
+     .swal2-custom-cancel:hover {
+         transform: translateY(-2px) !important;
+         box-shadow: 0 6px 20px rgba(0,0,0,0.2) !important;
+     }
 </style>
 {% endblock %}
 
@@ -355,10 +385,21 @@
 <!-- Lista de Gastos -->
 <div class="card-modern">
     <div class="card-header-modern">
-        <div class="card-header-icon">
-            <i class="fas fa-list"></i>
+        <div class="d-flex justify-content-between align-items-center">
+            <div class="d-flex align-items-center">
+                <div class="card-header-icon">
+                    <i class="fas fa-list"></i>
+                </div>
+                <h4 class="card-header-title mb-0">Lista de Gastos</h4>
+            </div>
+            <div class="d-flex gap-2">
+                <select id="filtroEstado" class="form-select form-select-sm" style="width: auto;">
+                    <option value="todos">Todos los Estados</option>
+                    <option value="aprobado">Solo Aprobados</option>
+                    <option value="pendiente">Solo Pendientes</option>
+                </select>
+            </div>
         </div>
-        <h4 class="card-header-title">Lista de Gastos</h4>
     </div>
     
     {% if gastos %}
@@ -411,6 +452,15 @@
                         </td>
                         <td>
                             <div class="d-flex gap-2 justify-content-center">
+                                {% if gasto.aprobado %}
+                                    <button type="button" class="btn btn-warning btn-sm" title="Desaprobar Gasto" onclick="confirmarDesaprobarGasto({{ gasto.id }}, '{{ gasto.descripcion }}')">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                {% else %}
+                                    <button type="button" class="btn btn-success btn-sm" title="Aprobar Gasto" onclick="confirmarAprobarGasto({{ gasto.id }}, '{{ gasto.descripcion }}')">
+                                        <i class="fas fa-check"></i>
+                                    </button>
+                                {% endif %}
                                 <a href="{% url 'gasto_edit' gasto.id %}" class="btn btn-primary btn-sm" title="Editar">
                                     <i class="fas fa-edit"></i>
                                 </a>
@@ -438,6 +488,9 @@
 {% endblock %}
 
 {% block extra_js %}
+<!-- SweetAlert2 para confirmaciones bonitas -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     // Animación de entrada para las tarjetas
@@ -476,6 +529,205 @@ document.addEventListener('DOMContentLoaded', function() {
             this.style.transform = 'translateY(0)';
         });
     });
+    
+    // Filtros de gastos
+    const filtroEstado = document.getElementById('filtroEstado');
+    const filasGastos = document.querySelectorAll('.table-modern tbody tr');
+    
+    function aplicarFiltros() {
+        const estadoSeleccionado = filtroEstado ? filtroEstado.value : 'todos';
+        let gastosVisibles = 0;
+        
+        filasGastos.forEach(fila => {
+            const estadoGasto = fila.querySelector('td:nth-child(6) .badge-modern').textContent.trim();
+            let mostrar = true;
+            
+            // Filtro por estado
+            if (estadoSeleccionado === 'aprobado') {
+                mostrar = estadoGasto.includes('Aprobado');
+            } else if (estadoSeleccionado === 'pendiente') {
+                mostrar = estadoGasto.includes('Pendiente');
+            }
+            // Si es 'todos', mostrar = true (por defecto)
+            
+            fila.style.display = mostrar ? '' : 'none';
+            if (mostrar) gastosVisibles++;
+        });
+        
+        // Actualizar contador en el hero (solo el primer elemento que es "Total Gastos")
+        const totalGastosElements = document.querySelectorAll('.hero-stat-number');
+        if (totalGastosElements.length > 0) {
+            totalGastosElements[0].textContent = gastosVisibles;
+        }
+    }
+    
+    // Event listeners para los filtros
+    if (filtroEstado) {
+        filtroEstado.addEventListener('change', aplicarFiltros);
+    }
+    
+    // Función para obtener el token CSRF
+    function getCSRFToken() {
+        const name = 'csrftoken';
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+    
+    // Función para aprobar gasto
+    window.confirmarAprobarGasto = function(gastoId, descripcion) {
+        Swal.fire({
+            title: '¿Aprobar Gasto?',
+            html: `
+                <div class="text-center">
+                    <i class="fas fa-check-circle text-success" style="font-size: 3rem; margin-bottom: 1rem;"></i>
+                    <p><strong>${descripcion}</strong></p>
+                    <p class="text-muted">¿Estás seguro de que quieres aprobar este gasto?</p>
+                </div>
+            `,
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#28a745',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: '<i class="fas fa-check"></i> Sí, Aprobar',
+            cancelButtonText: '<i class="fas fa-times"></i> Cancelar',
+            reverseButtons: true,
+            customClass: {
+                popup: 'swal2-custom-popup',
+                confirmButton: 'swal2-custom-confirm',
+                cancelButton: 'swal2-custom-cancel'
+            }
+        }).then((result) => {
+            if (result.isConfirmed) {
+                // Mostrar loading
+                Swal.fire({
+                    title: 'Procesando...',
+                    html: 'Aprobando el gasto...',
+                    allowOutsideClick: false,
+                    didOpen: () => {
+                        Swal.showLoading();
+                    }
+                });
+                
+                // Enviar petición
+                fetch(`/gastos/${gastoId}/aprobar/`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': getCSRFToken(),
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    }
+                }).then(response => {
+                    if (response.ok) {
+                        Swal.fire({
+                            title: '¡Gasto Aprobado!',
+                            html: `
+                                <div class="text-center">
+                                    <i class="fas fa-check-circle text-success" style="font-size: 3rem; margin-bottom: 1rem;"></i>
+                                    <p>El gasto ha sido aprobado exitosamente</p>
+                                </div>
+                            `,
+                            icon: 'success',
+                            timer: 2000,
+                            showConfirmButton: false
+                        }).then(() => {
+                            location.reload();
+                        });
+                    } else {
+                        throw new Error('Error al aprobar el gasto');
+                    }
+                }).catch(error => {
+                    Swal.fire({
+                        title: 'Error',
+                        text: 'No se pudo aprobar el gasto. Inténtalo de nuevo.',
+                        icon: 'error',
+                        confirmButtonColor: '#dc3545'
+                    });
+                });
+            }
+        });
+    };
+    
+    // Función para desaprobar gasto
+    window.confirmarDesaprobarGasto = function(gastoId, descripcion) {
+        Swal.fire({
+            title: '¿Desaprobar Gasto?',
+            html: `
+                <div class="text-center">
+                    <i class="fas fa-exclamation-triangle text-warning" style="font-size: 3rem; margin-bottom: 1rem;"></i>
+                    <p><strong>${descripcion}</strong></p>
+                    <p class="text-muted">¿Estás seguro de que quieres desaprobar este gasto?</p>
+                </div>
+            `,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#ffc107',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: '<i class="fas fa-times"></i> Sí, Desaprobar',
+            cancelButtonText: '<i class="fas fa-arrow-left"></i> Cancelar',
+            reverseButtons: true,
+            customClass: {
+                popup: 'swal2-custom-popup',
+                confirmButton: 'swal2-custom-confirm',
+                cancelButton: 'swal2-custom-cancel'
+            }
+        }).then((result) => {
+            if (result.isConfirmed) {
+                // Mostrar loading
+                Swal.fire({
+                    title: 'Procesando...',
+                    html: 'Desaprobando el gasto...',
+                    allowOutsideClick: false,
+                    didOpen: () => {
+                        Swal.showLoading();
+                    }
+                });
+                
+                // Enviar petición
+                fetch(`/gastos/${gastoId}/aprobar/`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': getCSRFToken(),
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    }
+                }).then(response => {
+                    if (response.ok) {
+                        Swal.fire({
+                            title: '¡Gasto Desaprobado!',
+                            html: `
+                                <div class="text-center">
+                                    <i class="fas fa-times-circle text-warning" style="font-size: 3rem; margin-bottom: 1rem;"></i>
+                                    <p>El gasto ha sido desaprobado exitosamente</p>
+                                </div>
+                            `,
+                            icon: 'success',
+                            timer: 2000,
+                            showConfirmButton: false
+                        }).then(() => {
+                            location.reload();
+                        });
+                    } else {
+                        throw new Error('Error al desaprobar el gasto');
+                    }
+                }).catch(error => {
+                    Swal.fire({
+                        title: 'Error',
+                        text: 'No se pudo desaprobar el gasto. Inténtalo de nuevo.',
+                        icon: 'error',
+                        confirmButtonColor: '#dc3545'
+                    });
+                });
+            }
+        });
+    };
 });
 </script>
 {% endblock %}

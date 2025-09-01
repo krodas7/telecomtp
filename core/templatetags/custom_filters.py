@@ -25,3 +25,29 @@ def get_item(dictionary, key):
 def is_list(value):
     """Verifica si un valor es una lista"""
     return isinstance(value, list)
+
+@register.filter
+def divide(value, arg):
+    """Divide value por arg"""
+    try:
+        return float(value) / float(arg)
+    except (ValueError, ZeroDivisionError):
+        return 0
+
+@register.filter
+def multiply(value, arg):
+    """Multiplica value por arg"""
+    try:
+        return float(value) * float(arg)
+    except (ValueError):
+        return 0
+
+@register.filter
+def percentage(value, total):
+    """Calcula el porcentaje de value sobre total"""
+    try:
+        if float(total) == 0:
+            return 0
+        return round((float(value) / float(total)) * 100, 1)
+    except (ValueError, ZeroDivisionError):
+        return 0

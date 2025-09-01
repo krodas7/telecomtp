@@ -26,7 +26,17 @@ SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-change-in-production'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get('DEBUG', 'True').lower() == 'true'
 
-ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
+# Configuración de hosts permitidos
+DEFAULT_HOSTS = 'localhost,127.0.0.1'
+if not DEBUG:
+    # En producción, incluir tanto www como no-www
+    DEFAULT_HOSTS = 'construccionesarca.net,www.construccionesarca.net'
+
+ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', DEFAULT_HOSTS).split(',')
+
+# Configuración para redirección de www
+USE_WWW_REDIRECT = os.environ.get('USE_WWW_REDIRECT', 'False').lower() == 'true'
+WWW_REDIRECT_TO_NON_WWW = os.environ.get('WWW_REDIRECT_TO_NON_WWW', 'True').lower() == 'true'
 
 
 # Application definition
