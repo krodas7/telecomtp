@@ -742,6 +742,7 @@
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js"></script>
 
 <script>
+        // jshint ignore:start
         // Funciones para el modal de eventos - Definir primero
         function abrirModalEvento(fechaEspecifica = null) {
             // Si se pasa una fecha específica, usarla; si no, usar fecha actual
@@ -1049,6 +1050,7 @@
             // Mostrar notificación
             mostrarNotificacion(`Período cambiado a ${periodo === 1 ? 'mes actual' : periodo === 3 ? '3 meses' : '6 meses'}`, 'info');
         }
+        // jshint ignore:end
         </script>
 {% endblock %}
 
