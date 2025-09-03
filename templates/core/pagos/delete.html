@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load custom_filters %}
 
 {% block title %}Eliminar Pago - Sistema de Construcción{% endblock %}
 
@@ -28,7 +29,7 @@
                         <i class="fas fa-exclamation-triangle me-2"></i>¡Atención!
                     </h6>
                     <p class="mb-0">
-                        Está a punto de eliminar el pago de <strong>Q{{ pago.monto|floatformat:2 }}</strong> 
+                        Está a punto de eliminar el pago de <strong>{{pago.monto|currency_gtq}}</strong> 
                         para la factura <strong>"{{ pago.factura.numero_factura }}"</strong>. 
                         Esta acción desactivará el pago y no podrá ser utilizado en nuevas operaciones.
                     </p>
@@ -52,7 +53,7 @@
                                     </span>
                                 </p>
                                 {% if pago.monto %}
-                                    <p><strong>Monto:</strong> Q{{ pago.monto|floatformat:2 }}</p>
+                                    <p><strong>Monto:</strong> {{pago.monto|currency_gtq}}</p>
                                 {% endif %}
                                 <p><strong>Creado:</strong> {{ pago.creado_en|date:"d/m/Y H:i" }}</p>
                             </div>
@@ -112,7 +113,7 @@
                     </span>
                 </p>
                 {% if pago.factura.monto_total %}
-                    <p><strong>Total Factura:</strong> Q{{ pago.factura.monto_total|floatformat:2 }}</p>
+                    <p><strong>Total Factura:</strong> {{pago.factura.monto_total|currency_gtq}}</p>
                 {% endif %}
                 {% if pago.factura.fecha_emision %}
                     <p><strong>Fecha Emisión:</strong> {{ pago.factura.fecha_emision|date:"d/m/Y" }}</p>

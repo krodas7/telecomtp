@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load custom_filters %}
 
 {% block title %}Pagos - Sistema de Construcción{% endblock %}
 
@@ -455,7 +456,7 @@
                             <span class="pago-beneficiario">{{ pago.beneficiario }}</span>
                         </td>
                         <td>
-                            <span class="pago-monto">Q{{ pago.monto|floatformat:2 }}</span>
+                            <span class="pago-monto">{{pago.monto|currency_gtq}}</span>
                         </td>
                         <td>
                             <span class="pago-metodo">{{ pago.metodo_pago }}</span>

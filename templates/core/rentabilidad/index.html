@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load custom_filters %}
 
 {% block title %}Rentabilidad - Sistema de Construcción{% endblock %}
 
@@ -63,7 +64,7 @@
                 <h5 class="card-title text-success">
                     <i class="fas fa-arrow-up me-2"></i>Ingresos
                 </h5>
-                <h3 class="text-success">${{ ingresos|floatformat:2 }}</h3>
+                <h3 class="text-success">{{ingresos|currency_format}}</h3>
                 <small class="text-muted">Período seleccionado</small>
             </div>
         </div>
@@ -74,7 +75,7 @@
                 <h5 class="card-title text-danger">
                     <i class="fas fa-arrow-down me-2"></i>Gastos
                 </h5>
-                <h3 class="text-danger">${{ gastos|floatformat:2 }}</h3>
+                <h3 class="text-danger">{{gastos|currency_format}}</h3>
                 <small class="text-muted">Período seleccionado</small>
             </div>
         </div>
@@ -86,7 +87,7 @@
                     <i class="fas fa-chart-line me-2"></i>Rentabilidad Neta
                 </h5>
                 <h3 class="{% if rentabilidad_neta >= 0 %}text-success{% else %}text-danger{% endif %}">
-                    ${{ rentabilidad_neta|floatformat:2 }}
+                    {{rentabilidad_neta|currency_format}}
                 </h3>
                 <small class="text-muted">Ingresos - Gastos - Fijos</small>
             </div>
@@ -166,10 +167,10 @@
                             <strong>{{ item.proyecto.nombre }}</strong>
                         </td>
                                                         <td>{{ item.proyecto.cliente.razon_social }}</td>
-                        <td class="text-success">${{ item.ingresos|floatformat:2 }}</td>
-                        <td class="text-danger">${{ item.gastos|floatformat:2 }}</td>
+                        <td class="text-success">{{item.ingresos|currency_format}}</td>
+                        <td class="text-danger">{{item.gastos|currency_format}}</td>
                         <td class="{% if item.rentabilidad >= 0 %}text-success{% else %}text-danger{% endif %}">
-                            ${{ item.rentabilidad|floatformat:2 }}
+                            {{item.rentabilidad|currency_format}}
                         </td>
                         <td class="{% if item.margen >= 0 %}text-success{% else %}text-danger{% endif %}">
                             {{ item.margen|floatformat:1 }}%
@@ -210,7 +211,7 @@
                         <small class="text-muted">{{ item.proyecto.cliente.razon_social }}</small>
                     </div>
                     <div class="text-end">
-                        <span class="badge bg-success">${{ item.rentabilidad|floatformat:2 }}</span><br>
+                        <span class="badge bg-success">{{item.rentabilidad|currency_format}}</span><br>
                         <small class="text-muted">{{ item.margen|floatformat:1 }}%</small>
                     </div>
                 </div>
@@ -235,7 +236,7 @@
                             <small class="text-muted">{{ item.proyecto.cliente.razon_social }}</small>
                         </div>
                         <div class="text-end">
-                            <span class="badge bg-danger">${{ item.rentabilidad|floatformat:2 }}</span><br>
+                            <span class="badge bg-danger">{{item.rentabilidad|currency_format}}</span><br>
                             <small class="text-muted">{{ item.margen|floatformat:1 }}%</small>
                         </div>
                     </div>
@@ -259,22 +260,22 @@ document.addEventListener('DOMContentLoaded', function() {
     new Chart(tendenciasCtx, {
         type: 'line',
         data: {
-            labels: [{% for item in tendencias_mensuales %}'{{ item.mes }}'{% if not forloop.last %}, {% endif %}{% endfor %}],
+            labels: {{ tendencias_json|safe }}.map(item => item.mes),
             datasets: [{
                 label: 'Ingresos',
-                data: [{% for item in tendencias_mensuales %}{{ item.ingresos }}{% if not forloop.last %}, {% endif %}{% endfor %}],
+                data: {{ tendencias_json|safe }}.map(item => parseFloat(item.ingresos)),
                 borderColor: 'rgb(75, 192, 192)',
                 backgroundColor: 'rgba(75, 192, 192, 0.2)',
                 tension: 0.1
             }, {
                 label: 'Gastos',
-                data: [{% for item in tendencias_mensuales %}{{ item.gastos }}{% if not forloop.last %}, {% endif %}{% endfor %}],
+                data: {{ tendencias_json|safe }}.map(item => parseFloat(item.gastos)),
                 borderColor: 'rgb(255, 99, 132)',
                 backgroundColor: 'rgba(255, 99, 132, 0.2)',
                 tension: 0.1
             }, {
                 label: 'Rentabilidad',
-                data: [{% for item in tendencias_mensuales %}{{ item.rentabilidad }}{% if not forloop.last %}, {% endif %}{% endfor %}],
+                data: {{ tendencias_json|safe }}.map(item => parseFloat(item.rentabilidad)),
                 borderColor: 'rgb(255, 205, 86)',
                 backgroundColor: 'rgba(255, 205, 86, 0.2)',
                 tension: 0.1
@@ -328,8 +329,50 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // Funciones de exportación e impresión
 function exportarReporte() {
-    // Implementar exportación a PDF o Excel
-    alert('Función de exportación en desarrollo');
+    // Crear menú desplegable para seleccionar formato
+    const menu = document.createElement('div');
+    menu.className = 'dropdown-menu show';
+    menu.style.position = 'absolute';
+    menu.style.zIndex = '1000';
+    menu.innerHTML = `
+        <a class="dropdown-item" href="#" onclick="exportarPDF()">
+            <i class="fas fa-file-pdf me-2"></i>Exportar PDF
+        </a>
+        <a class="dropdown-item" href="#" onclick="exportarExcel()">
+            <i class="fas fa-file-excel me-2"></i>Exportar Excel
+        </a>
+    `;
+    
+    // Posicionar el menú cerca del botón
+    const boton = event.target.closest('button');
+    const rect = boton.getBoundingClientRect();
+    menu.style.top = (rect.bottom + 5) + 'px';
+    menu.style.left = rect.left + 'px';
+    
+    // Agregar al DOM
+    document.body.appendChild(menu);
+    
+    // Cerrar menú al hacer clic fuera
+    setTimeout(() => {
+        document.addEventListener('click', function cerrarMenu() {
+            document.body.removeChild(menu);
+            document.removeEventListener('click', cerrarMenu);
+        });
+    }, 100);
+}
+
+function exportarPDF() {
+    // Obtener parámetros actuales de la URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const pdfUrl = `{% url 'rentabilidad_exportar_pdf' %}?${urlParams.toString()}`;
+    window.open(pdfUrl, '_blank');
+}
+
+function exportarExcel() {
+    // Obtener parámetros actuales de la URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const excelUrl = `{% url 'rentabilidad_exportar_excel' %}?${urlParams.toString()}`;
+    window.open(excelUrl, '_blank');
 }
 
 function imprimirReporte() {

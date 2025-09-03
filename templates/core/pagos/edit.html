@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load custom_filters %}
 
 {% block title %}Editar Pago - Sistema de Construcción{% endblock %}
 
@@ -130,7 +131,7 @@
                     </span>
                 </p>
                 {% if pago.monto %}
-                    <p><strong>Monto:</strong> Q{{ pago.monto|floatformat:2 }}</p>
+                    <p><strong>Monto:</strong> {{pago.monto|currency_gtq}}</p>
                 {% endif %}
                 {% if pago.fecha_pago %}
                     <p><strong>Fecha del Pago:</strong> {{ pago.fecha_pago|date:"d/m/Y" }}</p>
@@ -149,7 +150,7 @@
                 </h6>
             </div>
             <div class="card-body">
-                <p><strong>Total Factura:</strong> Q{{ pago.factura.monto_total|floatformat:2 }}</p>
+                <p><strong>Total Factura:</strong> {{pago.factura.monto_total|currency_gtq}}</p>
                 <p><strong>Estado Factura:</strong> 
                     <span class="badge bg-{% if pago.factura.estado == 'pagada' %}success{% elif pago.factura.estado == 'pendiente' %}warning{% elif pago.factura.estado == 'vencida' %}danger{% else %}secondary{% endif %}">
                         {{ pago.factura.get_estado_display }}

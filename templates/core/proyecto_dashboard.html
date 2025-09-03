@@ -82,7 +82,7 @@
                                     <td><strong>Presupuesto:</strong></td>
                                     <td>
                                         {% if proyecto.presupuesto %}
-                                            Q{{ proyecto.presupuesto|floatformat:2 }}
+                                            {{proyecto.presupuesto|currency_gtq}}
                                         {% else %}
                                             <span class="text-muted">No especificado</span>
                                         {% endif %}
@@ -134,7 +134,7 @@
                                     <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
                                         Total Facturado
                                     </div>
-                                    <div class="h5 mb-0 font-weight-bold text-gray-800">Q{{ total_facturado|floatformat:2 }}</div>
+                                    <div class="h5 mb-0 font-weight-bold text-gray-800">{{total_facturado|currency_gtq}}</div>
                                 </div>
                                 <div class="col-auto">
                                     <i class="fas fa-file-invoice fa-2x text-gray-300"></i>
@@ -152,7 +152,7 @@
                                     <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
                                         Total Cobrado
                                     </div>
-                                    <div class="h5 mb-0 font-weight-bold text-gray-800">Q{{ total_cobrado|floatformat:2 }}</div>
+                                    <div class="h5 mb-0 font-weight-bold text-gray-800">{{total_cobrado|currency_gtq}}</div>
                                 </div>
                                 <div class="col-auto">
                                     <i class="fas fa-dollar-sign fa-2x text-gray-300"></i>
@@ -170,7 +170,7 @@
                                     <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
                                         Total Gastos
                                     </div>
-                                    <div class="h5 mb-0 font-weight-bold text-gray-800">Q{{ total_gastos|floatformat:2 }}</div>
+                                    <div class="h5 mb-0 font-weight-bold text-gray-800">{{total_gastos|currency_gtq}}</div>
                                 </div>
                                 <div class="col-auto">
                                     <i class="fas fa-receipt fa-2x text-gray-300"></i>
@@ -189,7 +189,7 @@
                                         Rentabilidad
                                     </div>
                                     <div class="h5 mb-0 font-weight-bold {% if rentabilidad_proyecto >= 0 %}text-success{% else %}text-danger{% endif %}">
-                                        Q{{ rentabilidad_proyecto|floatformat:2 }}
+                                        {{rentabilidad_proyecto|currency_gtq}}
                                     </div>
                                 </div>
                                 <div class="col-auto">
@@ -296,7 +296,7 @@
                                         <div>
                                             <h6 class="mb-0">{{ factura.numero_factura }}</h6>
                                             <small class="text-muted">
-                                                {{ factura.fecha_emision|date:"d/m/Y" }} • Q{{ factura.monto_total|floatformat:2 }}
+                                                {{ factura.fecha_emision|date:"d/m/Y" }} • {{factura.monto_total|currency_gtq}}
                                             </small>
                                         </div>
                                         <span class="badge badge-{{ factura.estado|yesno:'success,warning' }}">
@@ -321,7 +321,7 @@
                                                 {{ gasto.fecha_gasto|date:"d/m/Y" }} • {{ gasto.categoria.nombre }}
                                             </small>
                                         </div>
-                                        <span class="text-danger">Q{{ gasto.monto|floatformat:2 }}</span>
+                                        <span class="text-danger">{{gasto.monto|currency_gtq}}</span>
                                     </div>
                                     {% endfor %}
                                 </div>

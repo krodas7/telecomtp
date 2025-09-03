@@ -1,0 +1,148 @@
+{% extends 'base.html' %}
+
+{% block title %}Respaldos del Sistema - Sistema de Construcción{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="mb-0">
+        <i class="fas fa-database me-2"></i>Respaldos del Sistema
+    </h2>
+    <div>
+        <a href="{% url 'sistema_configurar' %}" class="btn btn-outline-secondary me-2">
+            <i class="fas fa-arrow-left me-2"></i>Volver a Configuración
+        </a>
+        <a href="{% url 'sistema_crear_respaldo' %}" class="btn btn-primary" onclick="return confirm('¿Crear nuevo respaldo?')">
+            <i class="fas fa-plus me-2"></i>Crear Nuevo Respaldo
+        </a>
+    </div>
+</div>
+
+{% if messages %}
+    {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    {% endfor %}
+{% endif %}
+
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-folder-open me-2"></i>Respaldos Disponibles
+                </h5>
+                <small class="text-muted">Ubicación: {{ backup_dir }}</small>
+            </div>
+            <div class="card-body">
+                {% if respaldos %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th><i class="fas fa-file me-1"></i>Archivo</th>
+                                    <th><i class="fas fa-calendar me-1"></i>Fecha de Creación</th>
+                                    <th><i class="fas fa-weight me-1"></i>Tamaño</th>
+                                    <th><i class="fas fa-cogs me-1"></i>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for respaldo in respaldos %}
+                                <tr>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <i class="fas fa-file-code text-primary me-2"></i>
+                                            <div>
+                                                <strong>{{ respaldo.nombre }}</strong>
+                                                <br>
+                                                <small class="text-muted">Respaldo completo del sistema</small>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div>
+                                            <strong>{{ respaldo.fecha|date:"d/m/Y" }}</strong>
+                                            <br>
+                                            <small class="text-muted">{{ respaldo.fecha|date:"H:i:s" }}</small>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-info">
+                                            {{ respaldo.tamaño|filesizeformat }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <div class="btn-group" role="group">
+                                            <button type="button" class="btn btn-sm btn-outline-primary" 
+                                                    onclick="descargarRespaldo('{{ respaldo.nombre }}')">
+                                                <i class="fas fa-download me-1"></i>Descargar
+                                            </button>
+                                            <button type="button" class="btn btn-sm btn-outline-success" 
+                                                    onclick="restaurarRespaldo('{{ respaldo.nombre }}')">
+                                                <i class="fas fa-upload me-1"></i>Restaurar
+                                            </button>
+                                            <button type="button" class="btn btn-sm btn-outline-danger" 
+                                                    onclick="eliminarRespaldo('{{ respaldo.nombre }}')">
+                                                <i class="fas fa-trash me-1"></i>Eliminar
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <div class="mt-4">
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i>
+                            <strong>Información:</strong>
+                            <ul class="mb-0 mt-2">
+                                <li>Los respaldos contienen todos los datos del sistema</li>
+                                <li>Se recomienda crear respaldos antes de cambios importantes</li>
+                                <li>Los archivos se guardan en formato JSON</li>
+                                <li>Para restaurar, usa el comando: <code>python manage.py loaddata archivo.json</code></li>
+                            </ul>
+                        </div>
+                    </div>
+                {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-database fa-3x text-muted mb-3"></i>
+                        <h5 class="text-muted">No hay respaldos disponibles</h5>
+                        <p class="text-muted">Crea tu primer respaldo para proteger los datos del sistema</p>
+                        <a href="{% url 'sistema_crear_respaldo' %}" class="btn btn-primary" onclick="return confirm('¿Crear primer respaldo?')">
+                            <i class="fas fa-plus me-2"></i>Crear Primer Respaldo
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function descargarRespaldo(nombre) {
+    // Crear enlace de descarga
+    const link = document.createElement('a');
+    link.href = `/media/respaldos/${nombre}`;
+    link.download = nombre;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
+
+function restaurarRespaldo(nombre) {
+    if (confirm(`¿Estás seguro de que quieres restaurar el respaldo "${nombre}"?\n\n⚠️ ADVERTENCIA: Esto sobrescribirá todos los datos actuales del sistema.`)) {
+        alert('⚠️ Función de restauración automática en desarrollo.\n\nPara restaurar manualmente:\n1. Detén el servidor\n2. Ejecuta: python manage.py loaddata media/respaldos/' + nombre + '\n3. Reinicia el servidor');
+    }
+}
+
+function eliminarRespaldo(nombre) {
+    if (confirm(`¿Estás seguro de que quieres eliminar el respaldo "${nombre}"?\n\nEsta acción no se puede deshacer.`)) {
+        // Aquí iría la lógica para eliminar el archivo
+        alert('⚠️ Función de eliminación en desarrollo.\n\nPara eliminar manualmente, ve a la carpeta:\nmedia/respaldos/');
+    }
+}
+</script>
+{% endblock %}

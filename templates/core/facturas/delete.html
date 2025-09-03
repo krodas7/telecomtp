@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load custom_filters %}
 
 {% block title %}Eliminar Factura - Sistema de Construcción{% endblock %}
 
@@ -51,7 +52,7 @@
                                     </span>
                                 </p>
                                 {% if factura.monto_total %}
-                                    <p><strong>Monto Total:</strong> Q{{ factura.monto_total|floatformat:2 }}</p>
+                                    <p><strong>Monto Total:</strong> {{factura.monto_total|currency_gtq}}</p>
                                 {% endif %}
                                 <p><strong>Creado:</strong> {{ factura.fecha_creacion|date:"d/m/Y H:i" }}</p>
                             </div>
@@ -114,7 +115,7 @@
                                 <div class="d-flex align-items-center">
                                     <i class="fas fa-money-bill me-2 text-success"></i>
                                     <div>
-                                        <strong>Q{{ pago.monto|floatformat:2 }}</strong>
+                                        <strong>{{pago.monto|currency_gtq}}</strong>
                                         <br>
                                         <small class="text-muted">
                                             {{ pago.fecha_pago|date:"d/m/Y" }} - 
@@ -153,7 +154,7 @@
                                 <div class="d-flex align-items-center">
                                     <i class="fas fa-hand-holding-usd me-2 text-info"></i>
                                     <div>
-                                        <strong>Q{{ aplicacion.monto_aplicado|floatformat:2 }}</strong>
+                                        <strong>{{aplicacion.monto_aplicado|currency_gtq}}</strong>
                                         <br>
                                         <small class="text-muted">
                                             {{ aplicacion.fecha_aplicacion|date:"d/m/Y" }}

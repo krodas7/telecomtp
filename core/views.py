@@ -18,7 +18,7 @@ from .models import (
     NotificacionSistema, ConfiguracionNotificaciones, HistorialNotificaciones,
     ItemInventario, CategoriaInventario, AsignacionInventario,
     Rol, PerfilUsuario, Modulo, Permiso, RolPermiso, AnticipoProyecto,
-    CarpetaProyecto
+    CarpetaProyecto, ConfiguracionSistema
 )
 from .forms import (
     AnticipoForm, ArchivoProyectoForm, ClienteForm, ProyectoForm, 
@@ -31,7 +31,7 @@ from django.contrib.auth.forms import UserCreationForm, UserChangeForm
 from django.core.paginator import Paginator
 from django.http import JsonResponse, HttpResponse
 from .services import NotificacionService, SistemaNotificacionesAutomaticas
-# from .optimization import performance_monitor  # ELIMINADO
+
 from django.conf import settings
 from reportlab.lib.pagesizes import letter, A4
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, PageBreak
@@ -122,10 +122,8 @@ def dashboard(request):
             fecha_emision__year=año_actual
         ).aggregate(total=Sum('monto_total'))['total'] or Decimal('0.00')
         
-        print(f"🔍 DEBUG DASHBOARD - Mes: {mes_actual}/{año_actual}")
-        print(f"🔍 DEBUG DASHBOARD - Facturado: Q{total_facturado_mes}")
-        print(f"🔍 DEBUG DASHBOARD - Cobrado: Q{ingresos_mes}")
-        print(f"🔍 DEBUG DASHBOARD - Pendiente: Q{total_facturado_mes - ingresos_mes}")
+        # Log información del dashboard para debugging
+        logger.debug(f"Dashboard - Mes: {mes_actual}/{año_actual}, Facturado: Q{total_facturado_mes}, Cobrado: Q{ingresos_mes}")
         
         # Gastos del mes (gastos aprobados)
         gastos_mes = Gasto.objects.filter(
@@ -213,14 +211,13 @@ def dashboard(request):
         import json
         eventos_calendario_json = json.dumps(eventos_calendario, default=str)
         
-        # DEBUG: Imprimir contexto
-        print(f"🔍 DEBUG - Eventos calendario: {eventos_calendario}")
-        print(f"🔍 DEBUG - Eventos JSON: {eventos_calendario_json}")
+        # Log eventos del calendario para debugging
+        logger.debug(f"Eventos calendario: {len(eventos_calendario)} eventos generados")
         
         # Datos simples para gráficos (sin cálculos complejos por ahora)
         meses_grafico = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun']
         
-        # Convertir Decimal a float para evitar errores de tipo
+        # Convertir Decimal a float para evitar errores de serialización JSON
         total_facturado_float = float(total_facturado) if total_facturado else 0.0
         
         ingresos_mensuales = [total_facturado_float * 0.1, total_facturado_float * 0.15, total_facturado_float * 0.2, total_facturado_float * 0.25, total_facturado_float * 0.3, total_facturado_float * 0.35]
@@ -281,28 +278,19 @@ def dashboard(request):
             'proyectos_rentables': proyectos_rentables,
         }
         
-        # DEBUG: Imprimir contexto final
-        print(f"🔍 DEBUG - Contexto final: {list(context.keys())}")
-        print(f"🔍 DEBUG - Eventos JSON en contexto: {context.get('eventos_calendario_json', 'NO ENCONTRADO')}")
-        
-        # DEBUG: Verificar si hay algún problema con Decimal
-        print(f"🔍 DEBUG - Verificando contexto completo...")
+        # Log información del contexto para debugging
+        logger.debug(f"Contexto dashboard generado con {len(context)} variables")
+        # Verificar tipos de datos en el contexto
         for key, value in context.items():
-            if isinstance(value, (int, float)):
-                print(f"   ✅ {key}: {value} (tipo: {type(value).__name__})")
-            elif isinstance(value, str):
-                print(f"   ✅ {key}: {value[:50]}... (tipo: string)")
-            elif isinstance(value, list):
-                print(f"   ✅ {key}: {len(value)} elementos (tipo: list)")
-            else:
-                print(f"   ⚠️ {key}: {value} (tipo: {type(value).__name__})")
+            if isinstance(value, Decimal):
+                logger.debug(f"Variable {key} es Decimal: {value}")
         
         return render(request, 'core/dashboard.html', context)
         
     except Exception as e:
         logger.error(f"Error en dashboard: {str(e)}")
         # Contexto de emergencia
-        print(f"🔍 DEBUG - Usando contexto de emergencia")
+        logger.warning("Usando contexto de emergencia para dashboard")
         context = {
             'total_clientes': 0,
             'total_proyectos': 0,
@@ -325,8 +313,22 @@ def dashboard(request):
 @login_required
 def clientes_list(request):
     """Lista de clientes"""
-    # Obtener todos los clientes (activos e inactivos) para la lista
-    clientes = Cliente.objects.all().order_by('razon_social')
+    # Obtener filtro de estado desde la URL
+    estado_filtro = request.GET.get('estado', 'activos')
+    
+    # Debug: Log para verificar el filtro
+    logger.info(f"Filtro aplicado: {estado_filtro}")
+    
+    # Aplicar filtro según el parámetro
+    if estado_filtro == 'inactivos':
+        clientes = Cliente.objects.filter(activo=False).order_by('razon_social')
+        logger.info(f"Clientes inactivos encontrados: {clientes.count()}")
+    elif estado_filtro == 'todos':
+        clientes = Cliente.objects.all().order_by('razon_social')
+        logger.info(f"Todos los clientes encontrados: {clientes.count()}")
+    else:  # activos por defecto
+        clientes = Cliente.objects.filter(activo=True).order_by('razon_social')
+        logger.info(f"Clientes activos encontrados: {clientes.count()}")
     
     # Calcular estadísticas correctas
     total_clientes = Cliente.objects.count()
@@ -338,6 +340,7 @@ def clientes_list(request):
         'total_clientes': total_clientes,
         'clientes_activos': clientes_activos,
         'clientes_inactivos': clientes_inactivos,
+        'estado_filtro': estado_filtro,
     }
     
     return render(request, 'core/clientes/list.html', context)
@@ -871,28 +874,18 @@ def factura_create(request):
     form = FacturaForm()
     
     if request.method == 'POST':
-        print("=== DEBUG: POST recibido ===")
-        print(f"POST data: {request.POST}")
-        
+        logger.debug("Creando nueva factura")
         form = FacturaForm(request.POST)
-        print(f"Formulario creado: {form}")
-        print(f"Formulario válido: {form.is_valid()}")
         
         if form.is_valid():
-            print("=== DEBUG: Formulario válido, guardando ===")
-            print(f"=== DEBUG: Datos del formulario: {form.cleaned_data}")
+            logger.debug("Formulario válido, guardando factura")
             
             factura = form.save(commit=False)
             factura.usuario_creacion = request.user
             factura.estado = 'emitida'
             
-            print(f"=== DEBUG: Factura antes de guardar: {factura}")
-            print(f"=== DEBUG: Usuario: {request.user}")
-            print(f"=== DEBUG: Estado: {factura.estado}")
-            
             factura.save()
-            
-            print(f"=== DEBUG: Factura guardada con ID: {factura.id} ===")
+            logger.info(f"Factura {factura.numero_factura} creada exitosamente por {request.user}")
             
             # Registrar actividad
             LogActividad.objects.create(
@@ -906,9 +899,7 @@ def factura_create(request):
             messages.success(request, 'Factura creada exitosamente')
             return redirect('facturas_list')
         else:
-            print("=== DEBUG: Formulario inválido ===")
-            print(f"Errores del formulario: {form.errors}")
-            print(f"Errores de campos: {form.errors.as_data()}")
+            logger.warning(f"Formulario inválido: {form.errors}")
     
     # Obtener clientes y proyectos activos para los dropdowns
     clientes = Cliente.objects.filter(activo=True).order_by('razon_social')
@@ -1065,10 +1056,11 @@ def gastos_list(request):
     # Obtener todos los gastos sin filtros
     gastos = Gasto.objects.all().order_by('-fecha_gasto')
     
-    # DEBUG: Imprimir información de gastos
-    print(f"🔍 DEBUG - Total gastos en BD: {gastos.count()}")
-    for g in gastos:
-        print(f"   • {g.descripcion} - Q{g.monto} - Aprobado: {g.aprobado} - Fecha: {g.fecha_gasto}")
+    # Log información de gastos
+    logger.debug(f"Total gastos en BD: {gastos.count()}")
+    # Log detalles de gastos para debugging
+    for g in gastos[:5]:  # Solo los primeros 5 para no saturar logs
+        logger.debug(f"Gasto: {g.descripcion} - Q{g.monto} - Aprobado: {g.aprobado}")
     
     # Calcular estadísticas
     total_gastos = sum(gasto.monto for gasto in gastos)
@@ -1083,6 +1075,56 @@ def gastos_list(request):
     }
     
     return render(request, 'core/gastos/list.html', context)
+
+
+@login_required
+def gastos_dashboard(request):
+    """Dashboard del módulo de gastos"""
+    try:
+        # Estadísticas generales
+        total_gastos = Gasto.objects.count()
+        total_monto = Gasto.objects.aggregate(total=Sum('monto'))['total'] or 0
+        gastos_aprobados = Gasto.objects.filter(aprobado=True).count()
+        gastos_pendientes = Gasto.objects.filter(aprobado=False).count()
+        
+        # Gastos por categoría
+        gastos_por_categoria = Gasto.objects.values('categoria__nombre').annotate(
+            total=Sum('monto'),
+            cantidad=Count('id')
+        ).order_by('-total')
+        
+        # Gastos recientes
+        gastos_recientes = Gasto.objects.select_related('categoria', 'proyecto').order_by('-fecha_gasto')[:10]
+        
+        # Gastos por mes (últimos 6 meses)
+        from datetime import datetime, timedelta
+        from django.db.models.functions import TruncMonth
+        
+        fecha_inicio = datetime.now() - timedelta(days=180)
+        gastos_por_mes = Gasto.objects.filter(
+            fecha_gasto__gte=fecha_inicio
+        ).annotate(
+            mes=TruncMonth('fecha_gasto')
+        ).values('mes').annotate(
+            total=Sum('monto')
+        ).order_by('mes')
+        
+        context = {
+            'total_gastos': total_gastos,
+            'total_monto': total_monto,
+            'gastos_aprobados': gastos_aprobados,
+            'gastos_pendientes': gastos_pendientes,
+            'gastos_por_categoria': gastos_por_categoria,
+            'gastos_recientes': gastos_recientes,
+            'gastos_por_mes': gastos_por_mes,
+        }
+        
+        return render(request, 'core/gastos/dashboard.html', context)
+        
+    except Exception as e:
+        logger.error(f'Error en gastos_dashboard: {e}')
+        messages.error(request, 'Error al cargar el dashboard de gastos')
+        return redirect('gastos_list')
 
 
 @login_required
@@ -1713,7 +1755,7 @@ def archivo_upload(request, proyecto_id):
             try:
                 archivo.generar_thumbnail()
             except Exception as e:
-                print(f"Error generando thumbnail: {e}")
+                logger.warning(f"Error generando thumbnail: {e}")
                 pass
             
             # Registrar actividad
@@ -1841,12 +1883,248 @@ def sistema_configurar(request):
         messages.error(request, 'No tienes permisos para acceder a esta sección')
         return redirect('dashboard')
     
-    if request.method == 'POST':
-        # Aquí se pueden agregar configuraciones del sistema
-        messages.success(request, 'Configuración actualizada exitosamente')
-        return redirect('sistema')
+    config = ConfiguracionSistema.get_config()
     
-    return render(request, 'core/sistema/configurar.html')
+    if request.method == 'POST':
+        try:
+            # Actualizar configuración general
+            config.nombre_empresa = request.POST.get('nombre_empresa', config.nombre_empresa)
+            config.moneda = request.POST.get('moneda', config.moneda)
+            config.zona_horaria = request.POST.get('zona_horaria', config.zona_horaria)
+            config.idioma = request.POST.get('idioma', config.idioma)
+            
+            # Configuración del sistema
+            config.max_usuarios_simultaneos = int(request.POST.get('max_usuarios_simultaneos', config.max_usuarios_simultaneos))
+            config.tiempo_sesion = int(request.POST.get('tiempo_sesion', config.tiempo_sesion))
+            
+            # Configuraciones avanzadas
+            config.respaldo_automatico = 'respaldo_automatico' in request.POST
+            config.notificaciones_email = 'notificaciones_email' in request.POST
+            
+            # Configuración de email
+            config.email_host = request.POST.get('email_host', config.email_host)
+            config.email_port = int(request.POST.get('email_port', config.email_port))
+            config.email_username = request.POST.get('email_username', config.email_username)
+            config.email_password = request.POST.get('email_password', config.email_password)
+            config.email_use_tls = 'email_use_tls' in request.POST
+            
+            config.actualizado_por = request.user
+            config.save()
+            
+            # Registrar actividad
+            LogActividad.objects.create(
+                usuario=request.user,
+                accion='Actualizar',
+                modulo='Sistema',
+                descripcion=f'Configuración del sistema actualizada por {request.user.username}',
+                ip_address=request.META.get('REMOTE_ADDR')
+            )
+            
+            messages.success(request, '✅ Configuración actualizada exitosamente')
+            return redirect('sistema_configurar')
+            
+        except Exception as e:
+            logger.error(f'Error al actualizar configuración: {e}')
+            messages.error(request, f'❌ Error al actualizar configuración: {str(e)}')
+    
+    context = {
+        'config': config,
+    }
+    return render(request, 'core/sistema/configurar.html', context)
+
+
+@login_required
+def sistema_crear_respaldo(request):
+    """Crear respaldo de la base de datos"""
+    if not request.user.is_superuser:
+        messages.error(request, 'No tienes permisos para acceder a esta sección')
+        return redirect('dashboard')
+    
+    try:
+        from django.core.management import call_command
+        from django.core.files.base import ContentFile
+        import io
+        import os
+        from datetime import datetime
+        
+        # Crear respaldo
+        output = io.StringIO()
+        call_command('dumpdata', stdout=output, indent=2)
+        output.seek(0)
+        
+        # Crear nombre de archivo con timestamp
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        filename = f'respaldo_sistema_{timestamp}.json'
+        
+        # Crear directorio de respaldos si no existe
+        backup_dir = os.path.join(settings.MEDIA_ROOT, 'respaldos')
+        os.makedirs(backup_dir, exist_ok=True)
+        
+        # Guardar archivo
+        backup_path = os.path.join(backup_dir, filename)
+        with open(backup_path, 'w', encoding='utf-8') as f:
+            f.write(output.getvalue())
+        
+        # Registrar actividad
+        LogActividad.objects.create(
+            usuario=request.user,
+            accion='Crear',
+            modulo='Sistema',
+            descripcion=f'Respaldo creado: {filename}',
+            ip_address=request.META.get('REMOTE_ADDR')
+        )
+        
+        messages.success(request, f'✅ Respaldo creado exitosamente: {filename}')
+        
+    except Exception as e:
+        logger.error(f'Error al crear respaldo: {e}')
+        messages.error(request, f'❌ Error al crear respaldo: {str(e)}')
+    
+    return redirect('sistema_configurar')
+
+
+@login_required
+def sistema_limpiar_logs(request):
+    """Limpiar logs antiguos"""
+    if not request.user.is_superuser:
+        messages.error(request, 'No tienes permisos para acceder a esta sección')
+        return redirect('dashboard')
+    
+    try:
+        from datetime import timedelta
+        
+        # Eliminar logs más antiguos de 30 días
+        fecha_limite = timezone.now() - timedelta(days=30)
+        logs_eliminados = LogActividad.objects.filter(fecha__lt=fecha_limite).count()
+        LogActividad.objects.filter(fecha__lt=fecha_limite).delete()
+        
+        # Registrar actividad
+        LogActividad.objects.create(
+            usuario=request.user,
+            accion='Limpiar',
+            modulo='Sistema',
+            descripcion=f'Logs antiguos eliminados: {logs_eliminados} registros',
+            ip_address=request.META.get('REMOTE_ADDR')
+        )
+        
+        messages.success(request, f'✅ Se eliminaron {logs_eliminados} logs antiguos')
+        
+    except Exception as e:
+        logger.error(f'Error al limpiar logs: {e}')
+        messages.error(request, f'❌ Error al limpiar logs: {str(e)}')
+    
+    return redirect('sistema_configurar')
+
+
+@login_required
+def sistema_exportar_config(request):
+    """Exportar configuración del sistema"""
+    if not request.user.is_superuser:
+        messages.error(request, 'No tienes permisos para acceder a esta sección')
+        return redirect('dashboard')
+    
+    try:
+        config = ConfiguracionSistema.get_config()
+        
+        # Crear respuesta JSON
+        config_data = {
+            'nombre_empresa': config.nombre_empresa,
+            'moneda': config.moneda,
+            'zona_horaria': config.zona_horaria,
+            'idioma': config.idioma,
+            'max_usuarios_simultaneos': config.max_usuarios_simultaneos,
+            'tiempo_sesion': config.tiempo_sesion,
+            'respaldo_automatico': config.respaldo_automatico,
+            'notificaciones_email': config.notificaciones_email,
+            'email_host': config.email_host,
+            'email_port': config.email_port,
+            'email_username': config.email_username,
+            'email_use_tls': config.email_use_tls,
+            'exportado_en': timezone.now().isoformat(),
+            'exportado_por': request.user.username
+        }
+        
+        response = HttpResponse(
+            json.dumps(config_data, indent=2, ensure_ascii=False),
+            content_type='application/json'
+        )
+        response['Content-Disposition'] = f'attachment; filename="configuracion_sistema_{timezone.now().strftime("%Y%m%d_%H%M%S")}.json"'
+        
+        # Registrar actividad
+        LogActividad.objects.create(
+            usuario=request.user,
+            accion='Exportar',
+            modulo='Sistema',
+            descripcion='Configuración del sistema exportada',
+            ip_address=request.META.get('REMOTE_ADDR')
+        )
+        
+        return response
+        
+    except Exception as e:
+        logger.error(f'Error al exportar configuración: {e}')
+        messages.error(request, f'❌ Error al exportar configuración: {str(e)}')
+        return redirect('sistema_configurar')
+
+
+@login_required
+def sistema_ver_respaldos(request):
+    """Ver lista de respaldos disponibles"""
+    if not request.user.is_superuser:
+        messages.error(request, 'No tienes permisos para acceder a esta sección')
+        return redirect('dashboard')
+    
+    try:
+        import os
+        from datetime import datetime
+        
+        # Directorio de respaldos
+        backup_dir = os.path.join(settings.MEDIA_ROOT, 'respaldos')
+        
+        # Crear directorio si no existe
+        os.makedirs(backup_dir, exist_ok=True)
+        
+        # Obtener lista de archivos
+        respaldos = []
+        if os.path.exists(backup_dir):
+            for filename in os.listdir(backup_dir):
+                if filename.endswith('.json') and filename.startswith('respaldo_sistema_'):
+                    file_path = os.path.join(backup_dir, filename)
+                    file_stat = os.stat(file_path)
+                    
+                    # Extraer fecha del nombre del archivo
+                    try:
+                        date_str = filename.replace('respaldo_sistema_', '').replace('.json', '')
+                        file_date = datetime.strptime(date_str, '%Y%m%d_%H%M%S')
+                    except:
+                        file_date = datetime.fromtimestamp(file_stat.st_mtime)
+                    
+                    respaldos.append({
+                        'nombre': filename,
+                        'fecha': file_date,
+                        'tamaño': file_stat.st_size,
+                        'ruta': file_path
+                    })
+            
+            # Ordenar por fecha (más reciente primero)
+            respaldos.sort(key=lambda x: x['fecha'], reverse=True)
+        
+        context = {
+            'respaldos': respaldos,
+            'backup_dir': backup_dir,
+        }
+        
+        return render(request, 'core/sistema/respaldos.html', context)
+        
+    except Exception as e:
+        logger.error(f'Error al listar respaldos: {e}')
+        messages.error(request, f'❌ Error al listar respaldos: {str(e)}')
+        return redirect('sistema_configurar')
+
+
+def offline_view(request):
+    """Vista para modo offline"""
+    return render(request, 'core/offline.html')
 
 
 @login_required
@@ -1890,99 +2168,99 @@ def sistema_reset_app(request):
             )
             
             # LIMPIEZA COMPLETA DE DATOS - En orden para evitar problemas de integridad referencial
-            print("🧹 Iniciando limpieza completa del sistema...")
+            logger.info("Iniciando limpieza completa del sistema")
             
             try:
                 # 1. Eliminar datos de facturación
-                print("📊 Eliminando datos de facturación...")
+                logger.info("Eliminando datos de facturación")
                 Pago.objects.all().delete()
                 Factura.objects.all().delete()
-                print("✅ Facturación eliminada")
+                logger.info("Facturación eliminada")
                 
                 # 2. Eliminar datos financieros
-                print("💰 Eliminando datos financieros...")
+                logger.info("Eliminando datos financieros")
                 Anticipo.objects.all().delete()
                 Gasto.objects.all().delete()
                 CategoriaGasto.objects.all().delete()
                 GastoFijoMensual.objects.all().delete()
-                print("✅ Datos financieros eliminados")
+                logger.info("Datos financieros eliminados")
                 
                 # 3. Eliminar presupuestos
-                print("📋 Eliminando presupuestos...")
+                logger.info("Eliminando presupuestos")
                 PartidaPresupuesto.objects.all().delete()
                 Presupuesto.objects.all().delete()
-                print("✅ Presupuestos eliminados")
+                logger.info("Presupuestos eliminados")
                 
                 # 4. Eliminar archivos
-                print("📁 Eliminando archivos...")
+                logger.info("Eliminando archivos")
                 ArchivoProyecto.objects.all().delete()
-                print("✅ Archivos eliminados")
+                logger.info("Archivos eliminados")
                 
                 # 5. Eliminar colaboradores
-                print("👥 Eliminando colaboradores...")
+                logger.info("Eliminando colaboradores")
                 Colaborador.objects.all().delete()
-                print("✅ Colaboradores eliminados")
+                logger.info("Colaboradores eliminados")
                 
                 # 6. Eliminar proyectos
-                print("🏗️ Eliminando proyectos...")
+                logger.info("Eliminando proyectos")
                 Proyecto.objects.all().delete()
-                print("✅ Proyectos eliminados")
+                logger.info("Proyectos eliminados")
                 
                 # 7. Eliminar clientes
-                print("👤 Eliminando clientes...")
+                logger.info("Eliminando clientes")
                 Cliente.objects.all().delete()
-                print("✅ Clientes eliminados")
+                logger.info("Clientes eliminados")
                 
                 # 8. Eliminar inventario
-                print("📦 Eliminando inventario...")
+                logger.info("Eliminando inventario")
                 AsignacionInventario.objects.all().delete()
                 ItemInventario.objects.all().delete()
                 CategoriaInventario.objects.all().delete()
-                print("✅ Inventario eliminado")
+                logger.info("Inventario eliminado")
                 
                 # 9. Eliminar notificaciones básicas
-                print("🔔 Eliminando notificaciones...")
+                logger.info("Eliminando notificaciones")
                 NotificacionSistema.objects.all().delete()
-                print("✅ Notificaciones eliminadas")
+                logger.info("Notificaciones eliminadas")
                 
                 # 10. Limpiar logs de actividad (mantener solo el log actual del reset)
-                print("📝 Limpiando logs de actividad...")
+                logger.info("Limpiando logs de actividad")
                 LogActividad.objects.exclude(
                     accion__in=['RESET_APP', 'RESET_APP_SUCCESS', 'RESET_APP_ERROR']
                 ).delete()
-                print("✅ Logs limpiados")
+                logger.info("Logs limpiados")
                 
                 # 11. Limpiar perfiles de usuario (excepto el superusuario actual)
-                print("👤 Limpiando perfiles de usuario...")
+                logger.info("Limpiando perfiles de usuario")
                 PerfilUsuario.objects.exclude(usuario=request.user).delete()
-                print("✅ Perfiles limpiados")
+                logger.info("Perfiles limpiados")
                 
                 # 12. Limpiar usuarios (excepto superusuarios)
-                print("🔐 Limpiando usuarios...")
+                logger.info("Limpiando usuarios")
                 User.objects.exclude(is_superuser=True).delete()
-                print("✅ Usuarios limpiados")
+                logger.info("Usuarios limpiados")
                 
                 # 13. Limpiar roles
-                print("🎭 Limpiando roles...")
+                logger.info("Limpiando roles")
                 Rol.objects.all().delete()
-                print("✅ Roles eliminados")
+                logger.info("Roles eliminados")
                 
                 # 14. Limpiar caché del sistema
-                print("🗄️ Limpiando caché...")
+                logger.info("Limpiando caché")
                 cache.clear()
-                print("✅ Caché limpiado")
+                logger.info("Caché limpiado")
                 
                 # 15. Limpiar contadores de base de datos SQLite
-                print("🗄️ Limpiando contadores de base de datos...")
+                logger.info("Limpiando contadores de base de datos")
                 from django.db import connection
                 with connection.cursor() as cursor:
                     cursor.execute("DELETE FROM sqlite_sequence")
-                print("✅ Contadores limpiados")
+                logger.info("Contadores limpiados")
                 
-                print("✅ Sistema limpiado completamente!")
+                logger.info("Sistema limpiado completamente")
                 
             except Exception as e:
-                print(f"❌ Error en paso específico: {e}")
+                logger.error(f"Error en paso específico del reset: {e}")
                 raise e
             
             messages.success(request, '✅ RESET COMPLETO realizado exitosamente. Todos los datos han sido eliminados.')
@@ -1998,7 +2276,7 @@ def sistema_reset_app(request):
             )
             
         except Exception as e:
-            print(f"❌ Error durante la limpieza: {e}")
+            logger.error(f"Error durante la limpieza del sistema: {e}")
             messages.error(request, f'❌ Error durante el reset: {str(e)}')
             
             # Registrar error en logs
@@ -2047,15 +2325,13 @@ def rentabilidad_view(request):
             estado='pagada'  # Solo facturas pagadas
         ).aggregate(total=Sum('monto_total'))['total'] or Decimal('0.00')
         
-        # DEBUG: Mostrar diferencia entre facturado y cobrado
+        # Calcular totales de facturación e ingresos
         total_facturado = Factura.objects.filter(
             fecha_emision__range=[fecha_inicio_dt, fecha_fin_dt]
         ).aggregate(total=Sum('monto_total'))['total'] or Decimal('0.00')
         
-        print(f"🔍 DEBUG - Período: {fecha_inicio} a {fecha_fin}")
-        print(f"🔍 DEBUG - Total facturado: Q{total_facturado}")
-        print(f"🔍 DEBUG - Total cobrado (ingresos): Q{ingresos}")
-        print(f"🔍 DEBUG - Diferencia: Q{total_facturado - ingresos}")
+        # Log información de rentabilidad
+        logger.debug(f"Período: {fecha_inicio} a {fecha_fin}, Facturado: Q{total_facturado}, Cobrado: Q{ingresos}")
         
         # Calcular gastos
         gastos = Gasto.objects.filter(
@@ -2146,6 +2422,10 @@ def rentabilidad_view(request):
         # Ordenar tendencias cronológicamente
         tendencias_mensuales.reverse()
         
+        # Crear datos JSON para JavaScript
+        import json
+        tendencias_json = json.dumps(tendencias_mensuales, default=str)
+        
         # Calcular rentabilidad del mes actual para el dashboard
         mes_actual = hoy.month
         año_actual = hoy.year
@@ -2178,6 +2458,7 @@ def rentabilidad_view(request):
             'proyectos_rentabilidad': proyectos_rentabilidad,
             'gastos_por_categoria': gastos_por_categoria,
             'tendencias_mensuales': tendencias_mensuales,
+            'tendencias_json': tendencias_json,
             # Datos para el dashboard
             'ingresos_mes': ingresos_mes_actual,
             'gastos_mes': gastos_mes_actual,
@@ -2201,6 +2482,7 @@ def rentabilidad_view(request):
             'proyectos_rentabilidad': [],
             'gastos_por_categoria': [],
             'tendencias_mensuales': [],
+            'tendencias_json': '[]',
             'ingresos_mes': Decimal('0.00'),
             'gastos_mes': Decimal('0.00'),
             'rentabilidad_mes': Decimal('0.00'),
@@ -2795,6 +3077,229 @@ def perfil(request):
         'usuario': request.user,
     }
     return render(request, 'core/perfil.html', context)
+
+
+@login_required
+def rentabilidad_exportar_pdf(request):
+    """Exportar reporte de rentabilidad a PDF"""
+    try:
+        # Obtener los mismos datos que la vista principal
+        periodo = request.GET.get('periodo', 'mes')
+        fecha_inicio = request.GET.get('fecha_inicio')
+        fecha_fin = request.GET.get('fecha_fin')
+        
+        # Fechas por defecto
+        hoy = timezone.now()
+        if periodo == 'mes':
+            fecha_inicio = fecha_inicio or (hoy - timedelta(days=30)).strftime('%Y-%m-%d')
+            fecha_fin = fecha_fin or hoy.strftime('%Y-%m-%d')
+        elif periodo == 'trimestre':
+            fecha_inicio = fecha_inicio or (hoy - timedelta(days=90)).strftime('%Y-%m-%d')
+            fecha_fin = fecha_fin or hoy.strftime('%Y-%m-%d')
+        elif periodo == 'año':
+            fecha_inicio = fecha_inicio or (hoy - timedelta(days=365)).strftime('%Y-%m-%d')
+            fecha_fin = fecha_fin or hoy.strftime('%Y-%m-%d')
+        
+        # Convertir fechas a datetime
+        fecha_inicio_dt = timezone.make_aware(datetime.strptime(fecha_inicio, '%Y-%m-%d'))
+        fecha_fin_dt = timezone.make_aware(datetime.strptime(fecha_fin, '%Y-%m-%d'))
+        
+        # Calcular datos de rentabilidad (mismo código que la vista principal)
+        ingresos = Factura.objects.filter(
+            fecha_emision__range=[fecha_inicio_dt, fecha_fin_dt],
+            estado='pagada'
+        ).aggregate(total=Sum('monto_total'))['total'] or Decimal('0.00')
+        
+        gastos = Gasto.objects.filter(
+            fecha_gasto__range=[fecha_inicio_dt, fecha_fin_dt],
+            aprobado=True
+        ).aggregate(total=Sum('monto'))['total'] or Decimal('0.00')
+        
+        rentabilidad_bruta = ingresos - gastos
+        margen_rentabilidad = (rentabilidad_bruta / ingresos * 100) if ingresos > 0 else Decimal('0.00')
+        
+        # Crear respuesta HTTP con contenido PDF
+        from django.http import HttpResponse
+        from reportlab.lib.pagesizes import letter
+        from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
+        from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+        from reportlab.lib.units import inch
+        from reportlab.lib import colors
+        from io import BytesIO
+        
+        buffer = BytesIO()
+        doc = SimpleDocTemplate(buffer, pagesize=letter)
+        styles = getSampleStyleSheet()
+        story = []
+        
+        # Título
+        title_style = ParagraphStyle(
+            'CustomTitle',
+            parent=styles['Heading1'],
+            fontSize=18,
+            spaceAfter=30,
+            alignment=1  # Centrado
+        )
+        story.append(Paragraph("Reporte de Rentabilidad", title_style))
+        story.append(Spacer(1, 12))
+        
+        # Información del período
+        periodo_text = f"Período: {fecha_inicio} a {fecha_fin}"
+        story.append(Paragraph(periodo_text, styles['Normal']))
+        story.append(Spacer(1, 20))
+        
+        # Resumen financiero
+        story.append(Paragraph("Resumen Financiero", styles['Heading2']))
+        story.append(Spacer(1, 12))
+        
+        data = [
+            ['Concepto', 'Monto (Q)'],
+            ['Ingresos', f"{ingresos:,.2f}"],
+            ['Gastos', f"{gastos:,.2f}"],
+            ['Rentabilidad Bruta', f"{rentabilidad_bruta:,.2f}"],
+            ['Margen de Rentabilidad', f"{margen_rentabilidad:.2f}%"]
+        ]
+        
+        table = Table(data)
+        table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, 0), 14),
+            ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+            ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+            ('GRID', (0, 0), (-1, -1), 1, colors.black)
+        ]))
+        
+        story.append(table)
+        story.append(Spacer(1, 20))
+        
+        # Construir PDF
+        doc.build(story)
+        buffer.seek(0)
+        
+        # Crear respuesta
+        response = HttpResponse(buffer.getvalue(), content_type='application/pdf')
+        response['Content-Disposition'] = f'attachment; filename="reporte_rentabilidad_{fecha_inicio}_a_{fecha_fin}.pdf"'
+        
+        return response
+        
+    except Exception as e:
+        logger.error(f'Error al exportar PDF de rentabilidad: {e}')
+        messages.error(request, 'Error al generar el reporte PDF')
+        return redirect('rentabilidad')
+
+
+@login_required
+def rentabilidad_exportar_excel(request):
+    """Exportar reporte de rentabilidad a Excel"""
+    try:
+        # Obtener los mismos datos que la vista principal
+        periodo = request.GET.get('periodo', 'mes')
+        fecha_inicio = request.GET.get('fecha_inicio')
+        fecha_fin = request.GET.get('fecha_fin')
+        
+        # Fechas por defecto
+        hoy = timezone.now()
+        if periodo == 'mes':
+            fecha_inicio = fecha_inicio or (hoy - timedelta(days=30)).strftime('%Y-%m-%d')
+            fecha_fin = fecha_fin or hoy.strftime('%Y-%m-%d')
+        elif periodo == 'trimestre':
+            fecha_inicio = fecha_inicio or (hoy - timedelta(days=90)).strftime('%Y-%m-%d')
+            fecha_fin = fecha_fin or hoy.strftime('%Y-%m-%d')
+        elif periodo == 'año':
+            fecha_inicio = fecha_inicio or (hoy - timedelta(days=365)).strftime('%Y-%m-%d')
+            fecha_fin = fecha_fin or hoy.strftime('%Y-%m-%d')
+        
+        # Convertir fechas a datetime
+        fecha_inicio_dt = timezone.make_aware(datetime.strptime(fecha_inicio, '%Y-%m-%d'))
+        fecha_fin_dt = timezone.make_aware(datetime.strptime(fecha_fin, '%Y-%m-%d'))
+        
+        # Calcular datos de rentabilidad
+        ingresos = Factura.objects.filter(
+            fecha_emision__range=[fecha_inicio_dt, fecha_fin_dt],
+            estado='pagada'
+        ).aggregate(total=Sum('monto_total'))['total'] or Decimal('0.00')
+        
+        gastos = Gasto.objects.filter(
+            fecha_gasto__range=[fecha_inicio_dt, fecha_fin_dt],
+            aprobado=True
+        ).aggregate(total=Sum('monto'))['total'] or Decimal('0.00')
+        
+        rentabilidad_bruta = ingresos - gastos
+        margen_rentabilidad = (rentabilidad_bruta / ingresos * 100) if ingresos > 0 else Decimal('0.00')
+        
+        # Crear archivo Excel
+        from django.http import HttpResponse
+        import openpyxl
+        from openpyxl.styles import Font, Alignment, PatternFill
+        from io import BytesIO
+        
+        buffer = BytesIO()
+        workbook = openpyxl.Workbook()
+        worksheet = workbook.active
+        worksheet.title = "Reporte de Rentabilidad"
+        
+        # Estilos
+        header_font = Font(bold=True, color="FFFFFF")
+        header_fill = PatternFill(start_color="366092", end_color="366092", fill_type="solid")
+        center_alignment = Alignment(horizontal="center", vertical="center")
+        
+        # Título
+        worksheet.merge_cells('A1:E1')
+        worksheet['A1'] = "Reporte de Rentabilidad"
+        worksheet['A1'].font = Font(bold=True, size=16)
+        worksheet['A1'].alignment = center_alignment
+        
+        # Período
+        worksheet['A2'] = f"Período: {fecha_inicio} a {fecha_fin}"
+        worksheet.merge_cells('A2:E2')
+        worksheet['A2'].alignment = center_alignment
+        
+        # Resumen financiero
+        worksheet['A4'] = "Resumen Financiero"
+        worksheet['A4'].font = Font(bold=True, size=14)
+        
+        # Encabezados
+        headers = ['Concepto', 'Monto (Q)']
+        for col, header in enumerate(headers, 1):
+            cell = worksheet.cell(row=5, column=col, value=header)
+            cell.font = header_font
+            cell.fill = header_fill
+            cell.alignment = center_alignment
+        
+        # Datos
+        data = [
+            ['Ingresos', float(ingresos)],
+            ['Gastos', float(gastos)],
+            ['Rentabilidad Bruta', float(rentabilidad_bruta)],
+            ['Margen de Rentabilidad (%)', float(margen_rentabilidad)]
+        ]
+        
+        for row, (concepto, monto) in enumerate(data, 6):
+            worksheet.cell(row=row, column=1, value=concepto)
+            worksheet.cell(row=row, column=2, value=monto)
+        
+        # Ajustar ancho de columnas
+        worksheet.column_dimensions['A'].width = 25
+        worksheet.column_dimensions['B'].width = 15
+        
+        # Guardar archivo
+        workbook.save(buffer)
+        buffer.seek(0)
+        
+        # Crear respuesta
+        response = HttpResponse(buffer.getvalue(), content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+        response['Content-Disposition'] = f'attachment; filename="reporte_rentabilidad_{fecha_inicio}_a_{fecha_fin}.xlsx"'
+        
+        return response
+        
+    except Exception as e:
+        logger.error(f'Error al exportar Excel de rentabilidad: {e}')
+        messages.error(request, 'Error al generar el reporte Excel')
+        return redirect('rentabilidad')
+
 
 # ===== VISTAS DEL MÓDULO DE INVENTARIO =====
 
@@ -3965,7 +4470,7 @@ def crear_anticipo_masivo(request, proyecto_id):
             
             messages.success(
                 request, 
-                f'Se crearon {len(anticipos_creados)} anticipos de Q{monto} cada uno para el proyecto {proyecto.nombre}'
+                f'✅ Se crearon exitosamente {len(anticipos_creados)} anticipos de Q{monto:,.2f} cada uno para el proyecto "{proyecto.nombre}". Total desembolsado: Q{(monto * len(anticipos_creados)):,.2f}'
             )
             
             return redirect('planilla_proyecto', proyecto_id=proyecto.id)
@@ -4006,14 +4511,14 @@ def crear_anticipo_individual(request, proyecto_id):
                 
                 messages.success(
                     request, 
-                    f'Se creó anticipo de Q{monto} para {colaborador.nombre} en el proyecto {proyecto.nombre}'
+                    f'✅ Anticipo creado exitosamente: Q{monto:,.2f} para {colaborador.nombre} en el proyecto "{proyecto.nombre}". Concepto: {concepto}'
                 )
                 
                 return redirect('planilla_proyecto', proyecto_id=proyecto.id)
             else:
-                messages.error(request, 'El colaborador no está asignado a este proyecto')
+                messages.error(request, '❌ Error: El colaborador seleccionado no está asignado a este proyecto. Por favor verifica la selección.')
         else:
-            messages.error(request, 'Por favor complete todos los campos requeridos')
+            messages.error(request, '❌ Error: Por favor complete todos los campos requeridos (colaborador y monto) para crear el anticipo.')
     
     context = {
         'proyecto': proyecto,

@@ -101,49 +101,16 @@
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a href="{% url 'gastos_list' %}" class="nav-link">
+                    <a href="{% url 'gastos_dashboard' %}" class="nav-link">
                         <i class="fas fa-receipt"></i>
                         <span>Gastos</span>
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a href="{% url 'categorias_gasto_list' %}" class="nav-link">
-                        <i class="fas fa-tags"></i>
-                        <span>Categorías Gastos</span>
-                    </a>
-                </li>
-                <li class="nav-item has-submenu">
-                    <a href="#" class="nav-link submenu-toggle">
+                    <a href="{% url 'inventario_dashboard' %}" class="nav-link">
                         <i class="fas fa-boxes"></i>
                         <span>Inventario</span>
-                        <i class="fas fa-chevron-down submenu-arrow"></i>
                     </a>
-                    <ul class="submenu">
-                        <li>
-                            <a href="{% url 'inventario_dashboard' %}" class="submenu-link">
-                                <i class="fas fa-tachometer-alt"></i>
-                                <span>Dashboard</span>
-                            </a>
-                        </li>
-                        <li>
-                            <a href="{% url 'item_list' %}" class="submenu-link">
-                                <i class="fas fa-box"></i>
-                                <span>Items</span>
-                            </a>
-                        </li>
-                        <li>
-                            <a href="{% url 'categoria_list' %}" class="submenu-link">
-                                <i class="fas fa-tags"></i>
-                                <span>Categorías</span>
-                            </a>
-                        </li>
-                        <li>
-                            <a href="{% url 'asignacion_list' %}" class="submenu-link">
-                                <i class="fas fa-link"></i>
-                                <span>Asignaciones</span>
-                            </a>
-                        </li>
-                    </ul>
                 </li>
                 <li class="nav-item">
                     <a href="{% url 'presupuestos_list' %}" class="nav-link">
@@ -203,6 +170,13 @@
                 </button>
             </div>
             <div class="nav-right">
+                <!-- Indicador de conexión -->
+                <div class="connection-indicator me-3">
+                    <span id="connectionStatus" class="badge bg-success">
+                        <i class="fas fa-wifi me-1"></i>Online
+                    </span>
+                </div>
+                
                 <div class="user-menu">
                     <span class="user-name">{{ user.get_full_name|default:user.username }}</span>
                     <div class="user-dropdown">
@@ -345,6 +319,212 @@
                 .submenu-link span {
                     font-weight: 500;
                 }
+                
+                /* ===== NOTIFICACIONES MODERNAS ===== */
+                .messages-container {
+                    position: fixed;
+                    top: 20px;
+                    right: 20px;
+                    z-index: 10000;
+                    max-width: 400px;
+                    width: 100%;
+                }
+                
+                .modern-notification {
+                    background: white;
+                    border-radius: 12px;
+                    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+                    margin-bottom: 16px;
+                    overflow: hidden;
+                    position: relative;
+                    transform: translateX(100%);
+                    opacity: 0;
+                    animation: slideInRight 0.5s ease forwards;
+                    border-left: 4px solid;
+                }
+                
+                .modern-notification.alert-success {
+                    border-left-color: #28a745;
+                }
+                
+                .modern-notification.alert-error {
+                    border-left-color: #dc3545;
+                }
+                
+                .modern-notification.alert-warning {
+                    border-left-color: #ffc107;
+                }
+                
+                .modern-notification.alert-info {
+                    border-left-color: #17a2b8;
+                }
+                
+                .notification-content {
+                    display: flex;
+                    align-items: flex-start;
+                    padding: 16px;
+                    position: relative;
+                }
+                
+                .notification-icon {
+                    margin-right: 12px;
+                    font-size: 20px;
+                    margin-top: 2px;
+                }
+                
+                .modern-notification.alert-success .notification-icon {
+                    color: #28a745;
+                }
+                
+                .modern-notification.alert-error .notification-icon {
+                    color: #dc3545;
+                }
+                
+                .modern-notification.alert-warning .notification-icon {
+                    color: #ffc107;
+                }
+                
+                .modern-notification.alert-info .notification-icon {
+                    color: #17a2b8;
+                }
+                
+                .notification-text {
+                    flex: 1;
+                }
+                
+                .notification-title {
+                    font-weight: 600;
+                    font-size: 14px;
+                    margin-bottom: 4px;
+                    color: #333;
+                }
+                
+                .notification-message {
+                    font-size: 13px;
+                    color: #666;
+                    line-height: 1.4;
+                }
+                
+                .notification-close {
+                    background: none;
+                    border: none;
+                    color: #999;
+                    cursor: pointer;
+                    font-size: 14px;
+                    padding: 4px;
+                    margin-left: 8px;
+                    border-radius: 4px;
+                    transition: all 0.2s ease;
+                }
+                
+                .notification-close:hover {
+                    background: rgba(0, 0, 0, 0.1);
+                    color: #666;
+                }
+                
+                .notification-progress {
+                    height: 3px;
+                    background: linear-gradient(90deg, rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 0.05));
+                    position: relative;
+                    overflow: hidden;
+                }
+                
+                .modern-notification.alert-success .notification-progress::after {
+                    content: '';
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    height: 100%;
+                    width: 100%;
+                    background: linear-gradient(90deg, #28a745, #20c997);
+                    animation: progressBar 5s linear forwards;
+                }
+                
+                .modern-notification.alert-error .notification-progress::after {
+                    content: '';
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    height: 100%;
+                    width: 100%;
+                    background: linear-gradient(90deg, #dc3545, #e74c3c);
+                    animation: progressBar 5s linear forwards;
+                }
+                
+                .modern-notification.alert-warning .notification-progress::after {
+                    content: '';
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    height: 100%;
+                    width: 100%;
+                    background: linear-gradient(90deg, #ffc107, #f39c12);
+                    animation: progressBar 5s linear forwards;
+                }
+                
+                .modern-notification.alert-info .notification-progress::after {
+                    content: '';
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    height: 100%;
+                    width: 100%;
+                    background: linear-gradient(90deg, #17a2b8, #3498db);
+                    animation: progressBar 5s linear forwards;
+                }
+                
+                @keyframes slideInRight {
+                    from {
+                        transform: translateX(100%);
+                        opacity: 0;
+                    }
+                    to {
+                        transform: translateX(0);
+                        opacity: 1;
+                    }
+                }
+                
+                @keyframes slideOutRight {
+                    from {
+                        transform: translateX(0);
+                        opacity: 1;
+                    }
+                    to {
+                        transform: translateX(100%);
+                        opacity: 0;
+                    }
+                }
+                
+                @keyframes progressBar {
+                    from {
+                        width: 100%;
+                    }
+                    to {
+                        width: 0%;
+                    }
+                }
+                
+                .modern-notification.closing {
+                    animation: slideOutRight 0.3s ease forwards;
+                }
+                
+                /* Responsive */
+                @media (max-width: 768px) {
+                    .messages-container {
+                        top: 10px;
+                        right: 10px;
+                        left: 10px;
+                        max-width: none;
+                    }
+                    
+                    .modern-notification {
+                        margin-bottom: 12px;
+                    }
+                    
+                    .notification-content {
+                        padding: 12px;
+                    }
+                }
             </style>
         </nav>
 
@@ -352,11 +532,44 @@
         <div class="page-content">
             <!-- Mensajes del Sistema -->
             {% if messages %}
-                <div class="messages">
+                <div class="messages-container">
                     {% for message in messages %}
-                        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
-                            {{ message }}
-                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        <div class="modern-notification alert-{{ message.tags }}" data-message-id="{{ forloop.counter }}">
+                            <div class="notification-content">
+                                <div class="notification-icon">
+                                    {% if message.tags == 'success' %}
+                                        <i class="fas fa-check-circle"></i>
+                                    {% elif message.tags == 'error' %}
+                                        <i class="fas fa-exclamation-circle"></i>
+                                    {% elif message.tags == 'warning' %}
+                                        <i class="fas fa-exclamation-triangle"></i>
+                                    {% elif message.tags == 'info' %}
+                                        <i class="fas fa-info-circle"></i>
+                                    {% else %}
+                                        <i class="fas fa-bell"></i>
+                                    {% endif %}
+                                </div>
+                                <div class="notification-text">
+                                    <div class="notification-title">
+                                        {% if message.tags == 'success' %}
+                                            ¡Éxito!
+                                        {% elif message.tags == 'error' %}
+                                            Error
+                                        {% elif message.tags == 'warning' %}
+                                            Advertencia
+                                        {% elif message.tags == 'info' %}
+                                            Información
+                                        {% else %}
+                                            Notificación
+                                        {% endif %}
+                                    </div>
+                                    <div class="notification-message">{{ message }}</div>
+                                </div>
+                                <button type="button" class="notification-close" onclick="closeNotification(this)">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                            <div class="notification-progress"></div>
                         </div>
                     {% endfor %}
                 </div>
@@ -510,23 +723,97 @@
             }
         }
         
-        function showNotification(message, type) {
+        function showNotification(message, type = 'info', title = null) {
+            // Crear contenedor si no existe
+            let container = document.querySelector('.messages-container');
+            if (!container) {
+                container = document.createElement('div');
+                container.className = 'messages-container';
+                document.body.appendChild(container);
+            }
+            
+            // Generar ID único
+            const notificationId = 'notification-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+            
+            // Determinar título e icono según el tipo
+            let notificationTitle = title;
+            let iconClass = 'fas fa-bell';
+            
+            if (!notificationTitle) {
+                switch(type) {
+                    case 'success':
+                        notificationTitle = '¡Éxito!';
+                        iconClass = 'fas fa-check-circle';
+                        break;
+                    case 'error':
+                        notificationTitle = 'Error';
+                        iconClass = 'fas fa-exclamation-circle';
+                        break;
+                    case 'warning':
+                        notificationTitle = 'Advertencia';
+                        iconClass = 'fas fa-exclamation-triangle';
+                        break;
+                    case 'info':
+                        notificationTitle = 'Información';
+                        iconClass = 'fas fa-info-circle';
+                        break;
+                    default:
+                        notificationTitle = 'Notificación';
+                        iconClass = 'fas fa-bell';
+                }
+            }
+            
+            // Crear notificación
             const notification = document.createElement('div');
-            notification.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
-            notification.style.cssText = 'top: 20px; right: 20px; z-index: 10000; min-width: 300px; max-width: 400px;';
+            notification.className = `modern-notification alert-${type}`;
+            notification.setAttribute('data-message-id', notificationId);
+            
             notification.innerHTML = `
-                ${message}
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                <div class="notification-content">
+                    <div class="notification-icon">
+                        <i class="${iconClass}"></i>
+                    </div>
+                    <div class="notification-text">
+                        <div class="notification-title">${notificationTitle}</div>
+                        <div class="notification-message">${message}</div>
+                    </div>
+                    <button type="button" class="notification-close" onclick="closeNotification(this)">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="notification-progress"></div>
             `;
             
-            document.body.appendChild(notification);
+            container.appendChild(notification);
             
             // Auto-ocultar después de 5 segundos
             setTimeout(() => {
-                if (notification.parentNode) {
-                    notification.remove();
-                }
+                closeNotificationById(notificationId);
             }, 5000);
+        }
+        
+        function closeNotification(button) {
+            const notification = button.closest('.modern-notification');
+            if (notification) {
+                notification.classList.add('closing');
+                setTimeout(() => {
+                    if (notification.parentNode) {
+                        notification.remove();
+                    }
+                }, 300);
+            }
+        }
+        
+        function closeNotificationById(notificationId) {
+            const notification = document.querySelector(`[data-message-id="${notificationId}"]`);
+            if (notification) {
+                notification.classList.add('closing');
+                setTimeout(() => {
+                    if (notification.parentNode) {
+                        notification.remove();
+                    }
+                }, 300);
+            }
         }
         
         // Verificar si ya está instalado
@@ -604,6 +891,42 @@
     </script>
     
     {% block extra_js %}{% endblock %}
+    
+    <!-- Service Worker Registration -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function() {
+                navigator.serviceWorker.register('/static/js/sw.js')
+                    .then(function(registration) {
+                        console.log('ServiceWorker registrado exitosamente:', registration.scope);
+                    })
+                    .catch(function(error) {
+                        console.log('Error al registrar ServiceWorker:', error);
+                    });
+            });
+        }
+        
+        // Indicador de conexión
+        function updateConnectionStatus() {
+            const statusElement = document.getElementById('connectionStatus');
+            if (statusElement) {
+                if (navigator.onLine) {
+                    statusElement.className = 'badge bg-success';
+                    statusElement.innerHTML = '<i class="fas fa-wifi me-1"></i>Online';
+                } else {
+                    statusElement.className = 'badge bg-danger';
+                    statusElement.innerHTML = '<i class="fas fa-wifi-slash me-1"></i>Offline';
+                }
+            }
+        }
+        
+        // Actualizar estado al cargar
+        updateConnectionStatus();
+        
+        // Escuchar cambios de conexión
+        window.addEventListener('online', updateConnectionStatus);
+        window.addEventListener('offline', updateConnectionStatus);
+    </script>
 </body>
 </html>
  

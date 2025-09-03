@@ -231,3 +231,12 @@ Una vez completado este checklist, tendrás:
 **¡Felicidades! 🎉 Tu sistema está listo para ser usado por clientes reales.**
 
 
+
+
+
+
+
+
+
+
+

@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load custom_filters %}
 {% load static %}
 
 {% block title %}Proyectos - Sistema de Construcción{% endblock %}
@@ -283,7 +284,7 @@
                                 {% endif %}
                             </td>
                             <td>
-                                <strong>Q{{ proyecto.presupuesto|default:"0"|floatformat:2 }}</strong>
+                                <strong>Q{{proyecto.presupuesto|currency_gtq}}</strong>
                             </td>
                             <td>
                                 <div class="btn-group" role="group">

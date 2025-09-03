@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load custom_filters %}
 
 {% block title %}Administrar Anticipos - {{ proyecto.nombre }}{% endblock %}
 
@@ -227,19 +228,19 @@
     <!-- Estadísticas de Anticipos -->
     <div class="stats-row">
         <div class="stat-card">
-            <div class="stat-number">Q{{ total_anticipos|floatformat:2 }}</div>
+            <div class="stat-number">{{total_anticipos|currency_gtq}}</div>
             <div class="stat-label">Total Anticipos</div>
         </div>
         <div class="stat-card">
-            <div class="stat-number">Q{{ anticipos_pendientes|floatformat:2 }}</div>
+            <div class="stat-number">{{anticipos_pendientes|currency_gtq}}</div>
             <div class="stat-label">Pendientes</div>
         </div>
         <div class="stat-card">
-            <div class="stat-number">Q{{ anticipos_liquidados|floatformat:2 }}</div>
+            <div class="stat-number">{{anticipos_liquidados|currency_gtq}}</div>
             <div class="stat-label">Liquidados</div>
         </div>
         <div class="stat-card">
-            <div class="stat-number">Q{{ anticipos_cancelados|floatformat:2 }}</div>
+            <div class="stat-number">{{anticipos_cancelados|currency_gtq}}</div>
             <div class="stat-label">Cancelados</div>
         </div>
     </div>
@@ -291,7 +292,7 @@
                             </div>
                         </td>
                         <td>
-                            <div class="fw-bold text-success">Q{{ anticipo.monto|floatformat:2 }}</div>
+                            <div class="fw-bold text-success">{{anticipo.monto|currency_gtq}}</div>
                         </td>
                         <td>
                             <div class="fw-bold">{{ anticipo.concepto }}</div>

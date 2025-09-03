@@ -1,0 +1,14 @@
+{
+  "fecha_respaldo": "20250825_191842",
+  "tipo_respaldo": "full",
+  "estado": "completado",
+  "archivos_respaldados": [
+    {
+      "nombre": "db_backup_20250825_191842.sqlite3",
+      "tamaño": 630784,
+      "fecha_modificacion": "2025-08-25T17:57:19.905493"
+    }
+  ],
+  "tamaño_total": 630784,
+  "errores": []
+}

@@ -54,7 +54,7 @@
                                     <p><strong>Proyecto:</strong> {{ anticipo.proyecto.nombre }}</p>
                                 </div>
                                 <div class="col-md-6 text-start">
-                                    <p><strong>Monto:</strong> <span class="text-success">Q{{ anticipo.monto|floatformat:2 }}</span></p>
+                                    <p><strong>Monto:</strong> <span class="text-success">{{anticipo.monto|currency_gtq}}</span></p>
                                     <p><strong>Estado:</strong> 
                                         {% if anticipo.estado == 'pendiente' %}
                                             <span class="badge bg-warning text-dark">Pendiente</span>

@@ -569,11 +569,11 @@
         
         <div class="hero-stats">
             <div class="hero-stat">
-                <div class="hero-stat-number">${{ presupuesto.monto_total|floatformat:2 }}</div>
+                <div class="hero-stat-number">{{presupuesto.monto_total|currency_format}}</div>
                 <div class="hero-stat-label">Presupuesto Total</div>
             </div>
             <div class="hero-stat">
-                <div class="hero-stat-number">${{ presupuesto.monto_aprobado|floatformat:2 }}</div>
+                <div class="hero-stat-number">{{presupuesto.monto_aprobado|currency_format}}</div>
                 <div class="hero-stat-label">Monto Aprobado</div>
             </div>
             <div class="hero-stat">
@@ -643,14 +643,14 @@
         </div>
         
         <div class="text-center mb-4">
-            <div class="display-4 text-primary mb-2">${{ presupuesto.monto_total|floatformat:2 }}</div>
+            <div class="display-4 text-primary mb-2">{{presupuesto.monto_total|currency_format}}</div>
             <p class="text-muted mb-0">Presupuesto Total</p>
         </div>
         
         <div class="row text-center">
             <div class="col-6">
                 <div class="border-end">
-                    <h4 class="text-success mb-1">${{ presupuesto.monto_aprobado|floatformat:2 }}</h4>
+                    <h4 class="text-success mb-1">{{presupuesto.monto_aprobado|currency_format}}</h4>
                     <small class="text-muted">Monto Aprobado</small>
                 </div>
             </div>
@@ -676,9 +676,9 @@
         <div class="variacion-item">
             <div class="variacion-number">
                 {% if variacion_data and variacion_data.variacion > 0 %}
-                    +${{ variacion_data.variacion|floatformat:2 }}
+                    +{{variacion_data.variacion|currency_format}}
                 {% elif variacion_data and variacion_data.variacion < 0 %}
-                    ${{ variacion_data.variacion|floatformat:2 }}
+                    {{variacion_data.variacion|currency_format}}
                 {% else %}
                     $0.00
                 {% endif %}
@@ -708,7 +708,7 @@
     <div class="alert {% if variacion_data and variacion_data.variacion > 0 %}alert-danger{% elif variacion_data and variacion_data.variacion < 0 %}alert-success{% else %}alert-info{% endif %}">
         <h6><i class="fas fa-info-circle me-2"></i>Interpretación:</h6>
         {% if variacion_data and variacion_data.variacion > 0 %}
-            <p class="mb-0">Los gastos reales exceden el presupuesto en <strong>${{ variacion_data.variacion|floatformat:2 }}</strong> ({{ variacion_data.porcentaje_variacion|floatformat:1 }}%). Se recomienda revisar los costos y considerar ajustes.</p>
+            <p class="mb-0">Los gastos reales exceden el presupuesto en <strong>{{variacion_data.variacion|currency_format}}</strong> ({{ variacion_data.porcentaje_variacion|floatformat:1 }}%). Se recomienda revisar los costos y considerar ajustes.</p>
         {% elif variacion_data and variacion_data.variacion < 0 %}
             <p class="mb-0">El presupuesto excede los gastos reales en <strong>${{ variacion_data.variacion_abs|default:0|floatformat:2 }}</strong> ({{ variacion_data.porcentaje_variacion_abs|default:0|floatformat:1 }}%). Excelente control de costos.</p>
         {% else %}
@@ -752,8 +752,8 @@
                         <td>{{ partida.descripcion }}</td>
                         <td>{{ partida.unidad }}</td>
                         <td>{{ partida.cantidad }}</td>
-                        <td>${{ partida.precio_unitario|floatformat:2 }}</td>
-                        <td class="partida-monto">${{ partida.monto_estimado|floatformat:2 }}</td>
+                        <td>{{partida.precio_unitario|currency_format}}</td>
+                        <td class="partida-monto">{{partida.monto_estimado|currency_format}}</td>
                         <td>
                             {% if partida.categoria %}
                                 <span class="partida-categoria">{{ partida.categoria.nombre }}</span>
@@ -777,7 +777,7 @@
                 <tfoot>
                     <tr class="partidas-total">
                         <td colspan="5" class="text-end"><strong>TOTAL:</strong></td>
-                        <td colspan="3"><strong>${{ presupuesto.monto_total|floatformat:2 }}</strong></td>
+                        <td colspan="3"><strong>{{presupuesto.monto_total|currency_format}}</strong></td>
                     </tr>
                 </tfoot>
             </table>

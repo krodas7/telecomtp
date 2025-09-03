@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load custom_filters %}
 
 {% block title %}Clientes - Sistema de Construcción{% endblock %}
 
@@ -365,6 +366,7 @@
                 <small class="text-muted">
                     <i class="fas fa-info-circle me-1"></i>
                     Mostrando <span id="contadorClientes">{{ clientes.count }}</span> de {{ total_clientes }} clientes
+                    <strong>(Filtro: {{ estado_filtro }}) - {% now "H:i:s" %}</strong>
                 </small>
             </div>
             <table class="table clientes-table">
@@ -380,6 +382,7 @@
                 </thead>
                 <tbody>
                     {% for cliente in clientes %}
+                    {% if estado_filtro == 'todos' or estado_filtro == 'activos' and cliente.activo or estado_filtro == 'inactivos' and not cliente.activo %}
                     <tr>
                         <td>
                             <div class="cliente-razon-social">{{ cliente.razon_social }}</div>
@@ -424,6 +427,7 @@
                             </div>
                         </td>
                     </tr>
+                    {% endif %}
                     {% endfor %}
                 </tbody>
             </table>
@@ -449,30 +453,14 @@ document.addEventListener('DOMContentLoaded', function() {
     const filasClientes = document.querySelectorAll('tbody tr');
     
     if (filtroEstado) {
+        // Establecer el valor actual del filtro
+        const estadoActual = '{{ estado_filtro }}';
+        filtroEstado.value = estadoActual;
+        
         filtroEstado.addEventListener('change', function() {
             const estadoSeleccionado = this.value;
-            let clientesVisibles = 0;
-            
-            filasClientes.forEach(fila => {
-                const estadoCliente = fila.querySelector('.cliente-estado').textContent.trim();
-                let mostrar = true;
-                
-                if (estadoSeleccionado === 'activos') {
-                    mostrar = estadoCliente === 'Activo';
-                } else if (estadoSeleccionado === 'inactivos') {
-                    mostrar = estadoCliente === 'Inactivo';
-                }
-                // Si es 'todos', mostrar = true (por defecto)
-                
-                fila.style.display = mostrar ? '' : 'none';
-                if (mostrar) clientesVisibles++;
-            });
-            
-            // Actualizar contador
-            const contadorElement = document.getElementById('contadorClientes');
-            if (contadorElement) {
-                contadorElement.textContent = clientesVisibles;
-            }
+            // Redirigir a la URL con el parámetro de filtro
+            window.location.href = `{% url 'clientes_list' %}?estado=${estadoSeleccionado}`;
         });
     }
     

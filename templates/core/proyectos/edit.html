@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load custom_filters %}
 
 {% block title %}Editar Proyecto - Sistema de Construcción{% endblock %}
 
@@ -168,7 +169,7 @@
                     </span>
                 </p>
                 {% if proyecto.presupuesto %}
-                    <p><strong>Presupuesto:</strong> Q{{ proyecto.presupuesto|floatformat:2 }}</p>
+                    <p><strong>Presupuesto:</strong> {{proyecto.presupuesto|currency_gtq}}</p>
                 {% endif %}
                 {% if proyecto.fecha_inicio %}
                     <p><strong>Fecha de Inicio:</strong> {{ proyecto.fecha_inicio|date:"d/m/Y" }}</p>

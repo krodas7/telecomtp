@@ -27,7 +27,7 @@ SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-change-in-production'
 DEBUG = os.environ.get('DEBUG', 'True').lower() == 'true'
 
 # Configuración de hosts permitidos
-DEFAULT_HOSTS = 'localhost,127.0.0.1'
+DEFAULT_HOSTS = 'localhost,127.0.0.1,testserver'
 if not DEBUG:
     # En producción, incluir tanto www como no-www
     DEFAULT_HOSTS = 'construccionesarca.net,www.construccionesarca.net'
@@ -129,14 +129,14 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 
+# Configuración de archivos estáticos
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+
 # En desarrollo, usar STATICFILES_DIRS
-# En producción, usar STATIC_ROOT
 if DEBUG:
     STATICFILES_DIRS = [
         BASE_DIR / 'static',
     ]
-else:
-    STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 # Media files
 MEDIA_URL = '/media/'

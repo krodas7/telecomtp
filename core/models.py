@@ -1329,3 +1329,69 @@ class AnticipoProyecto(models.Model):
         self.fecha_liquidacion = timezone.now().date()
         self.liquidado_por = usuario
         self.save()
+
+
+class ConfiguracionSistema(models.Model):
+    """Modelo para configuraciones del sistema"""
+    # Información de la Empresa
+    nombre_empresa = models.CharField(max_length=200, default='Constructora XYZ')
+    moneda = models.CharField(max_length=3, default='GTQ', choices=[
+        ('GTQ', 'Quetzal (GTQ)'),
+        ('USD', 'Dólar (USD)'),
+        ('EUR', 'Euro (EUR)'),
+    ])
+    
+    # Configuración Regional
+    zona_horaria = models.CharField(max_length=50, default='America/Guatemala', choices=[
+        ('America/Guatemala', 'Guatemala (GMT-6)'),
+        ('America/New_York', 'Nueva York (GMT-5)'),
+        ('Europe/Madrid', 'Madrid (GMT+1)'),
+    ])
+    idioma = models.CharField(max_length=5, default='es', choices=[
+        ('es', 'Español'),
+        ('en', 'English'),
+    ])
+    
+    # Configuración del Sistema
+    max_usuarios_simultaneos = models.PositiveIntegerField(default=5)
+    tiempo_sesion = models.PositiveIntegerField(default=480, help_text="Tiempo en minutos")
+    
+    # Configuraciones Avanzadas
+    respaldo_automatico = models.BooleanField(default=False)
+    notificaciones_email = models.BooleanField(default=False)
+    
+    # Configuración de Email
+    email_host = models.CharField(max_length=200, blank=True)
+    email_port = models.PositiveIntegerField(default=587)
+    email_username = models.CharField(max_length=200, blank=True)
+    email_password = models.CharField(max_length=200, blank=True)
+    email_use_tls = models.BooleanField(default=True)
+    
+    # Metadatos
+    ultima_actualizacion = models.DateTimeField(auto_now=True)
+    actualizado_por = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+    
+    class Meta:
+        verbose_name = 'Configuración del Sistema'
+        verbose_name_plural = 'Configuraciones del Sistema'
+    
+    def __str__(self):
+        return f"Configuración - {self.nombre_empresa}"
+    
+    @classmethod
+    def get_config(cls):
+        """Obtiene la configuración actual o crea una por defecto"""
+        config, created = cls.objects.get_or_create(
+            id=1,
+            defaults={
+                'nombre_empresa': 'Constructora XYZ',
+                'moneda': 'GTQ',
+                'zona_horaria': 'America/Guatemala',
+                'idioma': 'es',
+                'max_usuarios_simultaneos': 5,
+                'tiempo_sesion': 480,
+                'respaldo_automatico': False,
+                'notificaciones_email': False,
+            }
+        )
+        return config

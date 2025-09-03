@@ -106,7 +106,7 @@
                     <div class="row mb-4">
                         <div class="col-12">
                             <h6 class="text-primary mb-3">
-                                <i class="fas fa-advanced me-2"></i>Configuraciones Avanzadas
+                                <i class="fas fa-cogs me-2"></i>Configuraciones Avanzadas
                             </h6>
                         </div>
                         <div class="col-md-6 mb-3">
@@ -114,7 +114,7 @@
                                 <input class="form-check-input" type="checkbox" id="respaldo_automatico" 
                                        name="respaldo_automatico" {% if config.respaldo_automatico %}checked{% endif %}>
                                 <label class="form-check-label" for="respaldo_automatico">
-                                    <i class="fas fa-robot me-1"></i>Respaldo Automático
+                                    <i class="fas fa-database me-1"></i>Respaldo Automático
                                 </label>
                                 <small class="form-text text-muted d-block">Habilitar respaldo automático diario</small>
                             </div>
@@ -127,6 +127,53 @@
                                     <i class="fas fa-envelope me-1"></i>Notificaciones por Email
                                 </label>
                                 <small class="form-text text-muted d-block">Enviar notificaciones por email</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Configuración de Email -->
+                    <div class="row mb-4" id="email-config" style="{% if not config.notificaciones_email %}display: none;{% endif %}">
+                        <div class="col-12">
+                            <h6 class="text-primary mb-3">
+                                <i class="fas fa-envelope me-2"></i>Configuración de Email
+                            </h6>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="email_host" class="form-label">
+                                <i class="fas fa-server me-1"></i>Servidor SMTP
+                            </label>
+                            <input type="text" class="form-control" id="email_host" name="email_host" 
+                                   value="{{ config.email_host }}" placeholder="smtp.gmail.com">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="email_port" class="form-label">
+                                <i class="fas fa-plug me-1"></i>Puerto
+                            </label>
+                            <input type="number" class="form-control" id="email_port" name="email_port" 
+                                   value="{{ config.email_port }}" min="1" max="65535">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="email_username" class="form-label">
+                                <i class="fas fa-user me-1"></i>Usuario
+                            </label>
+                            <input type="email" class="form-control" id="email_username" name="email_username" 
+                                   value="{{ config.email_username }}" placeholder="usuario@empresa.com">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="email_password" class="form-label">
+                                <i class="fas fa-lock me-1"></i>Contraseña
+                            </label>
+                            <input type="password" class="form-control" id="email_password" name="email_password" 
+                                   value="{{ config.email_password }}" placeholder="Contraseña de aplicación">
+                        </div>
+                        <div class="col-12 mb-3">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="email_use_tls" 
+                                       name="email_use_tls" {% if config.email_use_tls %}checked{% endif %}>
+                                <label class="form-check-label" for="email_use_tls">
+                                    <i class="fas fa-shield-alt me-1"></i>Usar TLS
+                                </label>
+                                <small class="form-text text-muted d-block">Recomendado para Gmail y otros proveedores</small>
                             </div>
                         </div>
                     </div>
@@ -189,18 +236,21 @@
             </div>
             <div class="card-body">
                 <div class="d-grid gap-2">
-                    <button type="button" class="btn btn-outline-primary" onclick="crearRespaldo()">
+                    <a href="{% url 'sistema_crear_respaldo' %}" class="btn btn-outline-primary" onclick="return confirm('¿Crear respaldo de la base de datos?')">
                         <i class="fas fa-download me-2"></i>Crear Respaldo
-                    </button>
+                    </a>
+                    <a href="{% url 'sistema_ver_respaldos' %}" class="btn btn-outline-secondary">
+                        <i class="fas fa-folder-open me-2"></i>Ver Respaldos
+                    </a>
                     <button type="button" class="btn btn-outline-success" onclick="restaurarRespaldo()">
                         <i class="fas fa-upload me-2"></i>Restaurar Respaldo
                     </button>
-                    <button type="button" class="btn btn-outline-warning" onclick="limpiarLogs()">
+                    <a href="{% url 'sistema_limpiar_logs' %}" class="btn btn-outline-warning" onclick="return confirm('¿Limpiar logs antiguos (más de 30 días)?')">
                         <i class="fas fa-broom me-2"></i>Limpiar Logs Antiguos
-                    </button>
-                    <button type="button" class="btn btn-outline-info" onclick="exportarConfiguracion()">
+                    </a>
+                    <a href="{% url 'sistema_exportar_config' %}" class="btn btn-outline-info">
                         <i class="fas fa-file-export me-2"></i>Exportar Configuración
-                    </button>
+                    </a>
                 </div>
             </div>
         </div>
@@ -208,37 +258,46 @@
 </div>
 
 <script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Mostrar/ocultar configuración de email según el checkbox
+    const emailCheckbox = document.getElementById('notificaciones_email');
+    const emailConfig = document.getElementById('email-config');
+    
+    emailCheckbox.addEventListener('change', function() {
+        if (this.checked) {
+            emailConfig.style.display = 'block';
+        } else {
+            emailConfig.style.display = 'none';
+        }
+    });
+});
+
 function restaurarValores() {
     if (confirm('¿Estás seguro de que quieres restaurar los valores por defecto?')) {
-        // Aquí se restaurarían los valores por defecto
-        alert('Valores restaurados exitosamente');
-    }
-}
-
-function crearRespaldo() {
-    if (confirm('¿Estás seguro de que quieres crear un respaldo de la base de datos?')) {
-        // Aquí iría la lógica para crear el respaldo
-        alert('Respaldo iniciado. Se notificará cuando esté completo.');
+        // Restaurar valores por defecto
+        document.getElementById('nombre_empresa').value = 'Constructora XYZ';
+        document.getElementById('moneda').value = 'GTQ';
+        document.getElementById('zona_horaria').value = 'America/Guatemala';
+        document.getElementById('idioma').value = 'es';
+        document.getElementById('max_usuarios_simultaneos').value = '5';
+        document.getElementById('tiempo_sesion').value = '480';
+        document.getElementById('respaldo_automatico').checked = false;
+        document.getElementById('notificaciones_email').checked = false;
+        document.getElementById('email_host').value = '';
+        document.getElementById('email_port').value = '587';
+        document.getElementById('email_username').value = '';
+        document.getElementById('email_password').value = '';
+        document.getElementById('email_use_tls').checked = true;
+        
+        // Ocultar configuración de email
+        document.getElementById('email-config').style.display = 'none';
+        
+        alert('✅ Valores restaurados a los valores por defecto');
     }
 }
 
 function restaurarRespaldo() {
-    if (confirm('¿Estás seguro de que quieres restaurar un respaldo? Esto sobrescribirá la base de datos actual.')) {
-        // Aquí iría la lógica para restaurar
-        alert('Restauración iniciada. El sistema se reiniciará cuando esté completo.');
-    }
-}
-
-function limpiarLogs() {
-    if (confirm('¿Estás seguro de que quieres limpiar los logs antiguos?')) {
-        // Aquí iría la lógica para limpiar logs
-        alert('Limpieza de logs iniciada.');
-    }
-}
-
-function exportarConfiguracion() {
-    // Aquí iría la lógica para exportar
-    alert('Configuración exportada exitosamente.');
+    alert('⚠️ Función de restauración de respaldo en desarrollo.\n\nPor ahora, puedes restaurar manualmente usando:\npython manage.py loaddata respaldo_sistema_YYYYMMDD_HHMMSS.json');
 }
 </script>
 {% endblock %}

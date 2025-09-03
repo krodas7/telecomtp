@@ -1,5 +1,7 @@
 {% extends "base.html" %}
 
+{% load custom_filters %}
+
 {% block title %}Nuevo Proyecto - Sistema de Construcción{% endblock %}
 
 {% block extra_css %}
@@ -147,28 +149,60 @@
         font-size: 1.1rem;
     }
     
-    .form-control, .form-select {
-        border: 2px solid var(--blanco-humo);
-        border-radius: 12px;
-        padding: 1rem 1.2rem;
-        font-size: 1rem;
-        transition: all 0.3s ease;
-        background: white;
+    .form-container .form-control,
+    .form-container .form-select {
+        border: 2px solid #e9ecef !important;
+        border-radius: 12px !important;
+        padding: 1rem 1.2rem !important;
+        font-size: 1rem !important;
+        transition: all 0.3s ease !important;
+        background: white !important;
+        width: 100% !important;
+        box-shadow: none !important;
     }
-    
-    .form-control:focus, .form-select:focus {
-        border-color: var(--azul-acero);
-        box-shadow: 0 0 0 0.2rem rgba(52, 152, 219, 0.25);
-        outline: none;
+
+    .form-container .form-control:focus,
+    .form-container .form-select:focus {
+        border-color: #3498db !important;
+        box-shadow: 0 0 0 0.2rem rgba(52, 152, 219, 0.25) !important;
+        outline: none !important;
     }
-    
-    .form-control:hover, .form-select:hover {
-        border-color: var(--azul-acero-claro);
+
+    .form-container .form-control:hover,
+    .form-container .form-select:hover {
+        border-color: #5dade2 !important;
     }
-    
-    .form-textarea {
-        min-height: 120px;
-        resize: vertical;
+
+    .form-container .form-textarea {
+        min-height: 120px !important;
+        resize: vertical !important;
+    }
+
+    /* Estilos específicos para campos de fecha */
+    .form-container input[type="date"] {
+        position: relative !important;
+    }
+
+    /* Asegurar que el calendario nativo se muestre */
+    .form-container input[type="date"]::-webkit-calendar-picker-indicator {
+        cursor: pointer !important;
+        opacity: 1 !important;
+        background: none !important;
+    }
+
+    /* Estilos para el texto del campo de fecha */
+    .form-container input[type="date"]::-webkit-datetime-edit {
+        color: #374151 !important;
+    }
+
+    .form-container input[type="date"]::-webkit-datetime-edit-text {
+        color: #6b7280 !important;
+    }
+
+    .form-container input[type="date"]::-webkit-datetime-edit-month-field,
+    .form-container input[type="date"]::-webkit-datetime-edit-day-field,
+    .form-container input[type="date"]::-webkit-datetime-edit-year-field {
+        color: #374151 !important;
     }
     
     .form-row {
@@ -514,7 +548,7 @@
             
             <div class="info-item">
                 <span class="info-label">Total Clientes:</span>
-                <span class="info-value">{{ clientes.count }}</span>
+                <span class="info-value">{{ clientes|length }}</span>
             </div>
             
             <div class="info-item">

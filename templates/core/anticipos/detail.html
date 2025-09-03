@@ -68,15 +68,15 @@
                             <table class="table table-borderless">
                                 <tr>
                                     <td><strong>Monto Total:</strong></td>
-                                    <td><span class="h5 text-success mb-0">Q{{ anticipo.monto|floatformat:2 }}</span></td>
+                                    <td><span class="h5 text-success mb-0">{{anticipo.monto|currency_gtq}}</span></td>
                                 </tr>
                                 <tr>
                                     <td><strong>Monto Aplicado:</strong></td>
-                                    <td><span class="text-info">Q{{ anticipo.monto_aplicado|floatformat:2 }}</span></td>
+                                    <td><span class="text-info">{{anticipo.monto_aplicado|currency_gtq}}</span></td>
                                 </tr>
                                 <tr>
                                     <td><strong>Monto Disponible:</strong></td>
-                                    <td><span class="text-warning">Q{{ anticipo.monto_disponible|floatformat:2 }}</span></td>
+                                    <td><span class="text-warning">{{anticipo.monto_disponible|currency_gtq}}</span></td>
                                 </tr>
                                 <tr>
                                     <td><strong>Estado:</strong></td>
@@ -161,8 +161,8 @@
                                 <strong>{{ factura.numero_factura }}</strong>
                                 <br>
                                 <small class="text-muted">
-                                    Monto: Q{{ factura.monto_total|floatformat:2 }} | 
-                                    Pendiente: Q{{ factura.monto_pendiente|floatformat:2 }}
+                                    Monto: {{factura.monto_total|currency_gtq}} | 
+                                    Pendiente: {{factura.monto_pendiente|currency_gtq}}
                                 </small>
                             </div>
                             <span class="badge bg-secondary">{{ factura.estado }}</span>
@@ -284,7 +284,7 @@
                     <p class="small text-muted mb-2">
                         <strong>Ubicación:</strong> {{ anticipo.proyecto.ubicacion }}<br>
                         <strong>Estado:</strong> {{ anticipo.proyecto.estado }}<br>
-                        <strong>Presupuesto:</strong> Q{{ anticipo.proyecto.presupuesto|floatformat:2 }}
+                        <strong>Presupuesto:</strong> {{anticipo.proyecto.presupuesto|currency_gtq}}
                     </p>
                                             <a href="{% url 'proyecto_dashboard' anticipo.proyecto.id %}" class="btn btn-sm btn-outline-success">
                         <i class="fas fa-external-link-alt me-1"></i>

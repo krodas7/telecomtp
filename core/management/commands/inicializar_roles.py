@@ -106,6 +106,24 @@ class Command(BaseCommand):
                     'descripcion': 'Gestión de usuarios',
                     'icono': 'fas fa-user-cog',
                     'orden': 10
+                },
+                {
+                    'nombre': 'Archivos',
+                    'descripcion': 'Gestión de archivos y documentos',
+                    'icono': 'fas fa-folder-open',
+                    'orden': 11
+                },
+                {
+                    'nombre': 'Inventario',
+                    'descripcion': 'Gestión de inventario y materiales',
+                    'icono': 'fas fa-boxes',
+                    'orden': 12
+                },
+                {
+                    'nombre': 'Rentabilidad',
+                    'descripcion': 'Análisis de rentabilidad y reportes financieros',
+                    'icono': 'fas fa-chart-line',
+                    'orden': 13
                 }
             ]
             
@@ -173,7 +191,7 @@ class Command(BaseCommand):
         
         # Encargado de Proyecto - Gestión de proyectos y clientes
         rol_encargado = Rol.objects.get(nombre='Encargado de Proyecto')
-        modulos_encargado = ['Dashboard', 'Clientes', 'Proyectos', 'Colaboradores', 'Anticipos']
+        modulos_encargado = ['Dashboard', 'Clientes', 'Proyectos', 'Colaboradores', 'Anticipos', 'Archivos', 'Inventario']
         permisos_encargado = Permiso.objects.filter(
             modulo__nombre__in=modulos_encargado
         ).exclude(
@@ -194,7 +212,7 @@ class Command(BaseCommand):
         
         # Contador - Módulos financieros
         rol_contador = Rol.objects.get(nombre='Contador')
-        modulos_contador = ['Dashboard', 'Facturas', 'Gastos', 'Pagos', 'Reportes']
+        modulos_contador = ['Dashboard', 'Facturas', 'Gastos', 'Pagos', 'Reportes', 'Rentabilidad']
         permisos_contador = Permiso.objects.filter(
             modulo__nombre__in=modulos_contador
         )

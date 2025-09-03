@@ -57,6 +57,7 @@ urlpatterns = [
     path('facturas/reportes/detallado/', views.facturas_reporte_detallado, name='facturas_reporte_detallado'),
     
     # Gastos
+    path('gastos/dashboard/', views.gastos_dashboard, name='gastos_dashboard'),
     path('gastos/', views.gastos_list, name='gastos_list'),
     path('gastos/crear/', views.gasto_create, name='gasto_create'),
     path('gastos/<int:gasto_id>/editar/', views.gasto_edit, name='gasto_edit'),
@@ -77,6 +78,8 @@ urlpatterns = [
     
     # Rentabilidad
     path('rentabilidad/', views.rentabilidad_view, name='rentabilidad'),
+    path('rentabilidad/exportar/pdf/', views.rentabilidad_exportar_pdf, name='rentabilidad_exportar_pdf'),
+    path('rentabilidad/exportar/excel/', views.rentabilidad_exportar_excel, name='rentabilidad_exportar_excel'),
     
     # Usuarios
     path('usuarios/', views.usuarios_lista, name='usuarios_lista'),
@@ -88,6 +91,13 @@ urlpatterns = [
     path('sistema/configurar/', views.sistema_configurar, name='sistema_configurar'),
     path('sistema/logs/', views.sistema_logs, name='sistema_logs'),
     path('sistema/reset-app/', views.sistema_reset_app, name='sistema_reset_app'),
+    path('sistema/crear-respaldo/', views.sistema_crear_respaldo, name='sistema_crear_respaldo'),
+    path('sistema/ver-respaldos/', views.sistema_ver_respaldos, name='sistema_ver_respaldos'),
+    path('sistema/limpiar-logs/', views.sistema_limpiar_logs, name='sistema_limpiar_logs'),
+    path('sistema/exportar-config/', views.sistema_exportar_config, name='sistema_exportar_config'),
+    
+    # Offline
+    path('offline/', views.offline_view, name='offline'),
     
     # Anticipos
     path('anticipos/', views.anticipos_list, name='anticipos_list'),

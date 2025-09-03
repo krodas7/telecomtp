@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load custom_filters %}
 
 {% block title %}Rentabilidad - Sistema de Construcción{% endblock %}
 
@@ -340,11 +341,11 @@
                 <span class="rentabilidad-stat-label">Rentabilidad Mes</span>
             </div>
             <div class="rentabilidad-stat">
-                <span class="rentabilidad-stat-number">Q{{ ingresos_mes|floatformat:2 }}</span>
+                <span class="rentabilidad-stat-number">{{ingresos_mes|currency_gtq}}</span>
                 <span class="rentabilidad-stat-label">Ingresos Mes</span>
             </div>
             <div class="rentabilidad-stat">
-                <span class="rentabilidad-stat-number">Q{{ gastos_mes|floatformat:2 }}</span>
+                <span class="rentabilidad-stat-number">{{gastos_mes|currency_gtq}}</span>
                 <span class="rentabilidad-stat-label">Gastos Mes</span>
             </div>
         </div>
@@ -366,7 +367,7 @@
                     <div class="metrica-icon">
                         <i class="fas fa-arrow-up"></i>
                     </div>
-                    <div class="metrica-valor">Q{{ ingresos_mes|floatformat:2 }}</div>
+                    <div class="metrica-valor">{{ingresos_mes|currency_gtq}}</div>
                     <div class="metrica-label">Ingresos del Mes</div>
                     <div class="metrica-tendencia tendencia-positiva">
                         <i class="fas fa-arrow-up"></i> +12.5%
@@ -377,7 +378,7 @@
                     <div class="metrica-icon">
                         <i class="fas fa-arrow-down"></i>
                     </div>
-                    <div class="metrica-valor">Q{{ gastos_mes|floatformat:2 }}</div>
+                    <div class="metrica-valor">{{gastos_mes|currency_gtq}}</div>
                     <div class="metrica-label">Gastos del Mes</div>
                     <div class="metrica-tendencia tendencia-negativa">
                         <i class="fas fa-arrow-up"></i> +8.2%
@@ -399,7 +400,7 @@
                     <div class="metrica-icon">
                         <i class="fas fa-coins"></i>
                     </div>
-                    <div class="metrica-valor">Q{{ gastos_fijos|floatformat:2 }}</div>
+                    <div class="metrica-valor">{{gastos_fijos|currency_gtq}}</div>
                     <div class="metrica-label">Gastos Fijos</div>
                     <div class="metrica-tendencia tendencia-neutral">
                         <i class="fas fa-minus"></i> 0.0%
@@ -468,15 +469,15 @@
             </div>
             <div class="resumen-item">
                 <span class="resumen-label">Ingresos Totales:</span>
-                <span class="resumen-valor">Q{{ ingresos_mes|floatformat:2 }}</span>
+                <span class="resumen-valor">{{ingresos_mes|currency_gtq}}</span>
             </div>
             <div class="resumen-item">
                 <span class="resumen-label">Gastos Totales:</span>
-                <span class="resumen-valor">Q{{ gastos_mes|floatformat:2 }}</span>
+                <span class="resumen-valor">{{gastos_mes|currency_gtq}}</span>
             </div>
             <div class="resumen-item">
                 <span class="resumen-label">Gastos Fijos:</span>
-                <span class="resumen-valor">Q{{ gastos_fijos|floatformat:2 }}</span>
+                <span class="resumen-valor">{{gastos_fijos|currency_gtq}}</span>
             </div>
             <div class="resumen-item">
                 <span class="resumen-label">Rentabilidad:</span>

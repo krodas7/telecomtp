@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load custom_filters %}
 
 {% block title %}Eliminar Cliente - Sistema de Construcción{% endblock %}
 
@@ -145,7 +146,7 @@
                                         <strong>{{ factura.numero_factura }}</strong>
                                         <br>
                                         <small class="text-muted">
-                                            Q{{ factura.total|floatformat:2 }} - 
+                                            Q{{ factura.monto_total|default:"0"|floatformat:2 }} - 
                                             <span class="badge bg-{% if factura.estado == 'pagada' %}success{% elif factura.estado == 'pendiente' %}warning{% elif factura.estado == 'vencida' %}danger{% else %}secondary{% endif %}">
                                                 {{ factura.get_estado_display }}
                                             </span>

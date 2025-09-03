@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load custom_filters %}
 
 {% block title %}Login - Gestión de Proyectos{% endblock %}
 
@@ -351,64 +352,75 @@ document.addEventListener('DOMContentLoaded', function() {
     const dismissBtn = document.getElementById('pwa-dismiss-btn');
     let deferredPrompt;
     let bannerShown = false;
-    
-    // Verificar si ya se mostró el banner en esta sesión
-    if (sessionStorage.getItem('pwaBannerShown')) {
+    let installAvailable = false;
+
+    // Respetar una pausa si el usuario cerró el banner recientemente (3 días)
+    const dismissedUntil = parseInt(localStorage.getItem('pwaBannerDismissedUntil') || '0', 10);
+    if (Date.now() < dismissedUntil) {
         return;
     }
-    
+
     // Escuchar el evento beforeinstallprompt
     window.addEventListener('beforeinstallprompt', function(e) {
         e.preventDefault();
         deferredPrompt = e;
-        
-        // Mostrar el banner después de 2 segundos
+        installAvailable = true;
+        // Mostrar el banner después de 1.5s
         setTimeout(() => {
-            if (!bannerShown && !sessionStorage.getItem('pwaBannerShown')) {
+            if (!bannerShown) {
                 showPwaBanner();
             }
-        }, 2000);
+        }, 1500);
     });
-    
+
+    // Fallback: si el evento no llega en 5s, mostrar el banner igualmente con instrucciones
+    setTimeout(() => {
+        if (!bannerShown) {
+            showPwaBanner();
+        }
+    }, 5000);
+
     function showPwaBanner() {
         bannerShown = true;
-        sessionStorage.setItem('pwaBannerShown', 'true');
         pwaBanner.classList.add('show');
-        
         // Ocultar automáticamente después de 10 segundos
         setTimeout(() => {
             hidePwaBanner();
         }, 10000);
     }
-    
+
     function hidePwaBanner() {
         pwaBanner.classList.remove('show');
     }
-    
+
     // Botón de instalar
     installBtn.addEventListener('click', function() {
         if (deferredPrompt) {
             deferredPrompt.prompt();
             deferredPrompt.userChoice.then(function(choiceResult) {
                 if (choiceResult.outcome === 'accepted') {
-                    console.log('Usuario aceptó instalar la PWA');
-                } else {
-                    console.log('Usuario rechazó instalar la PWA');
+                    localStorage.setItem('pwaBannerDismissedUntil', String(Date.now() + 1000 * 60 * 60 * 24 * 30)); // 30 días
                 }
                 deferredPrompt = null;
                 hidePwaBanner();
             });
+        } else {
+            // Sin evento disponible: dar instrucciones manuales
+            alert('Para instalar: abre el menú del navegador y selecciona "Añadir a pantalla de inicio".');
+            localStorage.setItem('pwaBannerDismissedUntil', String(Date.now() + 1000 * 60 * 60 * 24 * 3)); // 3 días
+            hidePwaBanner();
         }
     });
-    
+
     // Botón de cerrar
     dismissBtn.addEventListener('click', function() {
+        localStorage.setItem('pwaBannerDismissedUntil', String(Date.now() + 1000 * 60 * 60 * 24 * 3)); // 3 días
         hidePwaBanner();
     });
-    
+
     // Verificar si la PWA ya está instalada
     window.addEventListener('appinstalled', function() {
-        console.log('PWA instalada exitosamente');
+        localStorage.setItem('pwaBannerDismissedUntil', String(Date.now() + 1000 * 60 * 60 * 24 * 365)); // 1 año
         hidePwaBanner();
     });
 });

@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load custom_filters %}
 
 {% block title %}Facturas - Sistema de Construcción{% endblock %}
 
@@ -349,11 +350,11 @@
                     <span class="facturas-stat-label">Pagadas</span>
                 </div>
                 <div class="facturas-stat">
-                    <span class="facturas-stat-number">Q{{ total_facturado|default:"0"|floatformat:2 }}</span>
+                    <span class="facturas-stat-number">{{ total_facturado|currency_gtq }}</span>
                     <span class="facturas-stat-label">Total Facturado</span>
                 </div>
                 <div class="facturas-stat">
-                    <span class="facturas-stat-number">Q{{ total_cobrado|default:"0"|floatformat:2 }}</span>
+                    <span class="facturas-stat-number">{{ total_cobrado|currency_gtq }}</span>
                     <span class="facturas-stat-label">Total Cobrado</span>
                 </div>
             </div>
@@ -450,7 +451,7 @@
                                 <div class="fw-bold text-info">{{ factura.proyecto.nombre|default:"N/A" }}</div>
                             </td>
                             <td>
-                                <strong>Q{{ factura.monto_total|default:"0"|floatformat:2 }}</strong>
+                                <strong>{{ factura.monto_total|currency_gtq }}</strong>
                             </td>
                             <td>
                                 <div class="text-center">
@@ -511,7 +512,7 @@
                                     </a>
                                     {% if factura.estado != 'pagada' %}
                                         <button type="button" class="btn btn-success btn-sm" title="Marcar como Pagada" 
-                                                onclick="marcarComoPagada({{ factura.id }}, '{{ factura.numero_factura }}')">
+                                                onclick="marcarComoPagada('{{ factura.id }}', '{{ factura.numero_factura }}')">
                                             <i class="fas fa-check"></i>
                                         </button>
                                     {% endif %}

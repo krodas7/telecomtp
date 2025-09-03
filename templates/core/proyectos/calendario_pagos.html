@@ -394,19 +394,19 @@
         <div class="resumen-detalle">
             <div class="resumen-item">
                 <h5>Anticipos Realizados</h5>
-                <div class="valor valor-anticipos">Q{{ total_anticipos_mes|floatformat:2 }}</div>
+                <div class="valor valor-anticipos">{{total_anticipos_mes|currency_gtq}}</div>
                 <small class="text-muted">{{ anticipos_mes|length }} anticipos</small>
             </div>
             
             <div class="resumen-item">
                 <h5>Anticipos Liquidados</h5>
-                <div class="valor valor-liquidado">Q{{ total_liquidado_mes|floatformat:2 }}</div>
+                <div class="valor valor-liquidado">{{total_liquidado_mes|currency_gtq}}</div>
                 <small class="text-muted">{{ anticipos_liquidados_mes|length }} liquidados</small>
             </div>
             
             <div class="resumen-item">
                 <h5>Saldo Pendiente</h5>
-                <div class="valor valor-pendiente">Q{{ saldo_pendiente_mes|floatformat:2 }}</div>
+                <div class="valor valor-pendiente">{{saldo_pendiente_mes|currency_gtq}}</div>
                 <small class="text-muted">Por liquidar</small>
             </div>
             

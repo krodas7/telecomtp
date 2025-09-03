@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load custom_filters %}
 
 {% block title %}Editar Colaborador - Sistema de Construcción{% endblock %}
 
@@ -172,7 +173,7 @@
                     {% endif %}
                 </p>
                 {% if colaborador.salario %}
-                    <p><strong>Salario:</strong> Q{{ colaborador.salario|floatformat:2 }}</p>
+                    <p><strong>Salario:</strong> {{colaborador.salario|currency_gtq}}</p>
                 {% endif %}
                 {% if colaborador.fecha_contratacion %}
                     <p><strong>Fecha de Contratación:</strong> {{ colaborador.fecha_contratacion|date:"d/m/Y" }}</p>

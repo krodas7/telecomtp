@@ -43,17 +43,17 @@
                     
                     <div class="mb-3">
                         <strong>Monto Total:</strong><br>
-                        <span class="text-success font-weight-bold">Q{{ anticipo.monto|floatformat:2 }}</span>
+                        <span class="text-success font-weight-bold">{{anticipo.monto|currency_gtq}}</span>
                     </div>
                     
                     <div class="mb-3">
                         <strong>Monto Aplicado:</strong><br>
-                        <span class="text-info">Q{{ anticipo.monto_aplicado|floatformat:2 }}</span>
+                        <span class="text-info">{{anticipo.monto_aplicado|currency_gtq}}</span>
                     </div>
                     
                     <div class="mb-3">
                         <strong>Monto Disponible:</strong><br>
-                        <span class="text-warning font-weight-bold">Q{{ anticipo.monto_disponible|floatformat:2 }}</span>
+                        <span class="text-warning font-weight-bold">{{anticipo.monto_disponible|currency_gtq}}</span>
                     </div>
                     
                     <div class="mb-3">
@@ -102,8 +102,8 @@
                                         <option value="{{ factura.id }}" 
                                                 data-monto="{{ factura.monto_total }}"
                                                 data-pendiente="{{ factura.monto_pendiente }}">
-                                            {{ factura.numero_factura }} - Q{{ factura.monto_total|floatformat:2 }} 
-                                            (Pendiente: Q{{ factura.monto_pendiente|floatformat:2 }})
+                                            {{ factura.numero_factura }} - {{factura.monto_total|currency_gtq}} 
+                                            (Pendiente: {{factura.monto_pendiente|currency_gtq}})
                                         </option>
                                         {% endfor %}
                                     </select>
@@ -116,7 +116,7 @@
                                     <input type="number" class="form-control" id="monto_aplicar" name="monto_aplicar" 
                                            step="0.01" min="0.01" max="{{ anticipo.monto_disponible }}" required>
                                     <small class="form-text text-muted">
-                                        Máximo disponible: Q{{ anticipo.monto_disponible|floatformat:2 }}
+                                        Máximo disponible: {{anticipo.monto_disponible|currency_gtq}}
                                     </small>
                                 </div>
                             </div>
@@ -183,8 +183,8 @@
                                 <tr>
                                     <td><strong>{{ factura.numero_factura }}</strong></td>
                                     <td>{{ factura.fecha_emision|date:"d/m/Y" }}</td>
-                                    <td class="text-success">Q{{ factura.monto_total|floatformat:2 }}</td>
-                                    <td class="text-warning">Q{{ factura.monto_pendiente|floatformat:2 }}</td>
+                                    <td class="text-success">{{factura.monto_total|currency_gtq}}</td>
+                                    <td class="text-warning">{{factura.monto_pendiente|currency_gtq}}</td>
                                     <td>
                                         {% if factura.estado == 'emitida' %}
                                             <span class="badge badge-primary">Emitida</span>

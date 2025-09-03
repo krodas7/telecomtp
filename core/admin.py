@@ -1,11 +1,11 @@
-from django.contrib import admin
+from django.contrib import admin 
 from django.contrib.auth.admin import UserAdmin
 from django.contrib.auth.models import User
 from .models import (
     Rol, PerfilUsuario, Cliente, Colaborador, Proyecto,
     Factura, Pago, CategoriaGasto, Gasto, GastoFijoMensual,
     LogActividad, ArchivoAdjunto, Anticipo, AplicacionAnticipo,
-    ArchivoProyecto, CarpetaProyecto
+    ArchivoProyecto, CarpetaProyecto, ConfiguracionSistema
 )
 
 
@@ -247,6 +247,43 @@ class CarpetaProyectoAdmin(admin.ModelAdmin):
             'classes': ('collapse',)
         }),
     )
+
+
+@admin.register(ConfiguracionSistema)
+class ConfiguracionSistemaAdmin(admin.ModelAdmin):
+    list_display = ['nombre_empresa', 'moneda', 'zona_horaria', 'idioma', 'ultima_actualizacion']
+    readonly_fields = ['ultima_actualizacion']
+    
+    fieldsets = (
+        ('Información de la Empresa', {
+            'fields': ('nombre_empresa', 'moneda')
+        }),
+        ('Configuración Regional', {
+            'fields': ('zona_horaria', 'idioma')
+        }),
+        ('Configuración del Sistema', {
+            'fields': ('max_usuarios_simultaneos', 'tiempo_sesion')
+        }),
+        ('Configuraciones Avanzadas', {
+            'fields': ('respaldo_automatico', 'notificaciones_email')
+        }),
+        ('Configuración de Email', {
+            'fields': ('email_host', 'email_port', 'email_username', 'email_password', 'email_use_tls'),
+            'classes': ('collapse',)
+        }),
+        ('Metadatos', {
+            'fields': ('ultima_actualizacion', 'actualizado_por'),
+            'classes': ('collapse',)
+        }),
+    )
+    
+    def has_add_permission(self, request):
+        # Solo permitir una configuración
+        return not ConfiguracionSistema.objects.exists()
+    
+    def has_delete_permission(self, request, obj=None):
+        # No permitir eliminar la configuración
+        return False
     
     def save_model(self, request, obj, form, change):
         if not change:  # Si es una nueva carpeta

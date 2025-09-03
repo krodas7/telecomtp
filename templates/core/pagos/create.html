@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load custom_filters %}
 
 {% block title %}Nuevo Pago - Sistema de Construcción{% endblock %}
 
@@ -34,7 +35,7 @@
                                 <option value="">Seleccionar factura...</option>
                                 {% for factura in facturas %}
                                     <option value="{{ factura.id }}">
-                                        {{ factura.numero_factura }} - {{ factura.cliente.razon_social }} (Q{{ factura.total|floatformat:2 }})
+                                        {{ factura.numero_factura }} - {{ factura.cliente.razon_social }} ({{factura.total|currency_gtq}})
                                     </option>
                                 {% endfor %}
                             </select>

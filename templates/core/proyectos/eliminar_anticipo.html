@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load custom_filters %}
 
 {% block title %}Eliminar Anticipo - {{ anticipo.colaborador.nombre }}{% endblock %}
 
@@ -180,7 +181,7 @@
         </div>
         <div class="info-row">
             <span class="info-label">Monto:</span>
-            <span class="info-value text-danger fw-bold">Q{{ anticipo.monto|floatformat:2 }}</span>
+            <span class="info-value text-danger fw-bold">{{anticipo.monto|currency_gtq}}</span>
         </div>
         <div class="info-row">
             <span class="info-label">Concepto:</span>

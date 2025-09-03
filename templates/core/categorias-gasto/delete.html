@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load custom_filters %}
 
 {% block title %}Eliminar Categoría de Gasto - Sistema de Construcción{% endblock %}
 
@@ -96,7 +97,7 @@
                                 <div class="d-flex align-items-center">
                                     <i class="fas fa-money-bill me-2 text-danger"></i>
                                     <div>
-                                        <strong>Q{{ gasto.monto|floatformat:2 }}</strong>
+                                        <strong>{{gasto.monto|currency_gtq}}</strong>
                                         <br>
                                         <small class="text-muted">
                                             {{ gasto.proyecto.nombre|truncatechars:30 }} - 

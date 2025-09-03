@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load custom_filters %}
 
 {% block title %}Editar Factura - Sistema de Construcción{% endblock %}
 
@@ -204,7 +205,7 @@
                     </span>
                 </p>
                 {% if factura.monto_total %}
-                    <p><strong>Monto Total:</strong> Q{{ factura.monto_total|floatformat:2 }}</p>
+                    <p><strong>Monto Total:</strong> {{factura.monto_total|currency_gtq}}</p>
                 {% endif %}
                 {% if factura.fecha_emision %}
                     <p><strong>Fecha de Emisión:</strong> {{ factura.fecha_emision|date:"d/m/Y" }}</p>

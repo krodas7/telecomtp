@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load custom_filters %}
 
 {% block title %}Reportes de Facturas - Sistema de Construcción{% endblock %}
 
@@ -345,15 +346,15 @@
                     <span class="reportes-stat-label">Facturas</span>
                 </div>
                 <div class="reportes-stat">
-                    <span class="reportes-stat-number">Q{{ total_facturado|floatformat:2 }}</span>
+                    <span class="reportes-stat-number">{{total_facturado|currency_gtq}}</span>
                     <span class="reportes-stat-label">Total Facturado</span>
                 </div>
                 <div class="reportes-stat">
-                    <span class="reportes-stat-number">Q{{ total_cobrado|floatformat:2 }}</span>
+                    <span class="reportes-stat-number">{{total_cobrado|currency_gtq}}</span>
                     <span class="reportes-stat-label">Total Cobrado</span>
                 </div>
                 <div class="reportes-stat">
-                    <span class="reportes-stat-number">Q{{ total_pendiente|floatformat:2 }}</span>
+                    <span class="reportes-stat-number">{{total_pendiente|currency_gtq}}</span>
                     <span class="reportes-stat-label">Total Pendiente</span>
                 </div>
             </div>
@@ -416,7 +417,7 @@
         <div class="stat-card">
             <div class="stat-card-title">{{ stat.estado|title }}</div>
             <div class="stat-card-value">{{ stat.cantidad }}</div>
-            <div class="stat-card-subtitle">Q{{ stat.monto_total|floatformat:2 }}</div>
+            <div class="stat-card-subtitle">{{stat.monto_total|currency_gtq}}</div>
         </div>
         {% endfor %}
     </div>
@@ -467,7 +468,7 @@
                             <div class="fw-bold text-info">{{ factura.proyecto.nombre|default:"N/A" }}</div>
                         </td>
                         <td>
-                            <strong>Q{{ factura.monto_total|floatformat:2 }}</strong>
+                            <strong>{{factura.monto_total|currency_gtq}}</strong>
                         </td>
                         <td>
                             <div class="text-center">

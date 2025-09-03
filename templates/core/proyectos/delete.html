@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load custom_filters %}
 
 {% block title %}Eliminar Proyecto - Sistema de Construcción{% endblock %}
 
@@ -50,7 +51,7 @@
                             </div>
                             <div class="col-md-6">
                                 {% if proyecto.presupuesto %}
-                                    <p><strong>Presupuesto:</strong> Q{{ proyecto.presupuesto|floatformat:2 }}</p>
+                                    <p><strong>Presupuesto:</strong> {{proyecto.presupuesto|currency_gtq}}</p>
                                 {% endif %}
                                 {% if proyecto.fecha_inicio %}
                                     <p><strong>Fecha de Inicio:</strong> {{ proyecto.fecha_inicio|date:"d/m/Y" }}</p>
@@ -111,7 +112,7 @@
                                         <strong>{{ factura.numero_factura }}</strong>
                                         <br>
                                         <small class="text-muted">
-                                            Q{{ factura.total|floatformat:2 }} - 
+                                            {{factura.total|currency_gtq}} - 
                                             <span class="badge bg-{% if factura.estado == 'pagada' %}success{% elif factura.estado == 'pendiente' %}warning{% elif factura.estado == 'vencida' %}danger{% else %}secondary{% endif %}">
                                                 {{ factura.get_estado_display }}
                                             </span>
@@ -150,7 +151,7 @@
                                         <strong>{{ gasto.descripcion|truncatechars:30 }}</strong>
                                         <br>
                                         <small class="text-muted">
-                                            Q{{ gasto.monto|floatformat:2 }} - 
+                                            {{gasto.monto|currency_gtq}} - 
                                             <span class="badge bg-{% if gasto.aprobado %}success{% else %}warning{% endif %}">
                                                 {% if gasto.aprobado %}Aprobado{% else %}Pendiente{% endif %}
                                             </span>

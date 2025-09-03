@@ -411,7 +411,7 @@
                 </div>
                 <div class="info-item">
                     <div class="info-label">Monto Total</div>
-                    <div class="info-value">${{ presupuesto.monto_total|floatformat:2 }}</div>
+                    <div class="info-value">{{presupuesto.monto_total|currency_format}}</div>
                 </div>
                 <div class="info-item">
                     <div class="info-label">Variación</div>
@@ -421,12 +421,12 @@
                                 {% if variacion.variacion > 0 %}
                                     <span class="variacion-indicator variacion-positiva">
                                         <i class="fas fa-arrow-up"></i>
-                                        +${{ variacion.variacion|floatformat:2 }}
+                                        +{{variacion.variacion|currency_format}}
                                     </span>
                                 {% elif variacion.variacion < 0 %}
                                     <span class="variacion-indicator variacion-negativa">
                                         <i class="fas fa-arrow-down"></i>
-                                        ${{ variacion.variacion|floatformat:2 }}
+                                        {{variacion.variacion|currency_format}}
                                     </span>
                                 {% else %}
                                     <span class="variacion-indicator variacion-neutral">

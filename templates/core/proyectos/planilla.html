@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load custom_filters %}
 
 {% block title %}Planilla del Proyecto - {{ proyecto.nombre }}{% endblock %}
 
@@ -312,15 +313,15 @@
             <div class="stat-label">Personal Asignado</div>
         </div>
         <div class="stat-card">
-            <div class="stat-number">Q{{ total_anticipos|floatformat:2 }}</div>
+            <div class="stat-number">{{total_anticipos|currency_gtq}}</div>
             <div class="stat-label">Total Anticipos</div>
         </div>
         <div class="stat-card">
-            <div class="stat-number">Q{{ total_liquidado|floatformat:2 }}</div>
+            <div class="stat-number">{{total_liquidado|currency_gtq}}</div>
             <div class="stat-label">Total Liquidado</div>
         </div>
         <div class="stat-card">
-            <div class="stat-number">Q{{ saldo_pendiente|floatformat:2 }}</div>
+            <div class="stat-number">{{saldo_pendiente|currency_gtq}}</div>
             <div class="stat-label">Saldo Pendiente</div>
         </div>
     </div>
@@ -398,14 +399,14 @@
                          </td>
                          <td>
                              <div class="fw-bold {% if colaborador.salario_neto < 0 %}text-danger{% else %}text-success{% endif %}">
-                                 Q{{ colaborador.salario_neto|floatformat:2 }}
+                                 {{colaborador.salario_neto|currency_gtq}}
                              </div>
                              <small class="text-muted">
                                  {% if colaborador.anticipos_liquidados > 0 %}
-                                     -Q{{ colaborador.anticipos_liquidados|floatformat:2 }} liquidados
+                                     -{{colaborador.anticipos_liquidados|currency_gtq}} liquidados
                                  {% endif %}
                                  {% if colaborador.deuda_anticipos > 0 %}
-                                     -Q{{ colaborador.deuda_anticipos|floatformat:2 }} pendientes
+                                     -{{colaborador.deuda_anticipos|currency_gtq}} pendientes
                                  {% endif %}
                              </small>
                          </td>
@@ -435,10 +436,10 @@
                              <strong>TOTALES DE LA PLANILLA:</strong>
                          </td>
                          <td class="fw-bold text-success">
-                             Q{{ total_salarios|floatformat:2 }}
+                             {{total_salarios|currency_gtq}}
                          </td>
                          <td class="fw-bold text-success">
-                             Q{{ total_salarios_netos|floatformat:2 }}
+                             {{total_salarios_netos|currency_gtq}}
                          </td>
                          <td colspan="2" class="text-center">
                              <span class="badge bg-info">Resumen</span>
@@ -449,15 +450,15 @@
                              <div class="row">
                                  <div class="col-md-4">
                                      <small class="text-muted">Total Salarios:</small><br>
-                                     <strong class="text-success">Q{{ total_salarios|floatformat:2 }}</strong>
+                                     <strong class="text-success">{{total_salarios|currency_gtq}}</strong>
                                  </div>
                                  <div class="col-md-4">
                                      <small class="text-muted">Total Anticipos:</small><br>
-                                     <strong class="text-warning">Q{{ total_anticipos_aplicados|floatformat:2 }}</strong>
+                                     <strong class="text-warning">{{total_anticipos_aplicados|currency_gtq}}</strong>
                                  </div>
                                  <div class="col-md-4">
                                      <small class="text-muted">Total a Pagar:</small><br>
-                                     <strong class="text-primary">Q{{ total_salarios_netos|floatformat:2 }}</strong>
+                                     <strong class="text-primary">{{total_salarios_netos|currency_gtq}}</strong>
                                  </div>
                              </div>
                          </td>

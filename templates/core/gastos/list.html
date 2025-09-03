@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load custom_filters %}
 
 {% block title %}Gastos - Sistema de Construcción{% endblock %}
 
@@ -429,7 +430,7 @@
                             <span class="badge-modern info">{{ gasto.categoria.nombre }}</span>
                         </td>
                         <td>
-                            <span class="fw-bold text-danger">Q{{ gasto.monto|floatformat:2 }}</span>
+                            <span class="fw-bold text-danger">{{gasto.monto|currency_gtq}}</span>
                         </td>
                         <td>
                             {% if gasto.proyecto %}

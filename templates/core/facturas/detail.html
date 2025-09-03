@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load custom_filters %}
 {% block title %}Detalle de Factura - Sistema de Construcción{% endblock %}
 
 {% block content %}
@@ -44,13 +45,13 @@
                         <div class="col-md-6">
                             <div class="info-item">
                                 <label class="info-label">Monto Total</label>
-                                <p class="info-value">Q{{ factura.monto_total|floatformat:2 }}</p>
+                                <p class="info-value">{{factura.monto_total|currency_gtq}}</p>
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="info-item">
                                 <label class="info-label">Monto Pagado</label>
-                                <p class="info-value">Q{{ factura.monto_pagado|floatformat:2 }}</p>
+                                <p class="info-value">{{factura.monto_pagado|currency_gtq}}</p>
                             </div>
                         </div>
                         <div class="col-md-6">
