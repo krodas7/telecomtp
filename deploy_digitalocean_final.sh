@@ -42,7 +42,7 @@ fi
 APP_NAME="sistema-arca"
 APP_USER="arca"
 APP_DIR="/var/www/$APP_NAME"
-REPO_URL="https://github.com/krodas7/sistema-construccion-django.git"
+REPO_URL="https://github.com/krodas7/arca-sistema.git"
 DOMAIN_NAME="construccionesarca.net"  # TU DOMINIO REAL
 
 print_status "🚀 Iniciando despliegue del Sistema ARCA Construcción..."

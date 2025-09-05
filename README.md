@@ -1,212 +1,186 @@
-#  Sistema ARCA Construcción
+# 🏗️ Sistema ARCA Construcción
 
-Sistema integral de gestión para empresas de construcción con capacidades PWA (Progressive Web App) y acceso móvil.
+Sistema integral de gestión para empresas de construcción desarrollado en Django.
 
-##  Características Principales
+## ✨ Características Principales
 
-###  Funcionalidades Core
-- **Gestión de Proyectos** - Planificación, seguimiento y control de obras
-- **Gestión de Clientes** - Base de datos completa de clientes
-- **Facturación** - Sistema de facturas con estados y pagos
-- **Gestión de Colaboradores** - Control de personal y anticipos
-- **Inventario** - Control de materiales y herramientas
-- **Presupuestos** - Elaboración y seguimiento de presupuestos
+- 📊 **Dashboard Inteligente** - Análisis financiero y de rentabilidad
+- 🏢 **Gestión de Proyectos** - Control completo del ciclo de vida
+- 👥 **Gestión de Clientes** - Base de datos de clientes y contactos
+- 💰 **Facturación** - Sistema completo de facturas y pagos
+- 📈 **Presupuestos** - Creación y seguimiento de presupuestos
+- 🧾 **Gastos** - Control de gastos por proyecto
+- 💳 **Anticipos** - Gestión de anticipos de clientes
+- 👷 **Colaboradores** - Gestión del equipo de trabajo
+- 📁 **Archivos** - Gestión documental
+- 📊 **Reportes** - Análisis detallados y exportación
 
-###  Características Móviles
-- **PWA Completa** - Instalable como aplicación nativa
-- **Responsive Design** - Optimizado para todos los dispositivos
-- **Funcionamiento Offline** - Cache de datos importantes
-- **Notificaciones Push** - Alertas en tiempo real
+## 🚀 Instalación Rápida
 
-###  Seguridad
-- **Atenticación de Usuarios** - Sistema de login seguro
-- **Control de Permisos** - Roles y accesos diferenciados
-- **Logs de Actividad** - Auditoría completa del sistema
-- **Tokens CSRF** - Protección contra ataques
+### Prerrequisitos
+- Python 3.9+
+- PostgreSQL 12+
+- Redis 6+
 
-##  Tecnologías Utilizadas
-
-- **Backend:** Django 5.2.5 (Python)
-- **Frontend:** HTML5, CSS3, JavaScript (ES6+)
-- **Base de Datos:** SQLite (desarrollo) / PostgreSQL (producción)
-- **Framework CSS:** Bootstrap 5.3.0
-- **Iconos:** Font Awesome 6.4.0
-- **PWA:** Service Worker, Manifest, Cache API
-
-## Requisitos del Sistema
-
-### Desarrollo
-- Python 3.11+
-- Django 5.2.5
-- SQLite3
-- Navegador moderno con soporte PWA
-
-### Producción
-- Ubuntu 22.04 LTS
-- PostgreSQL 15+
-- Nginx
-- Gunicorn
-- SSL/HTTPS
-
-##  Instalación y Configuración
-
-### 1. Clonar el repositorio
+### Desarrollo Local
 ```bash
-git clone <url-del-repositorio>
-cd sistema-construccion-django
-```
+# Clonar repositorio
+git clone https://github.com/krodas7/arca-sistema.git
+cd arca-sistema
 
-### 2. Crear entorno virtual
-```bash
+# Crear entorno virtual
 python -m venv venv
 source venv/bin/activate  # Linux/Mac
+# o
 venv\Scripts\activate     # Windows
-```
 
-### 3. Instalar dependencias
-```bash
-pip install -r requirements.txt
-```
+# Instalar dependencias
+pip install -r requirements_production_simple.txt
 
-### 4. Configurar base de datos
-```bash
+# Configurar base de datos
 python manage.py migrate
 python manage.py createsuperuser
-```
 
-### 5. Ejecutar servidor de desarrollo
-```bash
+# Ejecutar servidor
 python manage.py runserver
 ```
 
-##  Acceso al Sistema
+### Producción
+```bash
+# Usar script de despliegue
+chmod +x deploy_digitalocean_final.sh
+./deploy_digitalocean_final.sh
+```
 
-- **URL:** http://localhost:8000
-- **Admin:** http://localhost:8000/admin
-- **Dashboard:** http://localhost:8000/dashboard
+## 🛠️ Tecnologías
 
-##  Uso como PWA
+- **Backend**: Django 5.2.5
+- **Base de Datos**: PostgreSQL
+- **Cache**: Redis
+- **Frontend**: Bootstrap 5, Chart.js
+- **Servidor**: Gunicorn + Nginx
 
-### Instalación en Móvil
-1. Abrir el sistema en Chrome/Safari
-2. Aparecerá banner "Instalar App"
-3. Seleccionar "Instalar"
-4. La app aparecerá en la pantalla de inicio
+## 📁 Estructura del Proyecto
 
-### Funcionalidades PWA
-- Instalación como app nativa
-- Funcionamiento offline
--  Sincronización automática
--  Notificaciones push
+```
+arca-sistema/
+├── core/                    # Aplicación principal
+│   ├── models.py           # Modelos de datos
+│   ├── views.py            # Vistas y lógica de negocio
+│   ├── forms.py            # Formularios
+│   └── templates/          # Plantillas HTML
+├── static/                 # Archivos estáticos
+├── media/                  # Archivos de usuario
+├── requirements_production_simple.txt  # Dependencias
+└── deploy_digitalocean_final.sh       # Script de despliegue
+```
 
-##  Configuración de Producción
+## 🔧 Configuración
 
 ### Variables de Entorno
 ```bash
+# Copiar archivo de ejemplo
+cp production.env .env
+
+# Configurar variables
 DEBUG=False
 SECRET_KEY=tu-clave-secreta
-DATABASE_URL=postgresql://user:pass@host:port/db
-ALLOWED_HOSTS=tu-dominio.com
+DB_NAME=arca_construccion
+DB_USER=arca_user
+DB_PASSWORD=tu-password
 ```
 
-### Servidor Web
-- **Nginx** como proxy reverso
-- **Gunicorn** como servidor WSGI
-- **SSL** con Let's Encrypt
+## 📊 Módulos del Sistema
 
-##  Estructura del Proyecto
+### 🏠 Dashboard
+- Resumen financiero general
+- Gráficos de ingresos vs gastos
+- Proyectos más rentables
+- Estadísticas en tiempo real
 
-```
-sistema-construccion-django/
-├── core/                    # Aplicación principal
-│   ├── models.py           # Modelos de datos
-│   ├── views.py            # Vistas y lógica
-│   ├── urls.py             # URLs de la aplicación
-│   └── admin.py            # Panel de administración
-├── sistema_construccion/   # Configuración del proyecto
-│   ├── settings.py         # Configuración principal
-│   ├── urls.py             # URLs del proyecto
-│   └── wsgi.py             # Configuración WSGI
-├── templates/              # Plantillas HTML
-├── static/                 # Archivos estáticos
-├── media/                  # Archivos subidos
-├── requirements.txt        # Dependencias Python
-└── manage.py              # Script de gestión Django
-```
+### 🏢 Proyectos
+- Creación y gestión de proyectos
+- Seguimiento de progreso
+- Dashboard específico por proyecto
+- Control de fondos disponibles
 
-## Despliegue
+### 💰 Facturación
+- Emisión de facturas
+- Control de pagos
+- Estados de facturación
+- Reportes detallados
 
-### DigitalOcean 
-- **Droplet:** Ubuntu 22.04 LTS
-- **RAM:** 2GB mínimo
-- **Storage:** 50GB SSD
-- **Costo:** $12 USD/mes
+### 📈 Presupuestos
+- Creación de presupuestos
+- Partidas detalladas
+- Aprobación de presupuestos
+- Seguimiento de costos
 
+### 🧾 Gastos
+- Registro de gastos
+- Categorización automática
+- Aprobación de gastos
+- Control por proyecto
 
-##  Control de Versiones
+### 💳 Anticipos
+- Gestión de anticipos de clientes
+- Aplicación a facturas o proyectos
+- Control de liquidación
+- Seguimiento de disponibilidad
 
-### Git Workflow
+## 🔒 Seguridad
+
+- ✅ Autenticación de usuarios
+- ✅ Control de roles y permisos
+- ✅ Validación de formularios
+- ✅ Protección CSRF
+- ✅ Sanitización de datos
+- ✅ Logs de auditoría
+
+## 🚀 Despliegue
+
+### DigitalOcean + Hostinger
 ```bash
-# Crear rama para nueva funcionalidad
-git checkout -b feature/nueva-funcionalidad
-
-# Hacer cambios y commit
-git add .
-git commit -m "Agregar nueva funcionalidad"
-
-# Push y merge
-git push origin feature/nueva-funcionalidad
-git checkout main
-git merge feature/nueva-funcionalidad
+# Ejecutar script de despliegue
+./deploy_digitalocean_final.sh
 ```
 
-### Tags de Versión
-```bash
-git tag -a v1.0.0 -m "Versión 1.0.0 estable"
-git push origin v1.0.0
-```
+### Variables de Producción
+- Dominio: `construccionesarca.net`
+- Base de datos: PostgreSQL
+- Cache: Redis
+- Servidor web: Nginx
+- SSL: Let's Encrypt
 
-##  Solución de Problemas
+## 📈 Monitoreo
 
-### Problemas Comunes
-1. **Error CSRF:** Verificar token en plantillas
-2. **Error de permisos:** Verificar decoradores @login_required
-3. **Error de base de datos:** Ejecutar migraciones
-4. **PWA no funciona:** Verificar HTTPS en producción
+- Logs de aplicación
+- Métricas de rendimiento
+- Alertas de seguridad
+- Backup automático
 
-### Logs
-- **Django:** `logs/django.log`
-- **Backup:** `logs/backup.log`
-- **Sistema:** `/var/log/` (producción)
+## 🤝 Contribución
 
-##  Soporte
+1. Fork el proyecto
+2. Crea una rama para tu feature (`git checkout -b feature/AmazingFeature`)
+3. Commit tus cambios (`git commit -m 'Add some AmazingFeature'`)
+4. Push a la rama (`git push origin feature/AmazingFeature`)
+5. Abre un Pull Request
 
-### Documentación
-- **README:** Este archivo
-- **Comentarios:** En el código fuente
-- **Tests:** Archivos de prueba incluidos
+## 📄 Licencia
 
-### Contacto
-- **Desarrollador:** Kevin
-- **Proyecto:** Sistema ARCA Construcción
-- **Versión:** 1.0.0
+Este proyecto está bajo la Licencia MIT - ver el archivo [LICENSE](LICENSE) para detalles.
 
-##  Licencia
+## 👨‍💻 Autor
 
-Este proyecto es de uso interno para ARCA Construcción.
+**Kevin Sierra** - [@krodas7](https://github.com/krodas7)
 
-##  Roadmap
+## 📞 Soporte
 
-### Versión 1.1
-- [ ] Reportes avanzados
-- [ ] Integración con WhatsApp
-- [ ] App móvil nativa
-
-### Versión 1.2
-- [ ] Módulo de contabilidad
-- [ ] Integración bancaria
-- [ ] Dashboard ejecutivo
+Para soporte técnico o consultas:
+- 📧 Email: kevinsierra45@gmail.com
+- 🐛 Issues: [GitHub Issues](https://github.com/krodas7/arca-sistema/issues)
 
 ---
 
-
+⭐ **¡Si te gusta este proyecto, dale una estrella!** ⭐
