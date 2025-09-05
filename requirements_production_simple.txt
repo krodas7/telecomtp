@@ -1,0 +1,73 @@
+# ============================================================================
+# DEPENDENCIAS DE PRODUCCIÓN SIMPLIFICADAS - Sistema ARCA Construcción
+# ============================================================================
+# Solo las dependencias esenciales para evitar conflictos
+
+# Framework principal
+Django>=5.0,<6.0
+
+# Servidor WSGI
+gunicorn>=21.0.0
+
+# Base de datos PostgreSQL
+psycopg2-binary>=2.9.0
+
+# Procesamiento de imágenes
+Pillow>=10.0.0
+
+# Cache Redis
+django-redis>=5.0.0
+redis>=4.0.0
+
+# Variables de entorno
+python-dotenv>=1.0.0
+
+# Formularios
+django-crispy-forms>=2.0
+crispy-bootstrap5>=0.7
+
+# Procesamiento de archivos
+openpyxl>=3.0.0
+
+# Exportación PDF
+reportlab>=4.0.0
+
+# Manejo de fechas
+python-dateutil>=2.8.0
+pytz>=2023.3
+
+# Validación de emails
+email-validator>=2.0.0
+
+# Compresión
+django-compressor>=4.4.0
+
+# Limpieza de archivos
+django-cleanup>=8.0.0
+
+# Widgets de formularios
+django-widget-tweaks>=1.4.12
+
+# Importación/Exportación
+django-import-export>=3.3.0
+
+# Filtros
+django-filter>=23.0
+
+# Paginación
+django-pure-pagination>=0.3.0
+
+# Headers de seguridad
+django-security>=0.15.0
+
+# Manejo de archivos grandes
+django-chunked-upload>=2.0.0
+
+# Validación de tipos de archivo
+python-magic>=0.4.27
+
+# Optimización de imágenes
+django-imagekit>=5.0.0
+
+# Cache de imágenes
+django-image-cropping>=1.6.0

@@ -42,8 +42,8 @@ fi
 APP_NAME="sistema-arca"
 APP_USER="arca"
 APP_DIR="/var/www/$APP_NAME"
-REPO_URL="https://github.com/krodas7/sistema-arca.git"
-DOMAIN_NAME="[TU-DOMINIO.com]"  # CAMBIAR POR TU DOMINIO REAL
+REPO_URL="https://github.com/krodas7/sistema-construccion-django.git"
+DOMAIN_NAME="construccionesarca.net"  # TU DOMINIO REAL
 
 print_status "🚀 Iniciando despliegue del Sistema ARCA Construcción..."
 print_status "📍 Ubicación: $APP_DIR"
@@ -155,7 +155,7 @@ sudo -u $APP_USER python3 -m venv venv
 sudo -u $APP_USER $APP_DIR/venv/bin/pip install --upgrade pip
 
 print_status "📚 Instalando dependencias Python..."
-sudo -u $APP_USER $APP_DIR/venv/bin/pip install -r requirements_production.txt
+sudo -u $APP_USER $APP_DIR/venv/bin/pip install -r requirements_production_simple.txt
 
 # ============================================================================
 # PASO 8: CONFIGURAR VARIABLES DE ENTORNO
