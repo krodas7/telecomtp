@@ -180,6 +180,17 @@
         letter-spacing: 0.5px;
     }
     
+    .stat-card .stat-breakdown {
+        margin-top: 8px;
+        padding-top: 8px;
+        border-top: 1px solid rgba(0, 0, 0, 0.1);
+    }
+    
+    .stat-card .stat-breakdown small {
+        font-size: 11px;
+        line-height: 1.3;
+    }
+    
     .chart-area {
         background: white;
         border-radius: 20px;
@@ -539,6 +550,12 @@
                 </div>
                 <div class="stat-number">{{ total_cobrado|currency_gtq }}</div>
                 <div class="stat-label">Total Cobrado</div>
+                <div class="stat-breakdown">
+                    <small class="text-muted">
+                        Facturas: {{ total_facturas_pagadas|currency_gtq }}<br>
+                        Anticipos: {{ total_anticipos_aplicados|currency_gtq }}
+                    </small>
+                </div>
             </div>
         </div>
     </div>
@@ -815,26 +832,42 @@
             return colores[tipo] || '#667eea';
         }
 
-        // Gráfico Financiero con datos reales
+        // Gráfico Financiero con datos reales y escala ajustada
             const financialCtx = document.getElementById('financialChart').getContext('2d');
+            
+            // Calcular el rango de datos para ajustar la escala
+            const ingresosData = {{ ingresos_mensuales|safe }};
+            const gastosData = {{ gastos_mensuales|safe }};
+            const allData = [...ingresosData, ...gastosData];
+            const maxValue = Math.max(...allData);
+            const minValue = Math.min(...allData);
+            const range = maxValue - minValue;
+            const padding = range * 0.1; // 10% de padding
+            
             window.financialChart = new Chart(financialCtx, {
                 type: 'line',
                 data: {
                     labels: {{ meses_grafico|safe }},
                     datasets: [{
                         label: 'Ingresos',
-                        data: {{ ingresos_mensuales|safe }},
+                        data: ingresosData,
                         borderColor: '#667eea',
                         backgroundColor: 'rgba(102, 126, 234, 0.1)',
                         tension: 0.4,
-                        fill: true
+                        fill: true,
+                        pointBackgroundColor: '#667eea',
+                        pointBorderColor: '#ffffff',
+                        pointBorderWidth: 2
                     }, {
                         label: 'Gastos',
-                        data: {{ gastos_mensuales|safe }},
+                        data: gastosData,
                         borderColor: '#ff6b6b',
                         backgroundColor: 'rgba(255, 107, 107, 0.1)',
                         tension: 0.4,
-                        fill: true
+                        fill: true,
+                        pointBackgroundColor: '#ff6b6b',
+                        pointBorderColor: '#ffffff',
+                        pointBorderWidth: 2
                     }]
                 },
                 options: {
@@ -843,19 +876,98 @@
                     plugins: {
                         legend: {
                             position: 'top',
+                            labels: {
+                                usePointStyle: true,
+                                padding: 20,
+                                font: {
+                                    size: 12,
+                                    weight: 'bold'
+                                }
+                            }
+                        },
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false,
+                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                            titleColor: 'white',
+                            bodyColor: 'white',
+                            borderColor: '#667eea',
+                            borderWidth: 1,
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.dataset.label || '';
+                                    if (label) {
+                                        label += ': ';
+                                    }
+                                    label += 'Q' + context.parsed.y.toLocaleString('es-GT');
+                                    return label;
+                                }
+                            }
                         }
                     },
                     scales: {
                         y: {
                             beginAtZero: true,
+                            min: Math.max(0, minValue - padding),
+                            max: maxValue + padding,
                             grid: {
-                                color: 'rgba(0, 0, 0, 0.1)'
+                                color: 'rgba(0, 0, 0, 0.1)',
+                                drawBorder: false
+                            },
+                            ticks: {
+                                callback: function(value) {
+                                    return 'Q' + value.toLocaleString('es-GT');
+                                },
+                                font: {
+                                    size: 11
+                                },
+                                color: '#666'
+                            },
+                            title: {
+                                display: true,
+                                text: 'Monto (Q)',
+                                font: {
+                                    size: 12,
+                                    weight: 'bold'
+                                },
+                                color: '#333'
                             }
                         },
                         x: {
                             grid: {
-                                color: 'rgba(0, 0, 0, 0.1)'
+                                color: 'rgba(0, 0, 0, 0.1)',
+                                drawBorder: false
+                            },
+                            ticks: {
+                                font: {
+                                    size: 11
+                                },
+                                color: '#666'
+                            },
+                            title: {
+                                display: true,
+                                text: 'Período',
+                                font: {
+                                    size: 12,
+                                    weight: 'bold'
+                                },
+                                color: '#333'
                             }
+                        }
+                    },
+                    interaction: {
+                        intersect: false,
+                        mode: 'index'
+                    },
+                    elements: {
+                        point: {
+                            radius: 6,
+                            hoverRadius: 8,
+                            borderWidth: 3,
+                            hoverBorderWidth: 4
+                        },
+                        line: {
+                            borderWidth: 3
                         }
                     }
                 }

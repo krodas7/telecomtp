@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load custom_filters %}
 
 {% block title %}Aprobar Presupuesto - {{ presupuesto.nombre }}{% endblock %}
 
@@ -509,6 +510,33 @@
             display: none;
         }
     }
+    
+    /* Estilos para el modal de confirmación */
+    .modal-content {
+        border-radius: 15px;
+        border: none;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    }
+    
+    .modal-header {
+        border-radius: 15px 15px 0 0;
+        border-bottom: none;
+    }
+    
+    .modal-footer {
+        border-radius: 0 0 15px 15px;
+        border-top: 1px solid #e9ecef;
+    }
+    
+    .modal-body .alert {
+        border-radius: 10px;
+        border: none;
+        background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
+    }
+    
+    .btn-close-white {
+        filter: invert(1);
+    }
 </style>
 {% endblock %}
 
@@ -751,16 +779,22 @@ document.addEventListener('DOMContentLoaded', function() {
     form.addEventListener('submit', function(e) {
         e.preventDefault();
         
-        // Mostrar confirmación personalizada
-        if (confirm('¿Estás completamente seguro de que deseas aprobar este presupuesto?\n\nEsta acción no se puede deshacer y el presupuesto quedará bloqueado para edición.')) {
-            // Mostrar estado de carga
-            approveButton.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Aprobando...';
-            approveButton.disabled = true;
-            approveButton.style.background = 'linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%)';
-            
-            // Enviar formulario
-            form.submit();
-        }
+        // Mostrar modal de confirmación
+        const modal = new bootstrap.Modal(document.getElementById('confirmApproveModal'));
+        modal.show();
+    });
+    
+    // Manejar la confirmación del modal
+    document.getElementById('confirmApprove').addEventListener('click', function() {
+        const approveButton = document.getElementById('approveButton');
+        
+        // Mostrar estado de carga
+        approveButton.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Aprobando...';
+        approveButton.disabled = true;
+        approveButton.style.background = 'linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%)';
+        
+        // Enviar formulario
+        form.submit();
     });
     
     // Animación del botón de aprobación
@@ -810,4 +844,54 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 </script>
+
+<!-- Modal de Confirmación de Aprobación -->
+<div class="modal fade" id="confirmApproveModal" tabindex="-1" aria-labelledby="confirmApproveModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title" id="confirmApproveModalLabel">
+                    <i class="fas fa-check-circle me-2"></i>Confirmar Aprobación
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="text-center">
+                    <div class="mb-3">
+                        <i class="fas fa-file-invoice-dollar fa-3x text-success"></i>
+                    </div>
+                    <h6 class="mb-3">¿Estás completamente seguro de que deseas aprobar este presupuesto?</h6>
+                    <div class="alert alert-warning">
+                        <strong>⚠️ Advertencia:</strong> Esta acción no se puede deshacer y el presupuesto quedará bloqueado para edición.
+                        <br><br>
+                        <div class="row">
+                            <div class="col-6">
+                                <strong>Presupuesto:</strong><br>
+                                <span>{{ presupuesto.nombre }}</span>
+                            </div>
+                            <div class="col-6">
+                                <strong>Total:</strong><br>
+                                <span class="text-success fw-bold">{{ presupuesto.total|currency_gtq }}</span>
+                            </div>
+                        </div>
+                        <div class="row mt-2">
+                            <div class="col-12">
+                                <strong>Cliente:</strong><br>
+                                <span>{{ presupuesto.cliente.razon_social }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-2"></i>Cancelar
+                </button>
+                <button type="button" class="btn btn-success" id="confirmApprove">
+                    <i class="fas fa-check me-2"></i>Aprobar Presupuesto
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}

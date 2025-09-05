@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% load static %}
+{% load custom_filters %}
 
 {% block title %}Detalle de Anticipo - Sistema de Construcción{% endblock %}
 
@@ -72,7 +73,7 @@
                                 </tr>
                                 <tr>
                                     <td><strong>Monto Aplicado:</strong></td>
-                                    <td><span class="text-info">{{anticipo.monto_aplicado|currency_gtq}}</span></td>
+                                    <td><span class="text-info">{{anticipo.total_aplicado|currency_gtq}}</span></td>
                                 </tr>
                                 <tr>
                                     <td><strong>Monto Disponible:</strong></td>
@@ -198,7 +199,7 @@
                     <div class="row text-center">
                         <div class="col-4">
                             <div class="border-end">
-                                <h6 class="text-success">{{ anticipo.monto_aplicado|floatformat:2 }}</h6>
+                                <h6 class="text-success">{{ anticipo.total_aplicado|floatformat:2 }}</h6>
                                 <small class="text-muted">Aplicado</small>
                             </div>
                         </div>

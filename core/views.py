@@ -98,7 +98,11 @@ def dashboard(request):
         total_clientes = Cliente.objects.filter(activo=True).count()
         total_proyectos = Proyecto.objects.filter(activo=True).count()
         total_facturado = Factura.objects.aggregate(total=Sum('monto_total'))['total'] or 0
-        total_cobrado = Factura.objects.filter(estado='pagada').aggregate(total=Sum('monto_total'))['total'] or 0
+        
+        # Total cobrado = Facturas pagadas + Anticipos aplicados al proyecto
+        total_facturas_pagadas = Factura.objects.filter(estado='pagada').aggregate(total=Sum('monto_total'))['total'] or 0
+        total_anticipos_aplicados = Anticipo.objects.filter(aplicado_al_proyecto=True).aggregate(total=Sum('monto_aplicado_proyecto'))['total'] or 0
+        total_cobrado = total_facturas_pagadas + total_anticipos_aplicados
         
         # ============================================================================
         # DATOS DE RENTABILIDAD REAL
@@ -109,12 +113,20 @@ def dashboard(request):
         mes_actual = hoy.month
         año_actual = hoy.year
         
-        # Ingresos del mes (SOLO facturas pagadas, no facturadas)
-        ingresos_mes = Factura.objects.filter(
+        # Ingresos del mes = Facturas pagadas + Anticipos aplicados al proyecto
+        facturas_pagadas_mes = Factura.objects.filter(
             fecha_emision__month=mes_actual,
             fecha_emision__year=año_actual,
             estado='pagada'  # Solo facturas pagadas
         ).aggregate(total=Sum('monto_total'))['total'] or Decimal('0.00')
+        
+        anticipos_aplicados_mes = Anticipo.objects.filter(
+            fecha_aplicacion__month=mes_actual,
+            fecha_aplicacion__year=año_actual,
+            aplicado_al_proyecto=True
+        ).aggregate(total=Sum('monto_aplicado_proyecto'))['total'] or Decimal('0.00')
+        
+        ingresos_mes = facturas_pagadas_mes + anticipos_aplicados_mes
         
         # DEBUG: Mostrar diferencia en dashboard
         total_facturado_mes = Factura.objects.filter(
@@ -150,12 +162,22 @@ def dashboard(request):
         proyectos_activos = Proyecto.objects.filter(activo=True)
         
         for proyecto in proyectos_activos:
-            ingresos_proyecto = Factura.objects.filter(
+            # Ingresos del proyecto = Facturas pagadas + Anticipos aplicados
+            facturas_pagadas_proyecto = Factura.objects.filter(
                 proyecto=proyecto,
                 fecha_emision__month=mes_actual,
                 fecha_emision__year=año_actual,
                 monto_pagado__gt=0
             ).aggregate(total=Sum('monto_pagado'))['total'] or Decimal('0.00')
+            
+            anticipos_aplicados_proyecto = Anticipo.objects.filter(
+                proyecto=proyecto,
+                fecha_aplicacion__month=mes_actual,
+                fecha_aplicacion__year=año_actual,
+                aplicado_al_proyecto=True
+            ).aggregate(total=Sum('monto_aplicado_proyecto'))['total'] or Decimal('0.00')
+            
+            ingresos_proyecto = facturas_pagadas_proyecto + anticipos_aplicados_proyecto
             
             gastos_proyecto = Gasto.objects.filter(
                 proyecto=proyecto,
@@ -214,43 +236,137 @@ def dashboard(request):
         # Log eventos del calendario para debugging
         logger.debug(f"Eventos calendario: {len(eventos_calendario)} eventos generados")
         
-        # Datos simples para gráficos (sin cálculos complejos por ahora)
-        meses_grafico = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun']
-        
-        # Convertir Decimal a float para evitar errores de serialización JSON
-        total_facturado_float = float(total_facturado) if total_facturado else 0.0
-        
-        ingresos_mensuales = [total_facturado_float * 0.1, total_facturado_float * 0.15, total_facturado_float * 0.2, total_facturado_float * 0.25, total_facturado_float * 0.3, total_facturado_float * 0.35]
-        gastos_mensuales = [total_facturado_float * 0.05, total_facturado_float * 0.1, total_facturado_float * 0.15, total_facturado_float * 0.2, total_facturado_float * 0.25, total_facturado_float * 0.3]
-        evolucion_proyectos = [1, 2, 1, 3, 2, total_proyectos]
+        # ============================================================================
+        # DATOS REALES PARA GRÁFICOS - INGRESOS VS GASTOS
+        # ============================================================================
         
         # Obtener período seleccionado (por defecto 6 meses)
         periodo = request.GET.get('periodo', '6')
         
-        # Generar datos del gráfico según el período
-        if periodo == '3':
-            # 3 meses
-            meses_grafico = ['Abr', 'May', 'Jun']
-            total_facturado_float = float(total_facturado) if total_facturado else 0.0
-            ingresos_mensuales = [total_facturado_float * 0.25, total_facturado_float * 0.3, total_facturado_float * 0.35]
-            gastos_mensuales = [total_facturado_float * 0.2, total_facturado_float * 0.25, total_facturado_float * 0.3]
-            evolucion_proyectos = [3, 2, total_proyectos]
-        elif periodo == '1':
+        # Calcular datos reales para el gráfico según el período
+        meses_grafico = []
+        ingresos_mensuales = []
+        gastos_mensuales = []
+        evolucion_proyectos = []
+        
+        from datetime import datetime, timedelta
+        hoy = timezone.now().date()
+        
+        if periodo == '1':
             # Mes actual
-            from datetime import datetime
-            mes_actual = datetime.now().strftime('%b')
-            meses_grafico = [mes_actual]
-            total_facturado_float = float(total_facturado) if total_facturado else 0.0
-            ingresos_mensuales = [total_facturado_float * 0.35]
-            gastos_mensuales = [total_facturado_float * 0.3]
+            mes_actual = hoy.month
+            año_actual = hoy.year
+            meses_grafico = [hoy.strftime('%b')]
+            
+            # Ingresos reales del mes: facturas pagadas + anticipos aplicados
+            facturas_pagadas_mes = Factura.objects.filter(
+                estado='pagada',
+                fecha_emision__month=mes_actual,
+                fecha_emision__year=año_actual
+            ).aggregate(total=Sum('monto_total'))['total'] or Decimal('0.00')
+            
+            anticipos_aplicados_mes = Anticipo.objects.filter(
+                aplicado_al_proyecto=True,
+                fecha_aplicacion__month=mes_actual,
+                fecha_aplicacion__year=año_actual
+            ).aggregate(total=Sum('monto_aplicado_proyecto'))['total'] or Decimal('0.00')
+            
+            ingresos_mes_real = facturas_pagadas_mes + anticipos_aplicados_mes
+            ingresos_mensuales = [float(ingresos_mes_real)]
+            
+            # Gastos reales del mes: todos los gastos aprobados
+            gastos_mes_real = Gasto.objects.filter(
+                aprobado=True,
+                fecha_gasto__month=mes_actual,
+                fecha_gasto__year=año_actual
+            ).aggregate(total=Sum('monto'))['total'] or Decimal('0.00')
+            
+            gastos_mensuales = [float(gastos_mes_real)]
             evolucion_proyectos = [total_proyectos]
+            
+        elif periodo == '3':
+            # 3 meses
+            meses_grafico = []
+            for i in range(3):
+                fecha = hoy - timedelta(days=30*i)
+                meses_grafico.insert(0, fecha.strftime('%b'))
+                
+                mes = fecha.month
+                año = fecha.year
+                
+                # Ingresos reales del mes
+                facturas_pagadas_mes = Factura.objects.filter(
+                    estado='pagada',
+                    fecha_emision__month=mes,
+                    fecha_emision__year=año
+                ).aggregate(total=Sum('monto_total'))['total'] or Decimal('0.00')
+                
+                anticipos_aplicados_mes = Anticipo.objects.filter(
+                    aplicado_al_proyecto=True,
+                    fecha_aplicacion__month=mes,
+                    fecha_aplicacion__year=año
+                ).aggregate(total=Sum('monto_aplicado_proyecto'))['total'] or Decimal('0.00')
+                
+                ingresos_mes_real = facturas_pagadas_mes + anticipos_aplicados_mes
+                ingresos_mensuales.insert(0, float(ingresos_mes_real))
+                
+                # Gastos reales del mes
+                gastos_mes_real = Gasto.objects.filter(
+                    aprobado=True,
+                    fecha_gasto__month=mes,
+                    fecha_gasto__year=año
+                ).aggregate(total=Sum('monto'))['total'] or Decimal('0.00')
+                
+                gastos_mensuales.insert(0, float(gastos_mes_real))
+                
+                # Proyectos activos en ese mes (aproximación)
+                proyectos_mes = Proyecto.objects.filter(
+                    activo=True,
+                    creado_en__lte=fecha
+                ).count()
+                evolucion_proyectos.insert(0, proyectos_mes)
         else:
             # 6 meses (por defecto)
-            meses_grafico = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun']
-            total_facturado_float = float(total_facturado) if total_facturado else 0.0
-            ingresos_mensuales = [total_facturado_float * 0.1, total_facturado_float * 0.15, total_facturado_float * 0.2, total_facturado_float * 0.25, total_facturado_float * 0.3, total_facturado_float * 0.35]
-            gastos_mensuales = [total_facturado_float * 0.05, total_facturado_float * 0.1, total_facturado_float * 0.15, total_facturado_float * 0.2, total_facturado_float * 0.25, total_facturado_float * 0.3]
-            evolucion_proyectos = [1, 2, 1, 3, 2, total_proyectos]
+            meses_grafico = []
+            for i in range(6):
+                fecha = hoy - timedelta(days=30*i)
+                meses_grafico.insert(0, fecha.strftime('%b'))
+                
+                mes = fecha.month
+                año = fecha.year
+                
+                # Ingresos reales del mes
+                facturas_pagadas_mes = Factura.objects.filter(
+                    estado='pagada',
+                    fecha_emision__month=mes,
+                    fecha_emision__year=año
+                ).aggregate(total=Sum('monto_total'))['total'] or Decimal('0.00')
+                
+                anticipos_aplicados_mes = Anticipo.objects.filter(
+                    aplicado_al_proyecto=True,
+                    fecha_aplicacion__month=mes,
+                    fecha_aplicacion__year=año
+                ).aggregate(total=Sum('monto_aplicado_proyecto'))['total'] or Decimal('0.00')
+                
+                ingresos_mes_real = facturas_pagadas_mes + anticipos_aplicados_mes
+                ingresos_mensuales.insert(0, float(ingresos_mes_real))
+                
+                # Gastos reales del mes
+                gastos_mes_real = Gasto.objects.filter(
+                    aprobado=True,
+                    fecha_gasto__month=mes,
+                    fecha_gasto__year=año
+                ).aggregate(total=Sum('monto'))['total'] or Decimal('0.00')
+                
+                gastos_mensuales.insert(0, float(gastos_mes_real))
+                
+                # Proyectos activos en ese mes (aproximación)
+                proyectos_mes = Proyecto.objects.filter(
+                    activo=True,
+                    creado_en__lte=fecha
+                ).count()
+                evolucion_proyectos.insert(0, proyectos_mes)
+        
         
         # Contexto simplificado
         context = {
@@ -258,11 +374,13 @@ def dashboard(request):
             'total_proyectos': total_proyectos,
             'total_facturado': total_facturado,
             'total_cobrado': total_cobrado,
+            'total_facturas_pagadas': total_facturas_pagadas,
+            'total_anticipos_aplicados': total_anticipos_aplicados,
             'eventos_calendario': eventos_calendario,
             'eventos_calendario_json': eventos_calendario_json,
             'evolucion_proyectos': evolucion_proyectos,
-            'categorias_gastos': ['Materiales', 'Mano de Obra', 'Equipos', 'Administrativos'],
-            'montos_gastos': [total_facturado_float * 0.4, total_facturado_float * 0.3, total_facturado_float * 0.2, total_facturado_float * 0.1],
+            'categorias_gastos': [item['categoria__nombre'] for item in gastos_categoria_mes],
+            'montos_gastos': [float(item['total']) for item in gastos_categoria_mes],
             'ingresos_mensuales': ingresos_mensuales,
             'gastos_mensuales': gastos_mensuales,
             'meses_grafico': meses_grafico,
@@ -296,6 +414,8 @@ def dashboard(request):
             'total_proyectos': 0,
             'total_facturado': 0,
             'total_cobrado': 0,
+            'total_facturas_pagadas': 0,
+            'total_anticipos_aplicados': 0,
             'eventos_calendario': [],
             'eventos_calendario_json': '[]',
             'evolucion_proyectos': [],
@@ -420,6 +540,44 @@ def cliente_delete(request, cliente_id):
         return redirect('clientes_list')
     
     return render(request, 'core/clientes/delete.html', {'cliente': cliente})
+
+
+@login_required
+def cliente_detail(request, cliente_id):
+    """Detalle de cliente"""
+    cliente = get_object_or_404(Cliente, id=cliente_id)
+    
+    # Obtener proyectos del cliente
+    proyectos = Proyecto.objects.filter(cliente=cliente, activo=True).order_by('-creado_en')
+    
+    # Obtener anticipos del cliente
+    anticipos = Anticipo.objects.filter(cliente=cliente).order_by('-fecha_anticipo')
+    
+    # Obtener facturas del cliente
+    facturas = Factura.objects.filter(cliente=cliente).order_by('-fecha_factura')
+    
+    # Calcular estadísticas
+    total_proyectos = proyectos.count()
+    total_anticipos = anticipos.count()
+    total_facturas = facturas.count()
+    
+    # Calcular montos
+    monto_total_anticipos = anticipos.aggregate(total=Sum('monto'))['total'] or 0
+    monto_total_facturas = facturas.aggregate(total=Sum('monto'))['total'] or 0
+    
+    context = {
+        'cliente': cliente,
+        'proyectos': proyectos[:10],  # Últimos 10 proyectos
+        'anticipos': anticipos[:10],  # Últimos 10 anticipos
+        'facturas': facturas[:10],    # Últimas 10 facturas
+        'total_proyectos': total_proyectos,
+        'total_anticipos': total_anticipos,
+        'total_facturas': total_facturas,
+        'monto_total_anticipos': monto_total_anticipos,
+        'monto_total_facturas': monto_total_facturas,
+    }
+    
+    return render(request, 'core/clientes/detail.html', context)
 
 
 # ===== CRUD PROYECTOS =====
@@ -873,6 +1031,11 @@ def factura_create(request):
     # Inicializar form por defecto para GET requests
     form = FacturaForm()
     
+    # Establecer valores por defecto
+    if not request.method == 'POST':
+        form.fields['fecha_emision'].initial = timezone.now().date()
+        form.fields['fecha_vencimiento'].initial = timezone.now().date() + timedelta(days=30)  # 30 días después
+    
     if request.method == 'POST':
         logger.debug("Creando nueva factura")
         form = FacturaForm(request.POST)
@@ -1018,6 +1181,9 @@ def factura_marcar_pagada(request, factura_id):
             # Cambiar estado a pagada y establecer fecha de pago
             factura.estado = 'pagada'
             factura.fecha_pago = timezone.now().date()
+            # Actualizar monto pagado al monto total de la factura
+            factura.monto_pagado = factura.monto_total
+            factura.monto_pendiente = factura.monto_total - factura.monto_pagado
             factura.save()
             
             # Registrar actividad
@@ -1459,11 +1625,18 @@ def anticipos_list(request):
 def anticipo_create(request):
     """Crear nuevo anticipo"""
     if request.method == 'POST':
+        logger.info(f"📝 POST recibido para crear anticipo")
+        logger.info(f"📝 Datos POST: {request.POST}")
+        
         form = AnticipoForm(request.POST)
+        logger.info(f"📝 Formulario creado: {form}")
+        
         if form.is_valid():
+            logger.info("✅ Formulario es válido, guardando anticipo...")
             anticipo = form.save(commit=False)
             anticipo.creado_por = request.user
             anticipo.save()
+            logger.info(f"✅ Anticipo guardado con ID: {anticipo.id}")
             
             # Registrar actividad
             LogActividad.objects.create(
@@ -1475,14 +1648,41 @@ def anticipo_create(request):
             )
             
             messages.success(request, 'Anticipo creado exitosamente')
+            logger.info("✅ Redirigiendo a anticipos_list")
             return redirect('anticipos_list')
+        else:
+            logger.error(f"❌ Formulario no es válido. Errores: {form.errors}")
+            logger.error(f"❌ Datos del formulario: {form.cleaned_data}")
+            # Agregar los errores del formulario a los mensajes
+            for field, errors in form.errors.items():
+                for error in errors:
+                    messages.error(request, f"{field}: {error}")
     else:
         form = AnticipoForm()
     
+    # Obtener clientes y proyectos activos para los dropdowns
+    clientes = Cliente.objects.filter(activo=True).order_by('razon_social')
+    proyectos = Proyecto.objects.filter(activo=True).order_by('nombre')
+    
+    # Organizar proyectos por cliente para el filtro dinámico
+    proyectos_por_cliente = {}
+    for cliente in clientes:
+        proyectos_del_cliente = proyectos.filter(cliente=cliente)
+        proyectos_por_cliente[cliente.id] = [
+            {'id': p.id, 'nombre': p.nombre} 
+            for p in proyectos_del_cliente
+        ]
+        # Debug: Log para verificar datos
+        logger.info(f"Cliente {cliente.razon_social} (ID: {cliente.id}) tiene {len(proyectos_del_cliente)} proyectos")
+    
+    # Debug adicional
+    logger.info(f"Proyectos por cliente: {proyectos_por_cliente}")
+    
     context = {
         'form': form,
-        'clientes': Cliente.objects.filter(activo=True),
-        'proyectos': Proyecto.objects.filter(activo=True),
+        'clientes': clientes,
+        'proyectos': proyectos,
+        'proyectos_por_cliente': proyectos_por_cliente,
     }
     
     return render(request, 'core/anticipos/create.html', context)
@@ -1533,6 +1733,11 @@ def anticipo_edit(request, anticipo_id):
             
             messages.success(request, 'Anticipo actualizado exitosamente')
             return redirect('anticipos_list')
+        else:
+            # Mostrar errores de validación
+            for field, errors in form.errors.items():
+                for error in errors:
+                    messages.error(request, f'{field}: {error}')
     else:
         form = AnticipoForm(instance=anticipo)
     
@@ -1570,27 +1775,44 @@ def anticipo_delete(request, anticipo_id):
 
 @login_required
 def aplicar_anticipo(request, anticipo_id):
-    """Aplicar anticipo a facturas"""
+    """Aplicar anticipo a facturas o al proyecto"""
     anticipo = get_object_or_404(Anticipo, id=anticipo_id)
     
     if request.method == 'POST':
-        factura_id = request.POST.get('factura')
+        tipo_aplicacion = request.POST.get('tipo_aplicacion')
         monto_aplicar = Decimal(request.POST.get('monto_aplicar'))
         
         try:
-            factura = Factura.objects.get(id=factura_id)
-            anticipo.aplicar_a_factura(factura, monto_aplicar)
+            if tipo_aplicacion == 'factura':
+                factura_id = request.POST.get('factura')
+                factura = Factura.objects.get(id=factura_id)
+                anticipo.aplicar_a_factura(factura, monto_aplicar)
+                
+                # Registrar actividad
+                LogActividad.objects.create(
+                    usuario=request.user,
+                    accion='Aplicar Anticipo',
+                    modulo='Anticipos',
+                    descripcion=f'Anticipo {anticipo.numero_anticipo} aplicado a factura {factura.numero_factura} por Q{monto_aplicar}',
+                    ip_address=request.META.get('REMOTE_ADDR')
+                )
+                
+                messages.success(request, f'Anticipo aplicado exitosamente a la factura {factura.numero_factura}')
+                
+            elif tipo_aplicacion == 'proyecto':
+                anticipo.aplicar_al_proyecto(monto_aplicar)
+                
+                # Registrar actividad
+                LogActividad.objects.create(
+                    usuario=request.user,
+                    accion='Aplicar Anticipo',
+                    modulo='Anticipos',
+                    descripcion=f'Anticipo {anticipo.numero_anticipo} aplicado al proyecto {anticipo.proyecto.nombre} por Q{monto_aplicar}',
+                    ip_address=request.META.get('REMOTE_ADDR')
+                )
+                
+                messages.success(request, f'Anticipo aplicado exitosamente al proyecto {anticipo.proyecto.nombre}')
             
-            # Registrar actividad
-            LogActividad.objects.create(
-                usuario=request.user,
-                accion='Aplicar Anticipo',
-                modulo='Anticipos',
-                descripcion=f'Anticipo {anticipo.numero_anticipo} aplicado a factura {factura.numero_factura} por Q{monto_aplicar}',
-                ip_address=request.META.get('REMOTE_ADDR')
-            )
-            
-            messages.success(request, f'Anticipo aplicado exitosamente a la factura {factura.numero_factura}')
             return redirect('anticipo_detail', anticipo_id=anticipo.id)
             
         except (Factura.DoesNotExist, ValueError) as e:
@@ -1634,16 +1856,43 @@ def proyecto_dashboard(request, proyecto_id=None):
     
     # Estadísticas del proyecto específico
     facturas_proyecto = Factura.objects.filter(proyecto=proyecto)
-    gastos_proyecto = Gasto.objects.filter(proyecto=proyecto, aprobado=True)
+    gastos_proyecto = Gasto.objects.filter(proyecto=proyecto)
+    gastos_aprobados = Gasto.objects.filter(proyecto=proyecto, aprobado=True)
     anticipos_proyecto = Anticipo.objects.filter(proyecto=proyecto)
     
     # Totales financieros del proyecto
     total_facturado = facturas_proyecto.aggregate(total=Sum('monto_total'))['total'] or Decimal('0.00')
-    total_cobrado = facturas_proyecto.aggregate(total=Sum('monto_pagado'))['total'] or Decimal('0.00')
-    total_gastos = gastos_proyecto.aggregate(total=Sum('monto'))['total'] or Decimal('0.00')
-    total_anticipos = anticipos_proyecto.aggregate(total=Sum('monto'))['total'] or Decimal('0.00')
     
-    # Rentabilidad del proyecto
+    # Total gastos: suma de todos los gastos del proyecto
+    total_gastos = gastos_proyecto.aggregate(total=Sum('monto'))['total'] or Decimal('0.00')
+    total_gastos_aprobados = gastos_aprobados.aggregate(total=Sum('monto'))['total'] or Decimal('0.00')
+    
+    # Estadísticas de anticipos
+    total_anticipos = anticipos_proyecto.aggregate(total=Sum('monto'))['total'] or Decimal('0.00')
+    total_anticipos_aplicados = anticipos_proyecto.aggregate(total=Sum('monto_aplicado'))['total'] or Decimal('0.00')
+    total_anticipos_disponibles_base = anticipos_proyecto.aggregate(total=Sum('monto_disponible'))['total'] or Decimal('0.00')
+    
+    # Anticipos aplicados directamente al proyecto
+    anticipos_aplicados_proyecto = anticipos_proyecto.filter(aplicado_al_proyecto=True)
+    total_anticipos_aplicados_proyecto = anticipos_aplicados_proyecto.aggregate(total=Sum('monto_aplicado_proyecto'))['total'] or Decimal('0.00')
+    
+    # Fondos disponibles: anticipos aplicados al proyecto - gastos del proyecto
+    total_anticipos_disponibles = max(total_anticipos_aplicados_proyecto - total_gastos, Decimal('0.00'))
+    
+    # Fondos pendientes: monto disponible de anticipos que aún no se ha aplicado
+    total_anticipos_pendientes = total_anticipos_disponibles_base
+    
+    # Facturas pagadas (solo para mostrar en estadísticas)
+    facturas_pagadas = facturas_proyecto.filter(estado='pagada')
+    total_facturas_pagadas = facturas_pagadas.aggregate(total=Sum('monto_total'))['total'] or Decimal('0.00')
+    
+    # Total cobrado REAL: facturas pagadas + anticipos aplicados a facturas + anticipos aplicados al proyecto
+    total_cobrado = total_facturas_pagadas + total_anticipos_aplicados + total_anticipos_aplicados_proyecto
+    
+    # Anticipos recientes
+    anticipos_recientes = anticipos_proyecto.order_by('-fecha_recepcion')[:5]
+    
+    # Rentabilidad del proyecto: Total cobrado REAL - Total gastos
     rentabilidad_proyecto = total_cobrado - total_gastos
     
     # Archivos del proyecto
@@ -1660,13 +1909,25 @@ def proyecto_dashboard(request, proyecto_id=None):
         'todos_proyectos': todos_proyectos,
         'total_facturado': total_facturado,
         'total_cobrado': total_cobrado,
+        'total_facturas_pagadas': total_facturas_pagadas,
         'total_gastos': total_gastos,
+        'total_gastos_aprobados': total_gastos_aprobados,
         'total_anticipos': total_anticipos,
+        'total_anticipos_aplicados': total_anticipos_aplicados,
+        'total_anticipos_disponibles': total_anticipos_disponibles,
+        'total_anticipos_disponibles_base': total_anticipos_disponibles_base,
+        'total_anticipos_aplicados_proyecto': total_anticipos_aplicados_proyecto,
+        'total_anticipos_pendientes': total_anticipos_pendientes,
         'rentabilidad_proyecto': rentabilidad_proyecto,
         'archivos_proyecto': archivos_proyecto,
         'facturas_recientes': facturas_recientes,
         'gastos_recientes': gastos_recientes,
+        'anticipos_recientes': anticipos_recientes,
         'total_archivos': archivos_proyecto.count(),
+        'total_facturas': facturas_proyecto.count(),
+        'total_gastos_count': gastos_proyecto.count(),
+        'facturas_pagadas_count': facturas_pagadas.count(),
+        'total_anticipos_count': anticipos_proyecto.count(),
     }
     
     return render(request, 'core/proyecto_dashboard.html', context)
@@ -4346,7 +4607,7 @@ def planilla_proyecto_pdf(request, proyecto_id):
     # Tabla de colaboradores
     if colaboradores_asignados:
         # Encabezados de la tabla
-        headers = ['Colaborador', 'Cargo', 'Salario Base', 'Anticipos', 'Salario Neto', 'Estado']
+        headers = ['Colaborador', 'Salario Base', 'Anticipos', 'Salario Neto', 'Estado']
         data = [headers]
         
         for colaborador in colaboradores_asignados:
@@ -4374,7 +4635,6 @@ def planilla_proyecto_pdf(request, proyecto_id):
             
             data.append([
                 colaborador.nombre,
-                colaborador.cargo or 'N/A',
                 f"Q{salario_base:,.2f}",
                 f"Q{total_anticipos_colaborador:,.2f}",
                 f"Q{salario_neto:,.2f}",
@@ -4382,7 +4642,7 @@ def planilla_proyecto_pdf(request, proyecto_id):
             ])
         
         # Crear tabla
-        table = Table(data, colWidths=[1.5*inch, 1.2*inch, 1.2*inch, 1.2*inch, 1.2*inch, 1.2*inch])
+        table = Table(data, colWidths=[2*inch, 1.5*inch, 1.5*inch, 1.5*inch, 1.5*inch])
         table.setStyle(TableStyle([
             ('BACKGROUND', (0, 0), (-1, 0), colors.darkblue),
             ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
@@ -4710,42 +4970,42 @@ def editar_anticipo(request, anticipo_id):
 @login_required
 def eliminar_anticipo(request, anticipo_id):
     """Eliminar un anticipo"""
-    anticipo = get_object_or_404(AnticipoProyecto, id=anticipo_id)
+    anticipo = get_object_or_404(Anticipo, id=anticipo_id)
     proyecto_id = anticipo.proyecto.id
     
     if request.method == 'POST':
-        colaborador_nombre = anticipo.colaborador.nombre
+        numero_anticipo = anticipo.numero_anticipo
         anticipo.delete()
-        messages.success(request, f'Anticipo de {colaborador_nombre} eliminado exitosamente')
-        return redirect('administrar_anticipos_proyecto', proyecto_id=proyecto_id)
+        messages.success(request, f'Anticipo {numero_anticipo} eliminado exitosamente')
+        return redirect('anticipos_list')
     
     context = {
         'anticipo': anticipo,
     }
     
-    return render(request, 'core/proyectos/eliminar_anticipo.html', context)
+    return render(request, 'core/anticipos/delete.html', context)
 
 
 @login_required
 def cambiar_estado_anticipo(request, anticipo_id):
     """Cambiar el estado de un anticipo"""
-    anticipo = get_object_or_404(AnticipoProyecto, id=anticipo_id)
+    anticipo = get_object_or_404(Anticipo, id=anticipo_id)
     
     if request.method == 'POST':
         nuevo_estado = request.POST.get('nuevo_estado')
-        if nuevo_estado in ['pendiente', 'liquidado', 'cancelado']:
+        if nuevo_estado in ['pendiente', 'aplicado', 'devuelto', 'cancelado']:
             anticipo.estado = nuevo_estado
             anticipo.save()
             
-            estado_display = dict(AnticipoProyecto.ESTADO_CHOICES)[nuevo_estado]
-            messages.success(request, f'Estado del anticipo de {anticipo.colaborador.nombre} cambiado a {estado_display}')
-            return redirect('administrar_anticipos_proyecto', proyecto_id=anticipo.proyecto.id)
+            estado_display = dict(Anticipo.ESTADO_CHOICES)[nuevo_estado]
+            messages.success(request, f'Estado del anticipo {anticipo.numero_anticipo} cambiado a {estado_display}')
+            return redirect('anticipos_list')
         else:
             messages.error(request, 'Estado no válido')
     
     context = {
         'anticipo': anticipo,
-        'estados_choices': AnticipoProyecto.ESTADO_CHOICES,
+        'estados_choices': Anticipo.ESTADO_CHOICES,
     }
     
     return render(request, 'core/proyectos/cambiar_estado_anticipo.html', context)
@@ -5178,24 +5438,70 @@ def facturas_reporte_detallado(request):
     total_pendiente = total_facturado - total_cobrado
     
     # Estadísticas por estado
-    stats_por_estado = facturas.values('estado').annotate(
-        cantidad=Count('id'),
-        monto_total=Sum('monto_total'),
-        monto_pagado=Sum('monto_pagado')
-    ).order_by('estado')
+    stats_por_estado = []
+    for estado in Factura.ESTADO_CHOICES:
+        estado_key = estado[0]
+        facturas_estado = facturas.filter(estado=estado_key)
+        cantidad = facturas_estado.count()
+        monto_total = facturas_estado.aggregate(total=Sum('monto_total'))['total'] or 0
+        monto_pagado = facturas_estado.aggregate(total=Sum('monto_pagado'))['total'] or 0
+        
+        if cantidad > 0:
+            porcentaje = (monto_pagado / monto_total * 100) if monto_total > 0 else 0
+            stats_por_estado.append({
+                'estado': estado_key,
+                'estado_display': estado[1],
+                'cantidad': cantidad,
+                'monto_total': monto_total,
+                'monto_pagado': monto_pagado,
+                'porcentaje': round(porcentaje, 1)
+            })
     
     # Estadísticas por cliente
-    stats_por_cliente = facturas.values('cliente__razon_social').annotate(
-        cantidad=Count('id'),
-        monto_total=Sum('monto_total'),
-        monto_pagado=Sum('monto_pagado')
-    ).order_by('-monto_total')
+    stats_por_cliente = []
+    clientes_con_facturas = facturas.values('cliente__razon_social', 'cliente__id').distinct()
+    
+    for cliente_data in clientes_con_facturas:
+        cliente_id = cliente_data['cliente__id']
+        cliente_nombre = cliente_data['cliente__razon_social']
+        
+        facturas_cliente = facturas.filter(cliente_id=cliente_id)
+        cantidad = facturas_cliente.count()
+        monto_total = facturas_cliente.aggregate(total=Sum('monto_total'))['total'] or 0
+        monto_pagado = facturas_cliente.aggregate(total=Sum('monto_pagado'))['total'] or 0
+        
+        # Obtener el presupuesto del proyecto más reciente del cliente
+        proyecto_mas_reciente = Proyecto.objects.filter(cliente_id=cliente_id).order_by('-creado_en').first()
+        presupuesto_proyecto = proyecto_mas_reciente.presupuesto if proyecto_mas_reciente else 0
+        
+        # Calcular porcentaje basado en el presupuesto del proyecto
+        if presupuesto_proyecto and presupuesto_proyecto > 0:
+            porcentaje = (monto_pagado / presupuesto_proyecto * 100)
+        else:
+            # Si no hay presupuesto, calcular basado en el monto total facturado
+            porcentaje = (monto_pagado / monto_total * 100) if monto_total > 0 else 0
+        
+        stats_por_cliente.append({
+            'cliente_nombre': cliente_nombre,
+            'cliente_id': cliente_id,
+            'cantidad': cantidad,
+            'monto_total': monto_total,
+            'monto_pagado': monto_pagado,
+            'presupuesto_proyecto': presupuesto_proyecto,
+            'porcentaje': round(porcentaje, 1)
+        })
+    
+    # Ordenar por monto total descendente
+    stats_por_cliente.sort(key=lambda x: x['monto_total'], reverse=True)
     
     # Facturas vencidas
     facturas_vencidas = facturas.filter(
         estado__in=['emitida', 'enviada'],
         fecha_vencimiento__lt=timezone.now().date()
     )
+    
+    # Total de facturas vencidas
+    total_vencidas = facturas_vencidas.aggregate(total=Sum('monto_total'))['total'] or 0
     
     # Obtener clientes para el filtro
     clientes = Cliente.objects.filter(activo=True).order_by('razon_social')
@@ -5206,6 +5512,7 @@ def facturas_reporte_detallado(request):
         'total_facturado': total_facturado,
         'total_cobrado': total_cobrado,
         'total_pendiente': total_pendiente,
+        'total_vencidas': total_vencidas,
         'stats_por_estado': stats_por_estado,
         'stats_por_cliente': stats_por_cliente,
         'facturas_vencidas': facturas_vencidas,

@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% load static %}
+{% load custom_filters %}
 
 {% block title %}{{ proyecto.nombre }} - Dashboard - Gestion de Proyectos{% endblock %}
 
@@ -89,6 +90,45 @@
                                     </td>
                                 </tr>
                                 <tr>
+                                    <td><strong>Fondos Disponibles:</strong></td>
+                                    <td>
+                                        <span class="text-success font-weight-bold">
+                                            {{total_anticipos_disponibles|currency_gtq}}
+                                        </span>
+                                        <small class="text-muted d-block">
+                                            {% if total_anticipos_aplicados_proyecto > 0 %}
+                                                {{total_anticipos_aplicados_proyecto|currency_gtq}} aplicados - {{total_gastos|currency_gtq}} gastos
+                                            {% else %}
+                                                Sin anticipos aplicados
+                                            {% endif %}
+                                        </small>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Fondos Pendientes:</strong></td>
+                                    <td>
+                                        <span class="text-warning font-weight-bold">
+                                            {{total_anticipos_pendientes|currency_gtq}}
+                                        </span>
+                                        <small class="text-muted d-block">
+                                            Monto disponible en anticipos
+                                        </small>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Anticipos Aplicados:</strong></td>
+                                    <td>
+                                        <span class="text-info font-weight-bold">
+                                            {{total_anticipos_aplicados|currency_gtq}}
+                                        </span>
+                                        <small class="text-muted d-block">
+                                            {% if total_anticipos_aplicados_proyecto > 0 %}
+                                                {{total_anticipos_aplicados_proyecto|currency_gtq}} al proyecto
+                                            {% endif %}
+                                        </small>
+                                    </td>
+                                </tr>
+                                <tr>
                                     <td><strong>Fecha Inicio:</strong></td>
                                     <td>{{ proyecto.fecha_inicio|date:"d/m/Y"|default:"No especificada" }}</td>
                                 </tr>
@@ -153,6 +193,9 @@
                                         Total Cobrado
                                     </div>
                                     <div class="h5 mb-0 font-weight-bold text-gray-800">{{total_cobrado|currency_gtq}}</div>
+                                    <small class="text-muted">
+                                        {{total_facturas_pagadas|currency_gtq}} facturas + {{total_anticipos_aplicados|currency_gtq}} anticipos facturas + {{total_anticipos_aplicados_proyecto|currency_gtq}} anticipos proyecto
+                                    </small>
                                 </div>
                                 <div class="col-auto">
                                     <i class="fas fa-dollar-sign fa-2x text-gray-300"></i>
@@ -171,6 +214,7 @@
                                         Total Gastos
                                     </div>
                                     <div class="h5 mb-0 font-weight-bold text-gray-800">{{total_gastos|currency_gtq}}</div>
+                                    <small class="text-muted">{{total_gastos_count}} gasto{{total_gastos_count|pluralize}}</small>
                                 </div>
                                 <div class="col-auto">
                                     <i class="fas fa-receipt fa-2x text-gray-300"></i>
@@ -180,7 +224,7 @@
                     </div>
                 </div>
 
-                <div class="col-12">
+                <div class="col-12 mb-4">
                     <div class="card border-left-info shadow h-100 py-2">
                         <div class="card-body">
                             <div class="row no-gutters align-items-center">
@@ -199,9 +243,176 @@
                         </div>
                     </div>
                 </div>
+
+                <div class="col-12">
+                    <div class="card border-left-success shadow h-100 py-2">
+                        <div class="card-body">
+                            <div class="row no-gutters align-items-center">
+                                <div class="col mr-2">
+                                    <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                        Fondos Disponibles
+                                    </div>
+                                    <div class="h5 mb-0 font-weight-bold text-gray-800">{{total_anticipos_disponibles|currency_gtq}}</div>
+                                    <small class="text-muted">
+                                        {% if total_anticipos_aplicados_proyecto > 0 %}
+                                            {{total_anticipos_aplicados_proyecto|currency_gtq}} aplicados - {{total_gastos|currency_gtq}} gastos
+                                        {% else %}
+                                            Sin anticipos aplicados
+                                        {% endif %}
+                                    </small>
+                                </div>
+                                <div class="col-auto">
+                                    <i class="fas fa-hand-holding-usd fa-2x text-gray-300"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
+
+    <!-- Información de Anticipos -->
+    {% if total_anticipos > 0 %}
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 bg-info text-white">
+                    <h6 class="m-0 font-weight-bold">
+                        <i class="fas fa-hand-holding-usd"></i> Información de Anticipos
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <!-- Total Anticipos Recibidos -->
+                        <div class="col-md-3 mb-3">
+                            <div class="card border-left-primary shadow h-100 py-2">
+                                <div class="card-body">
+                                    <div class="row no-gutters align-items-center">
+                                        <div class="col mr-2">
+                                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                                Total Anticipos
+                                            </div>
+                                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{total_anticipos|currency_gtq}}</div>
+                                            <small class="text-muted">{{total_anticipos_count}} anticipo{{total_anticipos_count|pluralize}}</small>
+                                        </div>
+                                        <div class="col-auto">
+                                            <i class="fas fa-hand-holding-usd fa-2x text-gray-300"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                                                        <!-- Anticipos Aplicados a Facturas -->
+                                <div class="col-md-3 mb-3">
+                                    <div class="card border-left-success shadow h-100 py-2">
+                                        <div class="card-body">
+                                            <div class="row no-gutters align-items-center">
+                                                <div class="col mr-2">
+                                                    <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                                        Aplicados a Facturas
+                                                    </div>
+                                                    <div class="h5 mb-0 font-weight-bold text-gray-800">{{total_anticipos_aplicados|currency_gtq}}</div>
+                                                    <small class="text-muted">
+                                                        {% if total_anticipos > 0 %}
+                                                            {{total_anticipos_aplicados|divide:total_anticipos|multiply:100|floatformat:1}}% del total
+                                                        {% else %}
+                                                            0%
+                                                        {% endif %}
+                                                    </small>
+                                                </div>
+                                                <div class="col-auto">
+                                                    <i class="fas fa-file-invoice fa-2x text-gray-300"></i>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                                        <!-- Anticipos Aplicados al Proyecto -->
+                                <div class="col-md-3 mb-3">
+                                    <div class="card border-left-info shadow h-100 py-2">
+                                        <div class="card-body">
+                                            <div class="row no-gutters align-items-center">
+                                                <div class="col mr-2">
+                                                    <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                                        Aplicados al Proyecto
+                                                    </div>
+                                                    <div class="h5 mb-0 font-weight-bold text-gray-800">{{total_anticipos_aplicados_proyecto|currency_gtq}}</div>
+                                                    <small class="text-muted">
+                                                        {% if total_anticipos > 0 %}
+                                                            {{total_anticipos_aplicados_proyecto|divide:total_anticipos|multiply:100|floatformat:1}}% del total
+                                                        {% else %}
+                                                            0%
+                                                        {% endif %}
+                                                    </small>
+                                                </div>
+                                                <div class="col-auto">
+                                                    <i class="fas fa-building fa-2x text-gray-300"></i>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Anticipos Disponibles -->
+                                <div class="col-md-3 mb-3">
+                                    <div class="card border-left-warning shadow h-100 py-2">
+                                        <div class="card-body">
+                                            <div class="row no-gutters align-items-center">
+                                                <div class="col mr-2">
+                                                    <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                                        Disponibles
+                                                    </div>
+                                                    <div class="h5 mb-0 font-weight-bold text-gray-800">{{total_anticipos_disponibles|currency_gtq}}</div>
+                                                    <small class="text-muted">
+                                                        {% if total_anticipos > 0 %}
+                                                            {{total_anticipos_disponibles|divide:total_anticipos|multiply:100|floatformat:1}}% del total
+                                                        {% else %}
+                                                            0%
+                                                        {% endif %}
+                                                    </small>
+                                                </div>
+                                                <div class="col-auto">
+                                                    <i class="fas fa-clock fa-2x text-gray-300"></i>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                        <!-- Relación con Total Cobrado -->
+                        <div class="col-md-3 mb-3">
+                            <div class="card border-left-info shadow h-100 py-2">
+                                <div class="card-body">
+                                    <div class="row no-gutters align-items-center">
+                                        <div class="col mr-2">
+                                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                                % Anticipos vs Cobrado
+                                            </div>
+                                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                                {% if total_cobrado > 0 %}
+                                                    {{total_anticipos|divide:total_cobrado|multiply:100|floatformat:1}}%
+                                                {% else %}
+                                                    0%
+                                                {% endif %}
+                                            </div>
+                                            <small class="text-muted">Anticipos del total cobrado</small>
+                                        </div>
+                                        <div class="col-auto">
+                                            <i class="fas fa-percentage fa-2x text-gray-300"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
 
     <!-- Archivos Recientes y Actividad -->
     <div class="row">
@@ -285,6 +496,13 @@
                                 Gastos ({{ gastos_recientes.count }})
                             </a>
                         </li>
+                        {% if total_anticipos > 0 %}
+                        <li class="nav-item">
+                            <a class="nav-link" id="anticipos-tab" data-toggle="tab" href="#anticipos" role="tab">
+                                Anticipos ({{ anticipos_recientes.count }})
+                            </a>
+                        </li>
+                        {% endif %}
                     </ul>
                     
                     <div class="tab-content mt-3" id="activityTabContent">
@@ -329,6 +547,41 @@
                                 <p class="text-muted text-center">No hay gastos recientes</p>
                             {% endif %}
                         </div>
+
+                        {% if total_anticipos > 0 %}
+                        <div class="tab-pane fade" id="anticipos" role="tabpanel">
+                            {% if anticipos_recientes %}
+                                <div class="list-group list-group-flush">
+                                    {% for anticipo in anticipos_recientes %}
+                                    <div class="list-group-item d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <h6 class="mb-0">{{ anticipo.numero_anticipo }}</h6>
+                                            <small class="text-muted">
+                                                {{ anticipo.fecha_recepcion|date:"d/m/Y" }} • {{ anticipo.get_tipo_display }}
+                                            </small>
+                                        </div>
+                                        <div class="text-right">
+                                            <div class="text-success font-weight-bold">{{anticipo.monto|currency_gtq}}</div>
+                                            <small class="text-muted">
+                                                {% if anticipo.estado == 'pendiente' %}
+                                                    <span class="badge badge-warning">Pendiente</span>
+                                                {% elif anticipo.estado == 'aplicado' %}
+                                                    <span class="badge badge-success">Aplicado</span>
+                                                {% elif anticipo.estado == 'devuelto' %}
+                                                    <span class="badge badge-info">Devuelto</span>
+                                                {% elif anticipo.estado == 'cancelado' %}
+                                                    <span class="badge badge-danger">Cancelado</span>
+                                                {% endif %}
+                                            </small>
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                <p class="text-muted text-center">No hay anticipos recientes</p>
+                            {% endif %}
+                        </div>
+                        {% endif %}
                     </div>
                 </div>
             </div>

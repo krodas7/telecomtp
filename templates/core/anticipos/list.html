@@ -3,6 +3,130 @@
 
 {% block title %}Anticipos - Sistema de Construcción{% endblock %}
 
+{% block extra_css %}
+<style>
+    /* Estilos para notificaciones modernas */
+    .modern-notification {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+        margin-bottom: 16px;
+        overflow: hidden;
+        position: relative;
+        transform: translateX(100%);
+        opacity: 0;
+        animation: slideInRight 0.5s ease forwards;
+        border-left: 4px solid;
+    }
+    
+    .modern-notification.alert-success {
+        border-left-color: #28a745;
+    }
+    
+    .modern-notification.alert-error {
+        border-left-color: #dc3545;
+    }
+    
+    .modern-notification.alert-warning {
+        border-left-color: #ffc107;
+    }
+    
+    .modern-notification.alert-info {
+        border-left-color: #17a2b8;
+    }
+    
+    .notification-content {
+        display: flex;
+        align-items: flex-start;
+        padding: 16px;
+        position: relative;
+    }
+    
+    .notification-icon {
+        margin-right: 12px;
+        font-size: 20px;
+        margin-top: 2px;
+    }
+    
+    .modern-notification.alert-success .notification-icon {
+        color: #28a745;
+    }
+    
+    .modern-notification.alert-error .notification-icon {
+        color: #dc3545;
+    }
+    
+    .modern-notification.alert-warning .notification-icon {
+        color: #ffc107;
+    }
+    
+    .modern-notification.alert-info .notification-icon {
+        color: #17a2b8;
+    }
+    
+    .notification-text {
+        flex: 1;
+        font-size: 14px;
+        line-height: 1.4;
+    }
+    
+    @keyframes slideInRight {
+        from {
+            transform: translateX(100%);
+            opacity: 0;
+        }
+        to {
+            transform: translateX(0);
+            opacity: 1;
+        }
+    }
+    
+    /* Estilos para modals de confirmación */
+    .modal-header.bg-danger {
+        background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%) !important;
+    }
+    
+    .modal-content {
+        border-radius: 15px;
+        border: none;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+    }
+    
+    .modal-header {
+        border-radius: 15px 15px 0 0;
+        border-bottom: none;
+    }
+    
+    .modal-footer {
+        border-radius: 0 0 15px 15px;
+        border-top: 1px solid #e9ecef;
+    }
+    
+    .btn-danger {
+        background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+        border: none;
+        border-radius: 8px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-danger:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(231, 76, 60, 0.4);
+    }
+    
+    .btn-secondary {
+        border-radius: 8px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-secondary:hover {
+        transform: translateY(-2px);
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="container-fluid">
     <!-- Header -->
@@ -168,9 +292,9 @@
                             <td>
                                 <div class="text-end">
                                     <span class="h6 text-success mb-0">{{anticipo.monto|currency_gtq}}</span>
-                                    {% if anticipo.monto_aplicado > 0 %}
+                                    {% if anticipo.total_aplicado > 0 %}
                                     <br>
-                                    <small class="text-muted">Aplicado: {{anticipo.monto_aplicado|currency_gtq}}</small>
+                                    <small class="text-muted">Aplicado: {{anticipo.total_aplicado|currency_gtq}}</small>
                                     {% endif %}
                                 </div>
                             </td>
@@ -185,7 +309,9 @@
                                 {% if anticipo.estado == 'pendiente' %}
                                     <span class="badge bg-warning text-dark">Pendiente</span>
                                 {% elif anticipo.estado == 'aplicado' %}
-                                    <span class="badge bg-success">Aplicado</span>
+                                    <span class="badge bg-primary">Aplicado</span>
+                                {% elif anticipo.estado == 'liquidado' %}
+                                    <span class="badge bg-success">Liquidado</span>
                                 {% elif anticipo.estado == 'cancelado' %}
                                     <span class="badge bg-danger">Cancelado</span>
                                 {% elif anticipo.estado == 'devuelto' %}
@@ -205,6 +331,16 @@
                                         <i class="fas fa-check"></i>
                                     </a>
                                     {% endif %}
+                                    <button type="button" class="btn btn-sm btn-outline-danger" title="Eliminar" 
+                                            data-anticipo-id="{{ anticipo.id }}"
+                                            data-numero="{{ anticipo.numero_anticipo|escapejs }}"
+                                            data-cliente="{{ anticipo.cliente.razon_social|escapejs }}"
+                                            data-proyecto="{{ anticipo.proyecto.nombre|escapejs }}"
+                                            data-monto="{{ anticipo.monto }}"
+                                            data-estado="{{ anticipo.estado|escapejs }}"
+                                            onclick="confirmarEliminarAnticipoFromButton(this)">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
                                 </div>
                             </td>
                         </tr>
@@ -226,4 +362,141 @@
         </div>
     </div>
 </div>
+
+<script>
+// Función para confirmar eliminación de anticipo desde el botón
+function confirmarEliminarAnticipoFromButton(button) {
+    const anticipoId = button.getAttribute('data-anticipo-id');
+    const numeroAnticipo = button.getAttribute('data-numero');
+    const clienteAnticipo = button.getAttribute('data-cliente');
+    const proyectoAnticipo = button.getAttribute('data-proyecto');
+    const montoAnticipo = 'Q' + parseFloat(button.getAttribute('data-monto')).toFixed(2);
+    const estadoAnticipo = button.getAttribute('data-estado');
+    
+    // Actualizar el contenido del modal con la información del anticipo
+    document.getElementById('numeroAnticipoEliminar').textContent = numeroAnticipo;
+    document.getElementById('clienteAnticipoEliminar').textContent = clienteAnticipo;
+    document.getElementById('proyectoAnticipoEliminar').textContent = proyectoAnticipo;
+    document.getElementById('montoAnticipoEliminar').textContent = montoAnticipo;
+    document.getElementById('estadoAnticipoEliminar').textContent = estadoAnticipo;
+    document.getElementById('btnConfirmarEliminacionAnticipo').href = `/anticipos/${anticipoId}/eliminar/`;
+    
+    // Mostrar el modal
+    const modal = new bootstrap.Modal(document.getElementById('confirmarEliminacionAnticipoModal'));
+    modal.show();
+}
+
+// Función para mostrar notificaciones
+function showSuccessNotification(message) {
+    // Crear notificación toast moderna
+    const notification = document.createElement('div');
+    notification.className = 'modern-notification alert-success';
+    notification.innerHTML = `
+        <div class="notification-content">
+            <div class="notification-icon">
+                <i class="fas fa-check-circle"></i>
+            </div>
+            <div class="notification-text">
+                <strong>Éxito</strong><br>
+                ${message}
+            </div>
+        </div>
+    `;
+    
+    // Agregar al contenedor de notificaciones
+    let container = document.getElementById('notification-container');
+    if (!container) {
+        container = document.createElement('div');
+        container.id = 'notification-container';
+        container.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 10000;
+            max-width: 400px;
+            width: 100%;
+        `;
+        document.body.appendChild(container);
+    }
+    
+    container.appendChild(notification);
+    
+    // Remover después de 3 segundos
+    setTimeout(() => {
+        if (notification.parentNode) {
+            notification.parentNode.removeChild(notification);
+        }
+    }, 3000);
+}
+</script>
+
+<!-- Modal de Confirmación de Eliminación de Anticipo -->
+<div class="modal fade" id="confirmarEliminacionAnticipoModal" tabindex="-1" aria-labelledby="confirmarEliminacionAnticipoModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="confirmarEliminacionAnticipoModalLabel">
+                    <i class="fas fa-trash me-2"></i>Confirmar Eliminación
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="text-center">
+                    <div class="mb-3">
+                        <i class="fas fa-hand-holding-usd fa-3x text-danger"></i>
+                    </div>
+                    <h6 class="mb-3">¿Estás seguro de que quieres eliminar este anticipo?</h6>
+                    <div class="alert alert-warning">
+                        <strong>⚠️ Advertencia:</strong> Esta acción eliminará permanentemente el anticipo del sistema.
+                        <br><br>
+                        <div class="row">
+                            <div class="col-6">
+                                <strong>Número:</strong><br>
+                                <span id="numeroAnticipoEliminar" class="fw-bold"></span>
+                            </div>
+                            <div class="col-6">
+                                <strong>Cliente:</strong><br>
+                                <span id="clienteAnticipoEliminar"></span>
+                            </div>
+                        </div>
+                        <div class="row mt-2">
+                            <div class="col-6">
+                                <strong>Proyecto:</strong><br>
+                                <span id="proyectoAnticipoEliminar"></span>
+                            </div>
+                            <div class="col-6">
+                                <strong>Monto:</strong><br>
+                                <span id="montoAnticipoEliminar" class="text-danger fw-bold"></span>
+                            </div>
+                        </div>
+                        <div class="row mt-2">
+                            <div class="col-12">
+                                <strong>Estado:</strong><br>
+                                <span id="estadoAnticipoEliminar" class="badge bg-warning text-dark"></span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="alert alert-info">
+                        <strong>ℹ️ Información:</strong>
+                        <ul class="mb-0 mt-2">
+                            <li>Esta acción no se puede deshacer</li>
+                            <li>Se eliminarán todos los registros relacionados al anticipo</li>
+                            <li>Si el anticipo ya fue aplicado, se recomienda cambiar su estado en lugar de eliminarlo</li>
+                            <li>Se actualizarán automáticamente los totales del proyecto</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-2"></i>Cancelar
+                </button>
+                <a href="#" id="btnConfirmarEliminacionAnticipo" class="btn btn-danger">
+                    <i class="fas fa-trash me-2"></i>Eliminar Anticipo
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
 {% endblock %}

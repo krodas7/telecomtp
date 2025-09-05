@@ -172,6 +172,126 @@
         background: linear-gradient(135deg, #667eea, #764ba2);
         color: white;
     }
+    
+    /* Estilos para notificaciones modernas */
+    .modern-notification {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+        margin-bottom: 16px;
+        overflow: hidden;
+        position: relative;
+        transform: translateX(100%);
+        opacity: 0;
+        animation: slideInRight 0.5s ease forwards;
+        border-left: 4px solid;
+    }
+    
+    .modern-notification.alert-success {
+        border-left-color: #28a745;
+    }
+    
+    .modern-notification.alert-error {
+        border-left-color: #dc3545;
+    }
+    
+    .modern-notification.alert-warning {
+        border-left-color: #ffc107;
+    }
+    
+    .modern-notification.alert-info {
+        border-left-color: #17a2b8;
+    }
+    
+    .notification-content {
+        display: flex;
+        align-items: flex-start;
+        padding: 16px;
+        position: relative;
+    }
+    
+    .notification-icon {
+        margin-right: 12px;
+        font-size: 20px;
+        margin-top: 2px;
+    }
+    
+    .modern-notification.alert-success .notification-icon {
+        color: #28a745;
+    }
+    
+    .modern-notification.alert-error .notification-icon {
+        color: #dc3545;
+    }
+    
+    .modern-notification.alert-warning .notification-icon {
+        color: #ffc107;
+    }
+    
+    .modern-notification.alert-info .notification-icon {
+        color: #17a2b8;
+    }
+    
+    .notification-text {
+        flex: 1;
+        font-size: 14px;
+        line-height: 1.4;
+    }
+    
+    @keyframes slideInRight {
+        from {
+            transform: translateX(100%);
+            opacity: 0;
+        }
+        to {
+            transform: translateX(0);
+            opacity: 1;
+        }
+    }
+    
+    /* Estilos para modals de confirmación */
+    .modal-header.bg-danger {
+        background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%) !important;
+    }
+    
+    .modal-content {
+        border-radius: 15px;
+        border: none;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+    }
+    
+    .modal-header {
+        border-radius: 15px 15px 0 0;
+        border-bottom: none;
+    }
+    
+    .modal-footer {
+        border-radius: 0 0 15px 15px;
+        border-top: 1px solid #e9ecef;
+    }
+    
+    .btn-danger {
+        background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+        border: none;
+        border-radius: 8px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-danger:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(231, 76, 60, 0.4);
+    }
+    
+    .btn-secondary {
+        border-radius: 8px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-secondary:hover {
+        transform: translateY(-2px);
+    }
 </style>
 {% endblock %}
 
@@ -297,9 +417,9 @@
                                     <a href="{% url 'asignar_colaboradores_proyecto' proyecto.id %}" class="btn btn-sm btn-outline-info" title="Asignar Colaboradores">
                                         <i class="fas fa-users"></i>
                                     </a>
-                                    <a href="{% url 'proyecto_delete' proyecto.id %}" class="btn btn-sm btn-outline-danger" title="Eliminar" onclick="return confirm('¿Estás seguro de que quieres eliminar este proyecto?')">
+                                    <button type="button" class="btn btn-sm btn-outline-danger" title="Eliminar" onclick="confirmarEliminarProyecto({{ proyecto.id }}, '{{ proyecto.nombre|escapejs }}', '{{ proyecto.cliente.razon_social|escapejs }}', '{{ proyecto.presupuesto|currency_gtq|escapejs }}')">
                                         <i class="fas fa-trash"></i>
-                                    </a>
+                                    </button>
                                 </div>
                             </td>
                         </tr>
@@ -362,6 +482,121 @@ document.addEventListener('DOMContentLoaded', function() {
         filtroEstado.addEventListener('change', aplicarFiltros);
     }
 });
+
+// Función para confirmar eliminación de proyecto
+function confirmarEliminarProyecto(proyectoId, nombreProyecto, clienteProyecto, presupuestoProyecto) {
+    // Actualizar el contenido del modal con la información del proyecto
+    document.getElementById('nombreProyectoEliminar').textContent = nombreProyecto;
+    document.getElementById('clienteProyectoEliminar').textContent = clienteProyecto;
+    document.getElementById('presupuestoProyectoEliminar').textContent = presupuestoProyecto;
+    document.getElementById('btnConfirmarEliminacionProyecto').href = `/proyectos/${proyectoId}/eliminar/`;
+    
+    // Mostrar el modal
+    const modal = new bootstrap.Modal(document.getElementById('confirmarEliminacionProyectoModal'));
+    modal.show();
+}
+
+// Función para mostrar notificaciones
+function showSuccessNotification(message) {
+    // Crear notificación toast moderna
+    const notification = document.createElement('div');
+    notification.className = 'modern-notification alert-success';
+    notification.innerHTML = `
+        <div class="notification-content">
+            <div class="notification-icon">
+                <i class="fas fa-check-circle"></i>
+            </div>
+            <div class="notification-text">
+                <strong>Éxito</strong><br>
+                ${message}
+            </div>
+        </div>
+    `;
+    
+    // Agregar al contenedor de notificaciones
+    let container = document.getElementById('notification-container');
+    if (!container) {
+        container = document.createElement('div');
+        container.id = 'notification-container';
+        container.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 10000;
+            max-width: 400px;
+            width: 100%;
+        `;
+        document.body.appendChild(container);
+    }
+    
+    container.appendChild(notification);
+    
+    // Remover después de 3 segundos
+    setTimeout(() => {
+        if (notification.parentNode) {
+            notification.parentNode.removeChild(notification);
+        }
+    }, 3000);
+}
 </script>
+
+<!-- Modal de Confirmación de Eliminación de Proyecto -->
+<div class="modal fade" id="confirmarEliminacionProyectoModal" tabindex="-1" aria-labelledby="confirmarEliminacionProyectoModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="confirmarEliminacionProyectoModalLabel">
+                    <i class="fas fa-trash me-2"></i>Confirmar Eliminación
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="text-center">
+                    <div class="mb-3">
+                        <i class="fas fa-exclamation-triangle fa-3x text-danger"></i>
+                    </div>
+                    <h6 class="mb-3">¿Estás seguro de que quieres eliminar este proyecto?</h6>
+                    <div class="alert alert-warning">
+                        <strong>⚠️ Advertencia:</strong> Esta acción desactivará el proyecto y no podrá ser utilizado en nuevas operaciones.
+                        <br><br>
+                        <div class="row">
+                            <div class="col-6">
+                                <strong>Proyecto:</strong><br>
+                                <span id="nombreProyectoEliminar" class="fw-bold"></span>
+                            </div>
+                            <div class="col-6">
+                                <strong>Cliente:</strong><br>
+                                <span id="clienteProyectoEliminar"></span>
+                            </div>
+                        </div>
+                        <div class="row mt-2">
+                            <div class="col-12">
+                                <strong>Presupuesto:</strong><br>
+                                <span id="presupuestoProyectoEliminar" class="text-danger fw-bold"></span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="alert alert-info">
+                        <strong>ℹ️ Información:</strong>
+                        <ul class="mb-0 mt-2">
+                            <li>El proyecto será marcado como inactivo, no se eliminará físicamente</li>
+                            <li>Las facturas y gastos existentes no se verán afectados</li>
+                            <li>No se podrán crear nuevas facturas para este proyecto</li>
+                            <li>Esta acción se puede revertir editando el proyecto</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-2"></i>Cancelar
+                </button>
+                <a href="#" id="btnConfirmarEliminacionProyecto" class="btn btn-danger">
+                    <i class="fas fa-trash me-2"></i>Eliminar Proyecto
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
 
 {% endblock %}

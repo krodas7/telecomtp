@@ -12,7 +12,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 
 from pathlib import Path
 import os
-from decouple import config
+# from decouple import config  # Temporalmente comentado
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -22,10 +22,10 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = config('SECRET_KEY', default='django-insecure-change-in-production')
+SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-change-in-production')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = config('DEBUG', default=True, cast=bool)
+DEBUG = os.environ.get('DEBUG', 'True').lower() in ('true', '1', 'yes')
 
 # Configuración de hosts permitidos
 DEFAULT_HOSTS = 'localhost,127.0.0.1,testserver'
@@ -33,7 +33,7 @@ if not DEBUG:
     # En producción, incluir tanto www como no-www
     DEFAULT_HOSTS = 'construccionesarca.net,www.construccionesarca.net'
 
-ALLOWED_HOSTS = config('ALLOWED_HOSTS', default=DEFAULT_HOSTS).split(',')
+ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', DEFAULT_HOSTS).split(',')
 
 # Configuración para redirección de www
 USE_WWW_REDIRECT = os.environ.get('USE_WWW_REDIRECT', 'False').lower() == 'true'

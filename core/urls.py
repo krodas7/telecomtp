@@ -14,6 +14,7 @@ urlpatterns = [
     # Clientes
     path('clientes/', views.clientes_list, name='clientes_list'),
     path('clientes/crear/', views.cliente_create, name='cliente_create'),
+    path('clientes/<int:cliente_id>/', views.cliente_detail, name='cliente_detail'),
     path('clientes/<int:cliente_id>/editar/', views.cliente_edit, name='cliente_edit'),
     path('clientes/<int:cliente_id>/eliminar/', views.cliente_delete, name='cliente_delete'),
     
@@ -27,7 +28,7 @@ urlpatterns = [
     path('proyectos/<int:proyecto_id>/planilla/', views.planilla_proyecto, name='planilla_proyecto'),
     path('proyecto/<int:proyecto_id>/planilla/pdf/', views.planilla_proyecto_pdf, name='planilla_proyecto_pdf'),
     path('proyectos/<int:proyecto_id>/administrar-anticipos/', views.administrar_anticipos_proyecto, name='administrar_anticipos_proyecto'),
-    path('anticipos/<int:anticipo_id>/editar/', views.editar_anticipo, name='editar_anticipo'),
+    # path('anticipos/<int:anticipo_id>/editar/', views.editar_anticipo, name='editar_anticipo'),  # DUPLICADA - comentada
     path('anticipos/<int:anticipo_id>/eliminar/', views.eliminar_anticipo, name='eliminar_anticipo'),
     path('anticipos/<int:anticipo_id>/cambiar-estado/', views.cambiar_estado_anticipo, name='cambiar_estado_anticipo'),
     path('proyectos/<int:proyecto_id>/anticipo-masivo/', views.crear_anticipo_masivo, name='crear_anticipo_masivo'),

@@ -79,7 +79,9 @@ class AnticipoForm(forms.ModelForm):
         if self.instance.pk and self.instance.cliente:
             self.fields['proyecto'].queryset = Proyecto.objects.filter(cliente=self.instance.cliente)
         else:
-            self.fields['proyecto'].queryset = Proyecto.objects.none()
+            # Para nuevos anticipos, mostrar todos los proyectos activos
+            # El filtro dinámico se manejará en el frontend
+            self.fields['proyecto'].queryset = Proyecto.objects.filter(activo=True)
         
         # Hacer algunos campos requeridos
         self.fields['numero_anticipo'].required = True
@@ -576,7 +578,7 @@ class CategoriaGastoForm(forms.ModelForm):
     
     class Meta:
         model = CategoriaGasto
-        fields = ['nombre', 'descripcion']
+        fields = ['nombre', 'descripcion', 'color', 'icono']
         widgets = {
             'nombre': forms.TextInput(attrs={
                 'class': 'form-control',
@@ -586,6 +588,15 @@ class CategoriaGastoForm(forms.ModelForm):
                 'class': 'form-control',
                 'rows': 3,
                 'placeholder': 'Descripción de la categoría'
+            }),
+            'color': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': '#007bff',
+                'type': 'text'
+            }),
+            'icono': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'fas fa-tools'
             }),
         }
 

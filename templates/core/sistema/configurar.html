@@ -2,6 +2,147 @@
 
 {% block title %}Configuración del Sistema - Sistema de Construcción{% endblock %}
 
+{% block extra_css %}
+<style>
+    /* Estilos para notificaciones modernas */
+    .modern-notification {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+        margin-bottom: 16px;
+        overflow: hidden;
+        position: relative;
+        transform: translateX(100%);
+        opacity: 0;
+        animation: slideInRight 0.5s ease forwards;
+        border-left: 4px solid;
+    }
+    
+    .modern-notification.alert-success {
+        border-left-color: #28a745;
+    }
+    
+    .modern-notification.alert-error {
+        border-left-color: #dc3545;
+    }
+    
+    .modern-notification.alert-warning {
+        border-left-color: #ffc107;
+    }
+    
+    .modern-notification.alert-info {
+        border-left-color: #17a2b8;
+    }
+    
+    .notification-content {
+        display: flex;
+        align-items: flex-start;
+        padding: 16px;
+        position: relative;
+    }
+    
+    .notification-icon {
+        margin-right: 12px;
+        font-size: 20px;
+        margin-top: 2px;
+    }
+    
+    .modern-notification.alert-success .notification-icon {
+        color: #28a745;
+    }
+    
+    .modern-notification.alert-error .notification-icon {
+        color: #dc3545;
+    }
+    
+    .modern-notification.alert-warning .notification-icon {
+        color: #ffc107;
+    }
+    
+    .modern-notification.alert-info .notification-icon {
+        color: #17a2b8;
+    }
+    
+    .notification-text {
+        flex: 1;
+        font-size: 14px;
+        line-height: 1.4;
+    }
+    
+    @keyframes slideInRight {
+        from {
+            transform: translateX(100%);
+            opacity: 0;
+        }
+        to {
+            transform: translateX(0);
+            opacity: 1;
+        }
+    }
+    
+    /* Estilos para modals de confirmación */
+    .modal-header.bg-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+    }
+    
+    .modal-header.bg-warning {
+        background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%) !important;
+    }
+    
+    .modal-content {
+        border-radius: 15px;
+        border: none;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+    }
+    
+    .modal-header {
+        border-radius: 15px 15px 0 0;
+        border-bottom: none;
+    }
+    
+    .modal-footer {
+        border-radius: 0 0 15px 15px;
+        border-top: 1px solid #e9ecef;
+    }
+    
+    .btn-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border: none;
+        border-radius: 8px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+    }
+    
+    .btn-warning {
+        background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%);
+        border: none;
+        border-radius: 8px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-warning:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(243, 156, 18, 0.4);
+    }
+    
+    .btn-secondary {
+        border-radius: 8px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-secondary:hover {
+        transform: translateY(-2px);
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h2 class="mb-0">
@@ -132,7 +273,7 @@
                     </div>
 
                     <!-- Configuración de Email -->
-                    <div class="row mb-4" id="email-config" style="{% if not config.notificaciones_email %}display: none;{% endif %}">
+                    <div class="row mb-4" id="email-config" {% if not config.notificaciones_email %}style="display: none;"{% endif %}>
                         <div class="col-12">
                             <h6 class="text-primary mb-3">
                                 <i class="fas fa-envelope me-2"></i>Configuración de Email
@@ -236,18 +377,18 @@
             </div>
             <div class="card-body">
                 <div class="d-grid gap-2">
-                    <a href="{% url 'sistema_crear_respaldo' %}" class="btn btn-outline-primary" onclick="return confirm('¿Crear respaldo de la base de datos?')">
+                    <button type="button" class="btn btn-outline-primary" onclick="confirmarRespaldo()">
                         <i class="fas fa-download me-2"></i>Crear Respaldo
-                    </a>
+                    </button>
                     <a href="{% url 'sistema_ver_respaldos' %}" class="btn btn-outline-secondary">
                         <i class="fas fa-folder-open me-2"></i>Ver Respaldos
                     </a>
                     <button type="button" class="btn btn-outline-success" onclick="restaurarRespaldo()">
                         <i class="fas fa-upload me-2"></i>Restaurar Respaldo
                     </button>
-                    <a href="{% url 'sistema_limpiar_logs' %}" class="btn btn-outline-warning" onclick="return confirm('¿Limpiar logs antiguos (más de 30 días)?')">
+                    <button type="button" class="btn btn-outline-warning" onclick="confirmarLimpiarLogs()">
                         <i class="fas fa-broom me-2"></i>Limpiar Logs Antiguos
-                    </a>
+                    </button>
                     <a href="{% url 'sistema_exportar_config' %}" class="btn btn-outline-info">
                         <i class="fas fa-file-export me-2"></i>Exportar Configuración
                     </a>
@@ -273,31 +414,251 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function restaurarValores() {
-    if (confirm('¿Estás seguro de que quieres restaurar los valores por defecto?')) {
-        // Restaurar valores por defecto
-        document.getElementById('nombre_empresa').value = 'Constructora XYZ';
-        document.getElementById('moneda').value = 'GTQ';
-        document.getElementById('zona_horaria').value = 'America/Guatemala';
-        document.getElementById('idioma').value = 'es';
-        document.getElementById('max_usuarios_simultaneos').value = '5';
-        document.getElementById('tiempo_sesion').value = '480';
-        document.getElementById('respaldo_automatico').checked = false;
-        document.getElementById('notificaciones_email').checked = false;
-        document.getElementById('email_host').value = '';
-        document.getElementById('email_port').value = '587';
-        document.getElementById('email_username').value = '';
-        document.getElementById('email_password').value = '';
-        document.getElementById('email_use_tls').checked = true;
-        
-        // Ocultar configuración de email
-        document.getElementById('email-config').style.display = 'none';
-        
-        alert('✅ Valores restaurados a los valores por defecto');
+    const modal = new bootstrap.Modal(document.getElementById('confirmarRestaurarModal'));
+    modal.show();
+}
+
+function confirmarRespaldo() {
+    const modal = new bootstrap.Modal(document.getElementById('confirmarRespaldoModal'));
+    modal.show();
+}
+
+function confirmarLimpiarLogs() {
+    const modal = new bootstrap.Modal(document.getElementById('confirmarLimpiarLogsModal'));
+    modal.show();
+}
+
+function ejecutarRestaurarValores() {
+    // Restaurar valores por defecto
+    document.getElementById('nombre_empresa').value = 'Constructora XYZ';
+    document.getElementById('moneda').value = 'GTQ';
+    document.getElementById('zona_horaria').value = 'America/Guatemala';
+    document.getElementById('idioma').value = 'es';
+    document.getElementById('max_usuarios_simultaneos').value = '5';
+    document.getElementById('tiempo_sesion').value = '480';
+    document.getElementById('respaldo_automatico').checked = false;
+    document.getElementById('notificaciones_email').checked = false;
+    document.getElementById('email_host').value = '';
+    document.getElementById('email_port').value = '587';
+    document.getElementById('email_username').value = '';
+    document.getElementById('email_password').value = '';
+    document.getElementById('email_use_tls').checked = true;
+    
+    // Ocultar configuración de email
+    document.getElementById('email-config').style.display = 'none';
+    
+    // Cerrar modal
+    const modal = bootstrap.Modal.getInstance(document.getElementById('confirmarRestaurarModal'));
+    modal.hide();
+    
+    // Mostrar notificación de éxito
+    showSuccessNotification('✅ Valores restaurados a los valores por defecto');
+}
+
+function ejecutarCrearRespaldo() {
+    // Cerrar modal
+    const modal = bootstrap.Modal.getInstance(document.getElementById('confirmarRespaldoModal'));
+    modal.hide();
+    
+    // Redirigir a la URL de crear respaldo
+    window.location.href = "{% url 'sistema_crear_respaldo' %}";
+}
+
+function ejecutarLimpiarLogs() {
+    // Cerrar modal
+    const modal = bootstrap.Modal.getInstance(document.getElementById('confirmarLimpiarLogsModal'));
+    modal.hide();
+    
+    // Redirigir a la URL de limpiar logs
+    window.location.href = "{% url 'sistema_limpiar_logs' %}";
+}
+
+function showSuccessNotification(message) {
+    // Crear notificación toast moderna
+    const notification = document.createElement('div');
+    notification.className = 'modern-notification alert-success';
+    notification.innerHTML = `
+        <div class="notification-content">
+            <div class="notification-icon">
+                <i class="fas fa-check-circle"></i>
+            </div>
+            <div class="notification-text">
+                <strong>Éxito</strong><br>
+                ${message}
+            </div>
+        </div>
+    `;
+    
+    // Agregar al contenedor de notificaciones
+    let container = document.getElementById('notification-container');
+    if (!container) {
+        container = document.createElement('div');
+        container.id = 'notification-container';
+        container.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 10000;
+            max-width: 400px;
+            width: 100%;
+        `;
+        document.body.appendChild(container);
     }
+    
+    container.appendChild(notification);
+    
+    // Remover después de 3 segundos
+    setTimeout(() => {
+        if (notification.parentNode) {
+            notification.parentNode.removeChild(notification);
+        }
+    }, 3000);
 }
 
 function restaurarRespaldo() {
     alert('⚠️ Función de restauración de respaldo en desarrollo.\n\nPor ahora, puedes restaurar manualmente usando:\npython manage.py loaddata respaldo_sistema_YYYYMMDD_HHMMSS.json');
 }
 </script>
+
+<!-- Modal de Confirmación de Respaldo -->
+<div class="modal fade" id="confirmarRespaldoModal" tabindex="-1" aria-labelledby="confirmarRespaldoModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="confirmarRespaldoModalLabel">
+                    <i class="fas fa-database me-2"></i>Confirmar Respaldo
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="text-center">
+                    <div class="mb-3">
+                        <i class="fas fa-download fa-3x text-primary"></i>
+                    </div>
+                    <h6 class="mb-3">¿Crear respaldo de la base de datos?</h6>
+                    <div class="alert alert-info">
+                        <strong>ℹ️ Información:</strong> Se creará un respaldo completo de la base de datos del sistema.
+                        <br><br>
+                        <div class="row">
+                            <div class="col-6">
+                                <strong>Incluye:</strong><br>
+                                <span>• Todos los datos</span><br>
+                                <span>• Configuraciones</span><br>
+                                <span>• Archivos adjuntos</span>
+                            </div>
+                            <div class="col-6">
+                                <strong>Tiempo estimado:</strong><br>
+                                <span class="text-primary fw-bold">1-3 minutos</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-2"></i>Cancelar
+                </button>
+                <button type="button" class="btn btn-primary" onclick="ejecutarCrearRespaldo()">
+                    <i class="fas fa-download me-2"></i>Crear Respaldo
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Confirmación de Restaurar Valores -->
+<div class="modal fade" id="confirmarRestaurarModal" tabindex="-1" aria-labelledby="confirmarRestaurarModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-warning text-dark">
+                <h5 class="modal-title" id="confirmarRestaurarModalLabel">
+                    <i class="fas fa-undo me-2"></i>Confirmar Restauración
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="text-center">
+                    <div class="mb-3">
+                        <i class="fas fa-undo fa-3x text-warning"></i>
+                    </div>
+                    <h6 class="mb-3">¿Estás seguro de que quieres restaurar los valores por defecto?</h6>
+                    <div class="alert alert-warning">
+                        <strong>⚠️ Advertencia:</strong> Esta acción restaurará todos los valores de configuración a sus valores por defecto.
+                        <br><br>
+                        <div class="row">
+                            <div class="col-6">
+                                <strong>Se restaurará:</strong><br>
+                                <span>• Nombre de empresa</span><br>
+                                <span>• Configuración regional</span><br>
+                                <span>• Configuración del sistema</span>
+                            </div>
+                            <div class="col-6">
+                                <strong>Se perderá:</strong><br>
+                                <span>• Configuración de email</span><br>
+                                <span>• Configuraciones personalizadas</span><br>
+                                <span>• Preferencias guardadas</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-2"></i>Cancelar
+                </button>
+                <button type="button" class="btn btn-warning" onclick="ejecutarRestaurarValores()">
+                    <i class="fas fa-undo me-2"></i>Restaurar Valores
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Confirmación de Limpiar Logs -->
+<div class="modal fade" id="confirmarLimpiarLogsModal" tabindex="-1" aria-labelledby="confirmarLimpiarLogsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-warning text-dark">
+                <h5 class="modal-title" id="confirmarLimpiarLogsModalLabel">
+                    <i class="fas fa-broom me-2"></i>Confirmar Limpieza
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="text-center">
+                    <div class="mb-3">
+                        <i class="fas fa-broom fa-3x text-warning"></i>
+                    </div>
+                    <h6 class="mb-3">¿Limpiar logs antiguos (más de 30 días)?</h6>
+                    <div class="alert alert-warning">
+                        <strong>⚠️ Advertencia:</strong> Se eliminarán todos los logs del sistema que tengan más de 30 días de antigüedad.
+                        <br><br>
+                        <div class="row">
+                            <div class="col-6">
+                                <strong>Se eliminará:</strong><br>
+                                <span>• Logs de errores antiguos</span><br>
+                                <span>• Logs de acceso antiguos</span><br>
+                                <span>• Archivos de log grandes</span>
+                            </div>
+                            <div class="col-6">
+                                <strong>Se conservará:</strong><br>
+                                <span>• Logs recientes (30 días)</span><br>
+                                <span>• Logs de errores críticos</span><br>
+                                <span>• Logs de auditoría</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-2"></i>Cancelar
+                </button>
+                <button type="button" class="btn btn-warning" onclick="ejecutarLimpiarLogs()">
+                    <i class="fas fa-broom me-2"></i>Limpiar Logs
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}

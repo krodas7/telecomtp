@@ -566,15 +566,17 @@
                         <label for="fecha_emision" class="form-label">
                             <i class="fas fa-calendar"></i>Fecha de Emisión *
                         </label>
-                        <input type="date" class="form-control" id="fecha_emision" name="fecha_emision" required>
+                        <input type="date" class="form-control" id="fecha_emision" name="fecha_emision" 
+                               value="{{ form.fecha_emision.value|default:'' }}" required>
                         <div class="form-validation" id="fechaEmisionValidation"></div>
                     </div>
                     
                     <div class="form-group">
                         <label for="fecha_vencimiento" class="form-label">
-                            <i class="fas fa-clock"></i>Fecha de Vencimiento
+                            <i class="fas fa-clock"></i>Fecha de Vencimiento *
                         </label>
-                        <input type="date" class="form-control" id="fecha_vencimiento" name="fecha_vencimiento">
+                        <input type="date" class="form-control" id="fecha_vencimiento" name="fecha_vencimiento" 
+                               value="{{ form.fecha_vencimiento.value|default:'' }}" required>
                         <div class="form-validation" id="fechaVencimientoValidation"></div>
                     </div>
                 </div>
@@ -999,6 +1001,13 @@ document.addEventListener('DOMContentLoaded', function() {
     if (fechaEmisionInput) {
         const today = new Date().toISOString().split('T')[0];
         fechaEmisionInput.value = today;
+    }
+    
+    // Establecer fecha de vencimiento por defecto (30 días después)
+    if (fechaVencimientoInput) {
+        const today = new Date();
+        const futureDate = new Date(today.getTime() + (30 * 24 * 60 * 60 * 1000)); // 30 días después
+        fechaVencimientoInput.value = futureDate.toISOString().split('T')[0];
     }
     
     // Función para filtrar proyectos por cliente

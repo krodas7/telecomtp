@@ -161,6 +161,33 @@
         color: #388e3c;
     }
     
+    /* Estilos para el modal de confirmación */
+    .modal-content {
+        border-radius: 15px;
+        border: none;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    }
+    
+    .modal-header {
+        border-radius: 15px 15px 0 0;
+        border-bottom: none;
+    }
+    
+    .modal-footer {
+        border-radius: 0 0 15px 15px;
+        border-top: 1px solid #e9ecef;
+    }
+    
+    .modal-body .alert {
+        border-radius: 10px;
+        border: none;
+        background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+    }
+    
+    .btn-close-white {
+        filter: invert(1);
+    }
+    
     @media (max-width: 768px) {
         .proyecto-header {
             padding: 1.5rem;
@@ -172,6 +199,10 @@
         
         .anticipo-container {
             padding: 1rem;
+        }
+        
+        .modal-dialog {
+            margin: 1rem;
         }
     }
 </style>
@@ -294,6 +325,54 @@
         </div>
     </form>
 </div>
+
+<!-- Modal de Confirmación -->
+<div class="modal fade" id="confirmModal" tabindex="-1" aria-labelledby="confirmModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title" id="confirmModalLabel">
+                    <i class="fas fa-check-circle me-2"></i>Confirmar Anticipo
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="text-center">
+                    <div class="mb-3">
+                        <i class="fas fa-user-circle fa-3x text-primary"></i>
+                    </div>
+                    <h6 class="mb-3">¿Confirmas crear este anticipo?</h6>
+                    <div class="alert alert-info">
+                        <div class="row">
+                            <div class="col-6">
+                                <strong>Colaborador:</strong><br>
+                                <span id="modalColaborador"></span>
+                            </div>
+                            <div class="col-6">
+                                <strong>Monto:</strong><br>
+                                <span id="modalMonto" class="text-success fw-bold"></span>
+                            </div>
+                        </div>
+                        <div class="row mt-2">
+                            <div class="col-12">
+                                <strong>Concepto:</strong><br>
+                                <span id="modalConcepto"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-2"></i>Cancelar
+                </button>
+                <button type="button" class="btn btn-success" id="confirmSubmit">
+                    <i class="fas fa-check me-2"></i>Confirmar Anticipo
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block extra_js %}
@@ -349,36 +428,41 @@ document.addEventListener('DOMContentLoaded', function() {
     const colaboradorSelect = document.getElementById('colaborador');
     
     form.addEventListener('submit', function(e) {
+        e.preventDefault(); // Siempre prevenir el envío por defecto
+        
         const monto = parseFloat(montoInput.value);
         const colaborador = colaboradorSelect.value;
         
         if (!colaborador) {
-            e.preventDefault();
             alert('Por favor selecciona un colaborador');
             colaboradorSelect.focus();
             return;
         }
         
         if (monto <= 0) {
-            e.preventDefault();
             alert('Por favor ingresa un monto válido mayor a 0');
             montoInput.focus();
             return;
         }
         
-        if (monto > 10000) {
-            if (!confirm('¿Estás seguro de que quieres crear un anticipo por un monto tan alto?')) {
-                e.preventDefault();
-                return;
-            }
-        }
-        
-        // Confirmación final
+        // Mostrar modal de confirmación
         const colaboradorNombre = colaboradorSelect.options[colaboradorSelect.selectedIndex].text;
-        if (!confirm(`¿Confirmas crear un anticipo de Q${monto.toFixed(2)} para ${colaboradorNombre}?`)) {
-            e.preventDefault();
-            return;
-        }
+        const concepto = document.getElementById('concepto').value;
+        
+        // Llenar el modal con los datos
+        document.getElementById('modalColaborador').textContent = colaboradorNombre;
+        document.getElementById('modalMonto').textContent = `Q${monto.toFixed(2)}`;
+        document.getElementById('modalConcepto').textContent = concepto;
+        
+        // Mostrar el modal
+        const modal = new bootstrap.Modal(document.getElementById('confirmModal'));
+        modal.show();
+    });
+    
+    // Manejar la confirmación del modal
+    document.getElementById('confirmSubmit').addEventListener('click', function() {
+        // Enviar el formulario
+        document.getElementById('anticipoForm').submit();
     });
 });
 </script>

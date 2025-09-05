@@ -434,6 +434,8 @@ class CategoriaGasto(models.Model):
     """Modelo para categorías de gastos"""
     nombre = models.CharField(max_length=100, unique=True)
     descripcion = models.TextField(blank=True)
+    color = models.CharField(max_length=7, default='#007bff', help_text="Color hexadecimal (ej: #007bff)")
+    icono = models.CharField(max_length=50, default='fas fa-tools', help_text="Clase de Font Awesome (ej: fas fa-tools)")
     creado_en = models.DateTimeField(auto_now_add=True)
     
     class Meta:
@@ -504,6 +506,7 @@ class Anticipo(models.Model):
     ESTADO_CHOICES = [
         ('pendiente', 'Pendiente de Aplicar'),
         ('aplicado', 'Aplicado a Facturas'),
+        ('liquidado', 'Liquidado'),
         ('devuelto', 'Devuelto al Cliente'),
         ('cancelado', 'Cancelado'),
     ]
@@ -553,6 +556,10 @@ class Anticipo(models.Model):
     # Campos para seguimiento
     facturas_aplicadas = models.ManyToManyField(Factura, through='AplicacionAnticipo', blank=True)
     
+    # Campo para indicar si se aplicó al proyecto directamente
+    aplicado_al_proyecto = models.BooleanField(default=False, help_text="Indica si el anticipo se aplicó directamente al proyecto")
+    monto_aplicado_proyecto = models.DecimalField(max_digits=12, decimal_places=2, default=0, help_text="Monto aplicado directamente al proyecto")
+    
     class Meta:
         verbose_name = 'Anticipo'
         verbose_name_plural = 'Anticipos'
@@ -567,28 +574,36 @@ class Anticipo(models.Model):
         return f"Anticipo {self.numero_anticipo} - {self.cliente.razon_social} - Q{self.monto}"
     
     def save(self, *args, **kwargs):
-        # Calcular monto disponible
+        # Calcular monto disponible considerando aplicaciones a facturas y al proyecto
         if not self.pk:  # Nuevo anticipo
             self.monto_disponible = self.monto
         else:
-            self.monto_disponible = self.monto - self.monto_aplicado
+            total_aplicado = self.monto_aplicado + self.monto_aplicado_proyecto
+            self.monto_disponible = self.monto - total_aplicado
         
         # Actualizar estado basado en montos
-        if self.monto_aplicado >= self.monto:
-            self.estado = 'aplicado'
+        total_aplicado = self.monto_aplicado + self.monto_aplicado_proyecto
+        if total_aplicado >= self.monto:
+            self.estado = 'liquidado'
             if not self.fecha_aplicacion:
                 self.fecha_aplicacion = timezone.now().date()
-        elif self.monto_aplicado == 0:
+        else:
+            # Solo "pendiente" hasta que se aplique completamente
             self.estado = 'pendiente'
         
         super().save(*args, **kwargs)
     
     @property
+    def total_aplicado(self):
+        """Retorna el monto total aplicado (facturas + proyecto)"""
+        return self.monto_aplicado + self.monto_aplicado_proyecto
+    
+    @property
     def porcentaje_aplicado(self):
         """Retorna el porcentaje del anticipo que ya fue aplicado"""
         if self.monto > 0:
-            return (self.monto_aplicado / self.monto) * 100
-        return 0
+            return float((self.total_aplicado / self.monto) * 100)
+        return 0.0
     
     @property
     def dias_vencimiento(self):
@@ -622,6 +637,19 @@ class Anticipo(models.Model):
         # Actualizar factura
         factura.monto_anticipos += monto
         factura.save()
+        
+        return True
+    
+    def aplicar_al_proyecto(self, monto):
+        """Aplica el anticipo directamente al proyecto"""
+        if not self.puede_aplicar(monto):
+            raise ValueError(f"No se puede aplicar Q{monto} del anticipo al proyecto")
+        
+        # Actualizar montos y fecha de aplicación (sumar al existente)
+        self.monto_aplicado_proyecto += monto
+        self.aplicado_al_proyecto = True
+        self.fecha_aplicacion = timezone.now().date()
+        self.save()
         
         return True
 

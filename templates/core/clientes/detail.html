@@ -1,0 +1,597 @@
+{% extends "base.html" %}
+{% load custom_filters %}
+
+{% block title %}{{ cliente.razon_social }} - Detalle Cliente{% endblock %}
+
+{% block extra_css %}
+<style>
+    .cliente-hero {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 3rem 2rem;
+        border-radius: 20px;
+        margin-bottom: 2rem;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .cliente-hero::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="white" opacity="0.1"/><circle cx="75" cy="75" r="1" fill="white" opacity="0.1"/><circle cx="50" cy="10" r="0.5" fill="white" opacity="0.1"/><circle cx="10" cy="60" r="0.5" fill="white" opacity="0.1"/><circle cx="90" cy="40" r="0.5" fill="white" opacity="0.1"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+        opacity: 0.3;
+    }
+    
+    .cliente-hero-content {
+        position: relative;
+        z-index: 2;
+    }
+    
+    .cliente-hero-title {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin-bottom: 1rem;
+        text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    }
+    
+    .cliente-hero-subtitle {
+        font-size: 1.2rem;
+        opacity: 0.9;
+        margin-bottom: 2rem;
+    }
+    
+    .cliente-stats {
+        display: flex;
+        justify-content: center;
+        gap: 2rem;
+        flex-wrap: wrap;
+    }
+    
+    .stat-item {
+        text-align: center;
+        background: rgba(255, 255, 255, 0.1);
+        padding: 1rem 1.5rem;
+        border-radius: 15px;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    
+    .stat-number {
+        font-size: 2rem;
+        font-weight: 700;
+        display: block;
+        margin-bottom: 0.5rem;
+    }
+    
+    .stat-label {
+        font-size: 0.9rem;
+        opacity: 0.8;
+    }
+    
+    .info-card {
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        margin-bottom: 2rem;
+        overflow: hidden;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    
+    .info-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
+    }
+    
+    .info-card-header {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        padding: 1.5rem;
+        border-bottom: 1px solid #dee2e6;
+    }
+    
+    .info-card-title {
+        font-size: 1.3rem;
+        font-weight: 600;
+        color: #495057;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .info-card-body {
+        padding: 1.5rem;
+    }
+    
+    .info-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.75rem 0;
+        border-bottom: 1px solid #f8f9fa;
+    }
+    
+    .info-row:last-child {
+        border-bottom: none;
+    }
+    
+    .info-label {
+        font-weight: 600;
+        color: #6c757d;
+        min-width: 120px;
+    }
+    
+    .info-value {
+        color: #495057;
+        text-align: right;
+        flex: 1;
+    }
+    
+    .badge-status {
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .badge-activo {
+        background: linear-gradient(135deg, #28a745, #20c997);
+        color: white;
+    }
+    
+    .badge-inactivo {
+        background: linear-gradient(135deg, #dc3545, #fd7e14);
+        color: white;
+    }
+    
+    .table-modern {
+        background: white;
+        border-radius: 15px;
+        overflow: hidden;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+    }
+    
+    .table-modern th {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        padding: 1rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-size: 0.85rem;
+    }
+    
+    .table-modern td {
+        padding: 1rem;
+        border-bottom: 1px solid #f8f9fa;
+        vertical-align: middle;
+    }
+    
+    .table-modern tbody tr:hover {
+        background: #f8f9fa;
+    }
+    
+    .btn-action {
+        padding: 0.5rem 1rem;
+        border-radius: 8px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: all 0.3s ease;
+        border: none;
+        cursor: pointer;
+    }
+    
+    .btn-primary {
+        background: linear-gradient(135deg, #007bff, #0056b3);
+        color: white;
+    }
+    
+    .btn-primary:hover {
+        background: linear-gradient(135deg, #0056b3, #004085);
+        color: white;
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0, 123, 255, 0.3);
+    }
+    
+    .btn-secondary {
+        background: linear-gradient(135deg, #6c757d, #495057);
+        color: white;
+    }
+    
+    .btn-secondary:hover {
+        background: linear-gradient(135deg, #495057, #343a40);
+        color: white;
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(108, 117, 125, 0.3);
+    }
+    
+    .btn-success {
+        background: linear-gradient(135deg, #28a745, #20c997);
+        color: white;
+    }
+    
+    .btn-success:hover {
+        background: linear-gradient(135deg, #20c997, #17a2b8);
+        color: white;
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(40, 167, 69, 0.3);
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 3rem 2rem;
+        color: #6c757d;
+    }
+    
+    .empty-state i {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+        opacity: 0.5;
+    }
+    
+    .empty-state h5 {
+        margin-bottom: 0.5rem;
+        color: #495057;
+    }
+    
+    .empty-state p {
+        margin: 0;
+        opacity: 0.8;
+    }
+    
+    @media (max-width: 768px) {
+        .cliente-hero-title {
+            font-size: 2rem;
+        }
+        
+        .cliente-stats {
+            gap: 1rem;
+        }
+        
+        .stat-item {
+            padding: 0.75rem 1rem;
+        }
+        
+        .stat-number {
+            font-size: 1.5rem;
+        }
+        
+        .info-row {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 0.25rem;
+        }
+        
+        .info-value {
+            text-align: left;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Hero Section -->
+    <div class="cliente-hero">
+        <div class="cliente-hero-content">
+            <h1 class="cliente-hero-title">
+                <i class="fas fa-building me-2"></i>
+                {{ cliente.razon_social }}
+            </h1>
+            <p class="cliente-hero-subtitle">
+                Información detallada del cliente
+            </p>
+            
+            <!-- Stats -->
+            <div class="cliente-stats">
+                <div class="stat-item">
+                    <span class="stat-number">{{ total_proyectos }}</span>
+                    <span class="stat-label">Proyectos</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number">{{ total_anticipos }}</span>
+                    <span class="stat-label">Anticipos</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number">{{ total_facturas }}</span>
+                    <span class="stat-label">Facturas</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number">${{ monto_total_anticipos|floatformat:0 }}</span>
+                    <span class="stat-label">Total Anticipos</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number">${{ monto_total_facturas|floatformat:0 }}</span>
+                    <span class="stat-label">Total Facturas</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Información del Cliente -->
+        <div class="col-lg-4">
+            <div class="info-card">
+                <div class="info-card-header">
+                    <h5 class="info-card-title">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Información del Cliente
+                    </h5>
+                </div>
+                <div class="info-card-body">
+                    <div class="info-row">
+                        <span class="info-label">Razón Social:</span>
+                        <span class="info-value">{{ cliente.razon_social }}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">NIT:</span>
+                        <span class="info-value">{{ cliente.nit }}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Teléfono:</span>
+                        <span class="info-value">{{ cliente.telefono|default:"No especificado" }}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Email:</span>
+                        <span class="info-value">{{ cliente.email|default:"No especificado" }}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Dirección:</span>
+                        <span class="info-value">{{ cliente.direccion|default:"No especificada" }}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Estado:</span>
+                        <span class="info-value">
+                            {% if cliente.activo %}
+                                <span class="badge-status badge-activo">Activo</span>
+                            {% else %}
+                                <span class="badge-status badge-inactivo">Inactivo</span>
+                            {% endif %}
+                        </span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Creado:</span>
+                        <span class="info-value">{{ cliente.creado_en|date:"d/m/Y H:i" }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Acciones -->
+            <div class="info-card">
+                <div class="info-card-header">
+                    <h5 class="info-card-title">
+                        <i class="fas fa-cogs me-2"></i>
+                        Acciones
+                    </h5>
+                </div>
+                <div class="info-card-body">
+                    <div class="d-grid gap-2">
+                        <a href="{% url 'cliente_edit' cliente.id %}" class="btn-action btn-primary">
+                            <i class="fas fa-edit me-1"></i>
+                            Editar Cliente
+                        </a>
+                        <a href="{% url 'clientes_list' %}" class="btn-action btn-secondary">
+                            <i class="fas fa-list me-1"></i>
+                            Ver Todos los Clientes
+                        </a>
+                        <a href="{% url 'proyecto_create' %}?cliente={{ cliente.id }}" class="btn-action btn-success">
+                            <i class="fas fa-plus me-1"></i>
+                            Nuevo Proyecto
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Proyectos del Cliente -->
+        <div class="col-lg-8">
+            <div class="info-card">
+                <div class="info-card-header">
+                    <h5 class="info-card-title">
+                        <i class="fas fa-project-diagram me-2"></i>
+                        Proyectos del Cliente
+                        <span class="badge bg-primary ms-2">{{ total_proyectos }}</span>
+                    </h5>
+                </div>
+                <div class="info-card-body">
+                    {% if proyectos %}
+                        <div class="table-responsive">
+                            <table class="table table-modern">
+                                <thead>
+                                    <tr>
+                                        <th>Proyecto</th>
+                                        <th>Estado</th>
+                                        <th>Fecha Inicio</th>
+                                        <th>Presupuesto</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for proyecto in proyectos %}
+                                    <tr>
+                                        <td>
+                                            <strong>{{ proyecto.nombre }}</strong>
+                                            {% if proyecto.descripcion %}
+                                                <br><small class="text-muted">{{ proyecto.descripcion|truncatechars:50 }}</small>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-{{ proyecto.estado|lower }}">
+                                                {{ proyecto.get_estado_display }}
+                                            </span>
+                                        </td>
+                                        <td>{{ proyecto.fecha_inicio|date:"d/m/Y" }}</td>
+                                        <td>${{ proyecto.presupuesto|floatformat:0 }}</td>
+                                        <td>
+                                            <a href="{% url 'proyecto_dashboard' proyecto.id %}" class="btn btn-sm btn-outline-primary">
+                                                <i class="fas fa-eye me-1"></i>
+                                                Ver
+                                            </a>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="empty-state">
+                            <i class="fas fa-project-diagram"></i>
+                            <h5>No hay proyectos</h5>
+                            <p>Este cliente no tiene proyectos registrados.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Anticipos del Cliente -->
+            <div class="info-card">
+                <div class="info-card-header">
+                    <h5 class="info-card-title">
+                        <i class="fas fa-money-bill-wave me-2"></i>
+                        Anticipos del Cliente
+                        <span class="badge bg-success ms-2">{{ total_anticipos }}</span>
+                    </h5>
+                </div>
+                <div class="info-card-body">
+                    {% if anticipos %}
+                        <div class="table-responsive">
+                            <table class="table table-modern">
+                                <thead>
+                                    <tr>
+                                        <th>Fecha</th>
+                                        <th>Monto</th>
+                                        <th>Estado</th>
+                                        <th>Proyecto</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for anticipo in anticipos %}
+                                    <tr>
+                                        <td>{{ anticipo.fecha_anticipo|date:"d/m/Y" }}</td>
+                                        <td>${{ anticipo.monto|floatformat:0 }}</td>
+                                        <td>
+                                            <span class="badge bg-{{ anticipo.estado|lower }}">
+                                                {{ anticipo.get_estado_display }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            {% if anticipo.proyecto %}
+                                                <a href="{% url 'proyecto_dashboard' anticipo.proyecto.id %}" class="text-decoration-none">
+                                                    {{ anticipo.proyecto.nombre|truncatechars:30 }}
+                                                </a>
+                                            {% else %}
+                                                <span class="text-muted">Sin proyecto</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <a href="{% url 'anticipo_detail' anticipo.id %}" class="btn btn-sm btn-outline-primary">
+                                                <i class="fas fa-eye me-1"></i>
+                                                Ver
+                                            </a>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="empty-state">
+                            <i class="fas fa-money-bill-wave"></i>
+                            <h5>No hay anticipos</h5>
+                            <p>Este cliente no tiene anticipos registrados.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Facturas del Cliente -->
+            <div class="info-card">
+                <div class="info-card-header">
+                    <h5 class="info-card-title">
+                        <i class="fas fa-file-invoice me-2"></i>
+                        Facturas del Cliente
+                        <span class="badge bg-info ms-2">{{ total_facturas }}</span>
+                    </h5>
+                </div>
+                <div class="info-card-body">
+                    {% if facturas %}
+                        <div class="table-responsive">
+                            <table class="table table-modern">
+                                <thead>
+                                    <tr>
+                                        <th>Número</th>
+                                        <th>Fecha</th>
+                                        <th>Monto</th>
+                                        <th>Estado</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for factura in facturas %}
+                                    <tr>
+                                        <td>
+                                            <strong>{{ factura.numero_factura }}</strong>
+                                        </td>
+                                        <td>{{ factura.fecha_factura|date:"d/m/Y" }}</td>
+                                        <td>${{ factura.monto|floatformat:0 }}</td>
+                                        <td>
+                                            {% if factura.pagada %}
+                                                <span class="badge bg-success">Pagada</span>
+                                            {% else %}
+                                                <span class="badge bg-warning">Pendiente</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <a href="{% url 'factura_detail' factura.id %}" class="btn btn-sm btn-outline-primary">
+                                                <i class="fas fa-eye me-1"></i>
+                                                Ver
+                                            </a>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="empty-state">
+                            <i class="fas fa-file-invoice"></i>
+                            <h5>No hay facturas</h5>
+                            <p>Este cliente no tiene facturas registradas.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Animaciones suaves al cargar
+    document.addEventListener('DOMContentLoaded', function() {
+        const cards = document.querySelectorAll('.info-card');
+        cards.forEach((card, index) => {
+            card.style.opacity = '0';
+            card.style.transform = 'translateY(20px)';
+            setTimeout(() => {
+                card.style.transition = 'all 0.6s ease';
+                card.style.opacity = '1';
+                card.style.transform = 'translateY(0)';
+            }, index * 100);
+        });
+    });
+</script>
+{% endblock %}

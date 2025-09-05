@@ -120,6 +120,71 @@
                                 </div>
                                 {% endif %}
                             </div>
+                            
+                            <!-- Fecha de Vencimiento -->
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.fecha_vencimiento.id_for_label }}" class="form-label">
+                                    <strong>Fecha de Vencimiento</strong>
+                                </label>
+                                {{ form.fecha_vencimiento }}
+                                {% if form.fecha_vencimiento.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.fecha_vencimiento.errors.0 }}
+                                </div>
+                                {% endif %}
+                                <small class="form-text text-muted">Fecha de vencimiento del anticipo (opcional)</small>
+                            </div>
+                        </div>
+                        
+                        <!-- Información de Pago -->
+                        <div class="row">
+                            <div class="col-12">
+                                <h6 class="text-primary mb-3">
+                                    <i class="fas fa-credit-card me-2"></i>Información de Pago
+                                </h6>
+                            </div>
+                            
+                            <!-- Método de Pago -->
+                            <div class="col-md-4 mb-3">
+                                <label for="{{ form.metodo_pago.id_for_label }}" class="form-label">
+                                    <strong>Método de Pago *</strong>
+                                </label>
+                                {{ form.metodo_pago }}
+                                {% if form.metodo_pago.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.metodo_pago.errors.0 }}
+                                </div>
+                                {% endif %}
+                                <small class="form-text text-muted">Forma de pago del anticipo</small>
+                            </div>
+                            
+                            <!-- Referencia de Pago -->
+                            <div class="col-md-4 mb-3">
+                                <label for="{{ form.referencia_pago.id_for_label }}" class="form-label">
+                                    <strong>Referencia de Pago</strong>
+                                </label>
+                                {{ form.referencia_pago }}
+                                {% if form.referencia_pago.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.referencia_pago.errors.0 }}
+                                </div>
+                                {% endif %}
+                                <small class="form-text text-muted">Número de referencia, cheque, etc.</small>
+                            </div>
+                            
+                            <!-- Banco de Origen -->
+                            <div class="col-md-4 mb-3">
+                                <label for="{{ form.banco_origen.id_for_label }}" class="form-label">
+                                    <strong>Banco de Origen</strong>
+                                </label>
+                                {{ form.banco_origen }}
+                                {% if form.banco_origen.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.banco_origen.errors.0 }}
+                                </div>
+                                {% endif %}
+                                <small class="form-text text-muted">Banco de origen del pago</small>
+                            </div>
                         </div>
 
                         <!-- Descripción -->
@@ -239,4 +304,114 @@
         </div>
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('🔄 Inicializando filtro de proyectos por cliente');
+    
+    // Obtener elementos del formulario
+    const clienteSelect = document.getElementById('cliente-select');
+    const proyectoSelect = document.getElementById('proyecto-select');
+    
+    // Debug: Verificar que los elementos se encontraron
+    console.log('🔍 Cliente select encontrado:', clienteSelect);
+    console.log('🔍 Proyecto select encontrado:', proyectoSelect);
+    
+    // Datos de proyectos por cliente (se pasan desde la vista)
+    const proyectosPorCliente = {{ proyectos_por_cliente|safe }};
+    
+    // Debug: Verificar que los datos se cargaron correctamente
+    console.log('🔍 Proyectos por cliente cargados:', proyectosPorCliente);
+    
+    // Función para filtrar proyectos por cliente
+    function filtrarProyectosPorCliente() {
+        console.log('🔄 Función filtrarProyectosPorCliente ejecutada');
+        
+        const clienteId = clienteSelect.value;
+        
+        console.log('🔍 Cliente seleccionado ID:', clienteId);
+        console.log('🔍 Select de proyectos encontrado:', proyectoSelect);
+        console.log('🔍 Datos de proyectos por cliente:', proyectosPorCliente);
+        
+        // Limpiar opciones actuales
+        proyectoSelect.innerHTML = '<option value="">Seleccionar proyecto...</option>';
+        
+        if (clienteId) {
+            // Convertir clienteId a número para comparar con las claves del objeto
+            const clienteIdNum = parseInt(clienteId);
+            console.log('🔍 Cliente ID convertido a número:', clienteIdNum);
+            
+            // Obtener proyectos del cliente seleccionado
+            const proyectosCliente = proyectosPorCliente[clienteIdNum] || proyectosPorCliente[clienteId] || [];
+            
+            console.log('🔍 Proyectos encontrados para cliente', clienteId, ':', proyectosCliente);
+            console.log('🔍 Claves disponibles en proyectosPorCliente:', Object.keys(proyectosPorCliente));
+            
+            if (proyectosCliente.length > 0) {
+                proyectosCliente.forEach(proyecto => {
+                    const option = document.createElement('option');
+                    option.value = proyecto.id;
+                    option.textContent = proyecto.nombre;
+                    proyectoSelect.appendChild(option);
+                    console.log('✅ Agregado proyecto:', proyecto.nombre, 'con ID:', proyecto.id);
+                });
+                
+                // Habilitar el select de proyectos
+                proyectoSelect.disabled = false;
+                console.log('✅ Select de proyectos habilitado');
+            } else {
+                console.log('⚠️ No se encontraron proyectos para este cliente');
+                // Agregar opción de "Sin proyectos"
+                const option = document.createElement('option');
+                option.value = '';
+                option.textContent = 'No hay proyectos disponibles para este cliente';
+                option.disabled = true;
+                proyectoSelect.appendChild(option);
+            }
+        } else {
+            console.log('⚠️ No se seleccionó ningún cliente');
+            // Deshabilitar el select de proyectos si no hay cliente seleccionado
+            proyectoSelect.disabled = true;
+        }
+    }
+    
+    // Verificar que ambos elementos existen antes de continuar
+    if (!clienteSelect) {
+        console.error('❌ No se encontró el select de cliente con ID "cliente-select"');
+        return;
+    }
+    
+    if (!proyectoSelect) {
+        console.error('❌ No se encontró el select de proyecto con ID "proyecto-select"');
+        return;
+    }
+    
+    // Agregar event listener al cambio de cliente
+    clienteSelect.addEventListener('change', filtrarProyectosPorCliente);
+    console.log('✅ Event listener agregado al select de cliente');
+    
+    // Ejecutar filtro inicial si ya hay un cliente seleccionado
+    if (clienteSelect.value) {
+        console.log('🔄 Cliente ya seleccionado, ejecutando filtro inicial');
+        filtrarProyectosPorCliente();
+    }
+    
+    // Inicialmente deshabilitar el select de proyectos
+    proyectoSelect.disabled = true;
+    console.log('✅ Select de proyectos deshabilitado inicialmente');
+    
+    // Generar número de anticipo automáticamente
+    const numeroAnticipoInput = document.getElementById('id_numero_anticipo');
+    if (numeroAnticipoInput && !numeroAnticipoInput.value) {
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const day = String(now.getDate()).padStart(2, '0');
+        const randomNum = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+        const numeroAnticipo = `ANT-${year}${month}${day}-${randomNum}`;
+        numeroAnticipoInput.value = numeroAnticipo;
+        console.log('✅ Número de anticipo generado:', numeroAnticipo);
+    }
+});
+</script>
 {% endblock %}

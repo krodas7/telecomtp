@@ -1,7 +1,37 @@
 {% extends 'base.html' %}
 {% load static %}
+{% load custom_filters %}
 
 {% block title %}Aplicar Anticipo - Sistema de Construcción{% endblock %}
+
+{% block extra_css %}
+<style>
+    .card-selector {
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+    
+    .card-selector:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+    
+    .card-selector.selected {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+    
+    .card-selector.border-primary.selected {
+        border-color: #007bff !important;
+        background-color: #f8f9ff;
+    }
+    
+    .card-selector.border-success.selected {
+        border-color: #28a745 !important;
+        background-color: #f8fff9;
+    }
+</style>
+{% endblock %}
 
 {% block content %}
 <div class="container-fluid">
@@ -48,7 +78,7 @@
                     
                     <div class="mb-3">
                         <strong>Monto Aplicado:</strong><br>
-                        <span class="text-info">{{anticipo.monto_aplicado|currency_gtq}}</span>
+                        <span class="text-info">{{anticipo.total_aplicado|currency_gtq}}</span>
                     </div>
                     
                     <div class="mb-3">
@@ -61,7 +91,7 @@
                         <div class="progress" style="height: 20px;">
                             <div class="progress-bar bg-success" role="progressbar" 
                                  style="width: {{ anticipo.porcentaje_aplicado }}%"
-                                 aria-valuenow="{{ anticipo.porcentaje_aplicado }}" 
+                                 aria-valuenow="{{ anticipo.porcentaje_aplicado|floatformat:1 }}" 
                                  aria-valuemin="0" aria-valuemax="100">
                                 {{ anticipo.porcentaje_aplicado|floatformat:1 }}%
                             </div>
@@ -80,16 +110,49 @@
 
         <!-- Formulario de Aplicación -->
         <div class="col-lg-8">
+            <!-- Selector de Tipo de Aplicación -->
             <div class="card shadow mb-4">
                 <div class="card-header py-3">
                     <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-cogs"></i> Tipo de Aplicación
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="card border-primary card-selector" id="cardFactura" onclick="mostrarFormularioFactura()">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-file-invoice fa-3x text-primary mb-3"></i>
+                                    <h5 class="card-title">Aplicar a Factura</h5>
+                                    <p class="card-text">Aplicar el anticipo a una factura específica</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card border-success card-selector" id="cardProyecto" onclick="mostrarFormularioProyecto()">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-building fa-3x text-success mb-3"></i>
+                                    <h5 class="card-title">Aplicar al Proyecto</h5>
+                                    <p class="card-text">Aplicar el anticipo directamente al proyecto</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Formulario para Aplicar a Factura -->
+            <div class="card shadow mb-4" id="formFactura" style="display: none;">
+                <div class="card-header py-3 bg-primary text-white">
+                    <h6 class="m-0 font-weight-bold">
                         <i class="fas fa-file-invoice"></i> Aplicar a Factura
                     </h6>
                 </div>
                 <div class="card-body">
                     {% if facturas_aplicables %}
-                        <form method="post" id="formAplicar">
+                        <form method="post" id="formAplicarFactura">
                             {% csrf_token %}
+                            <input type="hidden" name="tipo_aplicacion" value="factura">
                             
                             <div class="row">
                                 <div class="col-md-6 mb-3">
@@ -110,10 +173,10 @@
                                 </div>
                                 
                                 <div class="col-md-6 mb-3">
-                                    <label for="monto_aplicar" class="form-label">
+                                    <label for="monto_aplicar_factura" class="form-label">
                                         <strong>Monto a Aplicar (GTQ) *</strong>
                                     </label>
-                                    <input type="number" class="form-control" id="monto_aplicar" name="monto_aplicar" 
+                                    <input type="number" class="form-control" id="monto_aplicar_factura" name="monto_aplicar" 
                                            step="0.01" min="0.01" max="{{ anticipo.monto_disponible }}" required>
                                     <small class="form-text text-muted">
                                         Máximo disponible: {{anticipo.monto_disponible|currency_gtq}}
@@ -128,15 +191,15 @@
                             </div>
 
                             <!-- Validaciones -->
-                            <div id="validaciones" class="mb-3"></div>
+                            <div id="validacionesFactura" class="mb-3"></div>
 
                             <!-- Botones -->
                             <div class="d-flex justify-content-between">
-                                <a href="{% url 'anticipo_detail' anticipo.id %}" class="btn btn-secondary">
-                                    <i class="fas fa-times"></i> Cancelar
-                                </a>
-                                <button type="submit" class="btn btn-success" id="btnAplicar">
-                                    <i class="fas fa-check"></i> Aplicar Anticipo
+                                <button type="button" class="btn btn-secondary" onclick="cambiarTipoAplicacion()">
+                                    <i class="fas fa-arrow-left"></i> Volver
+                                </button>
+                                <button type="submit" class="btn btn-primary" id="btnAplicarFactura">
+                                    <i class="fas fa-check"></i> Aplicar a Factura
                                 </button>
                             </div>
                         </form>
@@ -148,12 +211,69 @@
                                 No se encontraron facturas del mismo cliente y proyecto donde se pueda aplicar este anticipo.
                             </p>
                             <div class="mt-3">
-                                <a href="{% url 'anticipo_detail' anticipo.id %}" class="btn btn-primary">
-                                    <i class="fas fa-arrow-left"></i> Volver al Detalle
-                                </a>
+                                <button type="button" class="btn btn-secondary" onclick="cambiarTipoAplicacion()">
+                                    <i class="fas fa-arrow-left"></i> Volver
+                                </button>
                             </div>
                         </div>
                     {% endif %}
+                </div>
+            </div>
+
+            <!-- Formulario para Aplicar al Proyecto -->
+            <div class="card shadow mb-4" id="formProyecto" style="display: none;">
+                <div class="card-header py-3 bg-success text-white">
+                    <h6 class="m-0 font-weight-bold">
+                        <i class="fas fa-building"></i> Aplicar al Proyecto
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <form method="post" id="formAplicarProyecto">
+                        {% csrf_token %}
+                        <input type="hidden" name="tipo_aplicacion" value="proyecto">
+                        
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle"></i>
+                            <strong>Información:</strong> Al aplicar el anticipo al proyecto, se marcará como "fondos disponibles" 
+                            para el proyecto y aparecerá en el dashboard del proyecto.
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="monto_aplicar_proyecto" class="form-label">
+                                    <strong>Monto a Aplicar al Proyecto (GTQ) *</strong>
+                                </label>
+                                <input type="number" class="form-control" id="monto_aplicar_proyecto" name="monto_aplicar" 
+                                       step="0.01" min="0.01" max="{{ anticipo.monto_disponible }}" required>
+                                <small class="form-text text-muted">
+                                    Máximo disponible: {{anticipo.monto_disponible|currency_gtq}}
+                                </small>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">
+                                    <strong>Proyecto de Destino</strong>
+                                </label>
+                                <div class="form-control-plaintext">
+                                    <strong>{{ anticipo.proyecto.nombre }}</strong><br>
+                                    <small class="text-muted">{{ anticipo.cliente.razon_social }}</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Validaciones -->
+                        <div id="validacionesProyecto" class="mb-3"></div>
+
+                        <!-- Botones -->
+                        <div class="d-flex justify-content-between">
+                            <button type="button" class="btn btn-secondary" onclick="cambiarTipoAplicacion()">
+                                <i class="fas fa-arrow-left"></i> Volver
+                            </button>
+                            <button type="submit" class="btn btn-success" id="btnAplicarProyecto">
+                                <i class="fas fa-check"></i> Aplicar al Proyecto
+                            </button>
+                        </div>
+                    </form>
                 </div>
             </div>
 
@@ -213,83 +333,220 @@
 </div>
 
 <script>
-$(document).ready(function() {
-    // Validar monto al cambiar
-    $('#monto_aplicar').on('input', function() {
-        var monto = parseFloat($(this).val()) || 0;
-        var disponible = parseFloat('{{ anticipo.monto_disponible }}');
-        var facturaId = $('#factura').val();
-        
-        validarMonto(monto, disponible, facturaId);
-    });
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('🔄 Inicializando aplicación de anticipos');
+    
+    // Validar monto al cambiar (factura)
+    const montoFacturaInput = document.getElementById('monto_aplicar_factura');
+    if (montoFacturaInput) {
+        montoFacturaInput.addEventListener('input', function() {
+            const monto = parseFloat(this.value) || 0;
+            const disponible = parseFloat('{{ anticipo.monto_disponible }}');
+            const facturaId = document.getElementById('factura').value;
+            
+            validarMontoFactura(monto, disponible, facturaId);
+        });
+    }
+    
+    // Validar monto al cambiar (proyecto)
+    const montoProyectoInput = document.getElementById('monto_aplicar_proyecto');
+    if (montoProyectoInput) {
+        montoProyectoInput.addEventListener('input', function() {
+            const monto = parseFloat(this.value) || 0;
+            const disponible = parseFloat('{{ anticipo.monto_disponible }}');
+            
+            validarMontoProyecto(monto, disponible);
+        });
+    }
     
     // Validar al cambiar factura
-    $('#factura').on('change', function() {
-        var facturaId = $(this).val();
-        var monto = parseFloat($('#monto_aplicar').val()) || 0;
-        var disponible = parseFloat('{{ anticipo.monto_disponible }}');
+    const facturaSelect = document.getElementById('factura');
+    if (facturaSelect) {
+        facturaSelect.addEventListener('change', function() {
+            const facturaId = this.value;
+            const monto = parseFloat(document.getElementById('monto_aplicar_factura').value) || 0;
+            const disponible = parseFloat('{{ anticipo.monto_disponible }}');
         
         if (facturaId) {
             mostrarInfoFactura(facturaId);
-            validarMonto(monto, disponible, facturaId);
+                validarMontoFactura(monto, disponible, facturaId);
         } else {
             ocultarInfoFactura();
-            limpiarValidaciones();
-        }
-    });
+                limpiarValidacionesFactura();
+            }
+        });
+    }
     
-    // Validar formulario antes de enviar
-    $('#formAplicar').on('submit', function(e) {
-        var monto = parseFloat($('#monto_aplicar').val()) || 0;
-        var disponible = parseFloat('{{ anticipo.monto_disponible }}');
-        var facturaId = $('#factura').val();
-        
-        if (!validarMonto(monto, disponible, facturaId)) {
+    // Validar formulario antes de enviar (factura)
+    const formFactura = document.getElementById('formAplicarFactura');
+    if (formFactura) {
+        formFactura.addEventListener('submit', function(e) {
+            const monto = parseFloat(document.getElementById('monto_aplicar_factura').value) || 0;
+            const disponible = parseFloat('{{ anticipo.monto_disponible }}');
+            const facturaId = document.getElementById('factura').value;
+            
+            if (!validarMontoFactura(monto, disponible, facturaId)) {
             e.preventDefault();
             return false;
         }
         
-        if (!confirm('¿Estás seguro de que quieres aplicar Q' + monto.toFixed(2) + ' del anticipo a la factura seleccionada?')) {
-            e.preventDefault();
-            return false;
-        }
+                    if (!confirm('¿Estás seguro de que quieres aplicar ' + formatearMoneda(monto) + ' del anticipo a la factura seleccionada?')) {
+                e.preventDefault();
+                return false;
+            }
     });
+    }
+    
+    // Validar formulario antes de enviar (proyecto)
+    const formProyecto = document.getElementById('formAplicarProyecto');
+    if (formProyecto) {
+        formProyecto.addEventListener('submit', function(e) {
+            const monto = parseFloat(document.getElementById('monto_aplicar_proyecto').value) || 0;
+            const disponible = parseFloat('{{ anticipo.monto_disponible }}');
+            
+            if (!validarMontoProyecto(monto, disponible)) {
+                e.preventDefault();
+                return false;
+            }
+            
+            if (!confirm('¿Estás seguro de que quieres aplicar ' + formatearMoneda(monto) + ' del anticipo al proyecto?')) {
+                e.preventDefault();
+                return false;
+            }
+        });
+    }
 });
 
+function mostrarFormularioFactura() {
+    console.log('🔄 Mostrando formulario de factura');
+    
+    // Mostrar/ocultar formularios
+    const formFactura = document.getElementById('formFactura');
+    const formProyecto = document.getElementById('formProyecto');
+    
+    if (formFactura) formFactura.style.display = 'block';
+    if (formProyecto) formProyecto.style.display = 'none';
+    
+    // Actualizar estilos de las tarjetas
+    const cardFactura = document.getElementById('cardFactura');
+    const cardProyecto = document.getElementById('cardProyecto');
+    
+    if (cardFactura) {
+        cardFactura.classList.add('selected', 'border-primary');
+        cardFactura.classList.remove('border-secondary');
+    }
+    
+    if (cardProyecto) {
+        cardProyecto.classList.add('border-secondary');
+        cardProyecto.classList.remove('selected', 'border-success');
+    }
+}
+
+function mostrarFormularioProyecto() {
+    console.log('🔄 Mostrando formulario de proyecto');
+    
+    // Mostrar/ocultar formularios
+    const formFactura = document.getElementById('formFactura');
+    const formProyecto = document.getElementById('formProyecto');
+    
+    if (formFactura) formFactura.style.display = 'none';
+    if (formProyecto) formProyecto.style.display = 'block';
+    
+    // Actualizar estilos de las tarjetas
+    const cardFactura = document.getElementById('cardFactura');
+    const cardProyecto = document.getElementById('cardProyecto');
+    
+    if (cardFactura) {
+        cardFactura.classList.add('border-secondary');
+        cardFactura.classList.remove('selected', 'border-primary');
+    }
+    
+    if (cardProyecto) {
+        cardProyecto.classList.add('selected', 'border-success');
+        cardProyecto.classList.remove('border-secondary');
+    }
+}
+
+function cambiarTipoAplicacion() {
+    console.log('🔄 Cambiando tipo de aplicación');
+    
+    // Ocultar formularios
+    const formFactura = document.getElementById('formFactura');
+    const formProyecto = document.getElementById('formProyecto');
+    
+    if (formFactura) formFactura.style.display = 'none';
+    if (formProyecto) formProyecto.style.display = 'none';
+    
+    // Resetear estilos de las tarjetas
+    const cardFactura = document.getElementById('cardFactura');
+    const cardProyecto = document.getElementById('cardProyecto');
+    
+    if (cardFactura) {
+        cardFactura.classList.remove('selected', 'border-secondary');
+        cardFactura.classList.add('border-primary');
+    }
+    
+    if (cardProyecto) {
+        cardProyecto.classList.remove('selected', 'border-secondary');
+        cardProyecto.classList.add('border-success');
+    }
+}
+
 function seleccionarFactura(facturaId, numeroFactura, montoTotal, montoPendiente) {
-    $('#factura').val(facturaId);
-    $('#factura').trigger('change');
+    console.log('🔄 Seleccionando factura:', facturaId);
+    
+    const facturaSelect = document.getElementById('factura');
+    if (facturaSelect) {
+        facturaSelect.value = facturaId;
+        facturaSelect.dispatchEvent(new Event('change'));
+    }
     
     // Sugerir monto a aplicar (el mínimo entre disponible y pendiente)
-    var disponible = parseFloat('{{ anticipo.monto_disponible }}');
-    var sugerido = Math.min(disponible, montoPendiente);
-    $('#monto_aplicar').val(sugerido.toFixed(2));
-    
-    // Trigger para validar
-    $('#monto_aplicar').trigger('input');
+    const disponible = parseFloat('{{ anticipo.monto_disponible }}');
+    const sugerido = Math.min(disponible, montoPendiente);
+    const montoInput = document.getElementById('monto_aplicar_factura');
+    if (montoInput) {
+        montoInput.value = sugerido.toFixed(2);
+        montoInput.dispatchEvent(new Event('input'));
+    }
 }
 
 function mostrarInfoFactura(facturaId) {
-    var option = $('#factura option[value="' + facturaId + '"]');
-    var montoTotal = parseFloat(option.data('monto'));
-    var montoPendiente = parseFloat(option.data('pendiente'));
+    const facturaSelect = document.getElementById('factura');
+    const option = facturaSelect.querySelector('option[value="' + facturaId + '"]');
     
-    var html = '<div class="row">';
-    html += '<div class="col-md-6"><strong>Monto Total:</strong> Q' + montoTotal.toFixed(2) + '</div>';
-    html += '<div class="col-md-6"><strong>Monto Pendiente:</strong> Q' + montoPendiente.toFixed(2) + '</div>';
-    html += '</div>';
-    
-    $('#detallesFactura').html(html);
-    $('#infoFactura').show();
+    if (option) {
+        const montoTotal = parseFloat(option.dataset.monto);
+        const montoPendiente = parseFloat(option.dataset.pendiente);
+        
+        const detallesDiv = document.getElementById('detallesFactura');
+        const infoDiv = document.getElementById('infoFactura');
+        
+        if (detallesDiv && infoDiv) {
+            detallesDiv.innerHTML = `
+                <div class="row">
+                    <div class="col-md-6"><strong>Monto Total:</strong> ${formatearMoneda(montoTotal)}</div>
+                    <div class="col-md-6"><strong>Monto Pendiente:</strong> ${formatearMoneda(montoPendiente)}</div>
+                </div>
+            `;
+            infoDiv.style.display = 'block';
+        }
+    }
 }
 
 function ocultarInfoFactura() {
-    $('#infoFactura').hide();
+    const infoDiv = document.getElementById('infoFactura');
+    if (infoDiv) {
+        infoDiv.style.display = 'none';
+    }
 }
 
-function validarMonto(monto, disponible, facturaId) {
-    var html = '';
-    var esValido = true;
+function validarMontoFactura(monto, disponible, facturaId) {
+    const validacionesDiv = document.getElementById('validacionesFactura');
+    const btnAplicar = document.getElementById('btnAplicarFactura');
+    
+    let html = '';
+    let esValido = true;
     
     if (!facturaId) {
         html = '<div class="alert alert-warning"><i class="fas fa-exclamation-triangle"></i> Debes seleccionar una factura.</div>';
@@ -298,29 +555,63 @@ function validarMonto(monto, disponible, facturaId) {
         html = '<div class="alert alert-danger"><i class="fas fa-times-circle"></i> El monto debe ser mayor a 0.</div>';
         esValido = false;
     } else if (monto > disponible) {
-        html = '<div class="alert alert-danger"><i class="fas fa-times-circle"></i> El monto excede el disponible (Q' + disponible.toFixed(2) + ').</div>';
+        html = '<div class="alert alert-danger"><i class="fas fa-times-circle"></i> El monto excede el disponible (' + formatearMoneda(disponible) + ').</div>';
         esValido = false;
     } else {
-        var option = $('#factura option[value="' + facturaId + '"]');
-        var montoPendiente = parseFloat(option.data('pendiente'));
+        const facturaSelect = document.getElementById('factura');
+        const option = facturaSelect.querySelector('option[value="' + facturaId + '"]');
+        const montoPendiente = parseFloat(option.dataset.pendiente);
         
         if (monto > montoPendiente) {
-            html = '<div class="alert alert-warning"><i class="fas fa-exclamation-triangle"></i> El monto excede el pendiente de la factura (Q' + montoPendiente.toFixed(2) + ').</div>';
+            html = '<div class="alert alert-warning"><i class="fas fa-exclamation-triangle"></i> El monto excede el pendiente de la factura (' + formatearMoneda(montoPendiente) + ').</div>';
             esValido = false;
         } else {
-            html = '<div class="alert alert-success"><i class="fas fa-check-circle"></i> Monto válido. Se aplicarán Q' + monto.toFixed(2) + ' del anticipo.</div>';
+            html = '<div class="alert alert-success"><i class="fas fa-check-circle"></i> Monto válido. Se aplicarán ' + formatearMoneda(monto) + ' del anticipo a la factura.</div>';
         }
     }
     
-    $('#validaciones').html(html);
-    $('#btnAplicar').prop('disabled', !esValido);
+    if (validacionesDiv) validacionesDiv.innerHTML = html;
+    if (btnAplicar) btnAplicar.disabled = !esValido;
     
     return esValido;
 }
 
-function limpiarValidaciones() {
-    $('#validaciones').html('');
-    $('#btnAplicar').prop('disabled', true);
+function validarMontoProyecto(monto, disponible) {
+    const validacionesDiv = document.getElementById('validacionesProyecto');
+    const btnAplicar = document.getElementById('btnAplicarProyecto');
+    
+    let html = '';
+    let esValido = true;
+    
+    if (monto <= 0) {
+        html = '<div class="alert alert-danger"><i class="fas fa-times-circle"></i> El monto debe ser mayor a 0.</div>';
+        esValido = false;
+    } else if (monto > disponible) {
+        html = '<div class="alert alert-danger"><i class="fas fa-times-circle"></i> El monto excede el disponible (' + formatearMoneda(disponible) + ').</div>';
+        esValido = false;
+    } else {
+        html = '<div class="alert alert-success"><i class="fas fa-check-circle"></i> Monto válido. Se aplicarán ' + formatearMoneda(monto) + ' del anticipo al proyecto.</div>';
+    }
+    
+    if (validacionesDiv) validacionesDiv.innerHTML = html;
+    if (btnAplicar) btnAplicar.disabled = !esValido;
+    
+    return esValido;
+}
+
+function limpiarValidacionesFactura() {
+    const validacionesDiv = document.getElementById('validacionesFactura');
+    const btnAplicar = document.getElementById('btnAplicarFactura');
+    
+    if (validacionesDiv) validacionesDiv.innerHTML = '';
+    if (btnAplicar) btnAplicar.disabled = true;
+}
+
+function formatearMoneda(monto) {
+    return 'Q' + parseFloat(monto).toLocaleString('es-GT', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    });
 }
 </script>
 {% endblock %}
