@@ -548,6 +548,39 @@
         transform: translateY(-2px);
         box-shadow: 0 4px 15px rgba(0,0,0,0.2);
     }
+    
+    /* Estilos para modal de confirmación de eliminación */
+    .modal-confirmacion {
+        border-radius: 20px;
+        box-shadow: 0 20px 60px rgba(220, 53, 69, 0.3);
+    }
+    
+    .modal-confirmacion .modal-header {
+        border-radius: 20px 20px 0 0;
+        border-bottom: none;
+    }
+    
+    .modal-confirmacion .modal-body {
+        padding: 2rem;
+    }
+    
+    .modal-confirmacion .modal-footer {
+        border-radius: 0 0 20px 20px;
+        border-top: 1px solid #e9ecef;
+        padding: 1.5rem;
+    }
+    
+    .btn-danger {
+        background: linear-gradient(135deg, #dc3545, #c82333);
+        border: none;
+        box-shadow: 0 4px 15px rgba(220, 53, 69, 0.3);
+    }
+    
+    .btn-danger:hover {
+        background: linear-gradient(135deg, #c82333, #bd2130);
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(220, 53, 69, 0.4);
+    }
 </style>
 {% endblock %}
 
@@ -911,8 +944,197 @@
                 modalInfo.hide();
             }
             
-            // Aquí podrías implementar la edición del evento
-            mostrarNotificacion('🔧 Función de edición en desarrollo', 'info');
+            // Obtener el evento del calendario
+            const evento = window.calendar.getEventById(eventoId);
+            if (!evento) {
+                mostrarNotificacion('❌ Evento no encontrado', 'error');
+                return;
+            }
+            
+            // Llenar el formulario con los datos del evento
+            document.getElementById('tituloEvento').value = evento.title;
+            document.getElementById('fechaEvento').value = evento.startStr.split('T')[0];
+            document.getElementById('tipoEvento').value = evento.extendedProps.tipo || '';
+            document.getElementById('descripcionEvento').value = evento.extendedProps.descripcion || '';
+            
+            // Cambiar el título del modal
+            document.getElementById('modalEventoLabel').innerHTML = '<i class="fas fa-edit me-2"></i>Editar Evento';
+            
+            // Cambiar el botón de guardar
+            const botonGuardar = document.querySelector('#modalEvento .btn-primary');
+            botonGuardar.innerHTML = '<i class="fas fa-save me-1"></i>Actualizar Evento';
+            botonGuardar.setAttribute('onclick', 'actualizarEvento(' + eventoId + ')');
+            
+            // Mostrar modal de edición
+            const modal = new bootstrap.Modal(document.getElementById('modalEvento'));
+            modal.show();
+        }
+        
+        function eliminarEvento(eventoId) {
+            // Crear modal de confirmación personalizado
+            const confirmacionHtml = `
+                <div class="modal fade" id="modalConfirmarEliminar" tabindex="-1" aria-labelledby="modalConfirmarEliminarLabel" aria-hidden="true">
+                    <div class="modal-dialog modal-dialog-centered">
+                        <div class="modal-content modal-confirmacion">
+                            <div class="modal-header" style="background: linear-gradient(135deg, #dc3545, #c82333); color: white;">
+                                <h5 class="modal-title" id="modalConfirmarEliminarLabel">
+                                    <i class="fas fa-exclamation-triangle me-2"></i>Confirmar Eliminación
+                                </h5>
+                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                <div class="text-center">
+                                    <i class="fas fa-trash-alt text-danger" style="font-size: 3rem; margin-bottom: 1rem;"></i>
+                                    <h5 class="text-danger mb-3">¿Eliminar Evento?</h5>
+                                    <p class="text-muted">Esta acción no se puede deshacer. El evento será eliminado permanentemente del sistema.</p>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                                    <i class="fas fa-times me-1"></i>Cancelar
+                                </button>
+                                <button type="button" class="btn btn-danger" onclick="confirmarEliminacion(${eventoId})">
+                                    <i class="fas fa-trash me-1"></i>Eliminar Evento
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Remover modal anterior si existe
+            const existingModal = document.getElementById('modalConfirmarEliminar');
+            if (existingModal) {
+                existingModal.remove();
+            }
+            
+            // Agregar nuevo modal al body
+            document.body.insertAdjacentHTML('beforeend', confirmacionHtml);
+            
+            // Mostrar modal
+            const modal = new bootstrap.Modal(document.getElementById('modalConfirmarEliminar'));
+            modal.show();
+        }
+        
+        function confirmarEliminacion(eventoId) {
+            // Cerrar modal de confirmación
+            const modalConfirmar = bootstrap.Modal.getInstance(document.getElementById('modalConfirmarEliminar'));
+            if (modalConfirmar) {
+                modalConfirmar.hide();
+            }
+            
+            // Enviar petición de eliminación
+            fetch('/api/eventos/' + eventoId + '/eliminar/', {
+                method: 'DELETE',
+                headers: {
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Remover evento del calendario
+                    if (window.calendar) {
+                        const evento = window.calendar.getEventById(eventoId);
+                        if (evento) {
+                            evento.remove();
+                        }
+                    }
+                    
+                    // Cerrar modal de información
+                    const modalInfo = bootstrap.Modal.getInstance(document.getElementById('modalInfoEvento'));
+                    if (modalInfo) {
+                        modalInfo.hide();
+                    }
+                    
+                    // Mostrar notificación de éxito
+                    mostrarNotificacion('✅ Evento eliminado correctamente', 'success');
+                } else {
+                    mostrarNotificacion('❌ Error al eliminar evento: ' + data.message, 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error de red:', error);
+                mostrarNotificacion('❌ Error de conexión al eliminar evento', 'error');
+            });
+        }
+        
+        function actualizarEvento(eventoId) {
+            const titulo = document.getElementById('tituloEvento').value;
+            const fecha = document.getElementById('fechaEvento').value;
+            const tipo = document.getElementById('tipoEvento').value;
+            const descripcion = document.getElementById('descripcionEvento').value;
+            
+            if (!titulo || !fecha || !tipo) {
+                mostrarNotificacion('❌ Complete todos los campos requeridos', 'error');
+                return;
+            }
+            
+            // Obtener color basado en el tipo
+            const colores = {
+                'proyecto': '#28a745',
+                'factura': '#dc3545',
+                'reunion': '#667eea',
+                'entrega': '#ffc107',
+                'vencimiento': '#dc3545',
+                'otro': '#6c757d'
+            };
+            
+            const color = colores[tipo] || '#667eea';
+            
+            const eventoData = {
+                titulo: titulo,
+                fecha_inicio: fecha,
+                tipo: tipo,
+                descripcion: descripcion,
+                color: color,
+                todo_el_dia: true
+            };
+            
+            // Enviar evento actualizado al servidor
+            fetch('/api/eventos/' + eventoId + '/actualizar/', {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                },
+                body: JSON.stringify(eventoData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Actualizar evento en el calendario
+                    if (window.calendar) {
+                        const evento = window.calendar.getEventById(eventoId);
+                        if (evento) {
+                            evento.setProp('title', titulo);
+                            evento.setStart(fecha);
+                            evento.setProp('backgroundColor', color);
+                            evento.setExtendedProp('tipo', tipo);
+                            evento.setExtendedProp('descripcion', descripcion);
+                        }
+                    }
+                    
+                    // Cerrar modal
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('modalEvento'));
+                    modal.hide();
+                    
+                    // Restaurar botón original
+                    const botonGuardar = document.querySelector('#modalEvento .btn-primary');
+                    botonGuardar.innerHTML = '<i class="fas fa-save me-1"></i>Guardar Evento';
+                    botonGuardar.setAttribute('onclick', 'guardarEvento()');
+                    document.getElementById('modalEventoLabel').innerHTML = '<i class="fas fa-calendar-plus me-2"></i>Agregar Nuevo Evento';
+                    
+                    // Mostrar notificación de éxito
+                    mostrarNotificacion('✅ Evento actualizado correctamente', 'success');
+                } else {
+                    mostrarNotificacion('❌ Error al actualizar evento: ' + data.message, 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error de red:', error);
+                mostrarNotificacion('❌ Error de conexión al actualizar evento', 'error');
+            });
         }
         
         // Funciones para el modal de eventos - Definir primero
@@ -1054,6 +1276,9 @@
                             <div class="modal-footer">
                                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
                                     <i class="fas fa-times me-1"></i>Cerrar
+                                </button>
+                                <button type="button" class="btn btn-danger" onclick="eliminarEvento(${evento.id})">
+                                    <i class="fas fa-trash me-1"></i>Eliminar
                                 </button>
                                 <button type="button" class="btn btn-primary" onclick="editarEvento(${evento.id})">
                                     <i class="fas fa-edit me-1"></i>Editar

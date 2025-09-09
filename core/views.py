@@ -6,6 +6,7 @@ from django.db import models
 from django.db.models import Sum, Count, Q, F, Avg
 from django.db.models.functions import Extract
 from django.utils import timezone
+from django.views.decorators.http import require_http_methods
 from datetime import datetime, timedelta
 from decimal import Decimal
 from django.core.cache import cache
@@ -1806,6 +1807,126 @@ def evento_calendario_create_ajax(request):
             }, status=400)
     
     return JsonResponse({'success': False, 'message': 'Método no permitido'}, status=405)
+
+
+@require_http_methods(["PUT"])
+def evento_calendario_update_ajax(request, evento_id):
+    """Actualizar evento del calendario via AJAX"""
+    try:
+        data = json.loads(request.body)
+        
+        # Obtener evento
+        try:
+            evento = EventoCalendario.objects.get(id=evento_id)
+        except EventoCalendario.DoesNotExist:
+            return JsonResponse({
+                'success': False,
+                'message': 'Evento no encontrado'
+            }, status=404)
+        
+        # Validar datos requeridos
+        if not data.get('titulo') or not data.get('fecha_inicio'):
+            return JsonResponse({
+                'success': False,
+                'message': 'Título y fecha de inicio son requeridos'
+            }, status=400)
+        
+        # Procesar fechas
+        from datetime import datetime, date
+        
+        fecha_inicio = data.get('fecha_inicio')
+        if isinstance(fecha_inicio, str):
+            fecha_inicio = datetime.strptime(fecha_inicio, '%Y-%m-%d').date()
+        
+        fecha_fin = data.get('fecha_fin')
+        if fecha_fin and isinstance(fecha_fin, str):
+            fecha_fin = datetime.strptime(fecha_fin, '%Y-%m-%d').date()
+        
+        # Procesar horas
+        hora_inicio = data.get('hora_inicio')
+        if hora_inicio and isinstance(hora_inicio, str):
+            hora_inicio = datetime.strptime(hora_inicio, '%H:%M').time()
+        
+        hora_fin = data.get('hora_fin')
+        if hora_fin and isinstance(hora_fin, str):
+            hora_fin = datetime.strptime(hora_fin, '%H:%M').time()
+        
+        # Actualizar evento
+        evento.titulo = data.get('titulo')
+        evento.descripcion = data.get('descripcion', '')
+        evento.fecha_inicio = fecha_inicio
+        evento.fecha_fin = fecha_fin
+        evento.hora_inicio = hora_inicio
+        evento.hora_fin = hora_fin
+        evento.tipo = data.get('tipo', 'otro')
+        evento.color = data.get('color', '#667eea')
+        evento.todo_el_dia = data.get('todo_el_dia', True)
+        evento.proyecto_id = data.get('proyecto_id') if data.get('proyecto_id') else None
+        evento.factura_id = data.get('factura_id') if data.get('factura_id') else None
+        evento.save()
+        
+        # Registrar actividad
+        LogActividad.objects.create(
+            usuario=request.user,
+            accion='Actualizar',
+            modulo='Eventos del Calendario',
+            descripcion=f'Evento actualizado: {evento.titulo}',
+            ip_address=request.META.get('REMOTE_ADDR')
+        )
+        
+        return JsonResponse({
+            'success': True,
+            'message': 'Evento actualizado exitosamente',
+            'evento': evento.to_calendar_event()
+        })
+        
+    except Exception as e:
+        import traceback
+        return JsonResponse({
+            'success': False,
+            'message': f'Error al actualizar evento: {str(e)}',
+            'debug': traceback.format_exc()
+        }, status=400)
+
+
+@require_http_methods(["DELETE"])
+def evento_calendario_delete_ajax(request, evento_id):
+    """Eliminar evento del calendario via AJAX"""
+    try:
+        # Obtener evento
+        try:
+            evento = EventoCalendario.objects.get(id=evento_id)
+            titulo_evento = evento.titulo  # Guardar título para el log
+        except EventoCalendario.DoesNotExist:
+            return JsonResponse({
+                'success': False,
+                'message': 'Evento no encontrado'
+            }, status=404)
+        
+        # Eliminar evento
+        evento.delete()
+        
+        # Registrar actividad
+        LogActividad.objects.create(
+            usuario=request.user,
+            accion='Eliminar',
+            modulo='Eventos del Calendario',
+            descripcion=f'Evento eliminado: {titulo_evento}',
+            ip_address=request.META.get('REMOTE_ADDR')
+        )
+        
+        return JsonResponse({
+            'success': True,
+            'message': 'Evento eliminado exitosamente'
+        })
+        
+    except Exception as e:
+        import traceback
+        return JsonResponse({
+            'success': False,
+            'message': f'Error al eliminar evento: {str(e)}',
+            'debug': traceback.format_exc()
+        }, status=400)
 
 
 @login_required

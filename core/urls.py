@@ -115,6 +115,8 @@ urlpatterns = [
     path('eventos/<int:evento_id>/eliminar/', views.evento_calendario_delete, name='evento_calendario_delete'),
     path('api/eventos/', views.eventos_calendario_json, name='eventos_calendario_json'),
     path('api/eventos/crear/', views.evento_calendario_create_ajax, name='evento_calendario_create_ajax'),
+    path('api/eventos/<int:evento_id>/actualizar/', views.evento_calendario_update_ajax, name='evento_calendario_update_ajax'),
+    path('api/eventos/<int:evento_id>/eliminar/', views.evento_calendario_delete_ajax, name='evento_calendario_delete_ajax'),
 
     # URLs de Archivos de Proyectos
     path('archivos/', views.archivos_proyectos_list, name='archivos_proyectos_list'),
