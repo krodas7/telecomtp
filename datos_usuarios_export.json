@@ -1,0 +1,4872 @@
+{
+  "fecha_exportacion": "2025-09-08T21:27:02.842659",
+  "usuarios": [
+    {
+      "id": 2,
+      "username": "kevin",
+      "email": "kevin@test.com",
+      "first_name": "Kevin",
+      "last_name": "Admin",
+      "is_active": true,
+      "is_staff": true,
+      "is_superuser": true,
+      "date_joined": "2025-08-20T05:10:03.030111+00:00",
+      "last_login": "2025-09-02T17:40:30.171028+00:00"
+    },
+    {
+      "id": 4,
+      "username": "test_user",
+      "email": "",
+      "first_name": "",
+      "last_name": "",
+      "is_active": true,
+      "is_staff": true,
+      "is_superuser": true,
+      "date_joined": "2025-08-20T16:58:05.445724+00:00",
+      "last_login": null
+    },
+    {
+      "id": 5,
+      "username": "admin",
+      "email": "admin@sistema.com",
+      "first_name": "",
+      "last_name": "",
+      "is_active": true,
+      "is_staff": true,
+      "is_superuser": true,
+      "date_joined": "2025-08-20T20:09:25.477312+00:00",
+      "last_login": "2025-08-25T21:55:53.506782+00:00"
+    },
+    {
+      "id": 6,
+      "username": "testuser",
+      "email": "test@example.com",
+      "first_name": "",
+      "last_name": "",
+      "is_active": true,
+      "is_staff": true,
+      "is_superuser": true,
+      "date_joined": "2025-08-25T23:12:18.615401+00:00",
+      "last_login": null
+    },
+    {
+      "id": 7,
+      "username": "arca",
+      "email": "",
+      "first_name": "",
+      "last_name": "",
+      "is_active": true,
+      "is_staff": true,
+      "is_superuser": true,
+      "date_joined": "2025-08-25T23:52:34.274088+00:00",
+      "last_login": "2025-09-09T02:11:51.024636+00:00"
+    }
+  ],
+  "modulos": [
+    {
+      "id": 18,
+      "nombre": "proyectos",
+      "descripcion": "Gestión de proyectos",
+      "icono": "fas fa-project-diagram",
+      "orden": 0,
+      "activo": true
+    },
+    {
+      "id": 1,
+      "nombre": "Dashboard",
+      "descripcion": "Panel principal del sistema",
+      "icono": "fas fa-tachometer-alt",
+      "orden": 1,
+      "activo": true
+    },
+    {
+      "id": 19,
+      "nombre": "clientes",
+      "descripcion": "Gestión de clientes",
+      "icono": "fas fa-users",
+      "orden": 1,
+      "activo": true
+    },
+    {
+      "id": 2,
+      "nombre": "Clientes",
+      "descripcion": "Gestión de clientes",
+      "icono": "fas fa-users",
+      "orden": 2,
+      "activo": true
+    },
+    {
+      "id": 20,
+      "nombre": "colaboradores",
+      "descripcion": "Gestión de colaboradores",
+      "icono": "fas fa-user-tie",
+      "orden": 2,
+      "activo": true
+    },
+    {
+      "id": 3,
+      "nombre": "Proyectos",
+      "descripcion": "Gestión de proyectos",
+      "icono": "fas fa-project-diagram",
+      "orden": 3,
+      "activo": true
+    },
+    {
+      "id": 21,
+      "nombre": "facturas",
+      "descripcion": "Gestión de facturas",
+      "icono": "fas fa-file-invoice",
+      "orden": 3,
+      "activo": true
+    },
+    {
+      "id": 4,
+      "nombre": "Colaboradores",
+      "descripcion": "Gestión de personal",
+      "icono": "fas fa-user-tie",
+      "orden": 4,
+      "activo": true
+    },
+    {
+      "id": 22,
+      "nombre": "gastos",
+      "descripcion": "Gestión de gastos",
+      "icono": "fas fa-receipt",
+      "orden": 4,
+      "activo": true
+    },
+    {
+      "id": 5,
+      "nombre": "Facturación",
+      "descripcion": "Facturas y pagos",
+      "icono": "fas fa-file-invoice-dollar",
+      "orden": 5,
+      "activo": true
+    },
+    {
+      "id": 13,
+      "nombre": "Facturas",
+      "descripcion": "Gestión de facturas",
+      "icono": "fas fa-file-invoice-dollar",
+      "orden": 5,
+      "activo": true
+    },
+    {
+      "id": 23,
+      "nombre": "inventario",
+      "descripcion": "Gestión de inventario",
+      "icono": "fas fa-boxes",
+      "orden": 5,
+      "activo": true
+    },
+    {
+      "id": 6,
+      "nombre": "Gastos",
+      "descripcion": "Control de gastos",
+      "icono": "fas fa-money-bill-wave",
+      "orden": 6,
+      "activo": true
+    },
+    {
+      "id": 12,
+      "nombre": "Usuarios",
+      "descripcion": "Gestión de usuarios",
+      "icono": "",
+      "orden": 6,
+      "activo": true
+    },
+    {
+      "id": 24,
+      "nombre": "usuarios",
+      "descripcion": "Gestión de usuarios",
+      "icono": "fas fa-user-cog",
+      "orden": 6,
+      "activo": true
+    },
+    {
+      "id": 7,
+      "nombre": "Presupuestos",
+      "descripcion": "Presupuestos de proyectos",
+      "icono": "fas fa-calculator",
+      "orden": 7,
+      "activo": true
+    },
+    {
+      "id": 14,
+      "nombre": "Pagos",
+      "descripcion": "Gestión de pagos",
+      "icono": "fas fa-credit-card",
+      "orden": 7,
+      "activo": true
+    },
+    {
+      "id": 25,
+      "nombre": "reportes",
+      "descripcion": "Reportes del sistema",
+      "icono": "fas fa-chart-bar",
+      "orden": 7,
+      "activo": true
+    },
+    {
+      "id": 8,
+      "nombre": "Inventario",
+      "descripcion": "Control de materiales",
+      "icono": "fas fa-boxes",
+      "orden": 8,
+      "activo": true
+    },
+    {
+      "id": 15,
+      "nombre": "Anticipos",
+      "descripcion": "Gestión de anticipos",
+      "icono": "fas fa-hand-holding-usd",
+      "orden": 8,
+      "activo": true
+    },
+    {
+      "id": 26,
+      "nombre": "dashboard",
+      "descripcion": "Panel principal",
+      "icono": "fas fa-tachometer-alt",
+      "orden": 8,
+      "activo": true
+    },
+    {
+      "id": 9,
+      "nombre": "Rentabilidad",
+      "descripcion": "Análisis financiero",
+      "icono": "fas fa-chart-line",
+      "orden": 9,
+      "activo": true
+    },
+    {
+      "id": 16,
+      "nombre": "Reportes",
+      "descripcion": "Reportes del sistema",
+      "icono": "fas fa-chart-bar",
+      "orden": 9,
+      "activo": true
+    },
+    {
+      "id": 10,
+      "nombre": "Notificaciones",
+      "descripcion": "Sistema de alertas",
+      "icono": "fas fa-bell",
+      "orden": 10,
+      "activo": true
+    },
+    {
+      "id": 11,
+      "nombre": "Sistema",
+      "descripcion": "Configuración del sistema",
+      "icono": "fas fa-cogs",
+      "orden": 11,
+      "activo": true
+    },
+    {
+      "id": 17,
+      "nombre": "Archivos",
+      "descripcion": "Gestión de archivos y documentos",
+      "icono": "fas fa-folder-open",
+      "orden": 11,
+      "activo": true
+    }
+  ],
+  "roles": [
+    {
+      "id": 1,
+      "nombre": "encargado de obra",
+      "descripcion": "sadasdas",
+      "creado_en": "2025-09-03T10:05:23.997230+00:00"
+    },
+    {
+      "id": 2,
+      "nombre": "Superusuario",
+      "descripcion": "Acceso completo a todo el sistema. Puede gestionar usuarios, roles y configuraciones del sistema.",
+      "creado_en": "2025-09-03T10:18:16.302407+00:00"
+    },
+    {
+      "id": 3,
+      "nombre": "Administrador",
+      "descripcion": "Administrador con permisos amplios. Puede gestionar proyectos, clientes, facturas y reportes.",
+      "creado_en": "2025-09-03T10:18:16.319626+00:00"
+    },
+    {
+      "id": 4,
+      "nombre": "Encargado de Proyecto",
+      "descripcion": "Gestión de proyectos y clientes. Puede crear y editar proyectos, gestionar colaboradores y ver reportes.",
+      "creado_en": "2025-09-03T10:18:16.331106+00:00"
+    },
+    {
+      "id": 5,
+      "nombre": "Colaborador",
+      "descripcion": "Acceso limitado de solo lectura. Puede ver proyectos asignados y reportes básicos.",
+      "creado_en": "2025-09-03T10:18:16.342694+00:00"
+    },
+    {
+      "id": 6,
+      "nombre": "Contador",
+      "descripcion": "Gestión de facturas, pagos y reportes financieros. Acceso completo a módulos financieros.",
+      "creado_en": "2025-09-03T10:18:16.355506+00:00"
+    },
+    {
+      "id": 7,
+      "nombre": "sdfsdfdsfds",
+      "descripcion": "sdfsdf",
+      "creado_en": "2025-09-09T03:03:07.136365+00:00"
+    },
+    {
+      "id": 8,
+      "nombre": "Gerente",
+      "descripcion": "Gestión de proyectos y reportes",
+      "creado_en": "2025-09-09T03:21:39.528537+00:00"
+    },
+    {
+      "id": 9,
+      "nombre": "Supervisor",
+      "descripcion": "Supervisión de proyectos",
+      "creado_en": "2025-09-09T03:21:39.543357+00:00"
+    },
+    {
+      "id": 10,
+      "nombre": "Operador",
+      "descripcion": "Operaciones básicas del sistema",
+      "creado_en": "2025-09-09T03:21:39.558714+00:00"
+    },
+    {
+      "id": 11,
+      "nombre": "Consulta",
+      "descripcion": "Solo consulta de información",
+      "creado_en": "2025-09-09T03:21:39.580302+00:00"
+    }
+  ],
+  "permisos": [
+    {
+      "id": 1,
+      "nombre": "Ver Dashboard",
+      "codigo": "dashboard_ver",
+      "tipo": "ver",
+      "modulo_id": 1,
+      "descripcion": "Permite ver en el módulo Dashboard"
+    },
+    {
+      "id": 2,
+      "nombre": "Crear Dashboard",
+      "codigo": "dashboard_crear",
+      "tipo": "crear",
+      "modulo_id": 1,
+      "descripcion": "Permite crear en el módulo Dashboard"
+    },
+    {
+      "id": 3,
+      "nombre": "Editar Dashboard",
+      "codigo": "dashboard_editar",
+      "tipo": "editar",
+      "modulo_id": 1,
+      "descripcion": "Permite editar en el módulo Dashboard"
+    },
+    {
+      "id": 4,
+      "nombre": "Eliminar Dashboard",
+      "codigo": "dashboard_eliminar",
+      "tipo": "eliminar",
+      "modulo_id": 1,
+      "descripcion": "Permite eliminar en el módulo Dashboard"
+    },
+    {
+      "id": 5,
+      "nombre": "Exportar Dashboard",
+      "codigo": "dashboard_exportar",
+      "tipo": "exportar",
+      "modulo_id": 1,
+      "descripcion": "Permite exportar en el módulo Dashboard"
+    },
+    {
+      "id": 6,
+      "nombre": "Ver Clientes",
+      "codigo": "clientes_ver",
+      "tipo": "ver",
+      "modulo_id": 2,
+      "descripcion": "Permite ver en el módulo Clientes"
+    },
+    {
+      "id": 7,
+      "nombre": "Crear Clientes",
+      "codigo": "clientes_crear",
+      "tipo": "crear",
+      "modulo_id": 2,
+      "descripcion": "Permite crear en el módulo Clientes"
+    },
+    {
+      "id": 8,
+      "nombre": "Editar Clientes",
+      "codigo": "clientes_editar",
+      "tipo": "editar",
+      "modulo_id": 2,
+      "descripcion": "Permite editar en el módulo Clientes"
+    },
+    {
+      "id": 9,
+      "nombre": "Eliminar Clientes",
+      "codigo": "clientes_eliminar",
+      "tipo": "eliminar",
+      "modulo_id": 2,
+      "descripcion": "Permite eliminar en el módulo Clientes"
+    },
+    {
+      "id": 10,
+      "nombre": "Exportar Clientes",
+      "codigo": "clientes_exportar",
+      "tipo": "exportar",
+      "modulo_id": 2,
+      "descripcion": "Permite exportar en el módulo Clientes"
+    },
+    {
+      "id": 11,
+      "nombre": "Ver Proyectos",
+      "codigo": "proyectos_ver",
+      "tipo": "ver",
+      "modulo_id": 3,
+      "descripcion": "Permite ver en el módulo Proyectos"
+    },
+    {
+      "id": 12,
+      "nombre": "Crear Proyectos",
+      "codigo": "proyectos_crear",
+      "tipo": "crear",
+      "modulo_id": 3,
+      "descripcion": "Permite crear en el módulo Proyectos"
+    },
+    {
+      "id": 13,
+      "nombre": "Editar Proyectos",
+      "codigo": "proyectos_editar",
+      "tipo": "editar",
+      "modulo_id": 3,
+      "descripcion": "Permite editar en el módulo Proyectos"
+    },
+    {
+      "id": 14,
+      "nombre": "Eliminar Proyectos",
+      "codigo": "proyectos_eliminar",
+      "tipo": "eliminar",
+      "modulo_id": 3,
+      "descripcion": "Permite eliminar en el módulo Proyectos"
+    },
+    {
+      "id": 15,
+      "nombre": "Exportar Proyectos",
+      "codigo": "proyectos_exportar",
+      "tipo": "exportar",
+      "modulo_id": 3,
+      "descripcion": "Permite exportar en el módulo Proyectos"
+    },
+    {
+      "id": 16,
+      "nombre": "Ver Colaboradores",
+      "codigo": "colaboradores_ver",
+      "tipo": "ver",
+      "modulo_id": 4,
+      "descripcion": "Permite ver en el módulo Colaboradores"
+    },
+    {
+      "id": 17,
+      "nombre": "Crear Colaboradores",
+      "codigo": "colaboradores_crear",
+      "tipo": "crear",
+      "modulo_id": 4,
+      "descripcion": "Permite crear en el módulo Colaboradores"
+    },
+    {
+      "id": 18,
+      "nombre": "Editar Colaboradores",
+      "codigo": "colaboradores_editar",
+      "tipo": "editar",
+      "modulo_id": 4,
+      "descripcion": "Permite editar en el módulo Colaboradores"
+    },
+    {
+      "id": 19,
+      "nombre": "Eliminar Colaboradores",
+      "codigo": "colaboradores_eliminar",
+      "tipo": "eliminar",
+      "modulo_id": 4,
+      "descripcion": "Permite eliminar en el módulo Colaboradores"
+    },
+    {
+      "id": 20,
+      "nombre": "Exportar Colaboradores",
+      "codigo": "colaboradores_exportar",
+      "tipo": "exportar",
+      "modulo_id": 4,
+      "descripcion": "Permite exportar en el módulo Colaboradores"
+    },
+    {
+      "id": 21,
+      "nombre": "Ver Facturación",
+      "codigo": "facturación_ver",
+      "tipo": "ver",
+      "modulo_id": 5,
+      "descripcion": "Permite ver en el módulo Facturación"
+    },
+    {
+      "id": 22,
+      "nombre": "Crear Facturación",
+      "codigo": "facturación_crear",
+      "tipo": "crear",
+      "modulo_id": 5,
+      "descripcion": "Permite crear en el módulo Facturación"
+    },
+    {
+      "id": 23,
+      "nombre": "Editar Facturación",
+      "codigo": "facturación_editar",
+      "tipo": "editar",
+      "modulo_id": 5,
+      "descripcion": "Permite editar en el módulo Facturación"
+    },
+    {
+      "id": 24,
+      "nombre": "Eliminar Facturación",
+      "codigo": "facturación_eliminar",
+      "tipo": "eliminar",
+      "modulo_id": 5,
+      "descripcion": "Permite eliminar en el módulo Facturación"
+    },
+    {
+      "id": 25,
+      "nombre": "Exportar Facturación",
+      "codigo": "facturación_exportar",
+      "tipo": "exportar",
+      "modulo_id": 5,
+      "descripcion": "Permite exportar en el módulo Facturación"
+    },
+    {
+      "id": 26,
+      "nombre": "Ver Gastos",
+      "codigo": "gastos_ver",
+      "tipo": "ver",
+      "modulo_id": 6,
+      "descripcion": "Permite ver en el módulo Gastos"
+    },
+    {
+      "id": 27,
+      "nombre": "Crear Gastos",
+      "codigo": "gastos_crear",
+      "tipo": "crear",
+      "modulo_id": 6,
+      "descripcion": "Permite crear en el módulo Gastos"
+    },
+    {
+      "id": 28,
+      "nombre": "Editar Gastos",
+      "codigo": "gastos_editar",
+      "tipo": "editar",
+      "modulo_id": 6,
+      "descripcion": "Permite editar en el módulo Gastos"
+    },
+    {
+      "id": 29,
+      "nombre": "Eliminar Gastos",
+      "codigo": "gastos_eliminar",
+      "tipo": "eliminar",
+      "modulo_id": 6,
+      "descripcion": "Permite eliminar en el módulo Gastos"
+    },
+    {
+      "id": 30,
+      "nombre": "Exportar Gastos",
+      "codigo": "gastos_exportar",
+      "tipo": "exportar",
+      "modulo_id": 6,
+      "descripcion": "Permite exportar en el módulo Gastos"
+    },
+    {
+      "id": 31,
+      "nombre": "Ver Presupuestos",
+      "codigo": "presupuestos_ver",
+      "tipo": "ver",
+      "modulo_id": 7,
+      "descripcion": "Permite ver en el módulo Presupuestos"
+    },
+    {
+      "id": 32,
+      "nombre": "Crear Presupuestos",
+      "codigo": "presupuestos_crear",
+      "tipo": "crear",
+      "modulo_id": 7,
+      "descripcion": "Permite crear en el módulo Presupuestos"
+    },
+    {
+      "id": 33,
+      "nombre": "Editar Presupuestos",
+      "codigo": "presupuestos_editar",
+      "tipo": "editar",
+      "modulo_id": 7,
+      "descripcion": "Permite editar en el módulo Presupuestos"
+    },
+    {
+      "id": 34,
+      "nombre": "Eliminar Presupuestos",
+      "codigo": "presupuestos_eliminar",
+      "tipo": "eliminar",
+      "modulo_id": 7,
+      "descripcion": "Permite eliminar en el módulo Presupuestos"
+    },
+    {
+      "id": 35,
+      "nombre": "Exportar Presupuestos",
+      "codigo": "presupuestos_exportar",
+      "tipo": "exportar",
+      "modulo_id": 7,
+      "descripcion": "Permite exportar en el módulo Presupuestos"
+    },
+    {
+      "id": 36,
+      "nombre": "Ver Inventario",
+      "codigo": "inventario_ver",
+      "tipo": "ver",
+      "modulo_id": 8,
+      "descripcion": "Permite ver en el módulo Inventario"
+    },
+    {
+      "id": 37,
+      "nombre": "Crear Inventario",
+      "codigo": "inventario_crear",
+      "tipo": "crear",
+      "modulo_id": 8,
+      "descripcion": "Permite crear en el módulo Inventario"
+    },
+    {
+      "id": 38,
+      "nombre": "Editar Inventario",
+      "codigo": "inventario_editar",
+      "tipo": "editar",
+      "modulo_id": 8,
+      "descripcion": "Permite editar en el módulo Inventario"
+    },
+    {
+      "id": 39,
+      "nombre": "Eliminar Inventario",
+      "codigo": "inventario_eliminar",
+      "tipo": "eliminar",
+      "modulo_id": 8,
+      "descripcion": "Permite eliminar en el módulo Inventario"
+    },
+    {
+      "id": 40,
+      "nombre": "Exportar Inventario",
+      "codigo": "inventario_exportar",
+      "tipo": "exportar",
+      "modulo_id": 8,
+      "descripcion": "Permite exportar en el módulo Inventario"
+    },
+    {
+      "id": 41,
+      "nombre": "Ver Rentabilidad",
+      "codigo": "rentabilidad_ver",
+      "tipo": "ver",
+      "modulo_id": 9,
+      "descripcion": "Permite ver en el módulo Rentabilidad"
+    },
+    {
+      "id": 42,
+      "nombre": "Crear Rentabilidad",
+      "codigo": "rentabilidad_crear",
+      "tipo": "crear",
+      "modulo_id": 9,
+      "descripcion": "Permite crear en el módulo Rentabilidad"
+    },
+    {
+      "id": 43,
+      "nombre": "Editar Rentabilidad",
+      "codigo": "rentabilidad_editar",
+      "tipo": "editar",
+      "modulo_id": 9,
+      "descripcion": "Permite editar en el módulo Rentabilidad"
+    },
+    {
+      "id": 44,
+      "nombre": "Eliminar Rentabilidad",
+      "codigo": "rentabilidad_eliminar",
+      "tipo": "eliminar",
+      "modulo_id": 9,
+      "descripcion": "Permite eliminar en el módulo Rentabilidad"
+    },
+    {
+      "id": 45,
+      "nombre": "Exportar Rentabilidad",
+      "codigo": "rentabilidad_exportar",
+      "tipo": "exportar",
+      "modulo_id": 9,
+      "descripcion": "Permite exportar en el módulo Rentabilidad"
+    },
+    {
+      "id": 46,
+      "nombre": "Ver Notificaciones",
+      "codigo": "notificaciones_ver",
+      "tipo": "ver",
+      "modulo_id": 10,
+      "descripcion": "Permite ver en el módulo Notificaciones"
+    },
+    {
+      "id": 47,
+      "nombre": "Crear Notificaciones",
+      "codigo": "notificaciones_crear",
+      "tipo": "crear",
+      "modulo_id": 10,
+      "descripcion": "Permite crear en el módulo Notificaciones"
+    },
+    {
+      "id": 48,
+      "nombre": "Editar Notificaciones",
+      "codigo": "notificaciones_editar",
+      "tipo": "editar",
+      "modulo_id": 10,
+      "descripcion": "Permite editar en el módulo Notificaciones"
+    },
+    {
+      "id": 49,
+      "nombre": "Eliminar Notificaciones",
+      "codigo": "notificaciones_eliminar",
+      "tipo": "eliminar",
+      "modulo_id": 10,
+      "descripcion": "Permite eliminar en el módulo Notificaciones"
+    },
+    {
+      "id": 50,
+      "nombre": "Exportar Notificaciones",
+      "codigo": "notificaciones_exportar",
+      "tipo": "exportar",
+      "modulo_id": 10,
+      "descripcion": "Permite exportar en el módulo Notificaciones"
+    },
+    {
+      "id": 51,
+      "nombre": "Ver Sistema",
+      "codigo": "sistema_ver",
+      "tipo": "ver",
+      "modulo_id": 11,
+      "descripcion": "Permite ver en el módulo Sistema"
+    },
+    {
+      "id": 52,
+      "nombre": "Crear Sistema",
+      "codigo": "sistema_crear",
+      "tipo": "crear",
+      "modulo_id": 11,
+      "descripcion": "Permite crear en el módulo Sistema"
+    },
+    {
+      "id": 53,
+      "nombre": "Editar Sistema",
+      "codigo": "sistema_editar",
+      "tipo": "editar",
+      "modulo_id": 11,
+      "descripcion": "Permite editar en el módulo Sistema"
+    },
+    {
+      "id": 54,
+      "nombre": "Eliminar Sistema",
+      "codigo": "sistema_eliminar",
+      "tipo": "eliminar",
+      "modulo_id": 11,
+      "descripcion": "Permite eliminar en el módulo Sistema"
+    },
+    {
+      "id": 55,
+      "nombre": "Exportar Sistema",
+      "codigo": "sistema_exportar",
+      "tipo": "exportar",
+      "modulo_id": 11,
+      "descripcion": "Permite exportar en el módulo Sistema"
+    },
+    {
+      "id": 56,
+      "nombre": "ver_dashboard",
+      "codigo": "",
+      "tipo": "",
+      "modulo_id": 1,
+      "descripcion": "Ver Dashboard"
+    },
+    {
+      "id": 57,
+      "nombre": "Ver Dashboard",
+      "codigo": "ver_dashboard",
+      "tipo": "ver",
+      "modulo_id": 1,
+      "descripcion": "Permiso para ver en Dashboard"
+    },
+    {
+      "id": 58,
+      "nombre": "Crear Dashboard",
+      "codigo": "crear_dashboard",
+      "tipo": "crear",
+      "modulo_id": 1,
+      "descripcion": "Permiso para crear en Dashboard"
+    },
+    {
+      "id": 59,
+      "nombre": "Editar Dashboard",
+      "codigo": "editar_dashboard",
+      "tipo": "editar",
+      "modulo_id": 1,
+      "descripcion": "Permiso para editar en Dashboard"
+    },
+    {
+      "id": 60,
+      "nombre": "Eliminar Dashboard",
+      "codigo": "eliminar_dashboard",
+      "tipo": "eliminar",
+      "modulo_id": 1,
+      "descripcion": "Permiso para eliminar en Dashboard"
+    },
+    {
+      "id": 61,
+      "nombre": "Exportar Dashboard",
+      "codigo": "exportar_dashboard",
+      "tipo": "exportar",
+      "modulo_id": 1,
+      "descripcion": "Permiso para exportar en Dashboard"
+    },
+    {
+      "id": 62,
+      "nombre": "Ver Clientes",
+      "codigo": "ver_clientes",
+      "tipo": "ver",
+      "modulo_id": 2,
+      "descripcion": "Permiso para ver en Clientes"
+    },
+    {
+      "id": 63,
+      "nombre": "Crear Clientes",
+      "codigo": "crear_clientes",
+      "tipo": "crear",
+      "modulo_id": 2,
+      "descripcion": "Permiso para crear en Clientes"
+    },
+    {
+      "id": 64,
+      "nombre": "Editar Clientes",
+      "codigo": "editar_clientes",
+      "tipo": "editar",
+      "modulo_id": 2,
+      "descripcion": "Permiso para editar en Clientes"
+    },
+    {
+      "id": 65,
+      "nombre": "Eliminar Clientes",
+      "codigo": "eliminar_clientes",
+      "tipo": "eliminar",
+      "modulo_id": 2,
+      "descripcion": "Permiso para eliminar en Clientes"
+    },
+    {
+      "id": 66,
+      "nombre": "Exportar Clientes",
+      "codigo": "exportar_clientes",
+      "tipo": "exportar",
+      "modulo_id": 2,
+      "descripcion": "Permiso para exportar en Clientes"
+    },
+    {
+      "id": 67,
+      "nombre": "Ver Proyectos",
+      "codigo": "ver_proyectos",
+      "tipo": "ver",
+      "modulo_id": 3,
+      "descripcion": "Permiso para ver en Proyectos"
+    },
+    {
+      "id": 68,
+      "nombre": "Crear Proyectos",
+      "codigo": "crear_proyectos",
+      "tipo": "crear",
+      "modulo_id": 3,
+      "descripcion": "Permiso para crear en Proyectos"
+    },
+    {
+      "id": 69,
+      "nombre": "Editar Proyectos",
+      "codigo": "editar_proyectos",
+      "tipo": "editar",
+      "modulo_id": 3,
+      "descripcion": "Permiso para editar en Proyectos"
+    },
+    {
+      "id": 70,
+      "nombre": "Eliminar Proyectos",
+      "codigo": "eliminar_proyectos",
+      "tipo": "eliminar",
+      "modulo_id": 3,
+      "descripcion": "Permiso para eliminar en Proyectos"
+    },
+    {
+      "id": 71,
+      "nombre": "Exportar Proyectos",
+      "codigo": "exportar_proyectos",
+      "tipo": "exportar",
+      "modulo_id": 3,
+      "descripcion": "Permiso para exportar en Proyectos"
+    },
+    {
+      "id": 72,
+      "nombre": "Ver Colaboradores",
+      "codigo": "ver_colaboradores",
+      "tipo": "ver",
+      "modulo_id": 4,
+      "descripcion": "Permiso para ver en Colaboradores"
+    },
+    {
+      "id": 73,
+      "nombre": "Crear Colaboradores",
+      "codigo": "crear_colaboradores",
+      "tipo": "crear",
+      "modulo_id": 4,
+      "descripcion": "Permiso para crear en Colaboradores"
+    },
+    {
+      "id": 74,
+      "nombre": "Editar Colaboradores",
+      "codigo": "editar_colaboradores",
+      "tipo": "editar",
+      "modulo_id": 4,
+      "descripcion": "Permiso para editar en Colaboradores"
+    },
+    {
+      "id": 75,
+      "nombre": "Eliminar Colaboradores",
+      "codigo": "eliminar_colaboradores",
+      "tipo": "eliminar",
+      "modulo_id": 4,
+      "descripcion": "Permiso para eliminar en Colaboradores"
+    },
+    {
+      "id": 76,
+      "nombre": "Exportar Colaboradores",
+      "codigo": "exportar_colaboradores",
+      "tipo": "exportar",
+      "modulo_id": 4,
+      "descripcion": "Permiso para exportar en Colaboradores"
+    },
+    {
+      "id": 77,
+      "nombre": "Ver Facturación",
+      "codigo": "ver_facturación",
+      "tipo": "ver",
+      "modulo_id": 5,
+      "descripcion": "Permiso para ver en Facturación"
+    },
+    {
+      "id": 78,
+      "nombre": "Crear Facturación",
+      "codigo": "crear_facturación",
+      "tipo": "crear",
+      "modulo_id": 5,
+      "descripcion": "Permiso para crear en Facturación"
+    },
+    {
+      "id": 79,
+      "nombre": "Editar Facturación",
+      "codigo": "editar_facturación",
+      "tipo": "editar",
+      "modulo_id": 5,
+      "descripcion": "Permiso para editar en Facturación"
+    },
+    {
+      "id": 80,
+      "nombre": "Eliminar Facturación",
+      "codigo": "eliminar_facturación",
+      "tipo": "eliminar",
+      "modulo_id": 5,
+      "descripcion": "Permiso para eliminar en Facturación"
+    },
+    {
+      "id": 81,
+      "nombre": "Exportar Facturación",
+      "codigo": "exportar_facturación",
+      "tipo": "exportar",
+      "modulo_id": 5,
+      "descripcion": "Permiso para exportar en Facturación"
+    },
+    {
+      "id": 82,
+      "nombre": "Ver Facturas",
+      "codigo": "ver_facturas",
+      "tipo": "ver",
+      "modulo_id": 13,
+      "descripcion": "Permiso para ver en Facturas"
+    },
+    {
+      "id": 83,
+      "nombre": "Crear Facturas",
+      "codigo": "crear_facturas",
+      "tipo": "crear",
+      "modulo_id": 13,
+      "descripcion": "Permiso para crear en Facturas"
+    },
+    {
+      "id": 84,
+      "nombre": "Editar Facturas",
+      "codigo": "editar_facturas",
+      "tipo": "editar",
+      "modulo_id": 13,
+      "descripcion": "Permiso para editar en Facturas"
+    },
+    {
+      "id": 85,
+      "nombre": "Eliminar Facturas",
+      "codigo": "eliminar_facturas",
+      "tipo": "eliminar",
+      "modulo_id": 13,
+      "descripcion": "Permiso para eliminar en Facturas"
+    },
+    {
+      "id": 86,
+      "nombre": "Exportar Facturas",
+      "codigo": "exportar_facturas",
+      "tipo": "exportar",
+      "modulo_id": 13,
+      "descripcion": "Permiso para exportar en Facturas"
+    },
+    {
+      "id": 87,
+      "nombre": "Ver Gastos",
+      "codigo": "ver_gastos",
+      "tipo": "ver",
+      "modulo_id": 6,
+      "descripcion": "Permiso para ver en Gastos"
+    },
+    {
+      "id": 88,
+      "nombre": "Crear Gastos",
+      "codigo": "crear_gastos",
+      "tipo": "crear",
+      "modulo_id": 6,
+      "descripcion": "Permiso para crear en Gastos"
+    },
+    {
+      "id": 89,
+      "nombre": "Editar Gastos",
+      "codigo": "editar_gastos",
+      "tipo": "editar",
+      "modulo_id": 6,
+      "descripcion": "Permiso para editar en Gastos"
+    },
+    {
+      "id": 90,
+      "nombre": "Eliminar Gastos",
+      "codigo": "eliminar_gastos",
+      "tipo": "eliminar",
+      "modulo_id": 6,
+      "descripcion": "Permiso para eliminar en Gastos"
+    },
+    {
+      "id": 91,
+      "nombre": "Exportar Gastos",
+      "codigo": "exportar_gastos",
+      "tipo": "exportar",
+      "modulo_id": 6,
+      "descripcion": "Permiso para exportar en Gastos"
+    },
+    {
+      "id": 92,
+      "nombre": "Ver Usuarios",
+      "codigo": "ver_usuarios",
+      "tipo": "ver",
+      "modulo_id": 12,
+      "descripcion": "Permiso para ver en Usuarios"
+    },
+    {
+      "id": 93,
+      "nombre": "Crear Usuarios",
+      "codigo": "crear_usuarios",
+      "tipo": "crear",
+      "modulo_id": 12,
+      "descripcion": "Permiso para crear en Usuarios"
+    },
+    {
+      "id": 94,
+      "nombre": "Editar Usuarios",
+      "codigo": "editar_usuarios",
+      "tipo": "editar",
+      "modulo_id": 12,
+      "descripcion": "Permiso para editar en Usuarios"
+    },
+    {
+      "id": 95,
+      "nombre": "Eliminar Usuarios",
+      "codigo": "eliminar_usuarios",
+      "tipo": "eliminar",
+      "modulo_id": 12,
+      "descripcion": "Permiso para eliminar en Usuarios"
+    },
+    {
+      "id": 96,
+      "nombre": "Exportar Usuarios",
+      "codigo": "exportar_usuarios",
+      "tipo": "exportar",
+      "modulo_id": 12,
+      "descripcion": "Permiso para exportar en Usuarios"
+    },
+    {
+      "id": 97,
+      "nombre": "Ver Presupuestos",
+      "codigo": "ver_presupuestos",
+      "tipo": "ver",
+      "modulo_id": 7,
+      "descripcion": "Permiso para ver en Presupuestos"
+    },
+    {
+      "id": 98,
+      "nombre": "Crear Presupuestos",
+      "codigo": "crear_presupuestos",
+      "tipo": "crear",
+      "modulo_id": 7,
+      "descripcion": "Permiso para crear en Presupuestos"
+    },
+    {
+      "id": 99,
+      "nombre": "Editar Presupuestos",
+      "codigo": "editar_presupuestos",
+      "tipo": "editar",
+      "modulo_id": 7,
+      "descripcion": "Permiso para editar en Presupuestos"
+    },
+    {
+      "id": 100,
+      "nombre": "Eliminar Presupuestos",
+      "codigo": "eliminar_presupuestos",
+      "tipo": "eliminar",
+      "modulo_id": 7,
+      "descripcion": "Permiso para eliminar en Presupuestos"
+    },
+    {
+      "id": 101,
+      "nombre": "Exportar Presupuestos",
+      "codigo": "exportar_presupuestos",
+      "tipo": "exportar",
+      "modulo_id": 7,
+      "descripcion": "Permiso para exportar en Presupuestos"
+    },
+    {
+      "id": 102,
+      "nombre": "Ver Pagos",
+      "codigo": "ver_pagos",
+      "tipo": "ver",
+      "modulo_id": 14,
+      "descripcion": "Permiso para ver en Pagos"
+    },
+    {
+      "id": 103,
+      "nombre": "Crear Pagos",
+      "codigo": "crear_pagos",
+      "tipo": "crear",
+      "modulo_id": 14,
+      "descripcion": "Permiso para crear en Pagos"
+    },
+    {
+      "id": 104,
+      "nombre": "Editar Pagos",
+      "codigo": "editar_pagos",
+      "tipo": "editar",
+      "modulo_id": 14,
+      "descripcion": "Permiso para editar en Pagos"
+    },
+    {
+      "id": 105,
+      "nombre": "Eliminar Pagos",
+      "codigo": "eliminar_pagos",
+      "tipo": "eliminar",
+      "modulo_id": 14,
+      "descripcion": "Permiso para eliminar en Pagos"
+    },
+    {
+      "id": 106,
+      "nombre": "Exportar Pagos",
+      "codigo": "exportar_pagos",
+      "tipo": "exportar",
+      "modulo_id": 14,
+      "descripcion": "Permiso para exportar en Pagos"
+    },
+    {
+      "id": 107,
+      "nombre": "Ver Inventario",
+      "codigo": "ver_inventario",
+      "tipo": "ver",
+      "modulo_id": 8,
+      "descripcion": "Permiso para ver en Inventario"
+    },
+    {
+      "id": 108,
+      "nombre": "Crear Inventario",
+      "codigo": "crear_inventario",
+      "tipo": "crear",
+      "modulo_id": 8,
+      "descripcion": "Permiso para crear en Inventario"
+    },
+    {
+      "id": 109,
+      "nombre": "Editar Inventario",
+      "codigo": "editar_inventario",
+      "tipo": "editar",
+      "modulo_id": 8,
+      "descripcion": "Permiso para editar en Inventario"
+    },
+    {
+      "id": 110,
+      "nombre": "Eliminar Inventario",
+      "codigo": "eliminar_inventario",
+      "tipo": "eliminar",
+      "modulo_id": 8,
+      "descripcion": "Permiso para eliminar en Inventario"
+    },
+    {
+      "id": 111,
+      "nombre": "Exportar Inventario",
+      "codigo": "exportar_inventario",
+      "tipo": "exportar",
+      "modulo_id": 8,
+      "descripcion": "Permiso para exportar en Inventario"
+    },
+    {
+      "id": 112,
+      "nombre": "Ver Anticipos",
+      "codigo": "ver_anticipos",
+      "tipo": "ver",
+      "modulo_id": 15,
+      "descripcion": "Permiso para ver en Anticipos"
+    },
+    {
+      "id": 113,
+      "nombre": "Crear Anticipos",
+      "codigo": "crear_anticipos",
+      "tipo": "crear",
+      "modulo_id": 15,
+      "descripcion": "Permiso para crear en Anticipos"
+    },
+    {
+      "id": 114,
+      "nombre": "Editar Anticipos",
+      "codigo": "editar_anticipos",
+      "tipo": "editar",
+      "modulo_id": 15,
+      "descripcion": "Permiso para editar en Anticipos"
+    },
+    {
+      "id": 115,
+      "nombre": "Eliminar Anticipos",
+      "codigo": "eliminar_anticipos",
+      "tipo": "eliminar",
+      "modulo_id": 15,
+      "descripcion": "Permiso para eliminar en Anticipos"
+    },
+    {
+      "id": 116,
+      "nombre": "Exportar Anticipos",
+      "codigo": "exportar_anticipos",
+      "tipo": "exportar",
+      "modulo_id": 15,
+      "descripcion": "Permiso para exportar en Anticipos"
+    },
+    {
+      "id": 117,
+      "nombre": "Ver Rentabilidad",
+      "codigo": "ver_rentabilidad",
+      "tipo": "ver",
+      "modulo_id": 9,
+      "descripcion": "Permiso para ver en Rentabilidad"
+    },
+    {
+      "id": 118,
+      "nombre": "Crear Rentabilidad",
+      "codigo": "crear_rentabilidad",
+      "tipo": "crear",
+      "modulo_id": 9,
+      "descripcion": "Permiso para crear en Rentabilidad"
+    },
+    {
+      "id": 119,
+      "nombre": "Editar Rentabilidad",
+      "codigo": "editar_rentabilidad",
+      "tipo": "editar",
+      "modulo_id": 9,
+      "descripcion": "Permiso para editar en Rentabilidad"
+    },
+    {
+      "id": 120,
+      "nombre": "Eliminar Rentabilidad",
+      "codigo": "eliminar_rentabilidad",
+      "tipo": "eliminar",
+      "modulo_id": 9,
+      "descripcion": "Permiso para eliminar en Rentabilidad"
+    },
+    {
+      "id": 121,
+      "nombre": "Exportar Rentabilidad",
+      "codigo": "exportar_rentabilidad",
+      "tipo": "exportar",
+      "modulo_id": 9,
+      "descripcion": "Permiso para exportar en Rentabilidad"
+    },
+    {
+      "id": 122,
+      "nombre": "Ver Reportes",
+      "codigo": "ver_reportes",
+      "tipo": "ver",
+      "modulo_id": 16,
+      "descripcion": "Permiso para ver en Reportes"
+    },
+    {
+      "id": 123,
+      "nombre": "Crear Reportes",
+      "codigo": "crear_reportes",
+      "tipo": "crear",
+      "modulo_id": 16,
+      "descripcion": "Permiso para crear en Reportes"
+    },
+    {
+      "id": 124,
+      "nombre": "Editar Reportes",
+      "codigo": "editar_reportes",
+      "tipo": "editar",
+      "modulo_id": 16,
+      "descripcion": "Permiso para editar en Reportes"
+    },
+    {
+      "id": 125,
+      "nombre": "Eliminar Reportes",
+      "codigo": "eliminar_reportes",
+      "tipo": "eliminar",
+      "modulo_id": 16,
+      "descripcion": "Permiso para eliminar en Reportes"
+    },
+    {
+      "id": 126,
+      "nombre": "Exportar Reportes",
+      "codigo": "exportar_reportes",
+      "tipo": "exportar",
+      "modulo_id": 16,
+      "descripcion": "Permiso para exportar en Reportes"
+    },
+    {
+      "id": 127,
+      "nombre": "Ver Notificaciones",
+      "codigo": "ver_notificaciones",
+      "tipo": "ver",
+      "modulo_id": 10,
+      "descripcion": "Permiso para ver en Notificaciones"
+    },
+    {
+      "id": 128,
+      "nombre": "Crear Notificaciones",
+      "codigo": "crear_notificaciones",
+      "tipo": "crear",
+      "modulo_id": 10,
+      "descripcion": "Permiso para crear en Notificaciones"
+    },
+    {
+      "id": 129,
+      "nombre": "Editar Notificaciones",
+      "codigo": "editar_notificaciones",
+      "tipo": "editar",
+      "modulo_id": 10,
+      "descripcion": "Permiso para editar en Notificaciones"
+    },
+    {
+      "id": 130,
+      "nombre": "Eliminar Notificaciones",
+      "codigo": "eliminar_notificaciones",
+      "tipo": "eliminar",
+      "modulo_id": 10,
+      "descripcion": "Permiso para eliminar en Notificaciones"
+    },
+    {
+      "id": 131,
+      "nombre": "Exportar Notificaciones",
+      "codigo": "exportar_notificaciones",
+      "tipo": "exportar",
+      "modulo_id": 10,
+      "descripcion": "Permiso para exportar en Notificaciones"
+    },
+    {
+      "id": 132,
+      "nombre": "Ver Sistema",
+      "codigo": "ver_sistema",
+      "tipo": "ver",
+      "modulo_id": 11,
+      "descripcion": "Permiso para ver en Sistema"
+    },
+    {
+      "id": 133,
+      "nombre": "Crear Sistema",
+      "codigo": "crear_sistema",
+      "tipo": "crear",
+      "modulo_id": 11,
+      "descripcion": "Permiso para crear en Sistema"
+    },
+    {
+      "id": 134,
+      "nombre": "Editar Sistema",
+      "codigo": "editar_sistema",
+      "tipo": "editar",
+      "modulo_id": 11,
+      "descripcion": "Permiso para editar en Sistema"
+    },
+    {
+      "id": 135,
+      "nombre": "Eliminar Sistema",
+      "codigo": "eliminar_sistema",
+      "tipo": "eliminar",
+      "modulo_id": 11,
+      "descripcion": "Permiso para eliminar en Sistema"
+    },
+    {
+      "id": 136,
+      "nombre": "Exportar Sistema",
+      "codigo": "exportar_sistema",
+      "tipo": "exportar",
+      "modulo_id": 11,
+      "descripcion": "Permiso para exportar en Sistema"
+    },
+    {
+      "id": 137,
+      "nombre": "Ver Archivos",
+      "codigo": "ver_archivos",
+      "tipo": "ver",
+      "modulo_id": 17,
+      "descripcion": "Permiso para ver en Archivos"
+    },
+    {
+      "id": 138,
+      "nombre": "Crear Archivos",
+      "codigo": "crear_archivos",
+      "tipo": "crear",
+      "modulo_id": 17,
+      "descripcion": "Permiso para crear en Archivos"
+    },
+    {
+      "id": 139,
+      "nombre": "Editar Archivos",
+      "codigo": "editar_archivos",
+      "tipo": "editar",
+      "modulo_id": 17,
+      "descripcion": "Permiso para editar en Archivos"
+    },
+    {
+      "id": 140,
+      "nombre": "Eliminar Archivos",
+      "codigo": "eliminar_archivos",
+      "tipo": "eliminar",
+      "modulo_id": 17,
+      "descripcion": "Permiso para eliminar en Archivos"
+    },
+    {
+      "id": 141,
+      "nombre": "Exportar Archivos",
+      "codigo": "exportar_archivos",
+      "tipo": "exportar",
+      "modulo_id": 17,
+      "descripcion": "Permiso para exportar en Archivos"
+    },
+    {
+      "id": 142,
+      "nombre": "Ver Dashboard",
+      "codigo": "ver_Dashboard",
+      "tipo": "ver",
+      "modulo_id": 1,
+      "descripcion": "Permiso para ver en Dashboard"
+    },
+    {
+      "id": 143,
+      "nombre": "Crear Dashboard",
+      "codigo": "crear_Dashboard",
+      "tipo": "crear",
+      "modulo_id": 1,
+      "descripcion": "Permiso para crear en Dashboard"
+    },
+    {
+      "id": 144,
+      "nombre": "Editar Dashboard",
+      "codigo": "editar_Dashboard",
+      "tipo": "editar",
+      "modulo_id": 1,
+      "descripcion": "Permiso para editar en Dashboard"
+    },
+    {
+      "id": 145,
+      "nombre": "Eliminar Dashboard",
+      "codigo": "eliminar_Dashboard",
+      "tipo": "eliminar",
+      "modulo_id": 1,
+      "descripcion": "Permiso para eliminar en Dashboard"
+    },
+    {
+      "id": 146,
+      "nombre": "Exportar Dashboard",
+      "codigo": "exportar_Dashboard",
+      "tipo": "exportar",
+      "modulo_id": 1,
+      "descripcion": "Permiso para exportar en Dashboard"
+    },
+    {
+      "id": 147,
+      "nombre": "Ver Clientes",
+      "codigo": "ver_Clientes",
+      "tipo": "ver",
+      "modulo_id": 2,
+      "descripcion": "Permiso para ver en Clientes"
+    },
+    {
+      "id": 148,
+      "nombre": "Crear Clientes",
+      "codigo": "crear_Clientes",
+      "tipo": "crear",
+      "modulo_id": 2,
+      "descripcion": "Permiso para crear en Clientes"
+    },
+    {
+      "id": 149,
+      "nombre": "Editar Clientes",
+      "codigo": "editar_Clientes",
+      "tipo": "editar",
+      "modulo_id": 2,
+      "descripcion": "Permiso para editar en Clientes"
+    },
+    {
+      "id": 150,
+      "nombre": "Eliminar Clientes",
+      "codigo": "eliminar_Clientes",
+      "tipo": "eliminar",
+      "modulo_id": 2,
+      "descripcion": "Permiso para eliminar en Clientes"
+    },
+    {
+      "id": 151,
+      "nombre": "Exportar Clientes",
+      "codigo": "exportar_Clientes",
+      "tipo": "exportar",
+      "modulo_id": 2,
+      "descripcion": "Permiso para exportar en Clientes"
+    },
+    {
+      "id": 152,
+      "nombre": "Ver Proyectos",
+      "codigo": "ver_Proyectos",
+      "tipo": "ver",
+      "modulo_id": 3,
+      "descripcion": "Permiso para ver en Proyectos"
+    },
+    {
+      "id": 153,
+      "nombre": "Crear Proyectos",
+      "codigo": "crear_Proyectos",
+      "tipo": "crear",
+      "modulo_id": 3,
+      "descripcion": "Permiso para crear en Proyectos"
+    },
+    {
+      "id": 154,
+      "nombre": "Editar Proyectos",
+      "codigo": "editar_Proyectos",
+      "tipo": "editar",
+      "modulo_id": 3,
+      "descripcion": "Permiso para editar en Proyectos"
+    },
+    {
+      "id": 155,
+      "nombre": "Eliminar Proyectos",
+      "codigo": "eliminar_Proyectos",
+      "tipo": "eliminar",
+      "modulo_id": 3,
+      "descripcion": "Permiso para eliminar en Proyectos"
+    },
+    {
+      "id": 156,
+      "nombre": "Exportar Proyectos",
+      "codigo": "exportar_Proyectos",
+      "tipo": "exportar",
+      "modulo_id": 3,
+      "descripcion": "Permiso para exportar en Proyectos"
+    },
+    {
+      "id": 157,
+      "nombre": "Ver Colaboradores",
+      "codigo": "ver_Colaboradores",
+      "tipo": "ver",
+      "modulo_id": 4,
+      "descripcion": "Permiso para ver en Colaboradores"
+    },
+    {
+      "id": 158,
+      "nombre": "Crear Colaboradores",
+      "codigo": "crear_Colaboradores",
+      "tipo": "crear",
+      "modulo_id": 4,
+      "descripcion": "Permiso para crear en Colaboradores"
+    },
+    {
+      "id": 159,
+      "nombre": "Editar Colaboradores",
+      "codigo": "editar_Colaboradores",
+      "tipo": "editar",
+      "modulo_id": 4,
+      "descripcion": "Permiso para editar en Colaboradores"
+    },
+    {
+      "id": 160,
+      "nombre": "Eliminar Colaboradores",
+      "codigo": "eliminar_Colaboradores",
+      "tipo": "eliminar",
+      "modulo_id": 4,
+      "descripcion": "Permiso para eliminar en Colaboradores"
+    },
+    {
+      "id": 161,
+      "nombre": "Exportar Colaboradores",
+      "codigo": "exportar_Colaboradores",
+      "tipo": "exportar",
+      "modulo_id": 4,
+      "descripcion": "Permiso para exportar en Colaboradores"
+    },
+    {
+      "id": 162,
+      "nombre": "Ver Facturación",
+      "codigo": "ver_Facturación",
+      "tipo": "ver",
+      "modulo_id": 5,
+      "descripcion": "Permiso para ver en Facturación"
+    },
+    {
+      "id": 163,
+      "nombre": "Crear Facturación",
+      "codigo": "crear_Facturación",
+      "tipo": "crear",
+      "modulo_id": 5,
+      "descripcion": "Permiso para crear en Facturación"
+    },
+    {
+      "id": 164,
+      "nombre": "Editar Facturación",
+      "codigo": "editar_Facturación",
+      "tipo": "editar",
+      "modulo_id": 5,
+      "descripcion": "Permiso para editar en Facturación"
+    },
+    {
+      "id": 165,
+      "nombre": "Eliminar Facturación",
+      "codigo": "eliminar_Facturación",
+      "tipo": "eliminar",
+      "modulo_id": 5,
+      "descripcion": "Permiso para eliminar en Facturación"
+    },
+    {
+      "id": 166,
+      "nombre": "Exportar Facturación",
+      "codigo": "exportar_Facturación",
+      "tipo": "exportar",
+      "modulo_id": 5,
+      "descripcion": "Permiso para exportar en Facturación"
+    },
+    {
+      "id": 167,
+      "nombre": "Ver Facturas",
+      "codigo": "ver_Facturas",
+      "tipo": "ver",
+      "modulo_id": 13,
+      "descripcion": "Permiso para ver en Facturas"
+    },
+    {
+      "id": 168,
+      "nombre": "Crear Facturas",
+      "codigo": "crear_Facturas",
+      "tipo": "crear",
+      "modulo_id": 13,
+      "descripcion": "Permiso para crear en Facturas"
+    },
+    {
+      "id": 169,
+      "nombre": "Editar Facturas",
+      "codigo": "editar_Facturas",
+      "tipo": "editar",
+      "modulo_id": 13,
+      "descripcion": "Permiso para editar en Facturas"
+    },
+    {
+      "id": 170,
+      "nombre": "Eliminar Facturas",
+      "codigo": "eliminar_Facturas",
+      "tipo": "eliminar",
+      "modulo_id": 13,
+      "descripcion": "Permiso para eliminar en Facturas"
+    },
+    {
+      "id": 171,
+      "nombre": "Exportar Facturas",
+      "codigo": "exportar_Facturas",
+      "tipo": "exportar",
+      "modulo_id": 13,
+      "descripcion": "Permiso para exportar en Facturas"
+    },
+    {
+      "id": 172,
+      "nombre": "Ver Gastos",
+      "codigo": "ver_Gastos",
+      "tipo": "ver",
+      "modulo_id": 6,
+      "descripcion": "Permiso para ver en Gastos"
+    },
+    {
+      "id": 173,
+      "nombre": "Crear Gastos",
+      "codigo": "crear_Gastos",
+      "tipo": "crear",
+      "modulo_id": 6,
+      "descripcion": "Permiso para crear en Gastos"
+    },
+    {
+      "id": 174,
+      "nombre": "Editar Gastos",
+      "codigo": "editar_Gastos",
+      "tipo": "editar",
+      "modulo_id": 6,
+      "descripcion": "Permiso para editar en Gastos"
+    },
+    {
+      "id": 175,
+      "nombre": "Eliminar Gastos",
+      "codigo": "eliminar_Gastos",
+      "tipo": "eliminar",
+      "modulo_id": 6,
+      "descripcion": "Permiso para eliminar en Gastos"
+    },
+    {
+      "id": 176,
+      "nombre": "Exportar Gastos",
+      "codigo": "exportar_Gastos",
+      "tipo": "exportar",
+      "modulo_id": 6,
+      "descripcion": "Permiso para exportar en Gastos"
+    },
+    {
+      "id": 177,
+      "nombre": "Ver Usuarios",
+      "codigo": "ver_Usuarios",
+      "tipo": "ver",
+      "modulo_id": 12,
+      "descripcion": "Permiso para ver en Usuarios"
+    },
+    {
+      "id": 178,
+      "nombre": "Crear Usuarios",
+      "codigo": "crear_Usuarios",
+      "tipo": "crear",
+      "modulo_id": 12,
+      "descripcion": "Permiso para crear en Usuarios"
+    },
+    {
+      "id": 179,
+      "nombre": "Editar Usuarios",
+      "codigo": "editar_Usuarios",
+      "tipo": "editar",
+      "modulo_id": 12,
+      "descripcion": "Permiso para editar en Usuarios"
+    },
+    {
+      "id": 180,
+      "nombre": "Eliminar Usuarios",
+      "codigo": "eliminar_Usuarios",
+      "tipo": "eliminar",
+      "modulo_id": 12,
+      "descripcion": "Permiso para eliminar en Usuarios"
+    },
+    {
+      "id": 181,
+      "nombre": "Exportar Usuarios",
+      "codigo": "exportar_Usuarios",
+      "tipo": "exportar",
+      "modulo_id": 12,
+      "descripcion": "Permiso para exportar en Usuarios"
+    },
+    {
+      "id": 182,
+      "nombre": "Ver Presupuestos",
+      "codigo": "ver_Presupuestos",
+      "tipo": "ver",
+      "modulo_id": 7,
+      "descripcion": "Permiso para ver en Presupuestos"
+    },
+    {
+      "id": 183,
+      "nombre": "Crear Presupuestos",
+      "codigo": "crear_Presupuestos",
+      "tipo": "crear",
+      "modulo_id": 7,
+      "descripcion": "Permiso para crear en Presupuestos"
+    },
+    {
+      "id": 184,
+      "nombre": "Editar Presupuestos",
+      "codigo": "editar_Presupuestos",
+      "tipo": "editar",
+      "modulo_id": 7,
+      "descripcion": "Permiso para editar en Presupuestos"
+    },
+    {
+      "id": 185,
+      "nombre": "Eliminar Presupuestos",
+      "codigo": "eliminar_Presupuestos",
+      "tipo": "eliminar",
+      "modulo_id": 7,
+      "descripcion": "Permiso para eliminar en Presupuestos"
+    },
+    {
+      "id": 186,
+      "nombre": "Exportar Presupuestos",
+      "codigo": "exportar_Presupuestos",
+      "tipo": "exportar",
+      "modulo_id": 7,
+      "descripcion": "Permiso para exportar en Presupuestos"
+    },
+    {
+      "id": 187,
+      "nombre": "Ver Pagos",
+      "codigo": "ver_Pagos",
+      "tipo": "ver",
+      "modulo_id": 14,
+      "descripcion": "Permiso para ver en Pagos"
+    },
+    {
+      "id": 188,
+      "nombre": "Crear Pagos",
+      "codigo": "crear_Pagos",
+      "tipo": "crear",
+      "modulo_id": 14,
+      "descripcion": "Permiso para crear en Pagos"
+    },
+    {
+      "id": 189,
+      "nombre": "Editar Pagos",
+      "codigo": "editar_Pagos",
+      "tipo": "editar",
+      "modulo_id": 14,
+      "descripcion": "Permiso para editar en Pagos"
+    },
+    {
+      "id": 190,
+      "nombre": "Eliminar Pagos",
+      "codigo": "eliminar_Pagos",
+      "tipo": "eliminar",
+      "modulo_id": 14,
+      "descripcion": "Permiso para eliminar en Pagos"
+    },
+    {
+      "id": 191,
+      "nombre": "Exportar Pagos",
+      "codigo": "exportar_Pagos",
+      "tipo": "exportar",
+      "modulo_id": 14,
+      "descripcion": "Permiso para exportar en Pagos"
+    },
+    {
+      "id": 192,
+      "nombre": "Ver Inventario",
+      "codigo": "ver_Inventario",
+      "tipo": "ver",
+      "modulo_id": 8,
+      "descripcion": "Permiso para ver en Inventario"
+    },
+    {
+      "id": 193,
+      "nombre": "Crear Inventario",
+      "codigo": "crear_Inventario",
+      "tipo": "crear",
+      "modulo_id": 8,
+      "descripcion": "Permiso para crear en Inventario"
+    },
+    {
+      "id": 194,
+      "nombre": "Editar Inventario",
+      "codigo": "editar_Inventario",
+      "tipo": "editar",
+      "modulo_id": 8,
+      "descripcion": "Permiso para editar en Inventario"
+    },
+    {
+      "id": 195,
+      "nombre": "Eliminar Inventario",
+      "codigo": "eliminar_Inventario",
+      "tipo": "eliminar",
+      "modulo_id": 8,
+      "descripcion": "Permiso para eliminar en Inventario"
+    },
+    {
+      "id": 196,
+      "nombre": "Exportar Inventario",
+      "codigo": "exportar_Inventario",
+      "tipo": "exportar",
+      "modulo_id": 8,
+      "descripcion": "Permiso para exportar en Inventario"
+    },
+    {
+      "id": 197,
+      "nombre": "Ver Anticipos",
+      "codigo": "ver_Anticipos",
+      "tipo": "ver",
+      "modulo_id": 15,
+      "descripcion": "Permiso para ver en Anticipos"
+    },
+    {
+      "id": 198,
+      "nombre": "Crear Anticipos",
+      "codigo": "crear_Anticipos",
+      "tipo": "crear",
+      "modulo_id": 15,
+      "descripcion": "Permiso para crear en Anticipos"
+    },
+    {
+      "id": 199,
+      "nombre": "Editar Anticipos",
+      "codigo": "editar_Anticipos",
+      "tipo": "editar",
+      "modulo_id": 15,
+      "descripcion": "Permiso para editar en Anticipos"
+    },
+    {
+      "id": 200,
+      "nombre": "Eliminar Anticipos",
+      "codigo": "eliminar_Anticipos",
+      "tipo": "eliminar",
+      "modulo_id": 15,
+      "descripcion": "Permiso para eliminar en Anticipos"
+    },
+    {
+      "id": 201,
+      "nombre": "Exportar Anticipos",
+      "codigo": "exportar_Anticipos",
+      "tipo": "exportar",
+      "modulo_id": 15,
+      "descripcion": "Permiso para exportar en Anticipos"
+    },
+    {
+      "id": 202,
+      "nombre": "Ver Rentabilidad",
+      "codigo": "ver_Rentabilidad",
+      "tipo": "ver",
+      "modulo_id": 9,
+      "descripcion": "Permiso para ver en Rentabilidad"
+    },
+    {
+      "id": 203,
+      "nombre": "Crear Rentabilidad",
+      "codigo": "crear_Rentabilidad",
+      "tipo": "crear",
+      "modulo_id": 9,
+      "descripcion": "Permiso para crear en Rentabilidad"
+    },
+    {
+      "id": 204,
+      "nombre": "Editar Rentabilidad",
+      "codigo": "editar_Rentabilidad",
+      "tipo": "editar",
+      "modulo_id": 9,
+      "descripcion": "Permiso para editar en Rentabilidad"
+    },
+    {
+      "id": 205,
+      "nombre": "Eliminar Rentabilidad",
+      "codigo": "eliminar_Rentabilidad",
+      "tipo": "eliminar",
+      "modulo_id": 9,
+      "descripcion": "Permiso para eliminar en Rentabilidad"
+    },
+    {
+      "id": 206,
+      "nombre": "Exportar Rentabilidad",
+      "codigo": "exportar_Rentabilidad",
+      "tipo": "exportar",
+      "modulo_id": 9,
+      "descripcion": "Permiso para exportar en Rentabilidad"
+    },
+    {
+      "id": 207,
+      "nombre": "Ver Reportes",
+      "codigo": "ver_Reportes",
+      "tipo": "ver",
+      "modulo_id": 16,
+      "descripcion": "Permiso para ver en Reportes"
+    },
+    {
+      "id": 208,
+      "nombre": "Crear Reportes",
+      "codigo": "crear_Reportes",
+      "tipo": "crear",
+      "modulo_id": 16,
+      "descripcion": "Permiso para crear en Reportes"
+    },
+    {
+      "id": 209,
+      "nombre": "Editar Reportes",
+      "codigo": "editar_Reportes",
+      "tipo": "editar",
+      "modulo_id": 16,
+      "descripcion": "Permiso para editar en Reportes"
+    },
+    {
+      "id": 210,
+      "nombre": "Eliminar Reportes",
+      "codigo": "eliminar_Reportes",
+      "tipo": "eliminar",
+      "modulo_id": 16,
+      "descripcion": "Permiso para eliminar en Reportes"
+    },
+    {
+      "id": 211,
+      "nombre": "Exportar Reportes",
+      "codigo": "exportar_Reportes",
+      "tipo": "exportar",
+      "modulo_id": 16,
+      "descripcion": "Permiso para exportar en Reportes"
+    },
+    {
+      "id": 212,
+      "nombre": "Ver Notificaciones",
+      "codigo": "ver_Notificaciones",
+      "tipo": "ver",
+      "modulo_id": 10,
+      "descripcion": "Permiso para ver en Notificaciones"
+    },
+    {
+      "id": 213,
+      "nombre": "Crear Notificaciones",
+      "codigo": "crear_Notificaciones",
+      "tipo": "crear",
+      "modulo_id": 10,
+      "descripcion": "Permiso para crear en Notificaciones"
+    },
+    {
+      "id": 214,
+      "nombre": "Editar Notificaciones",
+      "codigo": "editar_Notificaciones",
+      "tipo": "editar",
+      "modulo_id": 10,
+      "descripcion": "Permiso para editar en Notificaciones"
+    },
+    {
+      "id": 215,
+      "nombre": "Eliminar Notificaciones",
+      "codigo": "eliminar_Notificaciones",
+      "tipo": "eliminar",
+      "modulo_id": 10,
+      "descripcion": "Permiso para eliminar en Notificaciones"
+    },
+    {
+      "id": 216,
+      "nombre": "Exportar Notificaciones",
+      "codigo": "exportar_Notificaciones",
+      "tipo": "exportar",
+      "modulo_id": 10,
+      "descripcion": "Permiso para exportar en Notificaciones"
+    },
+    {
+      "id": 217,
+      "nombre": "Ver Sistema",
+      "codigo": "ver_Sistema",
+      "tipo": "ver",
+      "modulo_id": 11,
+      "descripcion": "Permiso para ver en Sistema"
+    },
+    {
+      "id": 218,
+      "nombre": "Crear Sistema",
+      "codigo": "crear_Sistema",
+      "tipo": "crear",
+      "modulo_id": 11,
+      "descripcion": "Permiso para crear en Sistema"
+    },
+    {
+      "id": 219,
+      "nombre": "Editar Sistema",
+      "codigo": "editar_Sistema",
+      "tipo": "editar",
+      "modulo_id": 11,
+      "descripcion": "Permiso para editar en Sistema"
+    },
+    {
+      "id": 220,
+      "nombre": "Eliminar Sistema",
+      "codigo": "eliminar_Sistema",
+      "tipo": "eliminar",
+      "modulo_id": 11,
+      "descripcion": "Permiso para eliminar en Sistema"
+    },
+    {
+      "id": 221,
+      "nombre": "Exportar Sistema",
+      "codigo": "exportar_Sistema",
+      "tipo": "exportar",
+      "modulo_id": 11,
+      "descripcion": "Permiso para exportar en Sistema"
+    },
+    {
+      "id": 222,
+      "nombre": "Ver Archivos",
+      "codigo": "ver_Archivos",
+      "tipo": "ver",
+      "modulo_id": 17,
+      "descripcion": "Permiso para ver en Archivos"
+    },
+    {
+      "id": 223,
+      "nombre": "Crear Archivos",
+      "codigo": "crear_Archivos",
+      "tipo": "crear",
+      "modulo_id": 17,
+      "descripcion": "Permiso para crear en Archivos"
+    },
+    {
+      "id": 224,
+      "nombre": "Editar Archivos",
+      "codigo": "editar_Archivos",
+      "tipo": "editar",
+      "modulo_id": 17,
+      "descripcion": "Permiso para editar en Archivos"
+    },
+    {
+      "id": 225,
+      "nombre": "Eliminar Archivos",
+      "codigo": "eliminar_Archivos",
+      "tipo": "eliminar",
+      "modulo_id": 17,
+      "descripcion": "Permiso para eliminar en Archivos"
+    },
+    {
+      "id": 226,
+      "nombre": "Exportar Archivos",
+      "codigo": "exportar_Archivos",
+      "tipo": "exportar",
+      "modulo_id": 17,
+      "descripcion": "Permiso para exportar en Archivos"
+    }
+  ],
+  "rol_permisos": [
+    {
+      "id": 1,
+      "rol_id": 2,
+      "permiso_id": 1,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:18.448200+00:00"
+    },
+    {
+      "id": 2,
+      "rol_id": 2,
+      "permiso_id": 2,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:18.458038+00:00"
+    },
+    {
+      "id": 3,
+      "rol_id": 2,
+      "permiso_id": 3,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:18.464470+00:00"
+    },
+    {
+      "id": 4,
+      "rol_id": 2,
+      "permiso_id": 4,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:18.475966+00:00"
+    },
+    {
+      "id": 5,
+      "rol_id": 2,
+      "permiso_id": 5,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:18.481515+00:00"
+    },
+    {
+      "id": 6,
+      "rol_id": 2,
+      "permiso_id": 6,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:18.486481+00:00"
+    },
+    {
+      "id": 7,
+      "rol_id": 2,
+      "permiso_id": 7,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:18.497593+00:00"
+    },
+    {
+      "id": 8,
+      "rol_id": 2,
+      "permiso_id": 8,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:18.502385+00:00"
+    },
+    {
+      "id": 9,
+      "rol_id": 2,
+      "permiso_id": 9,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:18.507375+00:00"
+    },
+    {
+      "id": 10,
+      "rol_id": 2,
+      "permiso_id": 10,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:18.519266+00:00"
+    },
+    {
+      "id": 11,
+      "rol_id": 2,
+      "permiso_id": 11,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:18.525620+00:00"
+    },
+    {
+      "id": 12,
+      "rol_id": 2,
+      "permiso_id": 12,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:18.530907+00:00"
+    },
+    {
+      "id": 13,
+      "rol_id": 2,
+      "permiso_id": 13,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:18.535316+00:00"
+    },
+    {
+      "id": 14,
+      "rol_id": 2,
+      "permiso_id": 14,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:18.541037+00:00"
+    },
+    {
+      "id": 15,
+      "rol_id": 2,
+      "permiso_id": 15,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:18.552711+00:00"
+    },
+    {
+      "id": 16,
+      "rol_id": 2,
+      "permiso_id": 16,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:18.557820+00:00"
+    },
+    {
+      "id": 17,
+      "rol_id": 2,
+      "permiso_id": 17,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:18.572937+00:00"
+    },
+    {
+      "id": 18,
+      "rol_id": 2,
+      "permiso_id": 18,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:18.583571+00:00"
+    },
+    {
+      "id": 19,
+      "rol_id": 2,
+      "permiso_id": 19,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:18.609160+00:00"
+    },
+    {
+      "id": 20,
+      "rol_id": 2,
+      "permiso_id": 20,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:18.659725+00:00"
+    },
+    {
+      "id": 21,
+      "rol_id": 2,
+      "permiso_id": 21,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:18.686782+00:00"
+    },
+    {
+      "id": 22,
+      "rol_id": 2,
+      "permiso_id": 22,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:18.708594+00:00"
+    },
+    {
+      "id": 23,
+      "rol_id": 2,
+      "permiso_id": 23,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:18.724147+00:00"
+    },
+    {
+      "id": 24,
+      "rol_id": 2,
+      "permiso_id": 24,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:18.740238+00:00"
+    },
+    {
+      "id": 25,
+      "rol_id": 2,
+      "permiso_id": 25,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:18.772278+00:00"
+    },
+    {
+      "id": 26,
+      "rol_id": 2,
+      "permiso_id": 26,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:18.809276+00:00"
+    },
+    {
+      "id": 27,
+      "rol_id": 2,
+      "permiso_id": 27,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:18.839529+00:00"
+    },
+    {
+      "id": 28,
+      "rol_id": 2,
+      "permiso_id": 28,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:18.874627+00:00"
+    },
+    {
+      "id": 29,
+      "rol_id": 2,
+      "permiso_id": 29,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:18.887413+00:00"
+    },
+    {
+      "id": 30,
+      "rol_id": 2,
+      "permiso_id": 30,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:18.904991+00:00"
+    },
+    {
+      "id": 31,
+      "rol_id": 2,
+      "permiso_id": 31,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:18.909884+00:00"
+    },
+    {
+      "id": 32,
+      "rol_id": 2,
+      "permiso_id": 32,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:18.914857+00:00"
+    },
+    {
+      "id": 33,
+      "rol_id": 2,
+      "permiso_id": 33,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:18.920446+00:00"
+    },
+    {
+      "id": 34,
+      "rol_id": 2,
+      "permiso_id": 34,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:18.931307+00:00"
+    },
+    {
+      "id": 35,
+      "rol_id": 2,
+      "permiso_id": 35,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:18.939166+00:00"
+    },
+    {
+      "id": 36,
+      "rol_id": 2,
+      "permiso_id": 36,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:18.946831+00:00"
+    },
+    {
+      "id": 37,
+      "rol_id": 2,
+      "permiso_id": 37,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:18.952200+00:00"
+    },
+    {
+      "id": 38,
+      "rol_id": 2,
+      "permiso_id": 38,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:18.959208+00:00"
+    },
+    {
+      "id": 39,
+      "rol_id": 2,
+      "permiso_id": 39,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:18.968208+00:00"
+    },
+    {
+      "id": 40,
+      "rol_id": 2,
+      "permiso_id": 40,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:18.974287+00:00"
+    },
+    {
+      "id": 41,
+      "rol_id": 2,
+      "permiso_id": 41,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:18.982970+00:00"
+    },
+    {
+      "id": 42,
+      "rol_id": 2,
+      "permiso_id": 42,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:18.990892+00:00"
+    },
+    {
+      "id": 43,
+      "rol_id": 2,
+      "permiso_id": 43,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:18.997238+00:00"
+    },
+    {
+      "id": 44,
+      "rol_id": 2,
+      "permiso_id": 44,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:19.003000+00:00"
+    },
+    {
+      "id": 45,
+      "rol_id": 2,
+      "permiso_id": 45,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:19.009106+00:00"
+    },
+    {
+      "id": 46,
+      "rol_id": 2,
+      "permiso_id": 46,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:19.018533+00:00"
+    },
+    {
+      "id": 47,
+      "rol_id": 2,
+      "permiso_id": 47,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:19.029137+00:00"
+    },
+    {
+      "id": 48,
+      "rol_id": 2,
+      "permiso_id": 48,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:19.034497+00:00"
+    },
+    {
+      "id": 49,
+      "rol_id": 2,
+      "permiso_id": 49,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:19.040410+00:00"
+    },
+    {
+      "id": 50,
+      "rol_id": 2,
+      "permiso_id": 50,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:19.049507+00:00"
+    },
+    {
+      "id": 51,
+      "rol_id": 2,
+      "permiso_id": 51,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:19.062338+00:00"
+    },
+    {
+      "id": 52,
+      "rol_id": 2,
+      "permiso_id": 52,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:19.066719+00:00"
+    },
+    {
+      "id": 53,
+      "rol_id": 2,
+      "permiso_id": 53,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:19.071326+00:00"
+    },
+    {
+      "id": 54,
+      "rol_id": 2,
+      "permiso_id": 54,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:19.076175+00:00"
+    },
+    {
+      "id": 55,
+      "rol_id": 2,
+      "permiso_id": 55,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:19.082564+00:00"
+    },
+    {
+      "id": 56,
+      "rol_id": 2,
+      "permiso_id": 56,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:19.086695+00:00"
+    },
+    {
+      "id": 57,
+      "rol_id": 2,
+      "permiso_id": 57,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:19.091205+00:00"
+    },
+    {
+      "id": 58,
+      "rol_id": 2,
+      "permiso_id": 58,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:19.096487+00:00"
+    },
+    {
+      "id": 59,
+      "rol_id": 2,
+      "permiso_id": 59,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:19.101847+00:00"
+    },
+    {
+      "id": 60,
+      "rol_id": 2,
+      "permiso_id": 60,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:19.107255+00:00"
+    },
+    {
+      "id": 61,
+      "rol_id": 2,
+      "permiso_id": 61,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:19.114216+00:00"
+    },
+    {
+      "id": 62,
+      "rol_id": 2,
+      "permiso_id": 62,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:19.118906+00:00"
+    },
+    {
+      "id": 63,
+      "rol_id": 2,
+      "permiso_id": 63,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:19.125710+00:00"
+    },
+    {
+      "id": 64,
+      "rol_id": 2,
+      "permiso_id": 64,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:19.134025+00:00"
+    },
+    {
+      "id": 65,
+      "rol_id": 2,
+      "permiso_id": 65,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:19.140088+00:00"
+    },
+    {
+      "id": 66,
+      "rol_id": 2,
+      "permiso_id": 66,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:19.144893+00:00"
+    },
+    {
+      "id": 67,
+      "rol_id": 2,
+      "permiso_id": 67,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:19.149303+00:00"
+    },
+    {
+      "id": 68,
+      "rol_id": 2,
+      "permiso_id": 68,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:19.154319+00:00"
+    },
+    {
+      "id": 69,
+      "rol_id": 2,
+      "permiso_id": 69,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:19.161850+00:00"
+    },
+    {
+      "id": 70,
+      "rol_id": 2,
+      "permiso_id": 70,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:19.172889+00:00"
+    },
+    {
+      "id": 71,
+      "rol_id": 2,
+      "permiso_id": 71,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:19.203251+00:00"
+    },
+    {
+      "id": 72,
+      "rol_id": 2,
+      "permiso_id": 72,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:19.209283+00:00"
+    },
+    {
+      "id": 73,
+      "rol_id": 2,
+      "permiso_id": 73,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:19.218986+00:00"
+    },
+    {
+      "id": 74,
+      "rol_id": 2,
+      "permiso_id": 74,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:19.223943+00:00"
+    },
+    {
+      "id": 75,
+      "rol_id": 2,
+      "permiso_id": 75,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:19.230457+00:00"
+    },
+    {
+      "id": 76,
+      "rol_id": 2,
+      "permiso_id": 76,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:19.235267+00:00"
+    },
+    {
+      "id": 77,
+      "rol_id": 2,
+      "permiso_id": 77,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:19.242946+00:00"
+    },
+    {
+      "id": 78,
+      "rol_id": 2,
+      "permiso_id": 78,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:19.251070+00:00"
+    },
+    {
+      "id": 79,
+      "rol_id": 2,
+      "permiso_id": 79,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:19.264255+00:00"
+    },
+    {
+      "id": 80,
+      "rol_id": 2,
+      "permiso_id": 80,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:19.269758+00:00"
+    },
+    {
+      "id": 81,
+      "rol_id": 2,
+      "permiso_id": 81,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:19.279007+00:00"
+    },
+    {
+      "id": 82,
+      "rol_id": 2,
+      "permiso_id": 82,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:19.283127+00:00"
+    },
+    {
+      "id": 83,
+      "rol_id": 2,
+      "permiso_id": 83,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:19.288763+00:00"
+    },
+    {
+      "id": 84,
+      "rol_id": 2,
+      "permiso_id": 84,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:19.294338+00:00"
+    },
+    {
+      "id": 85,
+      "rol_id": 2,
+      "permiso_id": 85,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:19.305378+00:00"
+    },
+    {
+      "id": 86,
+      "rol_id": 2,
+      "permiso_id": 86,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:19.312889+00:00"
+    },
+    {
+      "id": 87,
+      "rol_id": 2,
+      "permiso_id": 87,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:19.321323+00:00"
+    },
+    {
+      "id": 88,
+      "rol_id": 2,
+      "permiso_id": 88,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:19.326184+00:00"
+    },
+    {
+      "id": 89,
+      "rol_id": 2,
+      "permiso_id": 89,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:19.331359+00:00"
+    },
+    {
+      "id": 90,
+      "rol_id": 2,
+      "permiso_id": 90,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:19.337443+00:00"
+    },
+    {
+      "id": 91,
+      "rol_id": 2,
+      "permiso_id": 91,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:19.342347+00:00"
+    },
+    {
+      "id": 92,
+      "rol_id": 2,
+      "permiso_id": 92,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:19.351586+00:00"
+    },
+    {
+      "id": 93,
+      "rol_id": 2,
+      "permiso_id": 93,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:19.361891+00:00"
+    },
+    {
+      "id": 94,
+      "rol_id": 2,
+      "permiso_id": 94,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:19.367323+00:00"
+    },
+    {
+      "id": 95,
+      "rol_id": 2,
+      "permiso_id": 95,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:19.373277+00:00"
+    },
+    {
+      "id": 96,
+      "rol_id": 2,
+      "permiso_id": 96,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:19.384995+00:00"
+    },
+    {
+      "id": 97,
+      "rol_id": 2,
+      "permiso_id": 97,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:19.390438+00:00"
+    },
+    {
+      "id": 98,
+      "rol_id": 2,
+      "permiso_id": 98,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:19.400775+00:00"
+    },
+    {
+      "id": 99,
+      "rol_id": 2,
+      "permiso_id": 99,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:19.408253+00:00"
+    },
+    {
+      "id": 100,
+      "rol_id": 2,
+      "permiso_id": 100,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:19.414591+00:00"
+    },
+    {
+      "id": 101,
+      "rol_id": 2,
+      "permiso_id": 101,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:19.419989+00:00"
+    },
+    {
+      "id": 102,
+      "rol_id": 2,
+      "permiso_id": 102,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:19.433971+00:00"
+    },
+    {
+      "id": 103,
+      "rol_id": 2,
+      "permiso_id": 103,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:19.439165+00:00"
+    },
+    {
+      "id": 104,
+      "rol_id": 2,
+      "permiso_id": 104,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:19.444501+00:00"
+    },
+    {
+      "id": 105,
+      "rol_id": 2,
+      "permiso_id": 105,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:19.453036+00:00"
+    },
+    {
+      "id": 106,
+      "rol_id": 2,
+      "permiso_id": 106,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:19.465389+00:00"
+    },
+    {
+      "id": 107,
+      "rol_id": 2,
+      "permiso_id": 107,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:19.472124+00:00"
+    },
+    {
+      "id": 108,
+      "rol_id": 2,
+      "permiso_id": 108,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:19.476495+00:00"
+    },
+    {
+      "id": 109,
+      "rol_id": 2,
+      "permiso_id": 109,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:19.488163+00:00"
+    },
+    {
+      "id": 110,
+      "rol_id": 2,
+      "permiso_id": 110,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:19.494622+00:00"
+    },
+    {
+      "id": 111,
+      "rol_id": 2,
+      "permiso_id": 111,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:19.499580+00:00"
+    },
+    {
+      "id": 112,
+      "rol_id": 2,
+      "permiso_id": 112,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:19.531791+00:00"
+    },
+    {
+      "id": 113,
+      "rol_id": 2,
+      "permiso_id": 113,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:19.540614+00:00"
+    },
+    {
+      "id": 114,
+      "rol_id": 2,
+      "permiso_id": 114,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:19.545692+00:00"
+    },
+    {
+      "id": 115,
+      "rol_id": 2,
+      "permiso_id": 115,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:19.559951+00:00"
+    },
+    {
+      "id": 116,
+      "rol_id": 2,
+      "permiso_id": 116,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:19.569997+00:00"
+    },
+    {
+      "id": 117,
+      "rol_id": 2,
+      "permiso_id": 117,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:19.574946+00:00"
+    },
+    {
+      "id": 118,
+      "rol_id": 2,
+      "permiso_id": 118,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:19.580827+00:00"
+    },
+    {
+      "id": 119,
+      "rol_id": 2,
+      "permiso_id": 119,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:19.590605+00:00"
+    },
+    {
+      "id": 120,
+      "rol_id": 2,
+      "permiso_id": 120,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:19.595970+00:00"
+    },
+    {
+      "id": 121,
+      "rol_id": 2,
+      "permiso_id": 121,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:19.601310+00:00"
+    },
+    {
+      "id": 122,
+      "rol_id": 2,
+      "permiso_id": 122,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:19.611330+00:00"
+    },
+    {
+      "id": 123,
+      "rol_id": 2,
+      "permiso_id": 123,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:19.615746+00:00"
+    },
+    {
+      "id": 124,
+      "rol_id": 2,
+      "permiso_id": 124,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:19.621570+00:00"
+    },
+    {
+      "id": 125,
+      "rol_id": 2,
+      "permiso_id": 125,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:19.636596+00:00"
+    },
+    {
+      "id": 126,
+      "rol_id": 2,
+      "permiso_id": 126,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:19.641315+00:00"
+    },
+    {
+      "id": 127,
+      "rol_id": 2,
+      "permiso_id": 127,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:19.649224+00:00"
+    },
+    {
+      "id": 128,
+      "rol_id": 2,
+      "permiso_id": 128,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:19.653863+00:00"
+    },
+    {
+      "id": 129,
+      "rol_id": 2,
+      "permiso_id": 129,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:19.660265+00:00"
+    },
+    {
+      "id": 130,
+      "rol_id": 2,
+      "permiso_id": 130,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:19.667164+00:00"
+    },
+    {
+      "id": 131,
+      "rol_id": 2,
+      "permiso_id": 131,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:19.673088+00:00"
+    },
+    {
+      "id": 132,
+      "rol_id": 2,
+      "permiso_id": 132,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:19.677587+00:00"
+    },
+    {
+      "id": 133,
+      "rol_id": 2,
+      "permiso_id": 133,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:19.691367+00:00"
+    },
+    {
+      "id": 134,
+      "rol_id": 2,
+      "permiso_id": 134,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:19.699209+00:00"
+    },
+    {
+      "id": 135,
+      "rol_id": 2,
+      "permiso_id": 135,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:19.716436+00:00"
+    },
+    {
+      "id": 136,
+      "rol_id": 2,
+      "permiso_id": 136,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:19.723051+00:00"
+    },
+    {
+      "id": 137,
+      "rol_id": 2,
+      "permiso_id": 137,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:19.730819+00:00"
+    },
+    {
+      "id": 138,
+      "rol_id": 2,
+      "permiso_id": 138,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:19.754624+00:00"
+    },
+    {
+      "id": 139,
+      "rol_id": 2,
+      "permiso_id": 139,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:19.762778+00:00"
+    },
+    {
+      "id": 140,
+      "rol_id": 2,
+      "permiso_id": 140,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:19.775105+00:00"
+    },
+    {
+      "id": 141,
+      "rol_id": 2,
+      "permiso_id": 141,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:19.784095+00:00"
+    },
+    {
+      "id": 142,
+      "rol_id": 3,
+      "permiso_id": 1,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:19.870812+00:00"
+    },
+    {
+      "id": 143,
+      "rol_id": 3,
+      "permiso_id": 2,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:19.887085+00:00"
+    },
+    {
+      "id": 144,
+      "rol_id": 3,
+      "permiso_id": 3,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:19.899199+00:00"
+    },
+    {
+      "id": 145,
+      "rol_id": 3,
+      "permiso_id": 4,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:19.925926+00:00"
+    },
+    {
+      "id": 146,
+      "rol_id": 3,
+      "permiso_id": 5,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:19.942995+00:00"
+    },
+    {
+      "id": 147,
+      "rol_id": 3,
+      "permiso_id": 6,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:19.971793+00:00"
+    },
+    {
+      "id": 148,
+      "rol_id": 3,
+      "permiso_id": 7,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:19.990933+00:00"
+    },
+    {
+      "id": 149,
+      "rol_id": 3,
+      "permiso_id": 8,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:20.001238+00:00"
+    },
+    {
+      "id": 150,
+      "rol_id": 3,
+      "permiso_id": 9,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:20.009994+00:00"
+    },
+    {
+      "id": 151,
+      "rol_id": 3,
+      "permiso_id": 10,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:20.031554+00:00"
+    },
+    {
+      "id": 152,
+      "rol_id": 3,
+      "permiso_id": 11,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:20.040499+00:00"
+    },
+    {
+      "id": 153,
+      "rol_id": 3,
+      "permiso_id": 12,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:20.052404+00:00"
+    },
+    {
+      "id": 154,
+      "rol_id": 3,
+      "permiso_id": 13,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:20.058726+00:00"
+    },
+    {
+      "id": 155,
+      "rol_id": 3,
+      "permiso_id": 14,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:20.072376+00:00"
+    },
+    {
+      "id": 156,
+      "rol_id": 3,
+      "permiso_id": 15,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:20.078984+00:00"
+    },
+    {
+      "id": 157,
+      "rol_id": 3,
+      "permiso_id": 16,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:20.085466+00:00"
+    },
+    {
+      "id": 158,
+      "rol_id": 3,
+      "permiso_id": 17,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:20.093137+00:00"
+    },
+    {
+      "id": 159,
+      "rol_id": 3,
+      "permiso_id": 18,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:20.100533+00:00"
+    },
+    {
+      "id": 160,
+      "rol_id": 3,
+      "permiso_id": 19,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:20.106466+00:00"
+    },
+    {
+      "id": 161,
+      "rol_id": 3,
+      "permiso_id": 20,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:20.113112+00:00"
+    },
+    {
+      "id": 162,
+      "rol_id": 3,
+      "permiso_id": 21,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:20.119686+00:00"
+    },
+    {
+      "id": 163,
+      "rol_id": 3,
+      "permiso_id": 22,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:20.125413+00:00"
+    },
+    {
+      "id": 164,
+      "rol_id": 3,
+      "permiso_id": 23,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:20.137037+00:00"
+    },
+    {
+      "id": 165,
+      "rol_id": 3,
+      "permiso_id": 24,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:20.142475+00:00"
+    },
+    {
+      "id": 166,
+      "rol_id": 3,
+      "permiso_id": 25,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:20.155805+00:00"
+    },
+    {
+      "id": 167,
+      "rol_id": 3,
+      "permiso_id": 26,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:20.164459+00:00"
+    },
+    {
+      "id": 168,
+      "rol_id": 3,
+      "permiso_id": 27,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:20.173314+00:00"
+    },
+    {
+      "id": 169,
+      "rol_id": 3,
+      "permiso_id": 28,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:20.181001+00:00"
+    },
+    {
+      "id": 170,
+      "rol_id": 3,
+      "permiso_id": 29,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:20.197440+00:00"
+    },
+    {
+      "id": 171,
+      "rol_id": 3,
+      "permiso_id": 30,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:20.207397+00:00"
+    },
+    {
+      "id": 172,
+      "rol_id": 3,
+      "permiso_id": 31,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:20.216532+00:00"
+    },
+    {
+      "id": 173,
+      "rol_id": 3,
+      "permiso_id": 32,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:20.225907+00:00"
+    },
+    {
+      "id": 174,
+      "rol_id": 3,
+      "permiso_id": 33,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:20.232848+00:00"
+    },
+    {
+      "id": 175,
+      "rol_id": 3,
+      "permiso_id": 34,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:20.246661+00:00"
+    },
+    {
+      "id": 176,
+      "rol_id": 3,
+      "permiso_id": 35,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:20.252991+00:00"
+    },
+    {
+      "id": 177,
+      "rol_id": 3,
+      "permiso_id": 36,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:20.263100+00:00"
+    },
+    {
+      "id": 178,
+      "rol_id": 3,
+      "permiso_id": 37,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:20.269840+00:00"
+    },
+    {
+      "id": 179,
+      "rol_id": 3,
+      "permiso_id": 38,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:20.280100+00:00"
+    },
+    {
+      "id": 180,
+      "rol_id": 3,
+      "permiso_id": 39,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:20.287888+00:00"
+    },
+    {
+      "id": 181,
+      "rol_id": 3,
+      "permiso_id": 40,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:20.297972+00:00"
+    },
+    {
+      "id": 182,
+      "rol_id": 3,
+      "permiso_id": 41,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:20.307838+00:00"
+    },
+    {
+      "id": 183,
+      "rol_id": 3,
+      "permiso_id": 42,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:20.322060+00:00"
+    },
+    {
+      "id": 184,
+      "rol_id": 3,
+      "permiso_id": 43,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:20.335032+00:00"
+    },
+    {
+      "id": 185,
+      "rol_id": 3,
+      "permiso_id": 44,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:20.342975+00:00"
+    },
+    {
+      "id": 186,
+      "rol_id": 3,
+      "permiso_id": 45,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:20.352346+00:00"
+    },
+    {
+      "id": 187,
+      "rol_id": 3,
+      "permiso_id": 46,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:20.358925+00:00"
+    },
+    {
+      "id": 188,
+      "rol_id": 3,
+      "permiso_id": 47,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:20.370509+00:00"
+    },
+    {
+      "id": 189,
+      "rol_id": 3,
+      "permiso_id": 48,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:20.375976+00:00"
+    },
+    {
+      "id": 190,
+      "rol_id": 3,
+      "permiso_id": 49,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:20.388836+00:00"
+    },
+    {
+      "id": 191,
+      "rol_id": 3,
+      "permiso_id": 50,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:20.395811+00:00"
+    },
+    {
+      "id": 192,
+      "rol_id": 3,
+      "permiso_id": 51,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:20.401990+00:00"
+    },
+    {
+      "id": 193,
+      "rol_id": 3,
+      "permiso_id": 52,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:20.412114+00:00"
+    },
+    {
+      "id": 194,
+      "rol_id": 3,
+      "permiso_id": 53,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:20.418514+00:00"
+    },
+    {
+      "id": 195,
+      "rol_id": 3,
+      "permiso_id": 54,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:20.429100+00:00"
+    },
+    {
+      "id": 196,
+      "rol_id": 3,
+      "permiso_id": 55,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:20.434708+00:00"
+    },
+    {
+      "id": 197,
+      "rol_id": 3,
+      "permiso_id": 56,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:20.441195+00:00"
+    },
+    {
+      "id": 198,
+      "rol_id": 3,
+      "permiso_id": 57,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:20.447007+00:00"
+    },
+    {
+      "id": 199,
+      "rol_id": 3,
+      "permiso_id": 58,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:20.452351+00:00"
+    },
+    {
+      "id": 200,
+      "rol_id": 3,
+      "permiso_id": 59,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:20.460987+00:00"
+    },
+    {
+      "id": 201,
+      "rol_id": 3,
+      "permiso_id": 60,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:20.478677+00:00"
+    },
+    {
+      "id": 202,
+      "rol_id": 3,
+      "permiso_id": 61,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:20.485009+00:00"
+    },
+    {
+      "id": 203,
+      "rol_id": 3,
+      "permiso_id": 62,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:20.492076+00:00"
+    },
+    {
+      "id": 204,
+      "rol_id": 3,
+      "permiso_id": 63,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:20.500776+00:00"
+    },
+    {
+      "id": 205,
+      "rol_id": 3,
+      "permiso_id": 64,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:20.510355+00:00"
+    },
+    {
+      "id": 206,
+      "rol_id": 3,
+      "permiso_id": 65,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:20.521208+00:00"
+    },
+    {
+      "id": 207,
+      "rol_id": 3,
+      "permiso_id": 66,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:20.531135+00:00"
+    },
+    {
+      "id": 208,
+      "rol_id": 3,
+      "permiso_id": 67,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:20.537171+00:00"
+    },
+    {
+      "id": 209,
+      "rol_id": 3,
+      "permiso_id": 68,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:20.546199+00:00"
+    },
+    {
+      "id": 210,
+      "rol_id": 3,
+      "permiso_id": 69,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:20.564430+00:00"
+    },
+    {
+      "id": 211,
+      "rol_id": 3,
+      "permiso_id": 70,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:20.570166+00:00"
+    },
+    {
+      "id": 212,
+      "rol_id": 3,
+      "permiso_id": 71,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:20.579375+00:00"
+    },
+    {
+      "id": 213,
+      "rol_id": 3,
+      "permiso_id": 72,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:20.585026+00:00"
+    },
+    {
+      "id": 214,
+      "rol_id": 3,
+      "permiso_id": 73,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:20.591219+00:00"
+    },
+    {
+      "id": 215,
+      "rol_id": 3,
+      "permiso_id": 74,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:20.598225+00:00"
+    },
+    {
+      "id": 216,
+      "rol_id": 3,
+      "permiso_id": 75,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:20.604193+00:00"
+    },
+    {
+      "id": 217,
+      "rol_id": 3,
+      "permiso_id": 76,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:20.610059+00:00"
+    },
+    {
+      "id": 218,
+      "rol_id": 3,
+      "permiso_id": 77,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:20.616939+00:00"
+    },
+    {
+      "id": 219,
+      "rol_id": 3,
+      "permiso_id": 78,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:20.622392+00:00"
+    },
+    {
+      "id": 220,
+      "rol_id": 3,
+      "permiso_id": 79,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:20.629313+00:00"
+    },
+    {
+      "id": 221,
+      "rol_id": 3,
+      "permiso_id": 80,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:20.640341+00:00"
+    },
+    {
+      "id": 222,
+      "rol_id": 3,
+      "permiso_id": 81,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:20.647460+00:00"
+    },
+    {
+      "id": 223,
+      "rol_id": 3,
+      "permiso_id": 82,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:20.653910+00:00"
+    },
+    {
+      "id": 224,
+      "rol_id": 3,
+      "permiso_id": 83,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:20.663318+00:00"
+    },
+    {
+      "id": 225,
+      "rol_id": 3,
+      "permiso_id": 84,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:20.670168+00:00"
+    },
+    {
+      "id": 226,
+      "rol_id": 3,
+      "permiso_id": 85,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:20.675961+00:00"
+    },
+    {
+      "id": 227,
+      "rol_id": 3,
+      "permiso_id": 86,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:20.684780+00:00"
+    },
+    {
+      "id": 228,
+      "rol_id": 3,
+      "permiso_id": 87,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:20.690447+00:00"
+    },
+    {
+      "id": 229,
+      "rol_id": 3,
+      "permiso_id": 88,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:20.698088+00:00"
+    },
+    {
+      "id": 230,
+      "rol_id": 3,
+      "permiso_id": 89,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:20.708531+00:00"
+    },
+    {
+      "id": 231,
+      "rol_id": 3,
+      "permiso_id": 90,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:20.714928+00:00"
+    },
+    {
+      "id": 232,
+      "rol_id": 3,
+      "permiso_id": 91,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:20.725605+00:00"
+    },
+    {
+      "id": 233,
+      "rol_id": 3,
+      "permiso_id": 97,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:20.731577+00:00"
+    },
+    {
+      "id": 234,
+      "rol_id": 3,
+      "permiso_id": 98,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:20.743476+00:00"
+    },
+    {
+      "id": 235,
+      "rol_id": 3,
+      "permiso_id": 99,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:20.749636+00:00"
+    },
+    {
+      "id": 236,
+      "rol_id": 3,
+      "permiso_id": 100,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:20.755641+00:00"
+    },
+    {
+      "id": 237,
+      "rol_id": 3,
+      "permiso_id": 101,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:20.761133+00:00"
+    },
+    {
+      "id": 238,
+      "rol_id": 3,
+      "permiso_id": 102,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:20.766575+00:00"
+    },
+    {
+      "id": 239,
+      "rol_id": 3,
+      "permiso_id": 103,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:20.775316+00:00"
+    },
+    {
+      "id": 240,
+      "rol_id": 3,
+      "permiso_id": 104,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:20.781554+00:00"
+    },
+    {
+      "id": 241,
+      "rol_id": 3,
+      "permiso_id": 105,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:20.787562+00:00"
+    },
+    {
+      "id": 242,
+      "rol_id": 3,
+      "permiso_id": 106,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:20.794623+00:00"
+    },
+    {
+      "id": 243,
+      "rol_id": 3,
+      "permiso_id": 107,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:20.810282+00:00"
+    },
+    {
+      "id": 244,
+      "rol_id": 3,
+      "permiso_id": 108,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:20.817634+00:00"
+    },
+    {
+      "id": 245,
+      "rol_id": 3,
+      "permiso_id": 109,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:20.830533+00:00"
+    },
+    {
+      "id": 246,
+      "rol_id": 3,
+      "permiso_id": 110,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:20.835982+00:00"
+    },
+    {
+      "id": 247,
+      "rol_id": 3,
+      "permiso_id": 111,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:20.840960+00:00"
+    },
+    {
+      "id": 248,
+      "rol_id": 3,
+      "permiso_id": 112,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:20.857393+00:00"
+    },
+    {
+      "id": 249,
+      "rol_id": 3,
+      "permiso_id": 113,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:20.865662+00:00"
+    },
+    {
+      "id": 250,
+      "rol_id": 3,
+      "permiso_id": 114,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:20.872299+00:00"
+    },
+    {
+      "id": 251,
+      "rol_id": 3,
+      "permiso_id": 115,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:20.878472+00:00"
+    },
+    {
+      "id": 252,
+      "rol_id": 3,
+      "permiso_id": 116,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:20.909976+00:00"
+    },
+    {
+      "id": 253,
+      "rol_id": 3,
+      "permiso_id": 117,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:20.916989+00:00"
+    },
+    {
+      "id": 254,
+      "rol_id": 3,
+      "permiso_id": 118,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:20.935559+00:00"
+    },
+    {
+      "id": 255,
+      "rol_id": 3,
+      "permiso_id": 119,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:20.942124+00:00"
+    },
+    {
+      "id": 256,
+      "rol_id": 3,
+      "permiso_id": 120,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:20.959504+00:00"
+    },
+    {
+      "id": 257,
+      "rol_id": 3,
+      "permiso_id": 121,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:20.966590+00:00"
+    },
+    {
+      "id": 258,
+      "rol_id": 3,
+      "permiso_id": 122,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:20.984442+00:00"
+    },
+    {
+      "id": 259,
+      "rol_id": 3,
+      "permiso_id": 123,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:21.001878+00:00"
+    },
+    {
+      "id": 260,
+      "rol_id": 3,
+      "permiso_id": 124,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:21.024238+00:00"
+    },
+    {
+      "id": 261,
+      "rol_id": 3,
+      "permiso_id": 125,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:21.046249+00:00"
+    },
+    {
+      "id": 262,
+      "rol_id": 3,
+      "permiso_id": 126,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:21.059278+00:00"
+    },
+    {
+      "id": 263,
+      "rol_id": 3,
+      "permiso_id": 127,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:21.065809+00:00"
+    },
+    {
+      "id": 264,
+      "rol_id": 3,
+      "permiso_id": 128,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:21.075901+00:00"
+    },
+    {
+      "id": 265,
+      "rol_id": 3,
+      "permiso_id": 129,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:21.082681+00:00"
+    },
+    {
+      "id": 266,
+      "rol_id": 3,
+      "permiso_id": 130,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:21.088245+00:00"
+    },
+    {
+      "id": 267,
+      "rol_id": 3,
+      "permiso_id": 131,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:21.098307+00:00"
+    },
+    {
+      "id": 268,
+      "rol_id": 3,
+      "permiso_id": 132,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:21.108793+00:00"
+    },
+    {
+      "id": 269,
+      "rol_id": 3,
+      "permiso_id": 133,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:21.114327+00:00"
+    },
+    {
+      "id": 270,
+      "rol_id": 3,
+      "permiso_id": 134,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:21.123145+00:00"
+    },
+    {
+      "id": 271,
+      "rol_id": 3,
+      "permiso_id": 135,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:21.145411+00:00"
+    },
+    {
+      "id": 272,
+      "rol_id": 3,
+      "permiso_id": 136,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:21.153613+00:00"
+    },
+    {
+      "id": 273,
+      "rol_id": 3,
+      "permiso_id": 137,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:21.160798+00:00"
+    },
+    {
+      "id": 274,
+      "rol_id": 3,
+      "permiso_id": 138,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:21.166032+00:00"
+    },
+    {
+      "id": 275,
+      "rol_id": 3,
+      "permiso_id": 139,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:21.200844+00:00"
+    },
+    {
+      "id": 276,
+      "rol_id": 3,
+      "permiso_id": 140,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:21.247844+00:00"
+    },
+    {
+      "id": 277,
+      "rol_id": 3,
+      "permiso_id": 141,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:21.274490+00:00"
+    },
+    {
+      "id": 278,
+      "rol_id": 4,
+      "permiso_id": 112,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:21.319873+00:00"
+    },
+    {
+      "id": 279,
+      "rol_id": 4,
+      "permiso_id": 113,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:21.326096+00:00"
+    },
+    {
+      "id": 280,
+      "rol_id": 4,
+      "permiso_id": 114,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:21.334884+00:00"
+    },
+    {
+      "id": 281,
+      "rol_id": 4,
+      "permiso_id": 115,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:21.341027+00:00"
+    },
+    {
+      "id": 282,
+      "rol_id": 4,
+      "permiso_id": 116,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:21.346739+00:00"
+    },
+    {
+      "id": 283,
+      "rol_id": 4,
+      "permiso_id": 137,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:21.351445+00:00"
+    },
+    {
+      "id": 284,
+      "rol_id": 4,
+      "permiso_id": 138,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:21.369283+00:00"
+    },
+    {
+      "id": 285,
+      "rol_id": 4,
+      "permiso_id": 139,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:21.375479+00:00"
+    },
+    {
+      "id": 286,
+      "rol_id": 4,
+      "permiso_id": 140,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:21.384873+00:00"
+    },
+    {
+      "id": 287,
+      "rol_id": 4,
+      "permiso_id": 141,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:21.391233+00:00"
+    },
+    {
+      "id": 288,
+      "rol_id": 4,
+      "permiso_id": 6,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:21.400626+00:00"
+    },
+    {
+      "id": 289,
+      "rol_id": 4,
+      "permiso_id": 7,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:21.406681+00:00"
+    },
+    {
+      "id": 290,
+      "rol_id": 4,
+      "permiso_id": 8,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:21.413294+00:00"
+    },
+    {
+      "id": 291,
+      "rol_id": 4,
+      "permiso_id": 9,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:21.418930+00:00"
+    },
+    {
+      "id": 292,
+      "rol_id": 4,
+      "permiso_id": 10,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:21.428421+00:00"
+    },
+    {
+      "id": 293,
+      "rol_id": 4,
+      "permiso_id": 62,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:21.437458+00:00"
+    },
+    {
+      "id": 294,
+      "rol_id": 4,
+      "permiso_id": 63,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:21.442404+00:00"
+    },
+    {
+      "id": 295,
+      "rol_id": 4,
+      "permiso_id": 64,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:21.454428+00:00"
+    },
+    {
+      "id": 296,
+      "rol_id": 4,
+      "permiso_id": 65,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:21.459909+00:00"
+    },
+    {
+      "id": 297,
+      "rol_id": 4,
+      "permiso_id": 66,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:21.467592+00:00"
+    },
+    {
+      "id": 298,
+      "rol_id": 4,
+      "permiso_id": 16,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:21.475828+00:00"
+    },
+    {
+      "id": 299,
+      "rol_id": 4,
+      "permiso_id": 17,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:21.486529+00:00"
+    },
+    {
+      "id": 300,
+      "rol_id": 4,
+      "permiso_id": 18,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:21.492433+00:00"
+    },
+    {
+      "id": 301,
+      "rol_id": 4,
+      "permiso_id": 19,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:21.507096+00:00"
+    },
+    {
+      "id": 302,
+      "rol_id": 4,
+      "permiso_id": 20,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:21.516571+00:00"
+    },
+    {
+      "id": 303,
+      "rol_id": 4,
+      "permiso_id": 72,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:21.523709+00:00"
+    },
+    {
+      "id": 304,
+      "rol_id": 4,
+      "permiso_id": 73,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:21.531165+00:00"
+    },
+    {
+      "id": 305,
+      "rol_id": 4,
+      "permiso_id": 74,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:21.537754+00:00"
+    },
+    {
+      "id": 306,
+      "rol_id": 4,
+      "permiso_id": 75,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:21.545721+00:00"
+    },
+    {
+      "id": 307,
+      "rol_id": 4,
+      "permiso_id": 76,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:21.554751+00:00"
+    },
+    {
+      "id": 308,
+      "rol_id": 4,
+      "permiso_id": 1,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:21.561834+00:00"
+    },
+    {
+      "id": 309,
+      "rol_id": 4,
+      "permiso_id": 2,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:21.566437+00:00"
+    },
+    {
+      "id": 310,
+      "rol_id": 4,
+      "permiso_id": 3,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:21.582866+00:00"
+    },
+    {
+      "id": 311,
+      "rol_id": 4,
+      "permiso_id": 4,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:21.588113+00:00"
+    },
+    {
+      "id": 312,
+      "rol_id": 4,
+      "permiso_id": 5,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:21.596935+00:00"
+    },
+    {
+      "id": 313,
+      "rol_id": 4,
+      "permiso_id": 56,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:21.604253+00:00"
+    },
+    {
+      "id": 314,
+      "rol_id": 4,
+      "permiso_id": 57,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:21.609618+00:00"
+    },
+    {
+      "id": 315,
+      "rol_id": 4,
+      "permiso_id": 58,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:21.616118+00:00"
+    },
+    {
+      "id": 316,
+      "rol_id": 4,
+      "permiso_id": 59,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:21.623916+00:00"
+    },
+    {
+      "id": 317,
+      "rol_id": 4,
+      "permiso_id": 60,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:21.629769+00:00"
+    },
+    {
+      "id": 318,
+      "rol_id": 4,
+      "permiso_id": 61,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:21.635970+00:00"
+    },
+    {
+      "id": 319,
+      "rol_id": 4,
+      "permiso_id": 36,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:21.640953+00:00"
+    },
+    {
+      "id": 320,
+      "rol_id": 4,
+      "permiso_id": 37,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:21.646657+00:00"
+    },
+    {
+      "id": 321,
+      "rol_id": 4,
+      "permiso_id": 38,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:21.653848+00:00"
+    },
+    {
+      "id": 322,
+      "rol_id": 4,
+      "permiso_id": 39,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:21.658292+00:00"
+    },
+    {
+      "id": 323,
+      "rol_id": 4,
+      "permiso_id": 40,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:21.663794+00:00"
+    },
+    {
+      "id": 324,
+      "rol_id": 4,
+      "permiso_id": 107,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:21.669998+00:00"
+    },
+    {
+      "id": 325,
+      "rol_id": 4,
+      "permiso_id": 108,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:21.680509+00:00"
+    },
+    {
+      "id": 326,
+      "rol_id": 4,
+      "permiso_id": 109,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:21.686075+00:00"
+    },
+    {
+      "id": 327,
+      "rol_id": 4,
+      "permiso_id": 110,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:21.694728+00:00"
+    },
+    {
+      "id": 328,
+      "rol_id": 4,
+      "permiso_id": 111,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:21.705387+00:00"
+    },
+    {
+      "id": 329,
+      "rol_id": 4,
+      "permiso_id": 11,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:21.713558+00:00"
+    },
+    {
+      "id": 330,
+      "rol_id": 4,
+      "permiso_id": 12,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:21.731015+00:00"
+    },
+    {
+      "id": 331,
+      "rol_id": 4,
+      "permiso_id": 13,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:21.745389+00:00"
+    },
+    {
+      "id": 332,
+      "rol_id": 4,
+      "permiso_id": 14,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:21.751953+00:00"
+    },
+    {
+      "id": 333,
+      "rol_id": 4,
+      "permiso_id": 15,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:21.757385+00:00"
+    },
+    {
+      "id": 334,
+      "rol_id": 4,
+      "permiso_id": 67,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:21.763197+00:00"
+    },
+    {
+      "id": 335,
+      "rol_id": 4,
+      "permiso_id": 68,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:21.768770+00:00"
+    },
+    {
+      "id": 336,
+      "rol_id": 4,
+      "permiso_id": 69,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:21.774146+00:00"
+    },
+    {
+      "id": 337,
+      "rol_id": 4,
+      "permiso_id": 70,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:21.780026+00:00"
+    },
+    {
+      "id": 338,
+      "rol_id": 4,
+      "permiso_id": 71,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:21.784684+00:00"
+    },
+    {
+      "id": 339,
+      "rol_id": 5,
+      "permiso_id": 56,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:21.932489+00:00"
+    },
+    {
+      "id": 340,
+      "rol_id": 6,
+      "permiso_id": 1,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:21.963610+00:00"
+    },
+    {
+      "id": 341,
+      "rol_id": 6,
+      "permiso_id": 2,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:21.968148+00:00"
+    },
+    {
+      "id": 342,
+      "rol_id": 6,
+      "permiso_id": 3,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:21.972687+00:00"
+    },
+    {
+      "id": 343,
+      "rol_id": 6,
+      "permiso_id": 4,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:21.982144+00:00"
+    },
+    {
+      "id": 344,
+      "rol_id": 6,
+      "permiso_id": 5,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:21.987085+00:00"
+    },
+    {
+      "id": 345,
+      "rol_id": 6,
+      "permiso_id": 56,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:21.991750+00:00"
+    },
+    {
+      "id": 346,
+      "rol_id": 6,
+      "permiso_id": 57,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:21.995799+00:00"
+    },
+    {
+      "id": 347,
+      "rol_id": 6,
+      "permiso_id": 58,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:22.005385+00:00"
+    },
+    {
+      "id": 348,
+      "rol_id": 6,
+      "permiso_id": 59,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:22.010188+00:00"
+    },
+    {
+      "id": 349,
+      "rol_id": 6,
+      "permiso_id": 60,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:22.014632+00:00"
+    },
+    {
+      "id": 350,
+      "rol_id": 6,
+      "permiso_id": 61,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:22.019560+00:00"
+    },
+    {
+      "id": 351,
+      "rol_id": 6,
+      "permiso_id": 82,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:22.025041+00:00"
+    },
+    {
+      "id": 352,
+      "rol_id": 6,
+      "permiso_id": 83,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:22.032426+00:00"
+    },
+    {
+      "id": 353,
+      "rol_id": 6,
+      "permiso_id": 84,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:22.037702+00:00"
+    },
+    {
+      "id": 354,
+      "rol_id": 6,
+      "permiso_id": 85,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:22.042426+00:00"
+    },
+    {
+      "id": 355,
+      "rol_id": 6,
+      "permiso_id": 86,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:22.058674+00:00"
+    },
+    {
+      "id": 356,
+      "rol_id": 6,
+      "permiso_id": 26,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:22.091942+00:00"
+    },
+    {
+      "id": 357,
+      "rol_id": 6,
+      "permiso_id": 27,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:22.119342+00:00"
+    },
+    {
+      "id": 358,
+      "rol_id": 6,
+      "permiso_id": 28,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:22.124458+00:00"
+    },
+    {
+      "id": 359,
+      "rol_id": 6,
+      "permiso_id": 29,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:22.139560+00:00"
+    },
+    {
+      "id": 360,
+      "rol_id": 6,
+      "permiso_id": 30,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:22.153584+00:00"
+    },
+    {
+      "id": 361,
+      "rol_id": 6,
+      "permiso_id": 87,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:22.172954+00:00"
+    },
+    {
+      "id": 362,
+      "rol_id": 6,
+      "permiso_id": 88,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:22.178306+00:00"
+    },
+    {
+      "id": 363,
+      "rol_id": 6,
+      "permiso_id": 89,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:22.183128+00:00"
+    },
+    {
+      "id": 364,
+      "rol_id": 6,
+      "permiso_id": 90,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:22.205307+00:00"
+    },
+    {
+      "id": 365,
+      "rol_id": 6,
+      "permiso_id": 91,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:22.212555+00:00"
+    },
+    {
+      "id": 366,
+      "rol_id": 6,
+      "permiso_id": 102,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:22.217198+00:00"
+    },
+    {
+      "id": 367,
+      "rol_id": 6,
+      "permiso_id": 103,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:22.223102+00:00"
+    },
+    {
+      "id": 368,
+      "rol_id": 6,
+      "permiso_id": 104,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:22.229008+00:00"
+    },
+    {
+      "id": 369,
+      "rol_id": 6,
+      "permiso_id": 105,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:22.241411+00:00"
+    },
+    {
+      "id": 370,
+      "rol_id": 6,
+      "permiso_id": 106,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:22.252930+00:00"
+    },
+    {
+      "id": 371,
+      "rol_id": 6,
+      "permiso_id": 41,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:22.257583+00:00"
+    },
+    {
+      "id": 372,
+      "rol_id": 6,
+      "permiso_id": 42,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:22.263889+00:00"
+    },
+    {
+      "id": 373,
+      "rol_id": 6,
+      "permiso_id": 43,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:22.269231+00:00"
+    },
+    {
+      "id": 374,
+      "rol_id": 6,
+      "permiso_id": 44,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:22.273961+00:00"
+    },
+    {
+      "id": 375,
+      "rol_id": 6,
+      "permiso_id": 45,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:22.280099+00:00"
+    },
+    {
+      "id": 376,
+      "rol_id": 6,
+      "permiso_id": 117,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:22.284860+00:00"
+    },
+    {
+      "id": 377,
+      "rol_id": 6,
+      "permiso_id": 118,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:22.290611+00:00"
+    },
+    {
+      "id": 378,
+      "rol_id": 6,
+      "permiso_id": 119,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:22.297056+00:00"
+    },
+    {
+      "id": 379,
+      "rol_id": 6,
+      "permiso_id": 120,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:22.302824+00:00"
+    },
+    {
+      "id": 380,
+      "rol_id": 6,
+      "permiso_id": 121,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:22.308043+00:00"
+    },
+    {
+      "id": 381,
+      "rol_id": 6,
+      "permiso_id": 122,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:22.316525+00:00"
+    },
+    {
+      "id": 382,
+      "rol_id": 6,
+      "permiso_id": 123,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:22.323076+00:00"
+    },
+    {
+      "id": 383,
+      "rol_id": 6,
+      "permiso_id": 124,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:22.329741+00:00"
+    },
+    {
+      "id": 384,
+      "rol_id": 6,
+      "permiso_id": 125,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:22.336663+00:00"
+    },
+    {
+      "id": 385,
+      "rol_id": 6,
+      "permiso_id": 126,
+      "activo": true,
+      "creado_en": "2025-09-03T10:18:22.341289+00:00"
+    },
+    {
+      "id": 386,
+      "rol_id": 1,
+      "permiso_id": 137,
+      "activo": true,
+      "creado_en": "2025-09-03T10:24:00.709304+00:00"
+    },
+    {
+      "id": 387,
+      "rol_id": 1,
+      "permiso_id": 138,
+      "activo": true,
+      "creado_en": "2025-09-03T10:24:00.810516+00:00"
+    },
+    {
+      "id": 388,
+      "rol_id": 1,
+      "permiso_id": 141,
+      "activo": true,
+      "creado_en": "2025-09-03T10:24:00.829806+00:00"
+    }
+  ],
+  "perfiles_usuario": []
+}

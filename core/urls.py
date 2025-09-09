@@ -107,6 +107,14 @@ urlpatterns = [
     path('anticipos/<int:anticipo_id>/editar/', views.anticipo_edit, name='anticipo_edit'),
     path('anticipos/<int:anticipo_id>/eliminar/', views.anticipo_delete, name='anticipo_delete'),
     path('anticipos/<int:anticipo_id>/aplicar/', views.aplicar_anticipo, name='aplicar_anticipo'),
+    
+    # Eventos del Calendario
+    path('eventos/', views.eventos_calendario_list, name='eventos_calendario_list'),
+    path('eventos/crear/', views.evento_calendario_create, name='evento_calendario_create'),
+    path('eventos/<int:evento_id>/editar/', views.evento_calendario_edit, name='evento_calendario_edit'),
+    path('eventos/<int:evento_id>/eliminar/', views.evento_calendario_delete, name='evento_calendario_delete'),
+    path('api/eventos/', views.eventos_calendario_json, name='eventos_calendario_json'),
+    path('api/eventos/crear/', views.evento_calendario_create_ajax, name='evento_calendario_create_ajax'),
 
     # URLs de Archivos de Proyectos
     path('archivos/', views.archivos_proyectos_list, name='archivos_proyectos_list'),

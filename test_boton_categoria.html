@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Botón Categoría</title>
+    <style>
+        .btn-nueva-categoria {
+            background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%) !important;
+            border: none !important;
+            color: white !important;
+            padding: 0.75rem 1.5rem !important;
+            border-radius: 10px !important;
+            font-weight: 600 !important;
+            transition: all 0.3s ease !important;
+            text-decoration: none !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            gap: 0.5rem !important;
+            font-size: 0.9rem !important;
+            min-width: 150px !important;
+            justify-content: center !important;
+            box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3) !important;
+        }
+        
+        .btn-nueva-categoria:hover {
+            transform: translateY(-2px) !important;
+            box-shadow: 0 8px 25px rgba(40, 167, 69, 0.4) !important;
+            color: white !important;
+            text-decoration: none !important;
+            background: linear-gradient(135deg, #1e7e34 0%, #155724 100%) !important;
+        }
+        
+        .test-container {
+            padding: 2rem;
+            background: #f8f9fa;
+            border-radius: 10px;
+            margin: 2rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>Test del Botón Nueva Categoría</h1>
+        
+        <h2>Botón con URL estática:</h2>
+        <a href="/categorias-gasto/crear/" class="btn-nueva-categoria">
+            <i class="fas fa-plus"></i>
+            Nueva Categoría
+        </a>
+        
+        <h2>Botón con URL dinámica (Django):</h2>
+        <a href="{% url 'categoria_gasto_create' %}" class="btn-nueva-categoria">
+            <i class="fas fa-plus"></i>
+            Nueva Categoría
+        </a>
+        
+        <h2>Botón simple:</h2>
+        <button class="btn-nueva-categoria" onclick="alert('Botón funciona')">
+            <i class="fas fa-plus"></i>
+            Nueva Categoría
+        </button>
+    </div>
+</body>
+</html>

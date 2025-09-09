@@ -18,13 +18,13 @@ from .models import (
     NotificacionSistema, ConfiguracionNotificaciones, HistorialNotificaciones,
     ItemInventario, CategoriaInventario, AsignacionInventario,
     Rol, PerfilUsuario, Modulo, Permiso, RolPermiso, AnticipoProyecto,
-    CarpetaProyecto, ConfiguracionSistema
+    CarpetaProyecto, ConfiguracionSistema, EventoCalendario
 )
 from .forms import (
     AnticipoForm, ArchivoProyectoForm, ClienteForm, ProyectoForm, 
     ColaboradorForm, FacturaForm, GastoForm, PagoForm, CategoriaGastoForm, PresupuestoForm, PartidaPresupuestoForm, VariacionPresupuestoForm,
     CategoriaInventarioForm, ItemInventarioForm, AsignacionInventarioForm,
-    CarpetaProyectoForm
+    CarpetaProyectoForm, EventoCalendarioForm
 )
 from django.contrib.auth.models import User
 from django.contrib.auth.forms import UserCreationForm, UserChangeForm
@@ -200,7 +200,7 @@ def dashboard(request):
         proyectos_rentables.sort(key=lambda x: x['rentabilidad'], reverse=True)
         proyectos_rentables = proyectos_rentables[:5]  # Top 5
         
-        # Calendario con eventos básicos
+        # Calendario con eventos básicos y eventos del calendario
         eventos_calendario = []
         
         # Eventos de facturas
@@ -213,7 +213,12 @@ def dashboard(request):
                 'end': factura.fecha_vencimiento.isoformat(),
                 'className': 'evento-factura',
                 'backgroundColor': '#dc3545',
-                'borderColor': '#dc3545'
+                'borderColor': '#dc3545',
+                'extendedProps': {
+                    'tipo': 'vencimiento',
+                    'descripcion': f'Vencimiento de factura {factura.numero_factura}',
+                    'todo_el_dia': True
+                }
             })
         
         # Eventos de proyectos
@@ -226,8 +231,18 @@ def dashboard(request):
                 'end': proyecto.fecha_inicio.isoformat(),
                 'className': 'evento-proyecto',
                 'backgroundColor': '#28a745',
-                'borderColor': '#28a745'
+                'borderColor': '#28a745',
+                'extendedProps': {
+                    'tipo': 'proyecto',
+                    'descripcion': f'Inicio del proyecto {proyecto.nombre}',
+                    'todo_el_dia': True
+                }
             })
+        
+        # Eventos del calendario personalizados
+        eventos_personalizados = EventoCalendario.objects.filter(creado_por=request.user)
+        for evento in eventos_personalizados:
+            eventos_calendario.append(evento.to_calendar_event())
         
         # Convertir a JSON para el template
         import json
@@ -1619,6 +1634,178 @@ def anticipos_list(request):
     }
     
     return render(request, 'core/anticipos/list.html', context)
+
+
+# ============================================================================
+# VISTAS PARA EVENTOS DEL CALENDARIO
+# ============================================================================
+
+@login_required
+def eventos_calendario_list(request):
+    """Lista de eventos del calendario"""
+    eventos = EventoCalendario.objects.filter(creado_por=request.user).order_by('-fecha_inicio')
+    return render(request, 'core/eventos/list.html', {'eventos': eventos})
+
+
+@login_required
+def evento_calendario_create(request):
+    """Crear evento del calendario"""
+    if request.method == 'POST':
+        form = EventoCalendarioForm(request.POST)
+        if form.is_valid():
+            evento = form.save(commit=False)
+            evento.creado_por = request.user
+            evento.save()
+            
+            # Registrar actividad
+            LogActividad.objects.create(
+                usuario=request.user,
+                accion='Crear',
+                modulo='Eventos del Calendario',
+                descripcion=f'Evento creado: {evento.titulo}',
+                ip_address=request.META.get('REMOTE_ADDR')
+            )
+            
+            messages.success(request, 'Evento creado exitosamente')
+            return redirect('eventos_calendario_list')
+    else:
+        form = EventoCalendarioForm()
+    
+    return render(request, 'core/eventos/create.html', {'form': form})
+
+
+@login_required
+def evento_calendario_edit(request, evento_id):
+    """Editar evento del calendario"""
+    evento = get_object_or_404(EventoCalendario, id=evento_id, creado_por=request.user)
+    
+    if request.method == 'POST':
+        form = EventoCalendarioForm(request.POST, instance=evento)
+        if form.is_valid():
+            evento = form.save()
+            
+            # Registrar actividad
+            LogActividad.objects.create(
+                usuario=request.user,
+                accion='Editar',
+                modulo='Eventos del Calendario',
+                descripcion=f'Evento editado: {evento.titulo}',
+                ip_address=request.META.get('REMOTE_ADDR')
+            )
+            
+            messages.success(request, 'Evento actualizado exitosamente')
+            return redirect('eventos_calendario_list')
+    else:
+        form = EventoCalendarioForm(instance=evento)
+    
+    return render(request, 'core/eventos/edit.html', {'form': form, 'evento': evento})
+
+
+@login_required
+def evento_calendario_delete(request, evento_id):
+    """Eliminar evento del calendario"""
+    evento = get_object_or_404(EventoCalendario, id=evento_id, creado_por=request.user)
+    
+    if request.method == 'POST':
+        # Registrar actividad antes de eliminar
+        LogActividad.objects.create(
+            usuario=request.user,
+            accion='Eliminar',
+            modulo='Eventos del Calendario',
+            descripcion=f'Evento eliminado: {evento.titulo}',
+            ip_address=request.META.get('REMOTE_ADDR')
+        )
+        
+        evento.delete()
+        messages.success(request, 'Evento eliminado exitosamente')
+        return redirect('eventos_calendario_list')
+    
+    return render(request, 'core/eventos/delete.html', {'evento': evento})
+
+
+@login_required
+def eventos_calendario_json(request):
+    """API para obtener eventos del calendario en formato JSON"""
+    eventos = EventoCalendario.objects.filter(creado_por=request.user)
+    eventos_data = [evento.to_calendar_event() for evento in eventos]
+    
+    return JsonResponse(eventos_data, safe=False)
+
+
+@login_required
+def evento_calendario_create_ajax(request):
+    """Crear evento del calendario via AJAX"""
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            
+            # Validar datos requeridos
+            if not data.get('titulo') or not data.get('fecha_inicio'):
+                return JsonResponse({
+                    'success': False,
+                    'message': 'Título y fecha de inicio son requeridos'
+                }, status=400)
+            
+            # Procesar fechas
+            from datetime import datetime, date
+            
+            fecha_inicio = data.get('fecha_inicio')
+            if isinstance(fecha_inicio, str):
+                fecha_inicio = datetime.strptime(fecha_inicio, '%Y-%m-%d').date()
+            
+            fecha_fin = data.get('fecha_fin')
+            if fecha_fin and isinstance(fecha_fin, str):
+                fecha_fin = datetime.strptime(fecha_fin, '%Y-%m-%d').date()
+            
+            # Procesar horas
+            hora_inicio = data.get('hora_inicio')
+            if hora_inicio and isinstance(hora_inicio, str):
+                hora_inicio = datetime.strptime(hora_inicio, '%H:%M').time()
+            
+            hora_fin = data.get('hora_fin')
+            if hora_fin and isinstance(hora_fin, str):
+                hora_fin = datetime.strptime(hora_fin, '%H:%M').time()
+            
+            # Crear evento
+            evento = EventoCalendario.objects.create(
+                titulo=data.get('titulo'),
+                descripcion=data.get('descripcion', ''),
+                fecha_inicio=fecha_inicio,
+                fecha_fin=fecha_fin,
+                hora_inicio=hora_inicio,
+                hora_fin=hora_fin,
+                tipo=data.get('tipo', 'otro'),
+                color=data.get('color', '#667eea'),
+                todo_el_dia=data.get('todo_el_dia', True),
+                creado_por=request.user,
+                proyecto_id=data.get('proyecto_id') if data.get('proyecto_id') else None,
+                factura_id=data.get('factura_id') if data.get('factura_id') else None
+            )
+            
+            # Registrar actividad
+            LogActividad.objects.create(
+                usuario=request.user,
+                accion='Crear',
+                modulo='Eventos del Calendario',
+                descripcion=f'Evento creado: {evento.titulo}',
+                ip_address=request.META.get('REMOTE_ADDR')
+            )
+            
+            return JsonResponse({
+                'success': True,
+                'message': 'Evento creado exitosamente',
+                'evento': evento.to_calendar_event()
+            })
+            
+        except Exception as e:
+            import traceback
+            return JsonResponse({
+                'success': False,
+                'message': f'Error al crear evento: {str(e)}',
+                'debug': traceback.format_exc()
+            }, status=400)
+    
+    return JsonResponse({'success': False, 'message': 'Método no permitido'}, status=405)
 
 
 @login_required

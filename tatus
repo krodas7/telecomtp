@@ -1,0 +1,10 @@
+[33mb143830[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m)[m Configuración completa: nuevas credenciales, scripts actualizados, CI/CD y documentación
+[33m15111a5[m Actualización completa del sistema: mejoras en UI, gradientes, y eliminación de credenciales sensibles
+[33m1535b94[m  Correcciones pre-despliegue: actualizar dominio, rutas y requirements simplificados
+[33m9ff6ca5[m Fix: Corregir configuración de DEBUG y ALLOWED_HOSTS para usar python-decouple correctamente
+[33m9a4478a[m Fix: Arreglar error de template currency_format y agregar eslintignore
+[33mc6345e9[m Remove GitHub workflows and add deployment scripts
+[33m32b625b[m Initial commit: Sistema de Construcción Django con modo offline
+[33m249bd07[m PWA: usar iconos v2 en manifest y SW v1.0.2; añadir screenshot-desktop.png
+[33m161b091[m PWA: bump SW cache to v1.0.1 and add versioned icons/manifest to bust old cache
+[33mfda0e3b[m Crear ícono profesional para Construcciones Arca con diseño de edificios y sol

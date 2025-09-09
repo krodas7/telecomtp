@@ -1,6 +1,6 @@
 from django import forms
 from django.core.exceptions import ValidationError
-from .models import Anticipo, Cliente, Proyecto, ArchivoProyecto, Colaborador, Factura, Gasto, Pago, CategoriaGasto, Presupuesto, PartidaPresupuesto, VariacionPresupuesto, CategoriaInventario, ItemInventario, AsignacionInventario, CarpetaProyecto
+from .models import Anticipo, Cliente, Proyecto, ArchivoProyecto, Colaborador, Factura, Gasto, Pago, CategoriaGasto, Presupuesto, PartidaPresupuesto, VariacionPresupuesto, CategoriaInventario, ItemInventario, AsignacionInventario, CarpetaProyecto, EventoCalendario
 from .constants import ICONOS_CARPETAS
 from decimal import Decimal
 
@@ -728,3 +728,92 @@ class AsignacionInventarioForm(forms.ModelForm):
         self.fields['proyecto'].queryset = Proyecto.objects.filter(
             estado__in=['activo', 'en_progreso', 'planificado']
         ).order_by('nombre')
+
+
+class EventoCalendarioForm(forms.ModelForm):
+    """Formulario para crear y editar eventos del calendario"""
+    
+    class Meta:
+        model = EventoCalendario
+        fields = [
+            'titulo', 'descripcion', 'fecha_inicio', 'fecha_fin', 
+            'hora_inicio', 'hora_fin', 'tipo', 'color', 'todo_el_dia',
+            'proyecto', 'factura'
+        ]
+        widgets = {
+            'titulo': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Título del evento',
+                'required': True
+            }),
+            'descripcion': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 3,
+                'placeholder': 'Descripción del evento (opcional)'
+            }),
+            'fecha_inicio': forms.DateInput(attrs={
+                'class': 'form-control',
+                'type': 'date',
+                'required': True
+            }),
+            'fecha_fin': forms.DateInput(attrs={
+                'class': 'form-control',
+                'type': 'date'
+            }),
+            'hora_inicio': forms.TimeInput(attrs={
+                'class': 'form-control',
+                'type': 'time'
+            }),
+            'hora_fin': forms.TimeInput(attrs={
+                'class': 'form-control',
+                'type': 'time'
+            }),
+            'tipo': forms.Select(attrs={
+                'class': 'form-select',
+                'required': True
+            }),
+            'color': forms.Select(attrs={
+                'class': 'form-select'
+            }),
+            'todo_el_dia': forms.CheckboxInput(attrs={
+                'class': 'form-check-input',
+                'onchange': 'toggleTimeFields()'
+            }),
+            'proyecto': forms.Select(attrs={
+                'class': 'form-select'
+            }),
+            'factura': forms.Select(attrs={
+                'class': 'form-select'
+            })
+        }
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Filtrar solo proyectos activos
+        self.fields['proyecto'].queryset = Proyecto.objects.filter(
+            estado__in=['activo', 'en_progreso', 'planificado']
+        ).order_by('nombre')
+        
+        # Filtrar solo facturas pendientes o pagadas
+        self.fields['factura'].queryset = Factura.objects.filter(
+            estado__in=['pendiente', 'pagada']
+        ).order_by('-fecha_creacion')
+    
+    def clean(self):
+        cleaned_data = super().clean()
+        fecha_inicio = cleaned_data.get('fecha_inicio')
+        fecha_fin = cleaned_data.get('fecha_fin')
+        hora_inicio = cleaned_data.get('hora_inicio')
+        hora_fin = cleaned_data.get('hora_fin')
+        todo_el_dia = cleaned_data.get('todo_el_dia')
+        
+        # Validar que la fecha de fin no sea anterior a la fecha de inicio
+        if fecha_fin and fecha_inicio and fecha_fin < fecha_inicio:
+            raise forms.ValidationError('La fecha de fin no puede ser anterior a la fecha de inicio.')
+        
+        # Validar que la hora de fin no sea anterior a la hora de inicio si es el mismo día
+        if not todo_el_dia and hora_inicio and hora_fin and fecha_inicio == fecha_fin:
+            if hora_fin <= hora_inicio:
+                raise forms.ValidationError('La hora de fin debe ser posterior a la hora de inicio.')
+        
+        return cleaned_data

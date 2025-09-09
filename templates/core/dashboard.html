@@ -442,6 +442,112 @@
         font-size: 0.8rem;
         opacity: 0.8;
     }
+    
+    /* Estilos para notificaciones y modales mejorados */
+    .toast {
+        border: none;
+        border-radius: 12px;
+        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+    }
+    
+    .toast-header {
+        border-radius: 12px 12px 0 0;
+        border-bottom: none;
+        font-weight: 600;
+    }
+    
+    .toast-body {
+        background: white;
+        color: #333;
+        border-radius: 0 0 12px 12px;
+        font-weight: 500;
+    }
+    
+    .modal-content {
+        border: none;
+        border-radius: 20px;
+        box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    }
+    
+    .modal-header {
+        border-radius: 20px 20px 0 0;
+        border-bottom: none;
+        padding: 1.5rem;
+    }
+    
+    .modal-body {
+        padding: 2rem;
+    }
+    
+    .modal-footer {
+        border-radius: 0 0 20px 20px;
+        border-top: 1px solid #e9ecef;
+        padding: 1.5rem;
+    }
+    
+    .evento-info {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        border-radius: 15px;
+        padding: 1.5rem;
+        margin: -1rem;
+    }
+    
+    .evento-titulo h4 {
+        color: #2c3e50;
+        font-weight: 700;
+        text-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    }
+    
+    .detail-item {
+        display: flex;
+        align-items: center;
+        padding: 0.5rem 0;
+        border-bottom: 1px solid rgba(0,0,0,0.05);
+    }
+    
+    .detail-item:last-child {
+        border-bottom: none;
+    }
+    
+    .detail-item i {
+        width: 20px;
+        text-align: center;
+    }
+    
+    .color-preview {
+        border-radius: 6px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .form-label {
+        font-weight: 600;
+        color: #2c3e50;
+        margin-bottom: 0.5rem;
+    }
+    
+    .form-control, .form-select {
+        border-radius: 10px;
+        border: 2px solid #e9ecef;
+        padding: 0.75rem 1rem;
+        transition: all 0.3s ease;
+    }
+    
+    .form-control:focus, .form-select:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+    }
+    
+    .btn {
+        border-radius: 10px;
+        font-weight: 600;
+        padding: 0.75rem 1.5rem;
+        transition: all 0.3s ease;
+    }
+    
+    .btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    }
 </style>
 {% endblock %}
 
@@ -648,44 +754,56 @@
         
         <!-- Modal para Agregar Evento -->
         <div class="modal fade" id="modalEvento" tabindex="-1" aria-labelledby="modalEventoLabel" aria-hidden="true">
-            <div class="modal-dialog">
+            <div class="modal-dialog modal-dialog-centered">
                 <div class="modal-content">
-                    <div class="modal-header">
+                    <div class="modal-header" style="background: linear-gradient(135deg, #667eea, #764ba2); color: white;">
                         <h5 class="modal-title" id="modalEventoLabel">
                             <i class="fas fa-calendar-plus me-2"></i>Agregar Nuevo Evento
                         </h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
                         <form id="formEvento">
+                            {% csrf_token %}
                             <div class="mb-3">
-                                <label for="tituloEvento" class="form-label">Título del Evento</label>
-                                <input type="text" class="form-control" id="tituloEvento" required>
+                                <label for="tituloEvento" class="form-label">
+                                    <i class="fas fa-heading me-1"></i>Título del Evento
+                                </label>
+                                <input type="text" class="form-control" id="tituloEvento" placeholder="Ingrese el título del evento" required>
                             </div>
                             <div class="mb-3">
-                                <label for="fechaEvento" class="form-label">Fecha</label>
+                                <label for="fechaEvento" class="form-label">
+                                    <i class="fas fa-calendar-alt me-1"></i>Fecha
+                                </label>
                                 <input type="date" class="form-control" id="fechaEvento" required>
                             </div>
                             <div class="mb-3">
-                                <label for="tipoEvento" class="form-label">Tipo de Evento</label>
+                                <label for="tipoEvento" class="form-label">
+                                    <i class="fas fa-tag me-1"></i>Tipo de Evento
+                                </label>
                                 <select class="form-select" id="tipoEvento" required>
                                     <option value="">Seleccionar tipo...</option>
-                                    <option value="proyecto">Proyecto</option>
-                                    <option value="factura">Factura</option>
-                                    <option value="reunion">Reunión</option>
-                                    <option value="entrega">Entrega</option>
-                                    <option value="otro">Otro</option>
+                                    <option value="proyecto">📋 Proyecto</option>
+                                    <option value="factura">📄 Factura</option>
+                                    <option value="reunion">👥 Reunión</option>
+                                    <option value="entrega">📦 Entrega</option>
+                                    <option value="vencimiento">⏰ Vencimiento</option>
+                                    <option value="otro">📝 Otro</option>
                                 </select>
                             </div>
                             <div class="mb-3">
-                                <label for="descripcionEvento" class="form-label">Descripción</label>
-                                <textarea class="form-control" id="descripcionEvento" rows="3"></textarea>
+                                <label for="descripcionEvento" class="form-label">
+                                    <i class="fas fa-align-left me-1"></i>Descripción
+                                </label>
+                                <textarea class="form-control" id="descripcionEvento" rows="3" placeholder="Descripción opcional del evento"></textarea>
                             </div>
                         </form>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                        <button type="button" class="btn btn-neostructure" onclick="guardarEvento()">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                            <i class="fas fa-times me-1"></i>Cancelar
+                        </button>
+                        <button type="button" class="btn btn-primary" onclick="guardarEvento()">
                             <i class="fas fa-save me-1"></i>Guardar Evento
                         </button>
                     </div>
@@ -760,6 +878,43 @@
 
 <script>
         // jshint ignore:start
+        // Funciones para notificaciones - Definir primero
+        function mostrarNotificacion(mensaje, tipo) {
+            // Crear notificación bonita
+            var notificacionHtml = '<div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 9999;">' +
+                '<div class="toast show" role="alert" aria-live="assertive" aria-atomic="true">' +
+                    '<div class="toast-header ' + (tipo === 'success' ? 'bg-success text-white' : tipo === 'error' ? 'bg-danger text-white' : 'bg-info text-white') + '">' +
+                        '<i class="fas ' + (tipo === 'success' ? 'fa-check-circle' : tipo === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle') + ' me-2"></i>' +
+                        '<strong class="me-auto">Sistema ARCA</strong>' +
+                        '<button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" aria-label="Close"></button>' +
+                    '</div>' +
+                    '<div class="toast-body">' + mensaje + '</div>' +
+                '</div>' +
+            '</div>';
+            
+            // Agregar notificación al body
+            document.body.insertAdjacentHTML('beforeend', notificacionHtml);
+            
+            // Auto-remover después de 5 segundos
+            setTimeout(function() {
+                var toast = document.querySelector('.toast-container');
+                if (toast) {
+                    toast.remove();
+                }
+            }, 5000);
+        }
+        
+        function editarEvento(eventoId) {
+            // Cerrar modal de información
+            const modalInfo = bootstrap.Modal.getInstance(document.getElementById('modalInfoEvento'));
+            if (modalInfo) {
+                modalInfo.hide();
+            }
+            
+            // Aquí podrías implementar la edición del evento
+            mostrarNotificacion('🔧 Función de edición en desarrollo', 'info');
+        }
+        
         // Funciones para el modal de eventos - Definir primero
         function abrirModalEvento(fechaEspecifica = null) {
             // Si se pasa una fecha específica, usarla; si no, usar fecha actual
@@ -780,45 +935,147 @@
             const fecha = document.getElementById('fechaEvento').value;
             const tipo = document.getElementById('tipoEvento').value;
             const descripcion = document.getElementById('descripcionEvento').value;
-            const color = document.getElementById('colorEvento').value || '#667eea';
             
             if (!titulo || !fecha || !tipo) {
                 alert('Complete todos los campos requeridos');
                 return;
             }
             
-            const nuevoEvento = {
-                title: titulo,
-                start: fecha,
-                backgroundColor: color,
-                borderColor: color,
-                extendedProps: {
-                    tipo: tipo,
-                    descripcion: descripcion
-                }
+            // Obtener color basado en el tipo
+            const colores = {
+                'proyecto': '#28a745',
+                'factura': '#dc3545',
+                'reunion': '#667eea',
+                'entrega': '#ffc107',
+                'vencimiento': '#dc3545',
+                'otro': '#6c757d'
             };
             
-            // Agregar evento al calendario
-            if (window.calendar) {
-                window.calendar.addEvent(nuevoEvento);
-            }
+            const color = colores[tipo] || '#667eea';
             
-            // Cerrar modal
-            const modal = bootstrap.Modal.getInstance(document.getElementById('modalEvento'));
-            modal.hide();
+            const eventoData = {
+                titulo: titulo,
+                fecha_inicio: fecha,
+                tipo: tipo,
+                descripcion: descripcion,
+                color: color,
+                todo_el_dia: true
+            };
             
-            // Mostrar mensaje de éxito
-            alert('Evento agregado correctamente');
+            // Enviar evento al servidor via AJAX
+            fetch('{% url "evento_calendario_create_ajax" %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                },
+                body: JSON.stringify(eventoData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Agregar evento al calendario
+                    if (window.calendar) {
+                        window.calendar.addEvent(data.evento);
+                    }
+                    
+                    // Cerrar modal
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('modalEvento'));
+                    modal.hide();
+                    
+                    // Mostrar mensaje de éxito con notificación bonita
+                    mostrarNotificacion('✅ Evento agregado correctamente', 'success');
+                } else {
+                    console.error('Error del servidor:', data);
+                    let errorMsg = 'Error al crear evento: ' + data.message;
+                    if (data.debug) {
+                        console.error('Debug info:', data.debug);
+                        errorMsg += '\n\nDetalles técnicos en la consola del navegador.';
+                    }
+                    mostrarNotificacion('❌ ' + data.message, 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error de red:', error);
+                mostrarNotificacion('❌ Error de conexión al crear evento', 'error');
+            });
         }
         
         function mostrarInfoEvento(evento) {
             const props = evento.extendedProps || {};
-            let mensaje = `📅 ${evento.title}\n\n`;
-            mensaje += `📆 Fecha: ${evento.startStr}\n`;
-            if (props.tipo) mensaje += `🏷️ Tipo: ${props.tipo}\n`;
-            if (props.descripcion) mensaje += `📝 Descripción: ${props.descripcion}\n`;
             
-            alert(mensaje);
+            // Crear modal de información del evento
+            const modalHtml = `
+                <div class="modal fade" id="modalInfoEvento" tabindex="-1" aria-labelledby="modalInfoEventoLabel" aria-hidden="true">
+                    <div class="modal-dialog modal-dialog-centered">
+                        <div class="modal-content">
+                            <div class="modal-header" style="background: linear-gradient(135deg, #667eea, #764ba2); color: white;">
+                                <h5 class="modal-title" id="modalInfoEventoLabel">
+                                    <i class="fas fa-calendar-check me-2"></i>Información del Evento
+                                </h5>
+                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                <div class="evento-info">
+                                    <div class="evento-titulo mb-3">
+                                        <h4 class="text-primary mb-0">${evento.title}</h4>
+                                    </div>
+                                    
+                                    <div class="evento-details">
+                                        <div class="detail-item mb-2">
+                                            <i class="fas fa-calendar-alt text-primary me-2"></i>
+                                            <strong>Fecha:</strong> ${evento.startStr}
+                                        </div>
+                                        
+                                        ${props.tipo ? `
+                                        <div class="detail-item mb-2">
+                                            <i class="fas fa-tag text-success me-2"></i>
+                                            <strong>Tipo:</strong> 
+                                            <span class="badge bg-primary">${props.tipo}</span>
+                                        </div>
+                                        ` : ''}
+                                        
+                                        ${props.descripcion ? `
+                                        <div class="detail-item mb-2">
+                                            <i class="fas fa-align-left text-info me-2"></i>
+                                            <strong>Descripción:</strong>
+                                            <p class="mt-1 mb-0 text-muted">${props.descripcion}</p>
+                                        </div>
+                                        ` : ''}
+                                        
+                                        <div class="detail-item mb-2">
+                                            <i class="fas fa-palette text-warning me-2"></i>
+                                            <strong>Color:</strong>
+                                            <span class="color-preview ms-2" style="background-color: ${evento.backgroundColor}; width: 20px; height: 20px; display: inline-block; border-radius: 4px; border: 1px solid #ddd;"></span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                                    <i class="fas fa-times me-1"></i>Cerrar
+                                </button>
+                                <button type="button" class="btn btn-primary" onclick="editarEvento(${evento.id})">
+                                    <i class="fas fa-edit me-1"></i>Editar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Remover modal anterior si existe
+            const existingModal = document.getElementById('modalInfoEvento');
+            if (existingModal) {
+                existingModal.remove();
+            }
+            
+            // Agregar nuevo modal al body
+            document.body.insertAdjacentHTML('beforeend', modalHtml);
+            
+            // Mostrar modal
+            const modal = new bootstrap.Modal(document.getElementById('modalInfoEvento'));
+            modal.show();
         }
         
         function obtenerColorEvento(tipo) {
@@ -831,7 +1088,7 @@
             };
             return colores[tipo] || '#667eea';
         }
-
+        
         // Gráfico Financiero con datos reales y escala ajustada
             const financialCtx = document.getElementById('financialChart').getContext('2d');
             
@@ -1072,6 +1329,16 @@
                         events: {{ eventos_calendario_json|safe }},
                         eventColor: '#667eea',
                         height: 'auto',
+                        // Configuración para múltiples eventos
+                        dayMaxEvents: 3, // Mostrar hasta 3 eventos por día
+                        moreLinkClick: 'popover', // Mostrar popover con eventos adicionales
+                        eventDisplay: 'block', // Mostrar eventos como bloques
+                        eventTextColor: 'white', // Color del texto de los eventos
+                        eventTimeFormat: {
+                            hour: '2-digit',
+                            minute: '2-digit',
+                            hour12: false
+                        },
                         // Hacer el calendario interactivo
                         selectable: true,
                         select: function(info) {
@@ -1085,6 +1352,11 @@
                             console.log('📝 Evento clickeado:', info.event.title);
                             // Mostrar información del evento
                             mostrarInfoEvento(info.event);
+                        },
+                        // Configuración para mostrar mejor los eventos múltiples
+                        dayMaxEventRows: 3,
+                        moreLinkContent: function(args) {
+                            return `+${args.num} más`;
                         }
                     });
                     

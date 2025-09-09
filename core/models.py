@@ -1423,3 +1423,113 @@ class ConfiguracionSistema(models.Model):
             }
         )
         return config
+
+
+class EventoCalendario(models.Model):
+    """
+    Modelo para eventos del calendario del dashboard
+    """
+    TIPO_CHOICES = [
+        ('proyecto', 'Proyecto'),
+        ('factura', 'Factura'),
+        ('reunion', 'Reunión'),
+        ('entrega', 'Entrega'),
+        ('vencimiento', 'Vencimiento'),
+        ('otro', 'Otro'),
+    ]
+    
+    COLOR_CHOICES = [
+        ('#667eea', 'Azul'),
+        ('#28a745', 'Verde'),
+        ('#dc3545', 'Rojo'),
+        ('#ffc107', 'Amarillo'),
+        ('#17a2b8', 'Cian'),
+        ('#6f42c1', 'Púrpura'),
+        ('#fd7e14', 'Naranja'),
+        ('#20c997', 'Turquesa'),
+    ]
+    
+    titulo = models.CharField(max_length=200, verbose_name="Título del Evento")
+    descripcion = models.TextField(blank=True, null=True, verbose_name="Descripción")
+    fecha_inicio = models.DateField(verbose_name="Fecha de Inicio")
+    fecha_fin = models.DateField(blank=True, null=True, verbose_name="Fecha de Fin")
+    hora_inicio = models.TimeField(blank=True, null=True, verbose_name="Hora de Inicio")
+    hora_fin = models.TimeField(blank=True, null=True, verbose_name="Hora de Fin")
+    tipo = models.CharField(max_length=20, choices=TIPO_CHOICES, default='otro', verbose_name="Tipo de Evento")
+    color = models.CharField(max_length=7, choices=COLOR_CHOICES, default='#667eea', verbose_name="Color")
+    todo_el_dia = models.BooleanField(default=True, verbose_name="Todo el día")
+    creado_por = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name="Creado por")
+    creado_en = models.DateTimeField(auto_now_add=True, verbose_name="Creado en")
+    actualizado_en = models.DateTimeField(auto_now=True, verbose_name="Actualizado en")
+    
+    # Relaciones opcionales
+    proyecto = models.ForeignKey('Proyecto', on_delete=models.SET_NULL, blank=True, null=True, verbose_name="Proyecto relacionado")
+    factura = models.ForeignKey('Factura', on_delete=models.SET_NULL, blank=True, null=True, verbose_name="Factura relacionada")
+    
+    class Meta:
+        verbose_name = 'Evento del Calendario'
+        verbose_name_plural = 'Eventos del Calendario'
+        ordering = ['fecha_inicio', 'hora_inicio']
+    
+    def __str__(self):
+        return f"{self.titulo} - {self.fecha_inicio}"
+    
+    @property
+    def fecha_completa_inicio(self):
+        """Retorna la fecha y hora de inicio combinadas"""
+        if self.hora_inicio:
+            from django.utils import timezone
+            return timezone.datetime.combine(self.fecha_inicio, self.hora_inicio)
+        return self.fecha_inicio
+    
+    @property
+    def fecha_completa_fin(self):
+        """Retorna la fecha y hora de fin combinadas"""
+        if self.fecha_fin and self.hora_fin:
+            from django.utils import timezone
+            return timezone.datetime.combine(self.fecha_fin, self.hora_fin)
+        elif self.fecha_fin:
+            return self.fecha_fin
+        return None
+    
+    def to_calendar_event(self):
+        """Convierte el evento a formato compatible con FullCalendar"""
+        # Asegurar que las fechas sean objetos date/datetime
+        if isinstance(self.fecha_inicio, str):
+            from datetime import datetime
+            fecha_inicio = datetime.strptime(self.fecha_inicio, '%Y-%m-%d').date()
+        else:
+            fecha_inicio = self.fecha_inicio
+            
+        if self.fecha_fin and isinstance(self.fecha_fin, str):
+            from datetime import datetime
+            fecha_fin = datetime.strptime(self.fecha_fin, '%Y-%m-%d').date()
+        else:
+            fecha_fin = self.fecha_fin
+        
+        event_data = {
+            'id': self.id,
+            'title': self.titulo,
+            'start': fecha_inicio.isoformat(),
+            'backgroundColor': self.color,
+            'borderColor': self.color,
+            'extendedProps': {
+                'tipo': self.tipo,
+                'descripcion': self.descripcion or '',
+                'todo_el_dia': self.todo_el_dia,
+                'proyecto_id': self.proyecto.id if self.proyecto else None,
+                'factura_id': self.factura.id if self.factura else None,
+            }
+        }
+        
+        # Agregar fecha de fin si existe
+        if fecha_fin:
+            event_data['end'] = fecha_fin.isoformat()
+        
+        # Agregar hora si no es todo el día
+        if not self.todo_el_dia and self.hora_inicio:
+            event_data['start'] = f"{fecha_inicio.isoformat()}T{self.hora_inicio.isoformat()}"
+            if self.hora_fin:
+                event_data['end'] = f"{fecha_fin.isoformat() if fecha_fin else fecha_inicio.isoformat()}T{self.hora_fin.isoformat()}"
+        
+        return event_data
