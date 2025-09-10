@@ -1,0 +1,1125 @@
+{
+  "modulos": [
+    {
+      "nombre": "proyectos",
+      "descripcion": "Gestión de proyectos",
+      "icono": "fas fa-project-diagram",
+      "orden": 0,
+      "activo": true
+    },
+    {
+      "nombre": "Roles",
+      "descripcion": "Gestión de roles y permisos",
+      "icono": "",
+      "orden": 0,
+      "activo": true
+    },
+    {
+      "nombre": "Permisos",
+      "descripcion": "Gestión de permisos del sistema",
+      "icono": "",
+      "orden": 0,
+      "activo": true
+    },
+    {
+      "nombre": "Dashboard",
+      "descripcion": "Panel principal del sistema",
+      "icono": "fas fa-tachometer-alt",
+      "orden": 1,
+      "activo": true
+    },
+    {
+      "nombre": "clientes",
+      "descripcion": "Gestión de clientes",
+      "icono": "fas fa-users",
+      "orden": 1,
+      "activo": true
+    },
+    {
+      "nombre": "colaboradores",
+      "descripcion": "Gestión de colaboradores",
+      "icono": "fas fa-user-tie",
+      "orden": 2,
+      "activo": true
+    },
+    {
+      "nombre": "facturas",
+      "descripcion": "Gestión de facturas",
+      "icono": "fas fa-file-invoice",
+      "orden": 3,
+      "activo": true
+    },
+    {
+      "nombre": "gastos",
+      "descripcion": "Gestión de gastos",
+      "icono": "fas fa-receipt",
+      "orden": 4,
+      "activo": true
+    },
+    {
+      "nombre": "Facturación",
+      "descripcion": "Facturas y pagos",
+      "icono": "fas fa-file-invoice-dollar",
+      "orden": 5,
+      "activo": true
+    },
+    {
+      "nombre": "inventario",
+      "descripcion": "Gestión de inventario",
+      "icono": "fas fa-boxes",
+      "orden": 5,
+      "activo": true
+    },
+    {
+      "nombre": "Usuarios",
+      "descripcion": "Gestión de usuarios",
+      "icono": "",
+      "orden": 6,
+      "activo": true
+    },
+    {
+      "nombre": "Presupuestos",
+      "descripcion": "Presupuestos de proyectos",
+      "icono": "fas fa-calculator",
+      "orden": 7,
+      "activo": true
+    },
+    {
+      "nombre": "Pagos",
+      "descripcion": "Gestión de pagos",
+      "icono": "fas fa-credit-card",
+      "orden": 7,
+      "activo": true
+    },
+    {
+      "nombre": "reportes",
+      "descripcion": "Reportes del sistema",
+      "icono": "fas fa-chart-bar",
+      "orden": 7,
+      "activo": true
+    },
+    {
+      "nombre": "Anticipos",
+      "descripcion": "Gestión de anticipos",
+      "icono": "fas fa-hand-holding-usd",
+      "orden": 8,
+      "activo": true
+    },
+    {
+      "nombre": "Rentabilidad",
+      "descripcion": "Análisis financiero",
+      "icono": "fas fa-chart-line",
+      "orden": 9,
+      "activo": true
+    },
+    {
+      "nombre": "Notificaciones",
+      "descripcion": "Sistema de alertas",
+      "icono": "fas fa-bell",
+      "orden": 10,
+      "activo": true
+    },
+    {
+      "nombre": "Sistema",
+      "descripcion": "Configuración del sistema",
+      "icono": "fas fa-cogs",
+      "orden": 11,
+      "activo": true
+    },
+    {
+      "nombre": "Archivos",
+      "descripcion": "Gestión de archivos y documentos",
+      "icono": "fas fa-folder-open",
+      "orden": 11,
+      "activo": true
+    }
+  ],
+  "permisos": [
+    {
+      "nombre": "Ver Dashboard",
+      "codigo": "dashboard_ver",
+      "descripcion": "Permite ver en el módulo Dashboard",
+      "modulo_nombre": "Dashboard"
+    },
+    {
+      "nombre": "Crear Dashboard",
+      "codigo": "dashboard_crear",
+      "descripcion": "Permite crear en el módulo Dashboard",
+      "modulo_nombre": "Dashboard"
+    },
+    {
+      "nombre": "Editar Dashboard",
+      "codigo": "dashboard_editar",
+      "descripcion": "Permite editar en el módulo Dashboard",
+      "modulo_nombre": "Dashboard"
+    },
+    {
+      "nombre": "Eliminar Dashboard",
+      "codigo": "dashboard_eliminar",
+      "descripcion": "Permite eliminar en el módulo Dashboard",
+      "modulo_nombre": "Dashboard"
+    },
+    {
+      "nombre": "Exportar Dashboard",
+      "codigo": "dashboard_exportar",
+      "descripcion": "Permite exportar en el módulo Dashboard",
+      "modulo_nombre": "Dashboard"
+    },
+    {
+      "nombre": "Ver Facturación",
+      "codigo": "facturación_ver",
+      "descripcion": "Permite ver en el módulo Facturación",
+      "modulo_nombre": "Facturación"
+    },
+    {
+      "nombre": "Crear Facturación",
+      "codigo": "facturación_crear",
+      "descripcion": "Permite crear en el módulo Facturación",
+      "modulo_nombre": "Facturación"
+    },
+    {
+      "nombre": "Editar Facturación",
+      "codigo": "facturación_editar",
+      "descripcion": "Permite editar en el módulo Facturación",
+      "modulo_nombre": "Facturación"
+    },
+    {
+      "nombre": "Eliminar Facturación",
+      "codigo": "facturación_eliminar",
+      "descripcion": "Permite eliminar en el módulo Facturación",
+      "modulo_nombre": "Facturación"
+    },
+    {
+      "nombre": "Exportar Facturación",
+      "codigo": "facturación_exportar",
+      "descripcion": "Permite exportar en el módulo Facturación",
+      "modulo_nombre": "Facturación"
+    },
+    {
+      "nombre": "Ver Presupuestos",
+      "codigo": "presupuestos_ver",
+      "descripcion": "Permite ver en el módulo Presupuestos",
+      "modulo_nombre": "Presupuestos"
+    },
+    {
+      "nombre": "Crear Presupuestos",
+      "codigo": "presupuestos_crear",
+      "descripcion": "Permite crear en el módulo Presupuestos",
+      "modulo_nombre": "Presupuestos"
+    },
+    {
+      "nombre": "Editar Presupuestos",
+      "codigo": "presupuestos_editar",
+      "descripcion": "Permite editar en el módulo Presupuestos",
+      "modulo_nombre": "Presupuestos"
+    },
+    {
+      "nombre": "Eliminar Presupuestos",
+      "codigo": "presupuestos_eliminar",
+      "descripcion": "Permite eliminar en el módulo Presupuestos",
+      "modulo_nombre": "Presupuestos"
+    },
+    {
+      "nombre": "Exportar Presupuestos",
+      "codigo": "presupuestos_exportar",
+      "descripcion": "Permite exportar en el módulo Presupuestos",
+      "modulo_nombre": "Presupuestos"
+    },
+    {
+      "nombre": "Ver Rentabilidad",
+      "codigo": "rentabilidad_ver",
+      "descripcion": "Permite ver en el módulo Rentabilidad",
+      "modulo_nombre": "Rentabilidad"
+    },
+    {
+      "nombre": "Crear Rentabilidad",
+      "codigo": "rentabilidad_crear",
+      "descripcion": "Permite crear en el módulo Rentabilidad",
+      "modulo_nombre": "Rentabilidad"
+    },
+    {
+      "nombre": "Editar Rentabilidad",
+      "codigo": "rentabilidad_editar",
+      "descripcion": "Permite editar en el módulo Rentabilidad",
+      "modulo_nombre": "Rentabilidad"
+    },
+    {
+      "nombre": "Eliminar Rentabilidad",
+      "codigo": "rentabilidad_eliminar",
+      "descripcion": "Permite eliminar en el módulo Rentabilidad",
+      "modulo_nombre": "Rentabilidad"
+    },
+    {
+      "nombre": "Exportar Rentabilidad",
+      "codigo": "rentabilidad_exportar",
+      "descripcion": "Permite exportar en el módulo Rentabilidad",
+      "modulo_nombre": "Rentabilidad"
+    },
+    {
+      "nombre": "Ver Notificaciones",
+      "codigo": "notificaciones_ver",
+      "descripcion": "Permite ver en el módulo Notificaciones",
+      "modulo_nombre": "Notificaciones"
+    },
+    {
+      "nombre": "Crear Notificaciones",
+      "codigo": "notificaciones_crear",
+      "descripcion": "Permite crear en el módulo Notificaciones",
+      "modulo_nombre": "Notificaciones"
+    },
+    {
+      "nombre": "Editar Notificaciones",
+      "codigo": "notificaciones_editar",
+      "descripcion": "Permite editar en el módulo Notificaciones",
+      "modulo_nombre": "Notificaciones"
+    },
+    {
+      "nombre": "Eliminar Notificaciones",
+      "codigo": "notificaciones_eliminar",
+      "descripcion": "Permite eliminar en el módulo Notificaciones",
+      "modulo_nombre": "Notificaciones"
+    },
+    {
+      "nombre": "Exportar Notificaciones",
+      "codigo": "notificaciones_exportar",
+      "descripcion": "Permite exportar en el módulo Notificaciones",
+      "modulo_nombre": "Notificaciones"
+    },
+    {
+      "nombre": "Ver Sistema",
+      "codigo": "sistema_ver",
+      "descripcion": "Permite ver en el módulo Sistema",
+      "modulo_nombre": "Sistema"
+    },
+    {
+      "nombre": "Crear Sistema",
+      "codigo": "sistema_crear",
+      "descripcion": "Permite crear en el módulo Sistema",
+      "modulo_nombre": "Sistema"
+    },
+    {
+      "nombre": "Editar Sistema",
+      "codigo": "sistema_editar",
+      "descripcion": "Permite editar en el módulo Sistema",
+      "modulo_nombre": "Sistema"
+    },
+    {
+      "nombre": "Eliminar Sistema",
+      "codigo": "sistema_eliminar",
+      "descripcion": "Permite eliminar en el módulo Sistema",
+      "modulo_nombre": "Sistema"
+    },
+    {
+      "nombre": "Exportar Sistema",
+      "codigo": "sistema_exportar",
+      "descripcion": "Permite exportar en el módulo Sistema",
+      "modulo_nombre": "Sistema"
+    },
+    {
+      "nombre": "ver_dashboard",
+      "codigo": "",
+      "descripcion": "Ver Dashboard",
+      "modulo_nombre": "Dashboard"
+    },
+    {
+      "nombre": "Ver Usuarios",
+      "codigo": "ver_usuarios",
+      "descripcion": "Permiso para ver en Usuarios",
+      "modulo_nombre": "Usuarios"
+    },
+    {
+      "nombre": "Crear Usuarios",
+      "codigo": "crear_usuarios",
+      "descripcion": "Permiso para crear en Usuarios",
+      "modulo_nombre": "Usuarios"
+    },
+    {
+      "nombre": "Editar Usuarios",
+      "codigo": "editar_usuarios",
+      "descripcion": "Permiso para editar en Usuarios",
+      "modulo_nombre": "Usuarios"
+    },
+    {
+      "nombre": "Eliminar Usuarios",
+      "codigo": "eliminar_usuarios",
+      "descripcion": "Permiso para eliminar en Usuarios",
+      "modulo_nombre": "Usuarios"
+    },
+    {
+      "nombre": "Exportar Usuarios",
+      "codigo": "exportar_usuarios",
+      "descripcion": "Permiso para exportar en Usuarios",
+      "modulo_nombre": "Usuarios"
+    },
+    {
+      "nombre": "Ver Pagos",
+      "codigo": "ver_pagos",
+      "descripcion": "Permiso para ver en Pagos",
+      "modulo_nombre": "Pagos"
+    },
+    {
+      "nombre": "Crear Pagos",
+      "codigo": "crear_pagos",
+      "descripcion": "Permiso para crear en Pagos",
+      "modulo_nombre": "Pagos"
+    },
+    {
+      "nombre": "Editar Pagos",
+      "codigo": "editar_pagos",
+      "descripcion": "Permiso para editar en Pagos",
+      "modulo_nombre": "Pagos"
+    },
+    {
+      "nombre": "Eliminar Pagos",
+      "codigo": "eliminar_pagos",
+      "descripcion": "Permiso para eliminar en Pagos",
+      "modulo_nombre": "Pagos"
+    },
+    {
+      "nombre": "Exportar Pagos",
+      "codigo": "exportar_pagos",
+      "descripcion": "Permiso para exportar en Pagos",
+      "modulo_nombre": "Pagos"
+    },
+    {
+      "nombre": "Ver Anticipos",
+      "codigo": "ver_anticipos",
+      "descripcion": "Permiso para ver en Anticipos",
+      "modulo_nombre": "Anticipos"
+    },
+    {
+      "nombre": "Crear Anticipos",
+      "codigo": "crear_anticipos",
+      "descripcion": "Permiso para crear en Anticipos",
+      "modulo_nombre": "Anticipos"
+    },
+    {
+      "nombre": "Editar Anticipos",
+      "codigo": "editar_anticipos",
+      "descripcion": "Permiso para editar en Anticipos",
+      "modulo_nombre": "Anticipos"
+    },
+    {
+      "nombre": "Eliminar Anticipos",
+      "codigo": "eliminar_anticipos",
+      "descripcion": "Permiso para eliminar en Anticipos",
+      "modulo_nombre": "Anticipos"
+    },
+    {
+      "nombre": "Exportar Anticipos",
+      "codigo": "exportar_anticipos",
+      "descripcion": "Permiso para exportar en Anticipos",
+      "modulo_nombre": "Anticipos"
+    },
+    {
+      "nombre": "Ver Archivos",
+      "codigo": "ver_archivos",
+      "descripcion": "Permiso para ver en Archivos",
+      "modulo_nombre": "Archivos"
+    },
+    {
+      "nombre": "Crear Archivos",
+      "codigo": "crear_archivos",
+      "descripcion": "Permiso para crear en Archivos",
+      "modulo_nombre": "Archivos"
+    },
+    {
+      "nombre": "Editar Archivos",
+      "codigo": "editar_archivos",
+      "descripcion": "Permiso para editar en Archivos",
+      "modulo_nombre": "Archivos"
+    },
+    {
+      "nombre": "Eliminar Archivos",
+      "codigo": "eliminar_archivos",
+      "descripcion": "Permiso para eliminar en Archivos",
+      "modulo_nombre": "Archivos"
+    },
+    {
+      "nombre": "Exportar Archivos",
+      "codigo": "exportar_archivos",
+      "descripcion": "Permiso para exportar en Archivos",
+      "modulo_nombre": "Archivos"
+    },
+    {
+      "nombre": "Ver Roles",
+      "codigo": "ver_roles",
+      "descripcion": "Permiso para ver roles",
+      "modulo_nombre": "Roles"
+    },
+    {
+      "nombre": "Crear Roles",
+      "codigo": "crear_roles",
+      "descripcion": "Permiso para crear roles",
+      "modulo_nombre": "Roles"
+    },
+    {
+      "nombre": "Editar Roles",
+      "codigo": "editar_roles",
+      "descripcion": "Permiso para editar roles",
+      "modulo_nombre": "Roles"
+    },
+    {
+      "nombre": "Eliminar Roles",
+      "codigo": "eliminar_roles",
+      "descripcion": "Permiso para eliminar roles",
+      "modulo_nombre": "Roles"
+    },
+    {
+      "nombre": "Exportar Roles",
+      "codigo": "exportar_roles",
+      "descripcion": "Permiso para exportar roles",
+      "modulo_nombre": "Roles"
+    },
+    {
+      "nombre": "Ver Permisos",
+      "codigo": "ver_permisos",
+      "descripcion": "Permiso para ver permisos",
+      "modulo_nombre": "Permisos"
+    },
+    {
+      "nombre": "Crear Permisos",
+      "codigo": "crear_permisos",
+      "descripcion": "Permiso para crear permisos",
+      "modulo_nombre": "Permisos"
+    },
+    {
+      "nombre": "Editar Permisos",
+      "codigo": "editar_permisos",
+      "descripcion": "Permiso para editar permisos",
+      "modulo_nombre": "Permisos"
+    },
+    {
+      "nombre": "Eliminar Permisos",
+      "codigo": "eliminar_permisos",
+      "descripcion": "Permiso para eliminar permisos",
+      "modulo_nombre": "Permisos"
+    },
+    {
+      "nombre": "Exportar Permisos",
+      "codigo": "exportar_permisos",
+      "descripcion": "Permiso para exportar permisos",
+      "modulo_nombre": "Permisos"
+    }
+  ],
+  "roles": [
+    {
+      "nombre": "encargado de obra",
+      "descripcion": "sadasdas"
+    },
+    {
+      "nombre": "Superusuario",
+      "descripcion": "Acceso completo a todo el sistema. Puede gestionar usuarios, roles y configuraciones del sistema."
+    },
+    {
+      "nombre": "Administrador",
+      "descripcion": "Administrador con permisos amplios. Puede gestionar proyectos, clientes, facturas y reportes."
+    },
+    {
+      "nombre": "Encargado de Proyecto",
+      "descripcion": "Gestión de proyectos y clientes. Puede crear y editar proyectos, gestionar colaboradores y ver reportes."
+    },
+    {
+      "nombre": "Colaborador",
+      "descripcion": "Acceso limitado de solo lectura. Puede ver proyectos asignados y reportes básicos."
+    },
+    {
+      "nombre": "Contador",
+      "descripcion": "Gestión de facturas, pagos y reportes financieros. Acceso completo a módulos financieros."
+    },
+    {
+      "nombre": "sdfsdfdsfds",
+      "descripcion": "sdfsdf"
+    },
+    {
+      "nombre": "Gerente",
+      "descripcion": "Gestión de proyectos y reportes"
+    },
+    {
+      "nombre": "Supervisor",
+      "descripcion": "Supervisión de proyectos"
+    },
+    {
+      "nombre": "Operador",
+      "descripcion": "Operaciones básicas del sistema"
+    },
+    {
+      "nombre": "Consulta",
+      "descripcion": "Solo consulta de información"
+    }
+  ],
+  "rol_permisos": [
+    {
+      "rol_nombre": "Superusuario",
+      "permiso_nombre": "Ver Dashboard"
+    },
+    {
+      "rol_nombre": "Superusuario",
+      "permiso_nombre": "Crear Dashboard"
+    },
+    {
+      "rol_nombre": "Superusuario",
+      "permiso_nombre": "Editar Dashboard"
+    },
+    {
+      "rol_nombre": "Superusuario",
+      "permiso_nombre": "Eliminar Dashboard"
+    },
+    {
+      "rol_nombre": "Superusuario",
+      "permiso_nombre": "Exportar Dashboard"
+    },
+    {
+      "rol_nombre": "Superusuario",
+      "permiso_nombre": "Ver Facturación"
+    },
+    {
+      "rol_nombre": "Superusuario",
+      "permiso_nombre": "Crear Facturación"
+    },
+    {
+      "rol_nombre": "Superusuario",
+      "permiso_nombre": "Editar Facturación"
+    },
+    {
+      "rol_nombre": "Superusuario",
+      "permiso_nombre": "Eliminar Facturación"
+    },
+    {
+      "rol_nombre": "Superusuario",
+      "permiso_nombre": "Exportar Facturación"
+    },
+    {
+      "rol_nombre": "Superusuario",
+      "permiso_nombre": "Ver Presupuestos"
+    },
+    {
+      "rol_nombre": "Superusuario",
+      "permiso_nombre": "Crear Presupuestos"
+    },
+    {
+      "rol_nombre": "Superusuario",
+      "permiso_nombre": "Editar Presupuestos"
+    },
+    {
+      "rol_nombre": "Superusuario",
+      "permiso_nombre": "Eliminar Presupuestos"
+    },
+    {
+      "rol_nombre": "Superusuario",
+      "permiso_nombre": "Exportar Presupuestos"
+    },
+    {
+      "rol_nombre": "Superusuario",
+      "permiso_nombre": "Ver Rentabilidad"
+    },
+    {
+      "rol_nombre": "Superusuario",
+      "permiso_nombre": "Crear Rentabilidad"
+    },
+    {
+      "rol_nombre": "Superusuario",
+      "permiso_nombre": "Editar Rentabilidad"
+    },
+    {
+      "rol_nombre": "Superusuario",
+      "permiso_nombre": "Eliminar Rentabilidad"
+    },
+    {
+      "rol_nombre": "Superusuario",
+      "permiso_nombre": "Exportar Rentabilidad"
+    },
+    {
+      "rol_nombre": "Superusuario",
+      "permiso_nombre": "Ver Notificaciones"
+    },
+    {
+      "rol_nombre": "Superusuario",
+      "permiso_nombre": "Crear Notificaciones"
+    },
+    {
+      "rol_nombre": "Superusuario",
+      "permiso_nombre": "Editar Notificaciones"
+    },
+    {
+      "rol_nombre": "Superusuario",
+      "permiso_nombre": "Eliminar Notificaciones"
+    },
+    {
+      "rol_nombre": "Superusuario",
+      "permiso_nombre": "Exportar Notificaciones"
+    },
+    {
+      "rol_nombre": "Superusuario",
+      "permiso_nombre": "Ver Sistema"
+    },
+    {
+      "rol_nombre": "Superusuario",
+      "permiso_nombre": "Crear Sistema"
+    },
+    {
+      "rol_nombre": "Superusuario",
+      "permiso_nombre": "Editar Sistema"
+    },
+    {
+      "rol_nombre": "Superusuario",
+      "permiso_nombre": "Eliminar Sistema"
+    },
+    {
+      "rol_nombre": "Superusuario",
+      "permiso_nombre": "Exportar Sistema"
+    },
+    {
+      "rol_nombre": "Superusuario",
+      "permiso_nombre": "ver_dashboard"
+    },
+    {
+      "rol_nombre": "Superusuario",
+      "permiso_nombre": "Ver Usuarios"
+    },
+    {
+      "rol_nombre": "Superusuario",
+      "permiso_nombre": "Crear Usuarios"
+    },
+    {
+      "rol_nombre": "Superusuario",
+      "permiso_nombre": "Editar Usuarios"
+    },
+    {
+      "rol_nombre": "Superusuario",
+      "permiso_nombre": "Eliminar Usuarios"
+    },
+    {
+      "rol_nombre": "Superusuario",
+      "permiso_nombre": "Exportar Usuarios"
+    },
+    {
+      "rol_nombre": "Superusuario",
+      "permiso_nombre": "Ver Pagos"
+    },
+    {
+      "rol_nombre": "Superusuario",
+      "permiso_nombre": "Crear Pagos"
+    },
+    {
+      "rol_nombre": "Superusuario",
+      "permiso_nombre": "Editar Pagos"
+    },
+    {
+      "rol_nombre": "Superusuario",
+      "permiso_nombre": "Eliminar Pagos"
+    },
+    {
+      "rol_nombre": "Superusuario",
+      "permiso_nombre": "Exportar Pagos"
+    },
+    {
+      "rol_nombre": "Superusuario",
+      "permiso_nombre": "Ver Anticipos"
+    },
+    {
+      "rol_nombre": "Superusuario",
+      "permiso_nombre": "Crear Anticipos"
+    },
+    {
+      "rol_nombre": "Superusuario",
+      "permiso_nombre": "Editar Anticipos"
+    },
+    {
+      "rol_nombre": "Superusuario",
+      "permiso_nombre": "Eliminar Anticipos"
+    },
+    {
+      "rol_nombre": "Superusuario",
+      "permiso_nombre": "Exportar Anticipos"
+    },
+    {
+      "rol_nombre": "Superusuario",
+      "permiso_nombre": "Ver Archivos"
+    },
+    {
+      "rol_nombre": "Superusuario",
+      "permiso_nombre": "Crear Archivos"
+    },
+    {
+      "rol_nombre": "Superusuario",
+      "permiso_nombre": "Editar Archivos"
+    },
+    {
+      "rol_nombre": "Superusuario",
+      "permiso_nombre": "Eliminar Archivos"
+    },
+    {
+      "rol_nombre": "Superusuario",
+      "permiso_nombre": "Exportar Archivos"
+    },
+    {
+      "rol_nombre": "Administrador",
+      "permiso_nombre": "Ver Dashboard"
+    },
+    {
+      "rol_nombre": "Administrador",
+      "permiso_nombre": "Crear Dashboard"
+    },
+    {
+      "rol_nombre": "Administrador",
+      "permiso_nombre": "Editar Dashboard"
+    },
+    {
+      "rol_nombre": "Administrador",
+      "permiso_nombre": "Eliminar Dashboard"
+    },
+    {
+      "rol_nombre": "Administrador",
+      "permiso_nombre": "Exportar Dashboard"
+    },
+    {
+      "rol_nombre": "Administrador",
+      "permiso_nombre": "Ver Facturación"
+    },
+    {
+      "rol_nombre": "Administrador",
+      "permiso_nombre": "Crear Facturación"
+    },
+    {
+      "rol_nombre": "Administrador",
+      "permiso_nombre": "Editar Facturación"
+    },
+    {
+      "rol_nombre": "Administrador",
+      "permiso_nombre": "Eliminar Facturación"
+    },
+    {
+      "rol_nombre": "Administrador",
+      "permiso_nombre": "Exportar Facturación"
+    },
+    {
+      "rol_nombre": "Administrador",
+      "permiso_nombre": "Ver Presupuestos"
+    },
+    {
+      "rol_nombre": "Administrador",
+      "permiso_nombre": "Crear Presupuestos"
+    },
+    {
+      "rol_nombre": "Administrador",
+      "permiso_nombre": "Editar Presupuestos"
+    },
+    {
+      "rol_nombre": "Administrador",
+      "permiso_nombre": "Eliminar Presupuestos"
+    },
+    {
+      "rol_nombre": "Administrador",
+      "permiso_nombre": "Exportar Presupuestos"
+    },
+    {
+      "rol_nombre": "Administrador",
+      "permiso_nombre": "Ver Rentabilidad"
+    },
+    {
+      "rol_nombre": "Administrador",
+      "permiso_nombre": "Crear Rentabilidad"
+    },
+    {
+      "rol_nombre": "Administrador",
+      "permiso_nombre": "Editar Rentabilidad"
+    },
+    {
+      "rol_nombre": "Administrador",
+      "permiso_nombre": "Eliminar Rentabilidad"
+    },
+    {
+      "rol_nombre": "Administrador",
+      "permiso_nombre": "Exportar Rentabilidad"
+    },
+    {
+      "rol_nombre": "Administrador",
+      "permiso_nombre": "Ver Notificaciones"
+    },
+    {
+      "rol_nombre": "Administrador",
+      "permiso_nombre": "Crear Notificaciones"
+    },
+    {
+      "rol_nombre": "Administrador",
+      "permiso_nombre": "Editar Notificaciones"
+    },
+    {
+      "rol_nombre": "Administrador",
+      "permiso_nombre": "Eliminar Notificaciones"
+    },
+    {
+      "rol_nombre": "Administrador",
+      "permiso_nombre": "Exportar Notificaciones"
+    },
+    {
+      "rol_nombre": "Administrador",
+      "permiso_nombre": "Ver Sistema"
+    },
+    {
+      "rol_nombre": "Administrador",
+      "permiso_nombre": "Crear Sistema"
+    },
+    {
+      "rol_nombre": "Administrador",
+      "permiso_nombre": "Editar Sistema"
+    },
+    {
+      "rol_nombre": "Administrador",
+      "permiso_nombre": "Eliminar Sistema"
+    },
+    {
+      "rol_nombre": "Administrador",
+      "permiso_nombre": "Exportar Sistema"
+    },
+    {
+      "rol_nombre": "Administrador",
+      "permiso_nombre": "ver_dashboard"
+    },
+    {
+      "rol_nombre": "Administrador",
+      "permiso_nombre": "Ver Pagos"
+    },
+    {
+      "rol_nombre": "Administrador",
+      "permiso_nombre": "Crear Pagos"
+    },
+    {
+      "rol_nombre": "Administrador",
+      "permiso_nombre": "Editar Pagos"
+    },
+    {
+      "rol_nombre": "Administrador",
+      "permiso_nombre": "Eliminar Pagos"
+    },
+    {
+      "rol_nombre": "Administrador",
+      "permiso_nombre": "Exportar Pagos"
+    },
+    {
+      "rol_nombre": "Administrador",
+      "permiso_nombre": "Ver Anticipos"
+    },
+    {
+      "rol_nombre": "Administrador",
+      "permiso_nombre": "Crear Anticipos"
+    },
+    {
+      "rol_nombre": "Administrador",
+      "permiso_nombre": "Editar Anticipos"
+    },
+    {
+      "rol_nombre": "Administrador",
+      "permiso_nombre": "Eliminar Anticipos"
+    },
+    {
+      "rol_nombre": "Administrador",
+      "permiso_nombre": "Exportar Anticipos"
+    },
+    {
+      "rol_nombre": "Administrador",
+      "permiso_nombre": "Ver Archivos"
+    },
+    {
+      "rol_nombre": "Administrador",
+      "permiso_nombre": "Crear Archivos"
+    },
+    {
+      "rol_nombre": "Administrador",
+      "permiso_nombre": "Editar Archivos"
+    },
+    {
+      "rol_nombre": "Administrador",
+      "permiso_nombre": "Eliminar Archivos"
+    },
+    {
+      "rol_nombre": "Administrador",
+      "permiso_nombre": "Exportar Archivos"
+    },
+    {
+      "rol_nombre": "Encargado de Proyecto",
+      "permiso_nombre": "Ver Anticipos"
+    },
+    {
+      "rol_nombre": "Encargado de Proyecto",
+      "permiso_nombre": "Crear Anticipos"
+    },
+    {
+      "rol_nombre": "Encargado de Proyecto",
+      "permiso_nombre": "Editar Anticipos"
+    },
+    {
+      "rol_nombre": "Encargado de Proyecto",
+      "permiso_nombre": "Eliminar Anticipos"
+    },
+    {
+      "rol_nombre": "Encargado de Proyecto",
+      "permiso_nombre": "Exportar Anticipos"
+    },
+    {
+      "rol_nombre": "Encargado de Proyecto",
+      "permiso_nombre": "Ver Archivos"
+    },
+    {
+      "rol_nombre": "Encargado de Proyecto",
+      "permiso_nombre": "Crear Archivos"
+    },
+    {
+      "rol_nombre": "Encargado de Proyecto",
+      "permiso_nombre": "Editar Archivos"
+    },
+    {
+      "rol_nombre": "Encargado de Proyecto",
+      "permiso_nombre": "Eliminar Archivos"
+    },
+    {
+      "rol_nombre": "Encargado de Proyecto",
+      "permiso_nombre": "Exportar Archivos"
+    },
+    {
+      "rol_nombre": "Encargado de Proyecto",
+      "permiso_nombre": "Ver Dashboard"
+    },
+    {
+      "rol_nombre": "Encargado de Proyecto",
+      "permiso_nombre": "Crear Dashboard"
+    },
+    {
+      "rol_nombre": "Encargado de Proyecto",
+      "permiso_nombre": "Editar Dashboard"
+    },
+    {
+      "rol_nombre": "Encargado de Proyecto",
+      "permiso_nombre": "Eliminar Dashboard"
+    },
+    {
+      "rol_nombre": "Encargado de Proyecto",
+      "permiso_nombre": "Exportar Dashboard"
+    },
+    {
+      "rol_nombre": "Encargado de Proyecto",
+      "permiso_nombre": "ver_dashboard"
+    },
+    {
+      "rol_nombre": "Colaborador",
+      "permiso_nombre": "ver_dashboard"
+    },
+    {
+      "rol_nombre": "Contador",
+      "permiso_nombre": "Ver Dashboard"
+    },
+    {
+      "rol_nombre": "Contador",
+      "permiso_nombre": "Crear Dashboard"
+    },
+    {
+      "rol_nombre": "Contador",
+      "permiso_nombre": "Editar Dashboard"
+    },
+    {
+      "rol_nombre": "Contador",
+      "permiso_nombre": "Eliminar Dashboard"
+    },
+    {
+      "rol_nombre": "Contador",
+      "permiso_nombre": "Exportar Dashboard"
+    },
+    {
+      "rol_nombre": "Contador",
+      "permiso_nombre": "ver_dashboard"
+    },
+    {
+      "rol_nombre": "Contador",
+      "permiso_nombre": "Ver Pagos"
+    },
+    {
+      "rol_nombre": "Contador",
+      "permiso_nombre": "Crear Pagos"
+    },
+    {
+      "rol_nombre": "Contador",
+      "permiso_nombre": "Editar Pagos"
+    },
+    {
+      "rol_nombre": "Contador",
+      "permiso_nombre": "Eliminar Pagos"
+    },
+    {
+      "rol_nombre": "Contador",
+      "permiso_nombre": "Exportar Pagos"
+    },
+    {
+      "rol_nombre": "Contador",
+      "permiso_nombre": "Ver Rentabilidad"
+    },
+    {
+      "rol_nombre": "Contador",
+      "permiso_nombre": "Crear Rentabilidad"
+    },
+    {
+      "rol_nombre": "Contador",
+      "permiso_nombre": "Editar Rentabilidad"
+    },
+    {
+      "rol_nombre": "Contador",
+      "permiso_nombre": "Eliminar Rentabilidad"
+    },
+    {
+      "rol_nombre": "Contador",
+      "permiso_nombre": "Exportar Rentabilidad"
+    },
+    {
+      "rol_nombre": "encargado de obra",
+      "permiso_nombre": "Ver Archivos"
+    },
+    {
+      "rol_nombre": "encargado de obra",
+      "permiso_nombre": "Crear Archivos"
+    },
+    {
+      "rol_nombre": "encargado de obra",
+      "permiso_nombre": "Exportar Archivos"
+    },
+    {
+      "rol_nombre": "Superusuario",
+      "permiso_nombre": "Ver Roles"
+    },
+    {
+      "rol_nombre": "Superusuario",
+      "permiso_nombre": "Crear Roles"
+    },
+    {
+      "rol_nombre": "Superusuario",
+      "permiso_nombre": "Editar Roles"
+    },
+    {
+      "rol_nombre": "Superusuario",
+      "permiso_nombre": "Eliminar Roles"
+    },
+    {
+      "rol_nombre": "Superusuario",
+      "permiso_nombre": "Exportar Roles"
+    },
+    {
+      "rol_nombre": "Superusuario",
+      "permiso_nombre": "Ver Permisos"
+    },
+    {
+      "rol_nombre": "Superusuario",
+      "permiso_nombre": "Crear Permisos"
+    },
+    {
+      "rol_nombre": "Superusuario",
+      "permiso_nombre": "Editar Permisos"
+    },
+    {
+      "rol_nombre": "Superusuario",
+      "permiso_nombre": "Eliminar Permisos"
+    },
+    {
+      "rol_nombre": "Superusuario",
+      "permiso_nombre": "Exportar Permisos"
+    }
+  ]
+}
