@@ -168,12 +168,12 @@
                             <label for="{{ form.color.id_for_label }}" class="form-label">
                                 <strong>Color *</strong>
                             </label>
-                            <div class="input-group">
-                                {{ form.color }}
-                                <span class="input-group-text">
-                                    <div class="color-preview" id="colorPreview" style="width: 20px; height: 20px; background-color: #007bff; border-radius: 4px; border: 1px solid #ddd;"></div>
-                                </span>
+                            {{ form.color }}
+                            <div class="mt-2">
+                                <small class="text-muted">Vista previa del color:</small>
+                                <div class="color-preview" id="colorPreview" style="width: 30px; height: 30px; background-color: #007bff; border-radius: 4px; border: 1px solid #ddd; display: inline-block; margin-left: 10px;"></div>
                             </div>
+                            
                             
                             <!-- Selector de colores visual -->
                             <div class="color-picker">
@@ -210,6 +210,7 @@
                                 <strong>Icono *</strong>
                             </label>
                             {{ form.icono }}
+                            
                             
                             <!-- Selector de iconos visual -->
                             <div class="icon-picker">
@@ -389,6 +390,13 @@ document.addEventListener('DOMContentLoaded', function() {
         descInput: descInput
     });
     
+    // Debug adicional para verificar IDs
+    console.log('IDs de los campos:');
+    console.log('Color ID:', '{{ form.color.id }}');
+    console.log('Icono ID:', '{{ form.icono.id }}');
+    console.log('Nombre ID:', '{{ form.nombre.id }}');
+    console.log('Descripción ID:', '{{ form.descripcion.id }}');
+    
     // Elementos de preview
     const colorPreview = document.getElementById('colorPreview');
     const previewIcon = document.getElementById('previewIcon');
@@ -413,7 +421,11 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Función para actualizar preview del color
     function updateColorPreview() {
-        const color = colorInput ? colorInput.value || '#007bff' : '#007bff';
+        let colorField = colorInput;
+        if (!colorField) {
+            colorField = document.querySelector('input[name="color"]');
+        }
+        const color = colorField ? colorField.value || '#007bff' : '#007bff';
         if (colorPreview) {
             colorPreview.style.backgroundColor = color;
         }
@@ -425,7 +437,11 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Función para actualizar preview del icono
     function updateIconPreview() {
-        const iconClass = iconInput ? iconInput.value || 'fas fa-tools' : 'fas fa-tools';
+        let iconField = iconInput;
+        if (!iconField) {
+            iconField = document.querySelector('input[name="icono"]');
+        }
+        const iconClass = iconField ? iconField.value || 'fas fa-tools' : 'fas fa-tools';
         if (previewIcon) {
             previewIcon.innerHTML = `<i class="${iconClass}"></i>`;
         }
@@ -445,8 +461,16 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // Event listeners para inputs
-    if (colorInput) colorInput.addEventListener('input', updateColorPreview);
-    if (iconInput) iconInput.addEventListener('input', updateIconPreview);
+    if (colorInput) {
+        colorInput.addEventListener('input', updateColorPreview);
+        colorInput.addEventListener('change', updateColorPreview);
+        colorInput.addEventListener('blur', updateColorPreview);
+    }
+    if (iconInput) {
+        iconInput.addEventListener('input', updateIconPreview);
+        iconInput.addEventListener('change', updateIconPreview);
+        iconInput.addEventListener('blur', updateIconPreview);
+    }
     if (nameInput) nameInput.addEventListener('input', updateNamePreview);
     if (descInput) descInput.addEventListener('input', updateDescPreview);
     
@@ -466,10 +490,19 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Seleccionar actual
                 this.classList.add('selected');
                 
+                // Buscar el input de color de nuevo por si no se encontró antes
+                let colorField = colorInput;
+                if (!colorField) {
+                    colorField = document.querySelector('input[name="color"]');
+                    console.log('Buscando campo color alternativo:', colorField);
+                }
+                
                 // Actualizar input y preview
-                if (colorInput) {
-                    colorInput.value = color;
-                    console.log('Color actualizado en input:', colorInput.value);
+                if (colorField) {
+                    colorField.value = color;
+                    console.log('Color actualizado en input:', colorField.value);
+                } else {
+                    console.error('No se pudo encontrar el campo de color');
                 }
                 updateColorPreview();
             });
@@ -494,10 +527,19 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Seleccionar actual
                 this.classList.add('selected');
                 
+                // Buscar el input de icono de nuevo por si no se encontró antes
+                let iconField = iconInput;
+                if (!iconField) {
+                    iconField = document.querySelector('input[name="icono"]');
+                    console.log('Buscando campo icono alternativo:', iconField);
+                }
+                
                 // Actualizar input y preview
-                if (iconInput) {
-                    iconInput.value = iconClass;
-                    console.log('Icono actualizado en input:', iconInput.value);
+                if (iconField) {
+                    iconField.value = iconClass;
+                    console.log('Icono actualizado en input:', iconField.value);
+                } else {
+                    console.error('No se pudo encontrar el campo de icono');
                 }
                 updateIconPreview();
             });
@@ -538,6 +580,27 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Ejecutar debug
     debugInfo();
+    
+    // Debug del formulario - verificar datos antes de enviar
+    const form = document.querySelector('form');
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            console.log('=== DATOS DEL FORMULARIO ===');
+            console.log('Color:', colorInput ? colorInput.value : 'No encontrado');
+            console.log('Icono:', iconInput ? iconInput.value : 'No encontrado');
+            console.log('Nombre:', nameInput ? nameInput.value : 'No encontrado');
+            console.log('Descripción:', descInput ? descInput.value : 'No encontrado');
+            
+            // Verificar que los campos tengan valores
+            if (colorInput && !colorInput.value) {
+                console.error('❌ Campo color está vacío');
+            }
+            if (iconInput && !iconInput.value) {
+                console.error('❌ Campo icono está vacío');
+            }
+            console.log('============================');
+        });
+    }
     
     // Aplicar clases de Bootstrap a los campos del formulario
     const formFields = document.querySelectorAll('input, textarea, select');

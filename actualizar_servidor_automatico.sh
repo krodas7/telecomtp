@@ -269,3 +269,5 @@ find $BACKUP_DIR -name "backup_*.sql.gz" -mtime +7 -delete 2>/dev/null || true
 find $BACKUP_DIR -name "code_backup_*.tar.gz" -mtime +7 -delete 2>/dev/null || true
 print_success "Limpieza completada"
 
+
+
