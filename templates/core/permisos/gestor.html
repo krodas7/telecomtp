@@ -1,0 +1,566 @@
+{% extends "base.html" %}
+{% load custom_filters %}
+
+{% block title %}Gestor de Permisos - Sistema de Construcción{% endblock %}
+
+{% block extra_css %}
+<style>
+    .gestor-hero {
+        background: linear-gradient(135deg, #6f42c1 0%, #e83e8c 100%);
+        color: white;
+        padding: 3rem 2rem;
+        border-radius: 20px;
+        margin-bottom: 2rem;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .gestor-hero::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="white" opacity="0.1"/><circle cx="75" cy="75" r="1" fill="white" opacity="0.1"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+        opacity: 0.3;
+    }
+    
+    .gestor-hero-content {
+        position: relative;
+        z-index: 2;
+    }
+    
+    .gestor-container {
+        background: white;
+        border-radius: 20px;
+        padding: 2rem;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        margin-bottom: 2rem;
+    }
+    
+    .roles-sidebar {
+        background: #f8f9fa;
+        border-radius: 15px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    
+    .rol-item {
+        background: white;
+        border: 2px solid #dee2e6;
+        border-radius: 10px;
+        padding: 1rem;
+        margin-bottom: 0.5rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .rol-item:hover {
+        border-color: var(--azul-acero);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    
+    .rol-item.active {
+        border-color: var(--azul-acero);
+        background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+    }
+    
+    .rol-nombre {
+        font-weight: 600;
+        color: var(--azul-acero);
+        margin-bottom: 0.25rem;
+    }
+    
+    .rol-descripcion {
+        font-size: 0.85rem;
+        color: #6c757d;
+        margin: 0;
+    }
+    
+    .permisos-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 1.5rem;
+    }
+    
+    .modulo-card {
+        background: white;
+        border: 1px solid #dee2e6;
+        border-radius: 15px;
+        overflow: hidden;
+        transition: all 0.3s ease;
+    }
+    
+    .modulo-card:hover {
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        transform: translateY(-2px);
+    }
+    
+    .modulo-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 1rem 1.5rem;
+    }
+    
+    .modulo-title {
+        font-weight: 600;
+        margin: 0;
+        display: flex;
+        align-items: center;
+    }
+    
+    .modulo-title i {
+        margin-right: 0.5rem;
+        font-size: 1.1rem;
+    }
+    
+    .modulo-body {
+        padding: 1.5rem;
+    }
+    
+    .permiso-item {
+        background: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        padding: 0.75rem;
+        margin-bottom: 0.5rem;
+        transition: all 0.3s ease;
+    }
+    
+    .permiso-item:hover {
+        background: #e9ecef;
+        border-color: var(--azul-acero);
+    }
+    
+    .permiso-checkbox {
+        display: flex;
+        align-items: center;
+        margin: 0;
+    }
+    
+    .permiso-checkbox input[type="checkbox"] {
+        margin-right: 0.75rem;
+        transform: scale(1.2);
+    }
+    
+    .permiso-label {
+        font-weight: 500;
+        color: var(--azul-acero);
+        margin: 0;
+        flex-grow: 1;
+    }
+    
+    .permiso-tipo {
+        background: var(--azul-acero);
+        color: white;
+        padding: 0.25rem 0.5rem;
+        border-radius: 12px;
+        font-size: 0.75rem;
+        font-weight: 500;
+    }
+    
+    .btn-guardar {
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        border: none;
+        padding: 0.75rem 2rem;
+        border-radius: 25px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(40,167,69,0.3);
+    }
+    
+    .btn-guardar:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 6px 20px rgba(40,167,69,0.4);
+    }
+    
+    .btn-cancelar {
+        background: linear-gradient(135deg, #6c757d 0%, #545b62 100%);
+        border: none;
+        padding: 0.75rem 2rem;
+        border-radius: 25px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-cancelar:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 6px 20px rgba(108,117,125,0.4);
+    }
+    
+    .select-all-controls {
+        background: #e3f2fd;
+        border: 1px solid #bbdefb;
+        border-radius: 10px;
+        padding: 1rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .select-all-controls h6 {
+        color: var(--azul-acero);
+        margin: 0 0 0.5rem 0;
+        font-weight: 600;
+    }
+    
+    .select-all-buttons {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+    }
+    
+    .btn-select-all {
+        background: var(--azul-acero);
+        color: white;
+        border: none;
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 500;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-select-all:hover {
+        background: #0056b3;
+        transform: translateY(-2px);
+    }
+    
+    .no-rol-selected {
+        text-align: center;
+        padding: 4rem 2rem;
+        color: #6c757d;
+    }
+    
+    .no-rol-selected i {
+        font-size: 4rem;
+        margin-bottom: 1rem;
+        opacity: 0.5;
+    }
+    
+    .rol-stats {
+        background: white;
+        border-radius: 10px;
+        padding: 1rem;
+        margin-top: 1rem;
+        border: 1px solid #dee2e6;
+    }
+    
+    .rol-stat {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.5rem 0;
+        border-bottom: 1px solid #f1f3f4;
+    }
+    
+    .rol-stat:last-child {
+        border-bottom: none;
+    }
+    
+    .rol-stat-label {
+        font-weight: 500;
+        color: var(--azul-acero);
+    }
+    
+    .rol-stat-value {
+        background: var(--azul-acero);
+        color: white;
+        padding: 0.25rem 0.75rem;
+        border-radius: 15px;
+        font-size: 0.85rem;
+        font-weight: 600;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<div class="gestor-hero">
+    <div class="gestor-hero-content">
+        <h1 class="mb-3">
+            <i class="fas fa-key me-3"></i>Gestor de Permisos
+        </h1>
+        <p class="mb-0">Administra los permisos de cada rol de forma visual e intuitiva</p>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Sidebar de Roles -->
+    <div class="col-md-3">
+        <div class="roles-sidebar">
+            <h5 class="mb-3">
+                <i class="fas fa-users me-2"></i>Roles del Sistema
+            </h5>
+            
+            {% for rol in roles %}
+            <div class="rol-item" onclick="seleccionarRol({{ rol.id }}, '{{ rol.nombre }}')" 
+                 id="rol_{{ rol.id }}">
+                <div class="rol-nombre">{{ rol.nombre }}</div>
+                <div class="rol-descripcion">{{ rol.descripcion|default:"Sin descripción" }}</div>
+                
+                <div class="rol-stats">
+                    <div class="rol-stat">
+                        <span class="rol-stat-label">Permisos:</span>
+                        <span class="rol-stat-value" id="permisos_count_{{ rol.id }}">
+                            {{ matriz_permisos|get_item:rol.id|length }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    
+    <!-- Área de Permisos -->
+    <div class="col-md-9">
+        <div class="gestor-container">
+            <div id="no-rol-selected" class="no-rol-selected">
+                <i class="fas fa-hand-pointer"></i>
+                <h5>Selecciona un rol</h5>
+                <p>Elige un rol de la izquierda para gestionar sus permisos</p>
+            </div>
+            
+            <div id="permisos-container" style="display: none;">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h4 id="rol-seleccionado-titulo">
+                        <i class="fas fa-user-tag me-2"></i>Permisos del Rol
+                    </h4>
+                    <div>
+                        <button type="button" class="btn btn-guardar" onclick="guardarPermisos()">
+                            <i class="fas fa-save me-2"></i>Guardar Cambios
+                        </button>
+                        <a href="{% url 'roles_lista_mejorada' %}" class="btn btn-cancelar">
+                            <i class="fas fa-arrow-left me-2"></i>Volver
+                        </a>
+                    </div>
+                </div>
+                
+                <!-- Controles de Selección Masiva -->
+                <div class="select-all-controls">
+                    <h6>
+                        <i class="fas fa-magic me-1"></i>
+                        Selección Rápida
+                    </h6>
+                    <div class="select-all-buttons">
+                        <button type="button" class="btn btn-select-all" onclick="seleccionarTodos()">
+                            <i class="fas fa-check-square me-1"></i>Seleccionar Todos
+                        </button>
+                        <button type="button" class="btn btn-select-all" onclick="deseleccionarTodos()">
+                            <i class="fas fa-square me-1"></i>Deseleccionar Todos
+                        </button>
+                        <button type="button" class="btn btn-select-all" onclick="seleccionarPorTipo('ver')">
+                            <i class="fas fa-eye me-1"></i>Solo Ver
+                        </button>
+                        <button type="button" class="btn btn-select-all" onclick="seleccionarPorTipo('crear')">
+                            <i class="fas fa-plus me-1"></i>Solo Crear
+                        </button>
+                        <button type="button" class="btn btn-select-all" onclick="seleccionarPorTipo('editar')">
+                            <i class="fas fa-edit me-1"></i>Solo Editar
+                        </button>
+                        <button type="button" class="btn btn-select-all" onclick="seleccionarPorTipo('eliminar')">
+                            <i class="fas fa-trash me-1"></i>Solo Eliminar
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Módulos y Permisos -->
+                <div class="permisos-grid">
+                    {% for modulo, permisos in permisos_por_modulo.items %}
+                    <div class="modulo-card">
+                        <div class="modulo-header">
+                            <div class="modulo-title">
+                                <i class="{{ modulo.icono|default:'fas fa-th-large' }}"></i>
+                                {{ modulo.nombre }}
+                            </div>
+                        </div>
+                        <div class="modulo-body">
+                            {% if permisos %}
+                                {% for permiso in permisos %}
+                                <div class="permiso-item">
+                                    <label class="permiso-checkbox">
+                                        <input type="checkbox" 
+                                               class="permiso-check" 
+                                               data-permiso-id="{{ permiso.id }}"
+                                               data-tipo="{{ permiso.tipo }}">
+                                        <span class="permiso-label">{{ permiso.nombre }}</span>
+                                        <span class="permiso-tipo">{{ permiso.get_tipo_display }}</span>
+                                    </label>
+                                </div>
+                                {% endfor %}
+                            {% else %}
+                                <div class="text-center text-muted py-2">
+                                    <i class="fas fa-exclamation-triangle me-2"></i>
+                                    No hay permisos disponibles
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let rolSeleccionado = null;
+let permisosOriginales = {{ matriz_permisos|safe }};
+
+function seleccionarRol(rolId, rolNombre) {
+    // Actualizar UI
+    document.querySelectorAll('.rol-item').forEach(item => {
+        item.classList.remove('active');
+    });
+    document.getElementById('rol_' + rolId).classList.add('active');
+    
+    // Mostrar área de permisos
+    document.getElementById('no-rol-selected').style.display = 'none';
+    document.getElementById('permisos-container').style.display = 'block';
+    
+    // Actualizar título
+    document.getElementById('rol-seleccionado-titulo').innerHTML = 
+        '<i class="fas fa-user-tag me-2"></i>Permisos del Rol: ' + rolNombre;
+    
+    // Cargar permisos del rol
+    rolSeleccionado = rolId;
+    cargarPermisosRol(rolId);
+}
+
+function cargarPermisosRol(rolId) {
+    const permisosRol = permisosOriginales[rolId] || [];
+    
+    // Desmarcar todos los checkboxes
+    document.querySelectorAll('.permiso-check').forEach(checkbox => {
+        checkbox.checked = false;
+    });
+    
+    // Marcar los permisos del rol
+    permisosRol.forEach(permisoId => {
+        const checkbox = document.querySelector(`input[data-permiso-id="${permisoId}"]`);
+        if (checkbox) {
+            checkbox.checked = true;
+        }
+    });
+}
+
+function seleccionarTodos() {
+    document.querySelectorAll('.permiso-check').forEach(checkbox => {
+        checkbox.checked = true;
+    });
+}
+
+function deseleccionarTodos() {
+    document.querySelectorAll('.permiso-check').forEach(checkbox => {
+        checkbox.checked = false;
+    });
+}
+
+function seleccionarPorTipo(tipo) {
+    document.querySelectorAll('.permiso-check').forEach(checkbox => {
+        if (checkbox.dataset.tipo === tipo) {
+            checkbox.checked = true;
+        } else {
+            checkbox.checked = false;
+        }
+    });
+}
+
+function guardarPermisos() {
+    if (!rolSeleccionado) {
+        alert('Por favor selecciona un rol primero');
+        return;
+    }
+    
+    const permisosSeleccionados = [];
+    document.querySelectorAll('.permiso-check:checked').forEach(checkbox => {
+        permisosSeleccionados.push(parseInt(checkbox.dataset.permisoId));
+    });
+    
+    // Mostrar loading
+    const btnGuardar = document.querySelector('.btn-guardar');
+    const textoOriginal = btnGuardar.innerHTML;
+    btnGuardar.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Guardando...';
+    btnGuardar.disabled = true;
+    
+    // Enviar datos
+    fetch('{% url "permisos_actualizar_masivo" %}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        },
+        body: JSON.stringify({
+            rol_id: rolSeleccionado,
+            permisos_ids: permisosSeleccionados
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Actualizar contador de permisos
+            const contador = document.getElementById('permisos_count_' + rolSeleccionado);
+            if (contador) {
+                contador.textContent = permisosSeleccionados.length;
+            }
+            
+            // Mostrar mensaje de éxito
+            alert('Permisos actualizados exitosamente');
+        } else {
+            alert('Error al actualizar permisos: ' + data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error al actualizar permisos');
+    })
+    .finally(() => {
+        // Restaurar botón
+        btnGuardar.innerHTML = textoOriginal;
+        btnGuardar.disabled = false;
+    });
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Animación de entrada
+    const cards = document.querySelectorAll('.gestor-container, .roles-sidebar');
+    cards.forEach((card, index) => {
+        card.style.opacity = '0';
+        card.style.transform = 'translateY(30px)';
+        
+        setTimeout(() => {
+            card.style.transition = 'all 0.8s ease';
+            card.style.opacity = '1';
+            card.style.transform = 'translateY(0)';
+        }, index * 200);
+    });
+    
+    // Efecto hover para las tarjetas de módulos
+    const moduloCards = document.querySelectorAll('.modulo-card');
+    moduloCards.forEach(card => {
+        card.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-2px)';
+        });
+        
+        card.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(0)';
+        });
+    });
+    
+    // Efecto hover para los items de permisos
+    const permisoItems = document.querySelectorAll('.permiso-item');
+    permisoItems.forEach(item => {
+        item.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-1px)';
+        });
+        
+        item.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(0)';
+        });
+    });
+});
+</script>
+{% endblock %}

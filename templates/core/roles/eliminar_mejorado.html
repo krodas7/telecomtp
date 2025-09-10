@@ -1,0 +1,371 @@
+{% extends "base.html" %}
+{% load custom_filters %}
+
+{% block title %}Eliminar Rol - Sistema de Construcción{% endblock %}
+
+{% block extra_css %}
+<style>
+    .eliminar-rol-hero {
+        background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+        color: white;
+        padding: 3rem 2rem;
+        border-radius: 20px;
+        margin-bottom: 2rem;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .eliminar-rol-hero::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="white" opacity="0.1"/><circle cx="75" cy="75" r="1" fill="white" opacity="0.1"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+        opacity: 0.3;
+    }
+    
+    .eliminar-rol-hero-content {
+        position: relative;
+        z-index: 2;
+    }
+    
+    .confirm-container {
+        background: white;
+        border-radius: 20px;
+        padding: 2rem;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        margin-bottom: 2rem;
+    }
+    
+    .rol-info-card {
+        background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+        border: 2px solid #ffc107;
+        border-radius: 15px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        text-align: center;
+    }
+    
+    .rol-nombre {
+        font-size: 2rem;
+        font-weight: 700;
+        color: #856404;
+        margin-bottom: 1rem;
+    }
+    
+    .rol-descripcion {
+        font-size: 1.1rem;
+        color: #856404;
+        margin-bottom: 1.5rem;
+    }
+    
+    .rol-stats {
+        display: flex;
+        justify-content: center;
+        gap: 2rem;
+        flex-wrap: wrap;
+    }
+    
+    .rol-stat {
+        background: rgba(255,255,255,0.8);
+        padding: 1rem 1.5rem;
+        border-radius: 15px;
+        text-align: center;
+        min-width: 120px;
+    }
+    
+    .rol-stat-number {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #856404;
+        display: block;
+    }
+    
+    .rol-stat-label {
+        font-size: 0.85rem;
+        color: #856404;
+        margin-top: 0.25rem;
+    }
+    
+    .warning-section {
+        background: #f8d7da;
+        border: 1px solid #f5c6cb;
+        border-radius: 15px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    
+    .warning-title {
+        color: #721c24;
+        font-weight: 600;
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+    }
+    
+    .warning-title i {
+        margin-right: 0.5rem;
+        font-size: 1.2rem;
+    }
+    
+    .warning-list {
+        color: #721c24;
+        margin: 0;
+        padding-left: 1.5rem;
+    }
+    
+    .warning-list li {
+        margin-bottom: 0.5rem;
+    }
+    
+    .btn-eliminar {
+        background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+        border: none;
+        padding: 0.75rem 2rem;
+        border-radius: 25px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(220,53,69,0.3);
+        color: white;
+    }
+    
+    .btn-eliminar:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 6px 20px rgba(220,53,69,0.4);
+    }
+    
+    .btn-cancelar {
+        background: linear-gradient(135deg, #6c757d 0%, #545b62 100%);
+        border: none;
+        padding: 0.75rem 2rem;
+        border-radius: 25px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        color: white;
+    }
+    
+    .btn-cancelar:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 6px 20px rgba(108,117,125,0.4);
+    }
+    
+    .usuarios-afectados {
+        background: #d1ecf1;
+        border: 1px solid #bee5eb;
+        border-radius: 10px;
+        padding: 1rem;
+        margin-top: 1rem;
+    }
+    
+    .usuarios-afectados h6 {
+        color: #0c5460;
+        margin-bottom: 0.5rem;
+        font-weight: 600;
+    }
+    
+    .usuarios-afectados p {
+        color: #0c5460;
+        margin: 0;
+        font-size: 0.9rem;
+    }
+    
+    .confirmation-checkbox {
+        background: #f8f9fa;
+        border: 2px solid #dee2e6;
+        border-radius: 10px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    
+    .confirmation-checkbox .form-check {
+        margin: 0;
+    }
+    
+    .confirmation-checkbox .form-check-input {
+        transform: scale(1.3);
+        margin-right: 1rem;
+    }
+    
+    .confirmation-checkbox .form-check-label {
+        font-weight: 600;
+        color: #dc3545;
+        font-size: 1.1rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<div class="eliminar-rol-hero">
+    <div class="eliminar-rol-hero-content">
+        <h1 class="mb-3">
+            <i class="fas fa-exclamation-triangle me-3"></i>Eliminar Rol
+        </h1>
+        <p class="mb-0">Esta acción no se puede deshacer</p>
+    </div>
+</div>
+
+<!-- Información del Rol -->
+<div class="rol-info-card">
+    <div class="rol-nombre">{{ rol.nombre }}</div>
+    <div class="rol-descripcion">
+        {{ rol.descripcion|default:"Sin descripción" }}
+    </div>
+    
+    <div class="rol-stats">
+        <div class="rol-stat">
+            <span class="rol-stat-number">{{ usuarios_con_rol }}</span>
+            <span class="rol-stat-label">Usuarios Asignados</span>
+        </div>
+        <div class="rol-stat">
+            <span class="rol-stat-number">{{ rol.permisos_count|default:0 }}</span>
+            <span class="rol-stat-label">Permisos</span>
+        </div>
+    </div>
+</div>
+
+<!-- Advertencias -->
+<div class="warning-section">
+    <div class="warning-title">
+        <i class="fas fa-exclamation-triangle"></i>
+        Advertencias Importantes
+    </div>
+    <ul class="warning-list">
+        <li>Esta acción <strong>NO se puede deshacer</strong></li>
+        <li>Se eliminarán <strong>TODOS los permisos</strong> asignados a este rol</li>
+        <li>Los usuarios con este rol <strong>quedarán sin rol asignado</strong></li>
+        <li>Se perderá el historial de permisos asociado a este rol</li>
+    </ul>
+</div>
+
+<!-- Usuarios Afectados -->
+{% if usuarios_con_rol > 0 %}
+<div class="usuarios-afectados">
+    <h6>
+        <i class="fas fa-users me-2"></i>
+        Usuarios que se verán afectados
+    </h6>
+    <p>
+        Hay <strong>{{ usuarios_con_rol }} usuario{{ usuarios_con_rol|pluralize }}</strong> 
+        que actualmente tienen este rol asignado. Después de eliminar el rol, 
+        estos usuarios quedarán sin rol asignado y deberás asignarles un nuevo rol.
+    </p>
+</div>
+{% endif %}
+
+<!-- Formulario de Confirmación -->
+<div class="confirm-container">
+    <form method="POST" id="eliminarRolForm">
+        {% csrf_token %}
+        
+        <div class="confirmation-checkbox">
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="confirmar_eliminacion" name="confirmar_eliminacion" required>
+                <label class="form-check-label" for="confirmar_eliminacion">
+                    Entiendo las consecuencias y deseo eliminar el rol "{{ rol.nombre }}"
+                </label>
+            </div>
+        </div>
+        
+        <div class="d-flex justify-content-between">
+            <a href="{% url 'roles_lista_mejorada' %}" class="btn btn-cancelar">
+                <i class="fas fa-arrow-left me-2"></i>Cancelar
+            </a>
+            <button type="submit" class="btn btn-eliminar" id="btnEliminar" disabled>
+                <i class="fas fa-trash me-2"></i>Eliminar Rol
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Animación de entrada
+    const cards = document.querySelectorAll('.rol-info-card, .warning-section, .confirm-container');
+    cards.forEach((card, index) => {
+        card.style.opacity = '0';
+        card.style.transform = 'translateY(30px)';
+        
+        setTimeout(() => {
+            card.style.transition = 'all 0.8s ease';
+            card.style.opacity = '1';
+            card.style.transform = 'translateY(0)';
+        }, index * 200);
+    });
+    
+    // Habilitar/deshabilitar botón de eliminar
+    const checkbox = document.getElementById('confirmar_eliminacion');
+    const btnEliminar = document.getElementById('btnEliminar');
+    
+    checkbox.addEventListener('change', function() {
+        btnEliminar.disabled = !this.checked;
+        
+        if (this.checked) {
+            btnEliminar.style.background = 'linear-gradient(135deg, #dc3545 0%, #c82333 100%)';
+        } else {
+            btnEliminar.style.background = 'linear-gradient(135deg, #6c757d 0%, #545b62 100%)';
+        }
+    });
+    
+    // Confirmación adicional al enviar
+    const form = document.getElementById('eliminarRolForm');
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const rolNombre = '{{ rol.nombre }}';
+        const confirmacion = prompt(
+            `Para confirmar la eliminación del rol "${rolNombre}", escribe exactamente: ${rolNombre}`
+        );
+        
+        if (confirmacion === rolNombre) {
+            // Crear un formulario temporal para enviar
+            const tempForm = document.createElement('form');
+            tempForm.method = 'POST';
+            tempForm.action = '';
+            
+            const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+            const csrfInput = document.createElement('input');
+            csrfInput.type = 'hidden';
+            csrfInput.name = 'csrfmiddlewaretoken';
+            csrfInput.value = csrfToken;
+            tempForm.appendChild(csrfInput);
+            
+            document.body.appendChild(tempForm);
+            tempForm.submit();
+        } else if (confirmacion !== null) {
+            alert('La confirmación no coincide. La eliminación ha sido cancelada.');
+        }
+    });
+    
+    // Efecto hover para las tarjetas
+    const infoCards = document.querySelectorAll('.rol-info-card, .warning-section');
+    infoCards.forEach(card => {
+        card.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-2px)';
+            this.style.boxShadow = '0 4px 12px rgba(0,0,0,0.1)';
+        });
+        
+        card.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(0)';
+            this.style.boxShadow = 'none';
+        });
+    });
+    
+    // Efecto de pulsación en el botón de eliminar
+    btnEliminar.addEventListener('mouseenter', function() {
+        if (!this.disabled) {
+            this.style.transform = 'translateY(-3px) scale(1.05)';
+        }
+    });
+    
+    btnEliminar.addEventListener('mouseleave', function() {
+        this.style.transform = 'translateY(0) scale(1)';
+    });
+});
+</script>
+{% endblock %}

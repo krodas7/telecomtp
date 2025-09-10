@@ -1,0 +1,816 @@
+{% extends "base.html" %}
+{% load custom_filters %}
+
+{% block title %}Gestor de Permisos por Módulos - Sistema de Construcción{% endblock %}
+
+{% block extra_css %}
+<style>
+    .gestor-hero {
+        background: linear-gradient(135deg, #6f42c1 0%, #e83e8c 100%);
+        color: white;
+        padding: 3rem 2rem;
+        border-radius: 20px;
+        margin-bottom: 2rem;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .gestor-hero::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="white" opacity="0.1"/><circle cx="75" cy="75" r="1" fill="white" opacity="0.1"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+        opacity: 0.3;
+    }
+    
+    .gestor-hero-content {
+        position: relative;
+        z-index: 2;
+    }
+    
+    .gestor-container {
+        background: white;
+        border-radius: 20px;
+        padding: 2rem;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        margin-bottom: 2rem;
+    }
+    
+    .roles-sidebar {
+        background: #f8f9fa;
+        border-radius: 15px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    
+    .rol-item {
+        background: white;
+        border: 2px solid #dee2e6;
+        border-radius: 10px;
+        padding: 1rem;
+        margin-bottom: 0.5rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .rol-item:hover {
+        border-color: var(--azul-acero);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    
+    .rol-item.active {
+        border-color: var(--azul-acero);
+        background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+    }
+    
+    .rol-nombre {
+        font-weight: 600;
+        color: var(--azul-acero);
+        margin-bottom: 0.25rem;
+    }
+    
+    .rol-descripcion {
+        font-size: 0.85rem;
+        color: #6c757d;
+        margin: 0;
+    }
+    
+    .modulos-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 1.5rem;
+    }
+    
+    .modulo-card {
+        background: white;
+        border: 2px solid #dee2e6;
+        border-radius: 15px;
+        overflow: hidden;
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+    
+    .modulo-card:hover {
+        box-shadow: 0 6px 20px rgba(0,0,0,0.1);
+        transform: translateY(-3px);
+    }
+    
+    .modulo-card.activo {
+        border-color: #28a745;
+        background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+        box-shadow: 0 6px 20px rgba(40, 167, 69, 0.2);
+    }
+    
+    .modulo-card.inactivo {
+        border-color: #dc3545;
+        background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
+        opacity: 0.7;
+    }
+    
+    .modulo-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 1.5rem;
+        text-align: center;
+    }
+    
+    .modulo-card.activo .modulo-header {
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    }
+    
+    .modulo-card.inactivo .modulo-header {
+        background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+    }
+    
+    .modulo-title {
+        font-weight: 700;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.1rem;
+    }
+    
+    .modulo-title i {
+        margin-right: 0.5rem;
+        font-size: 1.3rem;
+    }
+    
+    .modulo-body {
+        padding: 1.5rem;
+        text-align: center;
+    }
+    
+    .modulo-descripcion {
+        color: #6c757d;
+        font-size: 0.9rem;
+        margin-bottom: 1rem;
+        line-height: 1.4;
+    }
+    
+    .permisos-badges {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        justify-content: center;
+        margin-bottom: 1rem;
+    }
+    
+    .permiso-badge {
+        background: #007bff;
+        color: white;
+        padding: 0.25rem 0.75rem;
+        border-radius: 15px;
+        font-size: 0.8rem;
+        font-weight: 500;
+    }
+    
+    .modulo-card.activo .permiso-badge {
+        background: #28a745;
+    }
+    
+    .modulo-card.inactivo .permiso-badge {
+        background: #6c757d;
+    }
+    
+    .modulo-toggle {
+        position: relative;
+        display: inline-block;
+        width: 60px;
+        height: 30px;
+    }
+    
+    .modulo-toggle input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+    }
+    
+    .modulo-slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: #ccc;
+        transition: .4s;
+        border-radius: 30px;
+    }
+    
+    .modulo-slider:before {
+        position: absolute;
+        content: "";
+        height: 22px;
+        width: 22px;
+        left: 4px;
+        bottom: 4px;
+        background-color: white;
+        transition: .4s;
+        border-radius: 50%;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+    
+    input:checked + .modulo-slider {
+        background: linear-gradient(135deg, #28a745, #20c997);
+    }
+    
+    input:checked + .modulo-slider:before {
+        transform: translateX(30px);
+    }
+    
+    .btn-guardar {
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        border: none;
+        padding: 0.75rem 2rem;
+        border-radius: 25px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(40,167,69,0.3);
+    }
+    
+    .btn-guardar:hover:not(:disabled) {
+        transform: translateY(-3px);
+        box-shadow: 0 6px 20px rgba(40,167,69,0.4);
+    }
+    
+    .btn-guardar:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+    
+    .btn-cancelar {
+        background: linear-gradient(135deg, #6c757d 0%, #545b62 100%);
+        border: none;
+        padding: 0.75rem 2rem;
+        border-radius: 25px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-cancelar:hover:not(:disabled) {
+        transform: translateY(-3px);
+        box-shadow: 0 6px 20px rgba(108,117,125,0.4);
+    }
+    
+    .btn-cancelar:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+    
+    .select-all-controls {
+        background: #e3f2fd;
+        border: 1px solid #bbdefb;
+        border-radius: 10px;
+        padding: 1rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .select-all-controls h6 {
+        color: var(--azul-acero);
+        margin: 0 0 0.5rem 0;
+        font-weight: 600;
+    }
+    
+    .select-all-buttons {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+    }
+    
+    .btn-select-all {
+        background: var(--azul-acero);
+        color: white;
+        border: none;
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 500;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-select-all:hover {
+        background: #0056b3;
+        transform: translateY(-2px);
+    }
+    
+    .no-rol-selected {
+        text-align: center;
+        padding: 4rem 2rem;
+        color: #6c757d;
+    }
+    
+    .no-rol-selected i {
+        font-size: 4rem;
+        margin-bottom: 1rem;
+        opacity: 0.5;
+    }
+    
+    .rol-stats {
+        background: white;
+        border-radius: 10px;
+        padding: 1rem;
+        margin-top: 1rem;
+        border: 1px solid #dee2e6;
+    }
+    
+    .rol-stat {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.5rem 0;
+        border-bottom: 1px solid #f1f3f4;
+    }
+    
+    .rol-stat:last-child {
+        border-bottom: none;
+    }
+    
+    .rol-stat-label {
+        font-weight: 500;
+        color: var(--azul-acero);
+    }
+    
+    .rol-stat-value {
+        background: var(--azul-acero);
+        color: white;
+        padding: 0.25rem 0.75rem;
+        border-radius: 15px;
+        font-size: 0.85rem;
+        font-weight: 600;
+    }
+    
+    .estadisticas-modulos {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 20px;
+        border-radius: 12px;
+        margin-bottom: 25px;
+    }
+    
+    .estadisticas-modulos h6 {
+        margin: 0 0 15px 0;
+        font-weight: 600;
+        font-size: 1.1em;
+    }
+    
+    .estadisticas-modulos .row {
+        margin: 0;
+    }
+    
+    .estadisticas-modulos .col {
+        text-align: center;
+    }
+    
+    .estadisticas-modulos .numero {
+        font-size: 2em;
+        font-weight: bold;
+        display: block;
+        margin-bottom: 5px;
+    }
+    
+    .estadisticas-modulos .label {
+        font-size: 0.9em;
+        opacity: 0.9;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<div class="gestor-hero">
+    <div class="gestor-hero-content">
+        <h1 class="mb-3">
+            <i class="fas fa-key me-3"></i>Gestor de Permisos por Módulos
+        </h1>
+        <p class="mb-0">Asigna módulos completos a los roles de forma simple e intuitiva</p>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Sidebar de Roles -->
+    <div class="col-md-3">
+        <div class="roles-sidebar">
+            <h5 class="mb-3">
+                <i class="fas fa-users me-2"></i>Roles del Sistema
+            </h5>
+            
+            {% for rol in roles %}
+            <div class="rol-item" onclick="seleccionarRol({{ rol.id }}, '{{ rol.nombre }}')" 
+                 id="rol_{{ rol.id }}">
+                <div class="rol-nombre">{{ rol.nombre }}</div>
+                <div class="rol-descripcion">{{ rol.descripcion|default:"Sin descripción" }}</div>
+                
+                <div class="rol-stats">
+                    <div class="rol-stat">
+                        <span class="rol-stat-label">Módulos:</span>
+                        <span class="rol-stat-value" id="modulos_count_{{ rol.id }}">
+                            {{ rol.modulos_activos.count }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    
+    <!-- Área de Módulos -->
+    <div class="col-md-9">
+        <div class="gestor-container">
+            <div id="no-rol-selected" class="no-rol-selected">
+                <i class="fas fa-hand-pointer"></i>
+                <h5>Selecciona un rol</h5>
+                <p>Elige un rol de la izquierda para gestionar sus módulos</p>
+            </div>
+            
+            <div id="modulos-container" style="display: none;">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h4 id="rol-seleccionado-titulo">
+                        <i class="fas fa-user-tag me-2"></i>Módulos del Rol
+                    </h4>
+                    <div>
+                        <button type="button" class="btn btn-guardar" onclick="guardarModulos()" id="btn-guardar">
+                            <i class="fas fa-save me-2"></i>Guardar Cambios
+                        </button>
+                        <a href="{% url 'roles_lista_mejorada' %}" class="btn btn-cancelar">
+                            <i class="fas fa-arrow-left me-2"></i>Volver
+                        </a>
+                    </div>
+                </div>
+                
+                <!-- Controles de Selección Masiva -->
+                <div class="select-all-controls">
+                    <h6>
+                        <i class="fas fa-magic me-1"></i>
+                        Selección Rápida
+                    </h6>
+                    <div class="select-all-buttons">
+                        <button type="button" class="btn btn-select-all" onclick="seleccionarTodos()">
+                            <i class="fas fa-check-square me-1"></i>Seleccionar Todos
+                        </button>
+                        <button type="button" class="btn btn-select-all" onclick="deseleccionarTodos()">
+                            <i class="fas fa-square me-1"></i>Deseleccionar Todos
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Estadísticas -->
+                <div id="estadisticas-modulos" class="estadisticas-modulos" style="display: none;">
+                    <h6><i class="fas fa-chart-pie"></i> Estadísticas de Módulos</h6>
+                    <div class="row">
+                        <div class="col">
+                            <span class="numero" id="total-modulos">0</span>
+                            <span class="label">Total Módulos</span>
+                        </div>
+                        <div class="col">
+                            <span class="numero" id="modulos-activos">0</span>
+                            <span class="label">Asignados</span>
+                        </div>
+                        <div class="col">
+                            <span class="numero" id="modulos-disponibles">0</span>
+                            <span class="label">Disponibles</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Módulos -->
+                <div class="modulos-grid" id="modulos-grid">
+                    <!-- Los módulos se cargarán dinámicamente -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let rolSeleccionado = null;
+let modulosOriginales = [];
+let cambiosRealizados = false;
+
+function seleccionarRol(rolId, rolNombre) {
+    // Actualizar UI
+    document.querySelectorAll('.rol-item').forEach(item => {
+        item.classList.remove('active');
+    });
+    document.getElementById('rol_' + rolId).classList.add('active');
+    
+    // Mostrar área de módulos
+    document.getElementById('no-rol-selected').style.display = 'none';
+    document.getElementById('modulos-container').style.display = 'block';
+    document.getElementById('estadisticas-modulos').style.display = 'block';
+    
+    // Actualizar título
+    document.getElementById('rol-seleccionado-titulo').innerHTML = 
+        '<i class="fas fa-user-tag me-2"></i>Módulos del Rol: ' + rolNombre;
+    
+    // Cargar módulos del rol
+    rolSeleccionado = rolId;
+    cargarModulosRol(rolId);
+}
+
+function cargarModulosRol(rolId) {
+    fetch(`/api/permisos/rol/${rolId}/modulos/`)
+        .then(response => response.json())
+        .then(data => {
+            mostrarModulos(data.modulos, data.modulos_activos);
+            modulosOriginales = [...data.modulos_activos];
+            cambiosRealizados = false;
+            actualizarBotones();
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            mostrarError('Error al cargar los módulos del rol');
+        });
+}
+
+function mostrarModulos(modulos, modulosActivos) {
+    const container = document.getElementById('modulos-grid');
+    
+    if (modulos.length === 0) {
+        container.innerHTML = `
+            <div class="col-12 text-center text-muted py-5">
+                <i class="fas fa-exclamation-triangle fa-3x mb-3"></i>
+                <h5>No hay módulos disponibles</h5>
+                <p>No se encontraron módulos para mostrar</p>
+            </div>
+        `;
+        return;
+    }
+
+    // Actualizar estadísticas
+    document.getElementById('total-modulos').textContent = modulos.length;
+    document.getElementById('modulos-activos').textContent = modulosActivos.length;
+    document.getElementById('modulos-disponibles').textContent = modulos.length - modulosActivos.length;
+
+    let html = '';
+    
+    modulos.forEach(modulo => {
+        const estaActivo = modulosActivos.includes(modulo.id);
+        const claseCard = estaActivo ? 'modulo-card activo' : 'modulo-card inactivo';
+        
+        html += `
+            <div class="${claseCard}" onclick="toggleModulo(${modulo.id})" data-modulo-id="${modulo.id}">
+                <div class="modulo-header">
+                    <div class="modulo-title">
+                        <i class="${modulo.icono || 'fas fa-th-large'}"></i>
+                        ${modulo.nombre}
+                    </div>
+                </div>
+                <div class="modulo-body">
+                    <p class="modulo-descripcion">${modulo.descripcion || 'Sin descripción'}</p>
+                    <div class="permisos-badges">
+                        <span class="permiso-badge">Ver</span>
+                        <span class="permiso-badge">Crear</span>
+                        <span class="permiso-badge">Editar</span>
+                        <span class="permiso-badge">Eliminar</span>
+                    </div>
+                    <div class="modulo-toggle">
+                        <input type="checkbox" ${estaActivo ? 'checked' : ''} 
+                               onchange="toggleModulo(${modulo.id})">
+                        <span class="modulo-slider"></span>
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+
+    container.innerHTML = html;
+}
+
+function toggleModulo(moduloId) {
+    const moduloCard = document.querySelector(`[data-modulo-id="${moduloId}"]`);
+    const checkbox = moduloCard.querySelector('input[type="checkbox"]');
+    
+    // Toggle del checkbox
+    checkbox.checked = !checkbox.checked;
+    
+    if (checkbox.checked) {
+        moduloCard.classList.remove('inactivo');
+        moduloCard.classList.add('activo');
+    } else {
+        moduloCard.classList.remove('activo');
+        moduloCard.classList.add('inactivo');
+    }
+    
+    cambiosRealizados = true;
+    actualizarBotones();
+    actualizarEstadisticas();
+}
+
+function seleccionarTodos() {
+    document.querySelectorAll('#modulos-grid .modulo-card').forEach(card => {
+        const checkbox = card.querySelector('input[type="checkbox"]');
+        if (!checkbox.checked) {
+            checkbox.checked = true;
+            card.classList.remove('inactivo');
+            card.classList.add('activo');
+        }
+    });
+    cambiosRealizados = true;
+    actualizarBotones();
+    actualizarEstadisticas();
+}
+
+function deseleccionarTodos() {
+    document.querySelectorAll('#modulos-grid .modulo-card').forEach(card => {
+        const checkbox = card.querySelector('input[type="checkbox"]');
+        if (checkbox.checked) {
+            checkbox.checked = false;
+            card.classList.remove('activo');
+            card.classList.add('inactivo');
+        }
+    });
+    cambiosRealizados = true;
+    actualizarBotones();
+    actualizarEstadisticas();
+}
+
+function actualizarEstadisticas() {
+    const totalModulos = document.querySelectorAll('#modulos-grid .modulo-card').length;
+    const modulosActivos = document.querySelectorAll('#modulos-grid .modulo-card.activo').length;
+    const modulosDisponibles = totalModulos - modulosActivos;
+    
+    document.getElementById('total-modulos').textContent = totalModulos;
+    document.getElementById('modulos-activos').textContent = modulosActivos;
+    document.getElementById('modulos-disponibles').textContent = modulosDisponibles;
+}
+
+function actualizarBotones() {
+    const btnGuardar = document.getElementById('btn-guardar');
+    btnGuardar.disabled = !cambiosRealizados;
+}
+
+function guardarModulos() {
+    if (!rolSeleccionado) {
+        mostrarError('Por favor selecciona un rol primero');
+        return;
+    }
+    
+    const modulosSeleccionados = [];
+    document.querySelectorAll('#modulos-grid input[type="checkbox"]:checked').forEach(checkbox => {
+        modulosSeleccionados.push(parseInt(checkbox.closest('.modulo-card').dataset.moduloId));
+    });
+    
+    // Mostrar loading
+    const btnGuardar = document.getElementById('btn-guardar');
+    const textoOriginal = btnGuardar.innerHTML;
+    btnGuardar.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Guardando...';
+    btnGuardar.disabled = true;
+    
+    // Enviar datos
+    fetch('/api/permisos/actualizar-modulos/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        },
+        body: JSON.stringify({
+            rol_id: rolSeleccionado,
+            modulos_ids: modulosSeleccionados
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Actualizar contador de módulos
+            const contador = document.getElementById('modulos_count_' + rolSeleccionado);
+            if (contador) {
+                contador.textContent = modulosSeleccionados.length;
+            }
+            
+            // Mostrar mensaje de éxito
+            mostrarExito('Módulos actualizados exitosamente');
+            modulosOriginales = [...modulosSeleccionados];
+            cambiosRealizados = false;
+            actualizarBotones();
+        } else {
+            mostrarError('Error al actualizar módulos: ' + data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        mostrarError('Error al actualizar módulos');
+    })
+    .finally(() => {
+        // Restaurar botón
+        btnGuardar.innerHTML = textoOriginal;
+        btnGuardar.disabled = false;
+    });
+}
+
+function mostrarExito(mensaje) {
+    // Crear toast de éxito
+    const toast = document.createElement('div');
+    toast.className = 'toast-notification success';
+    toast.innerHTML = `
+        <div class="toast-content">
+            <i class="fas fa-check-circle"></i>
+            <span>${mensaje}</span>
+        </div>
+    `;
+    document.body.appendChild(toast);
+    
+    setTimeout(() => {
+        toast.classList.add('show');
+    }, 100);
+    
+    setTimeout(() => {
+        toast.classList.remove('show');
+        setTimeout(() => {
+            document.body.removeChild(toast);
+        }, 300);
+    }, 3000);
+}
+
+function mostrarError(mensaje) {
+    // Crear toast de error
+    const toast = document.createElement('div');
+    toast.className = 'toast-notification error';
+    toast.innerHTML = `
+        <div class="toast-content">
+            <i class="fas fa-exclamation-circle"></i>
+            <span>${mensaje}</span>
+        </div>
+    `;
+    document.body.appendChild(toast);
+    
+    setTimeout(() => {
+        toast.classList.add('show');
+    }, 100);
+    
+    setTimeout(() => {
+        toast.classList.remove('show');
+        setTimeout(() => {
+            document.body.removeChild(toast);
+        }, 300);
+    }, 3000);
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Animación de entrada
+    const cards = document.querySelectorAll('.gestor-container, .roles-sidebar');
+    cards.forEach((card, index) => {
+        card.style.opacity = '0';
+        card.style.transform = 'translateY(30px)';
+        
+        setTimeout(() => {
+            card.style.transition = 'all 0.8s ease';
+            card.style.opacity = '1';
+            card.style.transform = 'translateY(0)';
+        }, index * 200);
+    });
+});
+</script>
+
+<style>
+.toast-notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    padding: 15px 20px;
+    z-index: 9999;
+    transform: translateX(100%);
+    transition: transform 0.3s ease;
+}
+
+.toast-notification.show {
+    transform: translateX(0);
+}
+
+.toast-notification.success {
+    border-left: 4px solid #28a745;
+}
+
+.toast-notification.error {
+    border-left: 4px solid #dc3545;
+}
+
+.toast-content {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.toast-content i {
+    font-size: 1.2em;
+}
+
+.toast-notification.success .toast-content i {
+    color: #28a745;
+}
+
+.toast-notification.error .toast-content i {
+    color: #dc3545;
+}
+</style>
+{% endblock %}

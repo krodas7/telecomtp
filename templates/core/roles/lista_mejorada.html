@@ -1,0 +1,450 @@
+{% extends "base.html" %}
+{% load custom_filters %}
+
+{% block title %}Gestión de Roles - Sistema de Construcción{% endblock %}
+
+{% block extra_css %}
+<style>
+    .roles-hero {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 3rem 2rem;
+        border-radius: 20px;
+        margin-bottom: 2rem;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .roles-hero::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="white" opacity="0.1"/><circle cx="75" cy="75" r="1" fill="white" opacity="0.1"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+        opacity: 0.3;
+    }
+    
+    .roles-hero-content {
+        position: relative;
+        z-index: 2;
+    }
+    
+    .roles-stats {
+        display: flex;
+        justify-content: center;
+        gap: 2rem;
+        flex-wrap: wrap;
+        margin-top: 2rem;
+    }
+    
+    .roles-stat {
+        background: rgba(255,255,255,0.1);
+        backdrop-filter: blur(10px);
+        padding: 1rem 1.5rem;
+        border-radius: 15px;
+        border: 1px solid rgba(255,255,255,0.2);
+        transition: all 0.3s ease;
+    }
+    
+    .roles-stat:hover {
+        transform: translateY(-5px);
+        background: rgba(255,255,255,0.2);
+    }
+    
+    .roles-stat-number {
+        font-size: 2rem;
+        font-weight: 700;
+        display: block;
+    }
+    
+    .roles-stat-label {
+        font-size: 0.9rem;
+        opacity: 0.8;
+    }
+    
+    .roles-actions {
+        background: white;
+        border-radius: 15px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+    }
+    
+    .roles-table-container {
+        background: white;
+        border-radius: 20px;
+        overflow: hidden;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+    }
+    
+    .roles-table-header {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        padding: 1.5rem;
+        border-bottom: 1px solid #dee2e6;
+    }
+    
+    .roles-table {
+        margin: 0;
+    }
+    
+    .roles-table th {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        border: none;
+        padding: 1rem;
+        font-weight: 600;
+        color: var(--azul-acero);
+        font-size: 0.9rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .roles-table td {
+        padding: 1rem;
+        border: none;
+        border-bottom: 1px solid #f1f3f4;
+        vertical-align: middle;
+    }
+    
+    .roles-table tbody tr {
+        transition: all 0.3s ease;
+    }
+    
+    .roles-table tbody tr:hover {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    
+    .rol-badge {
+        background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+        color: white;
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 500;
+        display: inline-block;
+    }
+    
+    .rol-stats {
+        display: flex;
+        gap: 1rem;
+        align-items: center;
+    }
+    
+    .rol-stat {
+        background: #f8f9fa;
+        padding: 0.5rem 1rem;
+        border-radius: 15px;
+        font-size: 0.85rem;
+        font-weight: 500;
+        color: var(--azul-acero);
+    }
+    
+    .btn-accion {
+        padding: 0.5rem;
+        border-radius: 10px;
+        border: none;
+        transition: all 0.3s ease;
+        font-size: 0.9rem;
+        margin: 0 0.25rem;
+    }
+    
+    .btn-accion:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+    
+    .btn-view {
+        background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+        color: white;
+    }
+    
+    .btn-edit {
+        background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%);
+        color: #212529;
+    }
+    
+    .btn-delete {
+        background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+        color: white;
+    }
+    
+    .btn-nuevo-rol {
+        background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+        border: none;
+        padding: 0.75rem 2rem;
+        border-radius: 25px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(0,123,255,0.3);
+    }
+    
+    .btn-nuevo-rol:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 6px 20px rgba(0,123,255,0.4);
+    }
+    
+    .search-filters {
+        background: #f8f9fa;
+        padding: 1.5rem;
+        border-radius: 15px;
+        margin-bottom: 2rem;
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 4rem 2rem;
+        color: #6c757d;
+    }
+    
+    .empty-state i {
+        font-size: 4rem;
+        margin-bottom: 1rem;
+        opacity: 0.5;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<div class="roles-hero">
+    <div class="roles-hero-content">
+        <h1 class="mb-3">
+            <i class="fas fa-user-shield me-3"></i>Gestión de Roles
+        </h1>
+        <p class="mb-0">Administra los roles y permisos del sistema de construcción</p>
+        
+        <!-- Estadísticas Rápidas -->
+        <div class="roles-stats">
+            <div class="roles-stat">
+                <span class="roles-stat-number">{{ total_roles }}</span>
+                <span class="roles-stat-label">Total Roles</span>
+            </div>
+            <div class="roles-stat">
+                <span class="roles-stat-number">{{ page_obj|length }}</span>
+                <span class="roles-stat-label">Mostrados</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filtros de Búsqueda -->
+<div class="search-filters">
+    <form method="GET" class="row g-3">
+        <div class="col-md-8">
+            <div class="input-group">
+                <span class="input-group-text">
+                    <i class="fas fa-search"></i>
+                </span>
+                <input type="text" class="form-control" name="search" 
+                       value="{{ search }}" placeholder="Buscar roles...">
+            </div>
+        </div>
+        <div class="col-md-4">
+            <button type="submit" class="btn btn-primary w-100">
+                <i class="fas fa-search me-2"></i>Buscar
+            </button>
+        </div>
+    </form>
+</div>
+
+<!-- Acciones Principales -->
+<div class="roles-actions">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h4 class="mb-0">
+                <i class="fas fa-tasks me-2" style="color: var(--azul-acero);"></i>
+                Gestión de Roles
+            </h4>
+            <p class="text-muted mb-0">Administra los roles y sus permisos</p>
+        </div>
+        <a href="{% url 'rol_crear_mejorado' %}" class="btn btn-nuevo-rol">
+            <i class="fas fa-plus me-2"></i>Nuevo Rol
+        </a>
+    </div>
+</div>
+
+<!-- Lista de Roles -->
+<div class="roles-table-container">
+    <div class="roles-table-header">
+        <h5>
+            <i class="fas fa-list me-2"></i>Lista de Roles del Sistema
+        </h5>
+    </div>
+    
+    {% if page_obj %}
+        <div class="table-responsive">
+            <table class="table roles-table">
+                <thead>
+                    <tr>
+                        <th>Rol</th>
+                        <th>Descripción</th>
+                        <th>Estadísticas</th>
+                        <th>Fecha Creación</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in page_obj %}
+                    <tr>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <div class="rol-badge me-3">
+                                    <i class="fas fa-user-tag me-2"></i>{{ item.rol.nombre }}
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="text-muted">
+                                {{ item.rol.descripcion|default:"Sin descripción" }}
+                            </span>
+                        </td>
+                        <td>
+                            <div class="rol-stats">
+                                <div class="rol-stat">
+                                    <i class="fas fa-key me-1"></i>
+                                    {{ item.permisos_count }} permisos
+                                </div>
+                                <div class="rol-stat">
+                                    <i class="fas fa-users me-1"></i>
+                                    {{ item.usuarios_count }} usuarios
+                                </div>
+                                <div class="rol-stat">
+                                    <i class="fas fa-th-large me-1"></i>
+                                    {{ item.modulos_count }} módulos
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="text-muted">
+                                {{ item.rol.creado_en|date:"d/m/Y" }}
+                            </span>
+                        </td>
+                        <td>
+                            <div class="d-flex">
+                                <a href="{% url 'rol_editar_mejorado' item.rol.id %}" 
+                                   class="btn btn-accion btn-edit" title="Editar Rol">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <a href="{% url 'rol_eliminar_mejorado' item.rol.id %}" 
+                                   class="btn btn-accion btn-delete" title="Eliminar Rol">
+                                    <i class="fas fa-trash"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Paginación -->
+        {% if page_obj.has_other_pages %}
+        <div class="d-flex justify-content-center p-3">
+            <nav aria-label="Paginación de roles">
+                <ul class="pagination">
+                    {% if page_obj.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page=1{% if search %}&search={{ search }}{% endif %}">
+                                <i class="fas fa-angle-double-left"></i>
+                            </a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if search %}&search={{ search }}{% endif %}">
+                                <i class="fas fa-angle-left"></i>
+                            </a>
+                        </li>
+                    {% endif %}
+                    
+                    <li class="page-item active">
+                        <span class="page-link">
+                            Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}
+                        </span>
+                    </li>
+                    
+                    {% if page_obj.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if search %}&search={{ search }}{% endif %}">
+                                <i class="fas fa-angle-right"></i>
+                            </a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if search %}&search={{ search }}{% endif %}">
+                                <i class="fas fa-angle-double-right"></i>
+                            </a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+        {% endif %}
+    {% else %}
+        <div class="empty-state">
+            <i class="fas fa-user-shield"></i>
+            <h5>No hay roles registrados</h5>
+            <p>Comienza creando el primer rol del sistema</p>
+            <a href="{% url 'rol_crear_mejorado' %}" class="btn btn-nuevo-rol">
+                <i class="fas fa-plus me-2"></i>Crear Primer Rol
+            </a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Animación de entrada para las tarjetas
+    const cards = document.querySelectorAll('.roles-actions, .roles-table-container');
+    cards.forEach((card, index) => {
+        card.style.opacity = '0';
+        card.style.transform = 'translateY(30px)';
+        
+        setTimeout(() => {
+            card.style.transition = 'all 0.8s ease';
+            card.style.opacity = '1';
+            card.style.transform = 'translateY(0)';
+        }, index * 200);
+    });
+    
+    // Efecto hover para las estadísticas del hero
+    const heroStats = document.querySelectorAll('.roles-stat');
+    heroStats.forEach(stat => {
+        stat.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-10px) scale(1.05)';
+        });
+        
+        stat.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(0) scale(1)';
+        });
+    });
+    
+    // Efecto hover para las filas de la tabla
+    const tableRows = document.querySelectorAll('.roles-table tbody tr');
+    tableRows.forEach(row => {
+        row.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-2px)';
+        });
+        
+        row.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(0)';
+        });
+    });
+    
+    // Animación de los botones de acción
+    const actionButtons = document.querySelectorAll('.btn-accion');
+    actionButtons.forEach(button => {
+        button.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-3px) scale(1.05)';
+        });
+        
+        button.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(0) scale(1)';
+        });
+    });
+});
+</script>
+{% endblock %}

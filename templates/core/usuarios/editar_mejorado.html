@@ -1,0 +1,609 @@
+{% extends "base.html" %}
+{% load custom_filters %}
+
+{% block title %}Editar Usuario - Sistema de Construcción{% endblock %}
+
+{% block extra_css %}
+<style>
+    .editar-usuario-hero {
+        background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%);
+        color: #212529;
+        padding: 3rem 2rem;
+        border-radius: 20px;
+        margin-bottom: 2rem;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .editar-usuario-hero::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="white" opacity="0.1"/><circle cx="75" cy="75" r="1" fill="white" opacity="0.1"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+        opacity: 0.3;
+    }
+    
+    .editar-usuario-hero-content {
+        position: relative;
+        z-index: 2;
+    }
+    
+    .form-container {
+        background: white;
+        border-radius: 20px;
+        padding: 2rem;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        margin-bottom: 2rem;
+    }
+    
+    .form-section {
+        margin-bottom: 2rem;
+        padding: 1.5rem;
+        background: #f8f9fa;
+        border-radius: 15px;
+        border-left: 4px solid var(--azul-acero);
+    }
+    
+    .form-section h5 {
+        color: var(--azul-acero);
+        margin-bottom: 1rem;
+        font-weight: 600;
+    }
+    
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+    
+    .form-label {
+        font-weight: 600;
+        color: var(--azul-acero);
+        margin-bottom: 0.5rem;
+    }
+    
+    .form-control {
+        border: 2px solid #dee2e6;
+        border-radius: 10px;
+        padding: 0.75rem 1rem;
+        transition: all 0.3s ease;
+    }
+    
+    .form-control:focus {
+        border-color: var(--azul-acero);
+        box-shadow: 0 0 0 0.2rem rgba(0,123,255,0.25);
+    }
+    
+    .form-select {
+        border: 2px solid #dee2e6;
+        border-radius: 10px;
+        padding: 0.75rem 1rem;
+        transition: all 0.3s ease;
+    }
+    
+    .form-select:focus {
+        border-color: var(--azul-acero);
+        box-shadow: 0 0 0 0.2rem rgba(0,123,255,0.25);
+    }
+    
+    .form-check {
+        margin-bottom: 1rem;
+    }
+    
+    .form-check-input {
+        transform: scale(1.2);
+        margin-right: 0.75rem;
+    }
+    
+    .form-check-label {
+        font-weight: 500;
+        color: var(--azul-acero);
+    }
+    
+    .btn-guardar {
+        background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%);
+        border: none;
+        padding: 0.75rem 2rem;
+        border-radius: 25px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(255,193,7,0.3);
+        color: #212529;
+    }
+    
+    .btn-guardar:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 6px 20px rgba(255,193,7,0.4);
+    }
+    
+    .btn-cancelar {
+        background: linear-gradient(135deg, #6c757d 0%, #545b62 100%);
+        border: none;
+        padding: 0.75rem 2rem;
+        border-radius: 25px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-cancelar:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 6px 20px rgba(108,117,125,0.4);
+    }
+    
+    .password-strength {
+        margin-top: 0.5rem;
+        font-size: 0.85rem;
+    }
+    
+    .strength-weak {
+        color: #dc3545;
+    }
+    
+    .strength-medium {
+        color: #ffc107;
+    }
+    
+    .strength-strong {
+        color: #28a745;
+    }
+    
+    .rol-info {
+        background: #e3f2fd;
+        border: 1px solid #bbdefb;
+        border-radius: 10px;
+        padding: 1rem;
+        margin-top: 0.5rem;
+        font-size: 0.85rem;
+        color: var(--azul-acero);
+    }
+    
+    .required-field {
+        color: #dc3545;
+    }
+    
+    .help-text {
+        font-size: 0.85rem;
+        color: #6c757d;
+        margin-top: 0.25rem;
+    }
+    
+    .usuario-info-card {
+        background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+        border: 1px solid #90caf9;
+        border-radius: 15px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    
+    .usuario-avatar {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 2rem;
+        margin-right: 1.5rem;
+    }
+    
+    .usuario-details {
+        flex-grow: 1;
+    }
+    
+    .usuario-nombre {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--azul-acero);
+        margin-bottom: 0.5rem;
+    }
+    
+    .usuario-username {
+        font-size: 1.1rem;
+        color: #6c757d;
+        margin-bottom: 0.25rem;
+    }
+    
+    .usuario-rol {
+        background: var(--azul-acero);
+        color: white;
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 500;
+        display: inline-block;
+    }
+    
+    .usuario-estado {
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-left: 1rem;
+    }
+    
+    .estado-activo {
+        background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%);
+        color: white;
+    }
+    
+    .estado-inactivo {
+        background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+        color: white;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<div class="editar-usuario-hero">
+    <div class="editar-usuario-hero-content">
+        <h1 class="mb-3">
+            <i class="fas fa-user-edit me-3"></i>Editar Usuario
+        </h1>
+        <p class="mb-0">Modifica la información del usuario del sistema</p>
+    </div>
+</div>
+
+<!-- Información del Usuario -->
+<div class="usuario-info-card">
+    <div class="d-flex align-items-center">
+        <div class="usuario-avatar">
+            <i class="fas fa-user"></i>
+        </div>
+        <div class="usuario-details">
+            <div class="usuario-nombre">
+                {% if usuario.first_name or usuario.last_name %}
+                    {{ usuario.first_name }} {{ usuario.last_name }}
+                {% else %}
+                    {{ usuario.username }}
+                {% endif %}
+            </div>
+            <div class="usuario-username">@{{ usuario.username }}</div>
+            <div class="d-flex align-items-center">
+                {% if usuario.perfilusuario.rol %}
+                    <span class="usuario-rol">{{ usuario.perfilusuario.rol.nombre }}</span>
+                {% else %}
+                    <span class="usuario-rol">Sin rol</span>
+                {% endif %}
+                <span class="usuario-estado estado-{% if usuario.is_active %}activo{% else %}inactivo{% endif %}">
+                    {% if usuario.is_active %}Activo{% else %}Inactivo{% endif %}
+                </span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Formulario -->
+<div class="form-container">
+    <form method="POST" id="editarUsuarioForm">
+        {% csrf_token %}
+        
+        <!-- Información Básica del Usuario -->
+        <div class="form-section">
+            <h5>
+                <i class="fas fa-user me-2"></i>
+                Información Básica del Usuario
+            </h5>
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="first_name" class="form-label">
+                            <i class="fas fa-id-card me-1"></i>Nombre
+                        </label>
+                        <input type="text" class="form-control" id="first_name" name="first_name" 
+                               value="{{ usuario.first_name }}" placeholder="Nombre del usuario">
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="last_name" class="form-label">
+                            <i class="fas fa-id-card me-1"></i>Apellido
+                        </label>
+                        <input type="text" class="form-control" id="last_name" name="last_name" 
+                               value="{{ usuario.last_name }}" placeholder="Apellido del usuario">
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="email" class="form-label">
+                            <i class="fas fa-envelope me-1"></i>Correo Electrónico
+                        </label>
+                        <input type="email" class="form-control" id="email" name="email" 
+                               value="{{ usuario.email }}" placeholder="usuario@empresa.com">
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="telefono" class="form-label">
+                            <i class="fas fa-phone me-1"></i>Teléfono
+                        </label>
+                        <input type="text" class="form-control" id="telefono" name="telefono" 
+                               value="{{ perfil.telefono }}" placeholder="Número de teléfono">
+                    </div>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="direccion" class="form-label">
+                    <i class="fas fa-map-marker-alt me-1"></i>Dirección
+                </label>
+                <textarea class="form-control" id="direccion" name="direccion" rows="2" 
+                          placeholder="Dirección del usuario">{{ perfil.direccion }}</textarea>
+            </div>
+        </div>
+        
+        <!-- Contraseña -->
+        <div class="form-section">
+            <h5>
+                <i class="fas fa-lock me-2"></i>
+                Cambiar Contraseña
+            </h5>
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="password" class="form-label">
+                            <i class="fas fa-key me-1"></i>Nueva Contraseña
+                        </label>
+                        <input type="password" class="form-control" id="password" name="password" 
+                               placeholder="Dejar vacío para mantener la actual">
+                        <div class="help-text">Deja vacío si no quieres cambiar la contraseña</div>
+                        <div id="password-strength" class="password-strength"></div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="confirm_password" class="form-label">
+                            <i class="fas fa-key me-1"></i>Confirmar Nueva Contraseña
+                        </label>
+                        <input type="password" class="form-control" id="confirm_password" name="confirm_password" 
+                               placeholder="Repite la nueva contraseña">
+                        <div id="password-match" class="help-text"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Rol y Permisos -->
+        <div class="form-section">
+            <h5>
+                <i class="fas fa-user-shield me-2"></i>
+                Rol y Permisos
+            </h5>
+            <div class="form-group">
+                <label for="rol" class="form-label">
+                    <i class="fas fa-user-tag me-1"></i>Rol del Usuario
+                </label>
+                <select class="form-select" id="rol" name="rol">
+                    <option value="">Seleccionar rol...</option>
+                    {% for rol in roles %}
+                        <option value="{{ rol.id }}" {% if perfil.rol and perfil.rol.id == rol.id %}selected{% endif %}>
+                            {{ rol.nombre }}
+                        </option>
+                    {% endfor %}
+                </select>
+                <div class="help-text">El rol determina los permisos que tendrá el usuario</div>
+                <div id="rol-info" class="rol-info" style="display: none;"></div>
+            </div>
+        </div>
+        
+        <!-- Configuración Avanzada -->
+        <div class="form-section">
+            <h5>
+                <i class="fas fa-cog me-2"></i>
+                Configuración Avanzada
+            </h5>
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="is_superuser" name="is_superuser" 
+                               {% if usuario.is_superuser %}checked{% endif %}>
+                        <label class="form-check-label" for="is_superuser">
+                            <i class="fas fa-crown me-1"></i>Superusuario
+                        </label>
+                        <div class="help-text">Acceso completo al sistema</div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="is_staff" name="is_staff" 
+                               {% if usuario.is_staff %}checked{% endif %}>
+                        <label class="form-check-label" for="is_staff">
+                            <i class="fas fa-user-cog me-1"></i>Personal del Sistema
+                        </label>
+                        <div class="help-text">Acceso al panel de administración</div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="is_active" name="is_active" 
+                               {% if usuario.is_active %}checked{% endif %}>
+                        <label class="form-check-label" for="is_active">
+                            <i class="fas fa-check-circle me-1"></i>Usuario Activo
+                        </label>
+                        <div class="help-text">El usuario puede iniciar sesión</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row mt-3">
+                <div class="col-md-4">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="activo" name="activo" 
+                               {% if perfil.activo %}checked{% endif %}>
+                        <label class="form-check-label" for="activo">
+                            <i class="fas fa-user-check me-1"></i>Perfil Activo
+                        </label>
+                        <div class="help-text">Perfil activo en el sistema</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Botones de Acción -->
+        <div class="d-flex justify-content-between">
+            <a href="{% url 'usuarios_lista_mejorada' %}" class="btn btn-cancelar">
+                <i class="fas fa-arrow-left me-2"></i>Cancelar
+            </a>
+            <button type="submit" class="btn btn-guardar">
+                <i class="fas fa-save me-2"></i>Guardar Cambios
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Información de roles
+const rolesInfo = {
+    {% for rol in roles %}
+    {{ rol.id }}: {
+        nombre: "{{ rol.nombre }}",
+        descripcion: "{{ rol.descripcion|default:'Sin descripción' }}",
+        permisos: {{ rol.permisos_count|default:0 }}
+    }{% if not forloop.last %},{% endif %}
+    {% endfor %}
+};
+
+function checkPasswordStrength(password) {
+    if (!password) {
+        document.getElementById('password-strength').textContent = '';
+        return;
+    }
+    
+    let strength = 0;
+    let feedback = '';
+    
+    if (password.length >= 8) strength++;
+    if (password.match(/[a-z]/)) strength++;
+    if (password.match(/[A-Z]/)) strength++;
+    if (password.match(/[0-9]/)) strength++;
+    if (password.match(/[^a-zA-Z0-9]/)) strength++;
+    
+    const strengthElement = document.getElementById('password-strength');
+    
+    if (strength < 3) {
+        strengthElement.textContent = 'Contraseña débil';
+        strengthElement.className = 'password-strength strength-weak';
+    } else if (strength < 4) {
+        strengthElement.textContent = 'Contraseña media';
+        strengthElement.className = 'password-strength strength-medium';
+    } else {
+        strengthElement.textContent = 'Contraseña fuerte';
+        strengthElement.className = 'password-strength strength-strong';
+    }
+}
+
+function checkPasswordMatch() {
+    const password = document.getElementById('password').value;
+    const confirmPassword = document.getElementById('confirm_password').value;
+    const matchElement = document.getElementById('password-match');
+    
+    if (!password && !confirmPassword) {
+        matchElement.textContent = '';
+        matchElement.className = 'help-text';
+        return;
+    }
+    
+    if (confirmPassword && password !== confirmPassword) {
+        matchElement.textContent = 'Las contraseñas no coinciden';
+        matchElement.className = 'help-text text-danger';
+    } else if (confirmPassword && password === confirmPassword) {
+        matchElement.textContent = 'Las contraseñas coinciden';
+        matchElement.className = 'help-text text-success';
+    } else {
+        matchElement.textContent = '';
+        matchElement.className = 'help-text';
+    }
+}
+
+function showRolInfo(rolId) {
+    const rolInfoElement = document.getElementById('rol-info');
+    
+    if (rolId && rolesInfo[rolId]) {
+        const rol = rolesInfo[rolId];
+        rolInfoElement.innerHTML = `
+            <strong>${rol.nombre}</strong><br>
+            <small>${rol.descripcion}</small><br>
+            <small class="text-muted">Permisos: ${rol.permisos}</small>
+        `;
+        rolInfoElement.style.display = 'block';
+    } else {
+        rolInfoElement.style.display = 'none';
+    }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Animación de entrada
+    const formContainer = document.querySelector('.form-container');
+    formContainer.style.opacity = '0';
+    formContainer.style.transform = 'translateY(30px)';
+    
+    setTimeout(() => {
+        formContainer.style.transition = 'all 0.8s ease';
+        formContainer.style.opacity = '1';
+        formContainer.style.transform = 'translateY(0)';
+    }, 200);
+    
+    // Event listeners
+    document.getElementById('password').addEventListener('input', function() {
+        checkPasswordStrength(this.value);
+        checkPasswordMatch();
+    });
+    
+    document.getElementById('confirm_password').addEventListener('input', checkPasswordMatch);
+    
+    document.getElementById('rol').addEventListener('change', function() {
+        showRolInfo(this.value);
+    });
+    
+    // Mostrar información del rol actual
+    const rolActual = document.getElementById('rol').value;
+    if (rolActual) {
+        showRolInfo(rolActual);
+    }
+    
+    // Validación del formulario
+    const form = document.getElementById('editarUsuarioForm');
+    form.addEventListener('submit', function(e) {
+        const password = document.getElementById('password').value;
+        const confirmPassword = document.getElementById('confirm_password').value;
+        
+        if (password && password.length < 8) {
+            e.preventDefault();
+            alert('La contraseña debe tener al menos 8 caracteres');
+            return;
+        }
+        
+        if (password && password !== confirmPassword) {
+            e.preventDefault();
+            alert('Las contraseñas no coinciden');
+            return;
+        }
+    });
+    
+    // Efecto hover para las secciones del formulario
+    const formSections = document.querySelectorAll('.form-section');
+    formSections.forEach(section => {
+        section.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-2px)';
+            this.style.boxShadow = '0 4px 12px rgba(0,0,0,0.1)';
+        });
+        
+        section.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(0)';
+            this.style.boxShadow = 'none';
+        });
+    });
+});
+</script>
+{% endblock %}

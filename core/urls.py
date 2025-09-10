@@ -1,5 +1,6 @@
 from django.urls import path, include
 from . import views
+from . import views_usuarios_mejoradas
 
 urlpatterns = [
     # Autenticación
@@ -196,6 +197,23 @@ urlpatterns = [
     path('roles/<int:rol_id>/eliminar/', views.rol_eliminar, name='rol_eliminar'),
     path('roles/resumen/', views.roles_resumen, name='roles_resumen'),
     path('roles/<int:rol_id>/permisos/', views.rol_permisos, name='rol_permisos'),
+    
+    # URLs Mejoradas para Gestión de Usuarios y Roles
+    path('usuarios-mejorados/', views_usuarios_mejoradas.usuarios_lista_mejorada, name='usuarios_lista_mejorada'),
+    path('usuarios-mejorados/crear/', views_usuarios_mejoradas.usuario_crear_mejorado, name='usuario_crear_mejorado'),
+    path('usuarios-mejorados/<int:usuario_id>/editar/', views_usuarios_mejoradas.usuario_editar_mejorado, name='usuario_editar_mejorado'),
+    path('usuarios-mejorados/dashboard/', views_usuarios_mejoradas.usuarios_dashboard, name='usuarios_dashboard'),
+    path('usuarios-mejorados/gestor-permisos/', views_usuarios_mejoradas.usuarios_gestor_permisos, name='usuarios_gestor_permisos'),
+    
+    path('roles-mejorados/', views_usuarios_mejoradas.roles_lista_mejorada, name='roles_lista_mejorada'),
+    path('roles-mejorados/crear/', views_usuarios_mejoradas.rol_crear_mejorado, name='rol_crear_mejorado'),
+    path('roles-mejorados/<int:rol_id>/editar/', views_usuarios_mejoradas.rol_editar_mejorado, name='rol_editar_mejorado'),
+    path('roles-mejorados/<int:rol_id>/eliminar/', views_usuarios_mejoradas.rol_eliminar_mejorado, name='rol_eliminar_mejorado'),
+    
+    path('permisos-gestor/', views_usuarios_mejoradas.permisos_gestor, name='permisos_gestor'),
+    path('api/permisos/actualizar-masivo/', views_usuarios_mejoradas.permisos_actualizar_masivo, name='permisos_actualizar_masivo'),
+    path('api/permisos/rol/<int:rol_id>/modulos/', views_usuarios_mejoradas.permisos_rol_modulos, name='permisos_rol_modulos'),
+    path('api/permisos/actualizar-modulos/', views_usuarios_mejoradas.permisos_actualizar_modulos, name='permisos_actualizar_modulos'),
     
     # PWA Test
     path('pwa-test/', views.pwa_test, name='pwa_test'),

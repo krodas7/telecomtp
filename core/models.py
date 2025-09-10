@@ -9,6 +9,7 @@ class Rol(models.Model):
     """Modelo para roles de usuario"""
     nombre = models.CharField(max_length=50, unique=True)
     descripcion = models.TextField(blank=True)
+    modulos_activos = models.ManyToManyField('Modulo', blank=True, related_name='roles_activos')
     creado_en = models.DateTimeField(auto_now_add=True)
     
     class Meta:

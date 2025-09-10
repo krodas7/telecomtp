@@ -1,0 +1,557 @@
+{% extends "base.html" %}
+{% load custom_filters %}
+
+{% block title %}Editar Rol - Sistema de Construcción{% endblock %}
+
+{% block extra_css %}
+<style>
+    .editar-rol-hero {
+        background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%);
+        color: #212529;
+        padding: 3rem 2rem;
+        border-radius: 20px;
+        margin-bottom: 2rem;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .editar-rol-hero::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="white" opacity="0.1"/><circle cx="75" cy="75" r="1" fill="white" opacity="0.1"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+        opacity: 0.3;
+    }
+    
+    .editar-rol-hero-content {
+        position: relative;
+        z-index: 2;
+    }
+    
+    .form-container {
+        background: white;
+        border-radius: 20px;
+        padding: 2rem;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        margin-bottom: 2rem;
+    }
+    
+    .form-section {
+        margin-bottom: 2rem;
+        padding: 1.5rem;
+        background: #f8f9fa;
+        border-radius: 15px;
+        border-left: 4px solid var(--azul-acero);
+    }
+    
+    .form-section h5 {
+        color: var(--azul-acero);
+        margin-bottom: 1rem;
+        font-weight: 600;
+    }
+    
+    .modulo-card {
+        background: white;
+        border: 1px solid #dee2e6;
+        border-radius: 15px;
+        margin-bottom: 1rem;
+        overflow: hidden;
+        transition: all 0.3s ease;
+    }
+    
+    .modulo-card:hover {
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        transform: translateY(-2px);
+    }
+    
+    .modulo-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 1rem 1.5rem;
+        cursor: pointer;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .modulo-header:hover {
+        background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
+    }
+    
+    .modulo-title {
+        font-weight: 600;
+        margin: 0;
+        display: flex;
+        align-items: center;
+    }
+    
+    .modulo-title i {
+        margin-right: 0.5rem;
+        font-size: 1.1rem;
+    }
+    
+    .modulo-toggle {
+        background: rgba(255,255,255,0.2);
+        border: none;
+        color: white;
+        padding: 0.5rem;
+        border-radius: 50%;
+        width: 35px;
+        height: 35px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s ease;
+    }
+    
+    .modulo-toggle:hover {
+        background: rgba(255,255,255,0.3);
+    }
+    
+    .modulo-body {
+        padding: 1.5rem;
+        display: none;
+    }
+    
+    .modulo-body.show {
+        display: block;
+    }
+    
+    .permisos-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1rem;
+    }
+    
+    .permiso-item {
+        background: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: 10px;
+        padding: 1rem;
+        transition: all 0.3s ease;
+    }
+    
+    .permiso-item:hover {
+        background: #e9ecef;
+        border-color: var(--azul-acero);
+    }
+    
+    .permiso-checkbox {
+        display: flex;
+        align-items: center;
+        margin: 0;
+    }
+    
+    .permiso-checkbox input[type="checkbox"] {
+        margin-right: 0.75rem;
+        transform: scale(1.2);
+    }
+    
+    .permiso-label {
+        font-weight: 500;
+        color: var(--azul-acero);
+        margin: 0;
+        flex-grow: 1;
+    }
+    
+    .permiso-desc {
+        font-size: 0.85rem;
+        color: #6c757d;
+        margin: 0.25rem 0 0 0;
+    }
+    
+    .permiso-tipo {
+        background: var(--azul-acero);
+        color: white;
+        padding: 0.25rem 0.5rem;
+        border-radius: 12px;
+        font-size: 0.75rem;
+        font-weight: 500;
+        margin-left: auto;
+    }
+    
+    .btn-guardar {
+        background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%);
+        border: none;
+        padding: 0.75rem 2rem;
+        border-radius: 25px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(255,193,7,0.3);
+        color: #212529;
+    }
+    
+    .btn-guardar:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 6px 20px rgba(255,193,7,0.4);
+    }
+    
+    .btn-cancelar {
+        background: linear-gradient(135deg, #6c757d 0%, #545b62 100%);
+        border: none;
+        padding: 0.75rem 2rem;
+        border-radius: 25px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-cancelar:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 6px 20px rgba(108,117,125,0.4);
+    }
+    
+    .select-all-section {
+        background: #e3f2fd;
+        border: 1px solid #bbdefb;
+        border-radius: 10px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+    }
+    
+    .select-all-section h6 {
+        color: var(--azul-acero);
+        margin: 0 0 0.5rem 0;
+        font-weight: 600;
+    }
+    
+    .select-all-buttons {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+    }
+    
+    .btn-select-all {
+        background: var(--azul-acero);
+        color: white;
+        border: none;
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 500;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-select-all:hover {
+        background: #0056b3;
+        transform: translateY(-2px);
+    }
+    
+    .rol-info-card {
+        background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+        border: 1px solid #90caf9;
+        border-radius: 15px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    
+    .rol-nombre {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--azul-acero);
+        margin-bottom: 0.5rem;
+    }
+    
+    .rol-descripcion {
+        color: #6c757d;
+        margin-bottom: 1rem;
+    }
+    
+    .rol-stats {
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+    }
+    
+    .rol-stat {
+        background: rgba(255,255,255,0.8);
+        padding: 0.75rem 1rem;
+        border-radius: 10px;
+        text-align: center;
+        min-width: 100px;
+    }
+    
+    .rol-stat-number {
+        font-size: 1.2rem;
+        font-weight: 700;
+        color: var(--azul-acero);
+        display: block;
+    }
+    
+    .rol-stat-label {
+        font-size: 0.8rem;
+        color: #6c757d;
+        margin-top: 0.25rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<div class="editar-rol-hero">
+    <div class="editar-rol-hero-content">
+        <h1 class="mb-3">
+            <i class="fas fa-user-edit me-3"></i>Editar Rol
+        </h1>
+        <p class="mb-0">Modifica los permisos del rol del sistema</p>
+    </div>
+</div>
+
+<!-- Información del Rol -->
+<div class="rol-info-card">
+    <div class="rol-nombre">{{ rol.nombre }}</div>
+    <div class="rol-descripcion">
+        {{ rol.descripcion|default:"Sin descripción" }}
+    </div>
+    
+    <div class="rol-stats">
+        <div class="rol-stat">
+            <span class="rol-stat-number">{{ rol.permisos_count|default:0 }}</span>
+            <span class="rol-stat-label">Permisos Actuales</span>
+        </div>
+        <div class="rol-stat">
+            <span class="rol-stat-number">{{ rol.usuarios_count|default:0 }}</span>
+            <span class="rol-stat-label">Usuarios Asignados</span>
+        </div>
+    </div>
+</div>
+
+<!-- Formulario -->
+<div class="form-container">
+    <form method="POST" id="editarRolForm">
+        {% csrf_token %}
+        
+        <!-- Información Básica del Rol -->
+        <div class="form-section">
+            <h5>
+                <i class="fas fa-info-circle me-2"></i>
+                Información Básica del Rol
+            </h5>
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="nombre" class="form-label">
+                            <i class="fas fa-tag me-1"></i>Nombre del Rol *
+                        </label>
+                        <input type="text" class="form-control" id="nombre" name="nombre" 
+                               value="{{ rol.nombre }}" required placeholder="Ej: Administrador, Encargado, Colaborador">
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="descripcion" class="form-label">
+                            <i class="fas fa-align-left me-1"></i>Descripción
+                        </label>
+                        <input type="text" class="form-control" id="descripcion" name="descripcion" 
+                               value="{{ rol.descripcion }}" placeholder="Descripción breve del rol">
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Selección de Permisos -->
+        <div class="form-section">
+            <h5>
+                <i class="fas fa-key me-2"></i>
+                Asignación de Permisos
+            </h5>
+            
+            <!-- Controles de Selección Masiva -->
+            <div class="select-all-section">
+                <h6>
+                    <i class="fas fa-magic me-1"></i>
+                    Selección Rápida
+                </h6>
+                <div class="select-all-buttons">
+                    <button type="button" class="btn btn-select-all" onclick="seleccionarTodos()">
+                        <i class="fas fa-check-square me-1"></i>Seleccionar Todos
+                    </button>
+                    <button type="button" class="btn btn-select-all" onclick="deseleccionarTodos()">
+                        <i class="fas fa-square me-1"></i>Deseleccionar Todos
+                    </button>
+                    <button type="button" class="btn btn-select-all" onclick="seleccionarPorTipo('ver')">
+                        <i class="fas fa-eye me-1"></i>Solo Ver
+                    </button>
+                    <button type="button" class="btn btn-select-all" onclick="seleccionarPorTipo('crear')">
+                        <i class="fas fa-plus me-1"></i>Solo Crear
+                    </button>
+                    <button type="button" class="btn btn-select-all" onclick="seleccionarPorTipo('editar')">
+                        <i class="fas fa-edit me-1"></i>Solo Editar
+                    </button>
+                    <button type="button" class="btn btn-select-all" onclick="seleccionarPorTipo('eliminar')">
+                        <i class="fas fa-trash me-1"></i>Solo Eliminar
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Módulos y Permisos -->
+            {% for modulo, permisos in permisos_por_modulo.items %}
+            <div class="modulo-card">
+                <div class="modulo-header" onclick="toggleModulo('modulo_{{ modulo.id }}')">
+                    <div class="modulo-title">
+                        <i class="{{ modulo.icono|default:'fas fa-th-large' }}"></i>
+                        {{ modulo.nombre }}
+                    </div>
+                    <button type="button" class="modulo-toggle">
+                        <i class="fas fa-chevron-down" id="icon_{{ modulo.id }}"></i>
+                    </button>
+                </div>
+                <div class="modulo-body" id="modulo_{{ modulo.id }}">
+                    {% if permisos %}
+                        <div class="permisos-grid">
+                            {% for permiso in permisos %}
+                            <div class="permiso-item">
+                                <label class="permiso-checkbox">
+                                    <input type="checkbox" name="permisos" value="{{ permiso.id }}" 
+                                           class="permiso-check" data-tipo="{{ permiso.tipo }}"
+                                           {% if permiso.id in permisos_actuales %}checked{% endif %}>
+                                    <div class="flex-grow-1">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <span class="permiso-label">{{ permiso.nombre }}</span>
+                                            <span class="permiso-tipo">{{ permiso.get_tipo_display }}</span>
+                                        </div>
+                                        {% if permiso.descripcion %}
+                                            <p class="permiso-desc">{{ permiso.descripcion }}</p>
+                                        {% endif %}
+                                    </div>
+                                </label>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center text-muted py-3">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            No hay permisos disponibles para este módulo
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        
+        <!-- Botones de Acción -->
+        <div class="d-flex justify-content-between">
+            <a href="{% url 'roles_lista_mejorada' %}" class="btn btn-cancelar">
+                <i class="fas fa-arrow-left me-2"></i>Cancelar
+            </a>
+            <button type="submit" class="btn btn-guardar">
+                <i class="fas fa-save me-2"></i>Guardar Cambios
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function toggleModulo(moduloId) {
+    const body = document.getElementById(moduloId);
+    const icon = document.getElementById('icon_' + moduloId.split('_')[1]);
+    
+    if (body.classList.contains('show')) {
+        body.classList.remove('show');
+        icon.classList.remove('fa-chevron-up');
+        icon.classList.add('fa-chevron-down');
+    } else {
+        body.classList.add('show');
+        icon.classList.remove('fa-chevron-down');
+        icon.classList.add('fa-chevron-up');
+    }
+}
+
+function seleccionarTodos() {
+    const checkboxes = document.querySelectorAll('.permiso-check');
+    checkboxes.forEach(checkbox => {
+        checkbox.checked = true;
+    });
+}
+
+function deseleccionarTodos() {
+    const checkboxes = document.querySelectorAll('.permiso-check');
+    checkboxes.forEach(checkbox => {
+        checkbox.checked = false;
+    });
+}
+
+function seleccionarPorTipo(tipo) {
+    const checkboxes = document.querySelectorAll('.permiso-check');
+    checkboxes.forEach(checkbox => {
+        if (checkbox.dataset.tipo === tipo) {
+            checkbox.checked = true;
+        } else {
+            checkbox.checked = false;
+        }
+    });
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Animación de entrada
+    const formContainer = document.querySelector('.form-container');
+    formContainer.style.opacity = '0';
+    formContainer.style.transform = 'translateY(30px)';
+    
+    setTimeout(() => {
+        formContainer.style.transition = 'all 0.8s ease';
+        formContainer.style.opacity = '1';
+        formContainer.style.transform = 'translateY(0)';
+    }, 200);
+    
+    // Efecto hover para las tarjetas de módulos
+    const moduloCards = document.querySelectorAll('.modulo-card');
+    moduloCards.forEach(card => {
+        card.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-2px)';
+        });
+        
+        card.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(0)';
+        });
+    });
+    
+    // Efecto hover para los items de permisos
+    const permisoItems = document.querySelectorAll('.permiso-item');
+    permisoItems.forEach(item => {
+        item.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-1px)';
+        });
+        
+        item.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(0)';
+        });
+    });
+    
+    // Validación del formulario
+    const form = document.getElementById('editarRolForm');
+    form.addEventListener('submit', function(e) {
+        const nombre = document.getElementById('nombre').value.trim();
+        const permisosSeleccionados = document.querySelectorAll('.permiso-check:checked');
+        
+        if (!nombre) {
+            e.preventDefault();
+            alert('El nombre del rol es obligatorio');
+            return;
+        }
+        
+        if (permisosSeleccionados.length === 0) {
+            e.preventDefault();
+            alert('Debe seleccionar al menos un permiso para el rol');
+            return;
+        }
+    });
+    
+    // Abrir módulos que tienen permisos seleccionados
+    const modulosConPermisos = new Set();
+    document.querySelectorAll('.permiso-check:checked').forEach(checkbox => {
+        const moduloId = checkbox.closest('.modulo-card').querySelector('.modulo-body').id;
+        modulosConPermisos.add(moduloId);
+    });
+    
+    modulosConPermisos.forEach(moduloId => {
+        toggleModulo(moduloId);
+    });
+});
+</script>
+{% endblock %}
