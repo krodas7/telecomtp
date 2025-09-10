@@ -4703,7 +4703,7 @@ def roles_resumen(request):
     
     try:
         # Obtener todos los roles con sus permisos
-        roles = Rol.objects.all().order_by('orden')
+        roles = Rol.objects.all().order_by('nombre')
         modulos = Modulo.objects.all().order_by('orden')
         
         # Crear resumen detallado
