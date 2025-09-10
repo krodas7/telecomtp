@@ -1,0 +1,616 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Crear Categoría de Gasto - Sistema de Construcción{% endblock %}
+
+{% block extra_css %}
+<style>
+    .color-picker {
+        display: grid;
+        grid-template-columns: repeat(6, 1fr);
+        gap: 8px;
+        margin-top: 10px;
+    }
+    
+    .color-option {
+        width: 40px;
+        height: 40px;
+        border-radius: 8px;
+        cursor: pointer;
+        border: 3px solid transparent;
+        transition: all 0.3s ease;
+        position: relative;
+    }
+    
+    .color-option:hover {
+        transform: scale(1.1);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    }
+    
+    .color-option.selected {
+        border-color: #007bff;
+        box-shadow: 0 0 0 2px rgba(0,123,255,0.25);
+    }
+    
+    .color-option::after {
+        content: '✓';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        color: white;
+        font-weight: bold;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+    
+    .color-option.selected::after {
+        opacity: 1;
+    }
+    
+    .icon-picker {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 10px;
+        margin-top: 10px;
+        max-height: 200px;
+        overflow-y: auto;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        padding: 10px;
+    }
+    
+    .icon-option {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 10px;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        border: 2px solid transparent;
+    }
+    
+    .icon-option:hover {
+        background-color: #f8f9fa;
+        transform: translateY(-2px);
+    }
+    
+    .icon-option.selected {
+        background-color: #e3f2fd;
+        border-color: #007bff;
+    }
+    
+    .icon-option i {
+        font-size: 20px;
+        margin-bottom: 5px;
+        color: #6c757d;
+    }
+    
+    .icon-option.selected i {
+        color: #007bff;
+    }
+    
+    .icon-option small {
+        font-size: 10px;
+        text-align: center;
+        word-break: break-all;
+    }
+    
+    .preview-card {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        border: 2px dashed #dee2e6;
+        border-radius: 12px;
+        padding: 20px;
+        text-align: center;
+        margin-top: 15px;
+    }
+    
+    .preview-icon {
+        font-size: 48px;
+        margin-bottom: 10px;
+    }
+    
+    .preview-name {
+        font-size: 18px;
+        font-weight: 600;
+        margin-bottom: 5px;
+    }
+    
+    .preview-desc {
+        font-size: 14px;
+        color: #6c757d;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="mb-0">
+        <i class="fas fa-plus me-2"></i>Crear Nueva Categoría de Gasto
+    </h2>
+    <a href="{% url 'categorias_gasto_list' %}" class="btn btn-outline-secondary">
+        <i class="fas fa-arrow-left me-2"></i>Volver a Categorías
+    </a>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-edit me-2"></i>Información de la Categoría
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.nombre.id_for_label }}" class="form-label">
+                                <strong>Nombre de la Categoría *</strong>
+                            </label>
+                            {{ form.nombre }}
+                            {% if form.nombre.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.nombre.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <small class="form-text text-muted">
+                                Ej: Materiales, Servicios, Herramientas, etc.
+                            </small>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.color.id_for_label }}" class="form-label">
+                                <strong>Color *</strong>
+                            </label>
+                            {{ form.color }}
+                            <div class="mt-2">
+                                <small class="text-muted">Vista previa del color:</small>
+                                <div class="color-preview" id="colorPreview" style="width: 30px; height: 30px; background-color: #007bff; border-radius: 4px; border: 1px solid #ddd; display: inline-block; margin-left: 10px;"></div>
+                            </div>
+                            
+                            
+                            <!-- Selector de colores visual -->
+                            <div class="color-picker">
+                                <div class="color-option" data-color="#007bff" style="background-color: #007bff;"></div>
+                                <div class="color-option" data-color="#28a745" style="background-color: #28a745;"></div>
+                                <div class="color-option" data-color="#dc3545" style="background-color: #dc3545;"></div>
+                                <div class="color-option" data-color="#ffc107" style="background-color: #ffc107;"></div>
+                                <div class="color-option" data-color="#6f42c1" style="background-color: #6f42c1;"></div>
+                                <div class="color-option" data-color="#fd7e14" style="background-color: #fd7e14;"></div>
+                                <div class="color-option" data-color="#20c997" style="background-color: #20c997;"></div>
+                                <div class="color-option" data-color="#6c757d" style="background-color: #6c757d;"></div>
+                                <div class="color-option" data-color="#e83e8c" style="background-color: #e83e8c;"></div>
+                                <div class="color-option" data-color="#17a2b8" style="background-color: #17a2b8;"></div>
+                                <div class="color-option" data-color="#343a40" style="background-color: #343a40;"></div>
+                                <div class="color-option" data-color="#f8f9fa" style="background-color: #f8f9fa; border: 1px solid #dee2e6;"></div>
+                            </div>
+                            
+                            {% if form.color.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.color.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <small class="form-text text-muted">
+                                Selecciona un color o escribe un código hexadecimal
+                            </small>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.icono.id_for_label }}" class="form-label">
+                                <strong>Icono *</strong>
+                            </label>
+                            {{ form.icono }}
+                            
+                            
+                            <!-- Selector de iconos visual -->
+                            <div class="icon-picker">
+                                <div class="icon-option" data-icon="fas fa-tools">
+                                    <i class="fas fa-tools"></i>
+                                    <small>fas fa-tools</small>
+                                </div>
+                                <div class="icon-option" data-icon="fas fa-hammer">
+                                    <i class="fas fa-hammer"></i>
+                                    <small>fas fa-hammer</small>
+                                </div>
+                                <div class="icon-option" data-icon="fas fa-wrench">
+                                    <i class="fas fa-wrench"></i>
+                                    <small>fas fa-wrench</small>
+                                </div>
+                                <div class="icon-option" data-icon="fas fa-bolt">
+                                    <i class="fas fa-bolt"></i>
+                                    <small>fas fa-bolt</small>
+                                </div>
+                                <div class="icon-option" data-icon="fas fa-truck">
+                                    <i class="fas fa-truck"></i>
+                                    <small>fas fa-truck</small>
+                                </div>
+                                <div class="icon-option" data-icon="fas fa-cog">
+                                    <i class="fas fa-cog"></i>
+                                    <small>fas fa-cog</small>
+                                </div>
+                                <div class="icon-option" data-icon="fas fa-screwdriver">
+                                    <i class="fas fa-screwdriver"></i>
+                                    <small>fas fa-screwdriver</small>
+                                </div>
+                                <div class="icon-option" data-icon="fas fa-paint-brush">
+                                    <i class="fas fa-paint-brush"></i>
+                                    <small>fas fa-paint-brush</small>
+                                </div>
+                                <div class="icon-option" data-icon="fas fa-ruler">
+                                    <i class="fas fa-ruler"></i>
+                                    <small>fas fa-ruler</small>
+                                </div>
+                                <div class="icon-option" data-icon="fas fa-hard-hat">
+                                    <i class="fas fa-hard-hat"></i>
+                                    <small>fas fa-hard-hat</small>
+                                </div>
+                                <div class="icon-option" data-icon="fas fa-tape">
+                                    <i class="fas fa-tape"></i>
+                                    <small>fas fa-tape</small>
+                                </div>
+                                <div class="icon-option" data-icon="fas fa-clipboard">
+                                    <i class="fas fa-clipboard"></i>
+                                    <small>fas fa-clipboard</small>
+                                </div>
+                                <div class="icon-option" data-icon="fas fa-calculator">
+                                    <i class="fas fa-calculator"></i>
+                                    <small>fas fa-calculator</small>
+                                </div>
+                                <div class="icon-option" data-icon="fas fa-file-invoice">
+                                    <i class="fas fa-file-invoice"></i>
+                                    <small>fas fa-file-invoice</small>
+                                </div>
+                                <div class="icon-option" data-icon="fas fa-receipt">
+                                    <i class="fas fa-receipt"></i>
+                                    <small>fas fa-receipt</small>
+                                </div>
+                                <div class="icon-option" data-icon="fas fa-credit-card">
+                                    <i class="fas fa-credit-card"></i>
+                                    <small>fas fa-credit-card</small>
+                                </div>
+                            </div>
+                            
+                            {% if form.icono.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.icono.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <small class="form-text text-muted">
+                                Selecciona un icono o escribe una clase de Font Awesome
+                            </small>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.descripcion.id_for_label }}" class="form-label">
+                                <strong>Descripción</strong>
+                            </label>
+                            {{ form.descripcion }}
+                            {% if form.descripcion.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.descripcion.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <small class="form-text text-muted">
+                                Descripción opcional de la categoría
+                            </small>
+                        </div>
+                    </div>
+                    
+                    <!-- Vista previa de la categoría -->
+                    <div class="preview-card">
+                        <div class="preview-icon" id="previewIcon">
+                            <i class="fas fa-tools"></i>
+                        </div>
+                        <div class="preview-name" id="previewName" style="color: #007bff;">
+                            Nombre de la categoría
+                        </div>
+                        <div class="preview-desc" id="previewDesc">
+                            Descripción de la categoría
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-2"></i>Guardar Categoría
+                        </button>
+                        <a href="{% url 'categorias_gasto_list' %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-times me-2"></i>Cancelar
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="fas fa-info-circle me-2"></i>¿Por qué categorizar?
+                </h6>
+            </div>
+            <div class="card-body">
+                <ul class="list-unstyled mb-0">
+                    <li><i class="fas fa-check text-success me-2"></i>Mejor organización</li>
+                    <li><i class="fas fa-check text-success me-2"></i>Reportes detallados</li>
+                    <li><i class="fas fa-check text-success me-2"></i>Control presupuestario</li>
+                    <li><i class="fas fa-check text-success me-2"></i>Análisis de costos</li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="card mt-3">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="fas fa-lightbulb me-2"></i>Consejos
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info">
+                    <h6 class="alert-heading">💡 Tip para colores:</h6>
+                    <p class="mb-0">Usa colores que contrasten bien con el texto blanco para mejor legibilidad.</p>
+                </div>
+                <div class="alert alert-warning">
+                    <h6 class="alert-heading">⚠️ Tip para iconos:</h6>
+                    <p class="mb-0">Elige iconos que representen claramente el tipo de gasto para facilitar la identificación.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Iniciando script de categorías...');
+    
+    // Elementos del formulario
+    const colorInput = document.getElementById('{{ form.color.id }}');
+    const iconInput = document.getElementById('{{ form.icono.id }}');
+    const nameInput = document.getElementById('{{ form.nombre.id }}');
+    const descInput = document.getElementById('{{ form.descripcion.id }}');
+    
+    console.log('Elementos del formulario:', {
+        colorInput: colorInput,
+        iconInput: iconInput,
+        nameInput: nameInput,
+        descInput: descInput
+    });
+    
+    // Debug adicional para verificar IDs
+    console.log('IDs de los campos:');
+    console.log('Color ID:', '{{ form.color.id }}');
+    console.log('Icono ID:', '{{ form.icono.id }}');
+    console.log('Nombre ID:', '{{ form.nombre.id }}');
+    console.log('Descripción ID:', '{{ form.descripcion.id }}');
+    
+    // Elementos de preview
+    const colorPreview = document.getElementById('colorPreview');
+    const previewIcon = document.getElementById('previewIcon');
+    const previewName = document.getElementById('previewName');
+    const previewDesc = document.getElementById('previewDesc');
+    
+    console.log('Elementos de preview:', {
+        colorPreview: colorPreview,
+        previewIcon: previewIcon,
+        previewName: previewName,
+        previewDesc: previewDesc
+    });
+    
+    // Selectores visuales
+    const colorOptions = document.querySelectorAll('.color-option');
+    const iconOptions = document.querySelectorAll('.icon-option');
+    
+    console.log('Selectores visuales:', {
+        colorOptions: colorOptions.length,
+        iconOptions: iconOptions.length
+    });
+    
+    // Función para actualizar preview del color
+    function updateColorPreview() {
+        let colorField = colorInput;
+        if (!colorField) {
+            colorField = document.querySelector('input[name="color"]');
+        }
+        const color = colorField ? colorField.value || '#007bff' : '#007bff';
+        if (colorPreview) {
+            colorPreview.style.backgroundColor = color;
+        }
+        if (previewName) {
+            previewName.style.color = color;
+        }
+        console.log('Color actualizado:', color);
+    }
+    
+    // Función para actualizar preview del icono
+    function updateIconPreview() {
+        let iconField = iconInput;
+        if (!iconField) {
+            iconField = document.querySelector('input[name="icono"]');
+        }
+        const iconClass = iconField ? iconField.value || 'fas fa-tools' : 'fas fa-tools';
+        if (previewIcon) {
+            previewIcon.innerHTML = `<i class="${iconClass}"></i>`;
+        }
+        console.log('Icono actualizado:', iconClass);
+    }
+    
+    // Función para actualizar preview del nombre
+    function updateNamePreview() {
+        const name = nameInput.value || 'Nombre de la categoría';
+        previewName.textContent = name;
+    }
+    
+    // Función para actualizar preview de la descripción
+    function updateDescPreview() {
+        const desc = descInput.value || 'Descripción de la categoría';
+        previewDesc.textContent = desc;
+    }
+    
+    // Event listeners para inputs
+    if (colorInput) {
+        colorInput.addEventListener('input', updateColorPreview);
+        colorInput.addEventListener('change', updateColorPreview);
+        colorInput.addEventListener('blur', updateColorPreview);
+    }
+    if (iconInput) {
+        iconInput.addEventListener('input', updateIconPreview);
+        iconInput.addEventListener('change', updateIconPreview);
+        iconInput.addEventListener('blur', updateIconPreview);
+    }
+    if (nameInput) nameInput.addEventListener('input', updateNamePreview);
+    if (descInput) descInput.addEventListener('input', updateDescPreview);
+    
+    // Event listeners para selector de colores
+    if (colorOptions.length > 0) {
+        colorOptions.forEach((option, index) => {
+            option.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                const color = this.getAttribute('data-color');
+                console.log('Color clickeado:', color);
+                
+                // Remover selección anterior
+                colorOptions.forEach(opt => opt.classList.remove('selected'));
+                
+                // Seleccionar actual
+                this.classList.add('selected');
+                
+                // Buscar el input de color de nuevo por si no se encontró antes
+                let colorField = colorInput;
+                if (!colorField) {
+                    colorField = document.querySelector('input[name="color"]');
+                    console.log('Buscando campo color alternativo:', colorField);
+                }
+                
+                // Actualizar input y preview
+                if (colorField) {
+                    colorField.value = color;
+                    console.log('Color actualizado en input:', colorField.value);
+                } else {
+                    console.error('No se pudo encontrar el campo de color');
+                }
+                updateColorPreview();
+            });
+        });
+    } else {
+        console.error('No se encontraron opciones de color');
+    }
+    
+    // Event listeners para selector de iconos
+    if (iconOptions.length > 0) {
+        iconOptions.forEach((option, index) => {
+            option.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                const iconClass = this.getAttribute('data-icon');
+                console.log('Icono clickeado:', iconClass);
+                
+                // Remover selección anterior
+                iconOptions.forEach(opt => opt.classList.remove('selected'));
+                
+                // Seleccionar actual
+                this.classList.add('selected');
+                
+                // Buscar el input de icono de nuevo por si no se encontró antes
+                let iconField = iconInput;
+                if (!iconField) {
+                    iconField = document.querySelector('input[name="icono"]');
+                    console.log('Buscando campo icono alternativo:', iconField);
+                }
+                
+                // Actualizar input y preview
+                if (iconField) {
+                    iconField.value = iconClass;
+                    console.log('Icono actualizado en input:', iconField.value);
+                } else {
+                    console.error('No se pudo encontrar el campo de icono');
+                }
+                updateIconPreview();
+            });
+        });
+    } else {
+        console.error('No se encontraron opciones de icono');
+    }
+    
+    // Función de depuración
+    function debugInfo() {
+        console.log('=== DEBUG INFO ===');
+        console.log('Color Input:', colorInput);
+        console.log('Icon Input:', iconInput);
+        console.log('Color Preview:', colorPreview);
+        console.log('Preview Icon:', previewIcon);
+        console.log('Color Options:', colorOptions.length);
+        console.log('Icon Options:', iconOptions.length);
+        console.log('==================');
+    }
+    
+    // Inicializar previews
+    updateColorPreview();
+    updateIconPreview();
+    updateNamePreview();
+    updateDescPreview();
+    
+    // Seleccionar primer color por defecto
+    if (colorOptions.length > 0) {
+        colorOptions[0].classList.add('selected');
+        console.log('Primer color seleccionado por defecto');
+    }
+    
+    // Seleccionar primer icono por defecto
+    if (iconOptions.length > 0) {
+        iconOptions[0].classList.add('selected');
+        console.log('Primer icono seleccionado por defecto');
+    }
+    
+    // Ejecutar debug
+    debugInfo();
+    
+    // Debug del formulario - verificar datos antes de enviar
+    const form = document.querySelector('form');
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            console.log('=== DATOS DEL FORMULARIO ===');
+            console.log('Color:', colorInput ? colorInput.value : 'No encontrado');
+            console.log('Icono:', iconInput ? iconInput.value : 'No encontrado');
+            console.log('Nombre:', nameInput ? nameInput.value : 'No encontrado');
+            console.log('Descripción:', descInput ? descInput.value : 'No encontrado');
+            
+            // Verificar que los campos tengan valores
+            if (colorInput && !colorInput.value) {
+                console.error('❌ Campo color está vacío');
+            }
+            if (iconInput && !iconInput.value) {
+                console.error('❌ Campo icono está vacío');
+            }
+            console.log('============================');
+        });
+    }
+    
+    // Aplicar clases de Bootstrap a los campos del formulario
+    const formFields = document.querySelectorAll('input, textarea, select');
+    formFields.forEach(field => {
+        field.classList.add('form-control');
+        if (field.type === 'color') {
+            field.classList.remove('form-control');
+            field.classList.add('form-control-color');
+        }
+    });
+});
+</script>
+{% endblock %}
