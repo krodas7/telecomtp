@@ -4447,7 +4447,7 @@ def rol_permisos(request, rol_id):
             return redirect('roles_lista')
         
         # GET - Mostrar formulario
-        modulos = Modulo.objects.all().order_by('orden')
+        modulos = Modulo.objects.all().order_by('nombre')
         permisos_actuales = RolPermiso.objects.filter(rol=rol, activo=True).values_list('permiso_id', flat=True)
         
         # Organizar permisos por módulo
@@ -4704,7 +4704,7 @@ def roles_resumen(request):
     try:
         # Obtener todos los roles con sus permisos
         roles = Rol.objects.all().order_by('nombre')
-        modulos = Modulo.objects.all().order_by('orden')
+        modulos = Modulo.objects.all().order_by('nombre')
         
         # Crear resumen detallado
         resumen_roles = []

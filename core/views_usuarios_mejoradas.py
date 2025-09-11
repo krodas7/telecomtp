@@ -99,7 +99,7 @@ def rol_crear_mejorado(request):
             messages.error(request, f'Error al crear el rol: {str(e)}')
     
     # Obtener módulos y permisos para el formulario
-    modulos = Modulo.objects.filter(activo=True).order_by('orden')
+    modulos = Modulo.objects.filter(activo=True).order_by('nombre')
     permisos_por_modulo = {}
     
     for modulo in modulos:
@@ -168,7 +168,7 @@ def rol_editar_mejorado(request, rol_id):
     permisos_actuales = RolPermiso.objects.filter(rol=rol, activo=True).values_list('permiso_id', flat=True)
     
     # Obtener módulos y permisos para el formulario
-    modulos = Modulo.objects.filter(activo=True).order_by('orden')
+    modulos = Modulo.objects.filter(activo=True).order_by('nombre')
     permisos_por_modulo = {}
     
     for modulo in modulos:
@@ -444,7 +444,7 @@ def permisos_gestor(request):
         return redirect('dashboard')
     
     # Obtener módulos activos
-    modulos = Modulo.objects.filter(activo=True).order_by('orden')
+    modulos = Modulo.objects.filter(activo=True).order_by('nombre')
     
     # Obtener roles
     roles = Rol.objects.all().order_by('nombre')
@@ -471,7 +471,7 @@ def usuarios_gestor_permisos(request):
         return redirect('dashboard')
     
     # Obtener módulos activos
-    modulos = Modulo.objects.filter(activo=True).order_by('orden')
+    modulos = Modulo.objects.filter(activo=True).order_by('nombre')
     
     # Obtener roles
     roles = Rol.objects.all().order_by('nombre')
@@ -598,7 +598,7 @@ def permisos_rol_modulos(request, rol_id):
     
     try:
         rol = Rol.objects.get(id=rol_id)
-        modulos = Modulo.objects.filter(activo=True).order_by('orden')
+        modulos = Modulo.objects.filter(activo=True).order_by('nombre')
         modulos_activos = rol.modulos_activos.values_list('id', flat=True)
         
         modulos_data = []
