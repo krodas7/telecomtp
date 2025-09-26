@@ -1,0 +1,289 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Trabajadores Diarios - {{ proyecto.nombre }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">
+            <i class="fas fa-users me-2"></i>Trabajadores Diarios
+        </h1>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{% url 'proyectos_list' %}">Proyectos</a></li>
+                <li class="breadcrumb-item"><a href="{% url 'proyecto_dashboard' proyecto.id %}">{{ proyecto.nombre }}</a></li>
+                <li class="breadcrumb-item active">Trabajadores Diarios</li>
+            </ol>
+        </nav>
+    </div>
+
+    <!-- Botones de acción -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="btn-group" role="group">
+                <a href="{% url 'trabajador_diario_create' proyecto.id %}" class="btn btn-primary">
+                    <i class="fas fa-plus me-1"></i>Nuevo Trabajador
+                </a>
+                <a href="{% url 'trabajadores_diarios_pdf' proyecto.id %}" class="btn btn-success">
+                    <i class="fas fa-file-pdf me-1"></i>Descargar PDF
+                </a>
+                <a href="{% url 'proyecto_dashboard' proyecto.id %}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left me-1"></i>Volver al Proyecto
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Administración de Anticipos -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-money-bill-wave me-2"></i>Administración de Anticipos
+                    </h6>
+                    <div class="btn-group" role="group">
+                        <a href="{% url 'anticipo_trabajador_diario_create' proyecto.id %}" class="btn btn-sm btn-success">
+                            <i class="fas fa-plus me-1"></i>Nuevo Anticipo
+                        </a>
+                        <a href="{% url 'anticipo_trabajador_diario_list' proyecto.id %}" class="btn btn-sm btn-info">
+                            <i class="fas fa-list me-1"></i>Ver Anticipos
+                        </a>
+                        <a href="{% url 'trabajadores_diarios_pdf' proyecto.id %}" class="btn btn-sm btn-warning">
+                            <i class="fas fa-file-pdf me-1"></i>PDF Planilla
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>Resumen de Pagos</h6>
+                            <div class="alert alert-info">
+                                <div class="row">
+                                    <div class="col-6">
+                                        <strong>Total a Pagar:</strong><br>
+                                        <span class="badge bg-primary fs-6" id="total-general-pagar">Q{{ total_a_pagar|floatformat:2 }}</span>
+                                    </div>
+                                    <div class="col-6">
+                                        <strong>Anticipos Aplicados:</strong><br>
+                                        <span class="badge bg-warning fs-6" id="total-anticipos">Q{{ total_aplicado|floatformat:2 }}</span>
+                                    </div>
+                                </div>
+                                <hr>
+                                <div class="text-center">
+                                    <strong>Saldo Pendiente:</strong><br>
+                                    <span class="badge bg-success fs-5" id="saldo-pendiente">Q{{ saldo_pendiente|floatformat:2 }}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Estadísticas</h6>
+                            <div class="row text-center">
+                                <div class="col-6">
+                                    <div class="border rounded p-3">
+                                        <h4 class="text-primary">{{ total_trabajadores }}</h4>
+                                        <small class="text-muted">Trabajadores</small>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="border rounded p-3">
+                                        <h4 class="text-success">Q{{ total_anticipos|floatformat:2 }}</h4>
+                                        <small class="text-muted">Anticipos</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabla de trabajadores -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">
+                <i class="fas fa-table me-2"></i>Lista de Trabajadores Diarios
+            </h6>
+        </div>
+        <div class="card-body">
+            {% if trabajadores %}
+                <div class="table-responsive">
+                    <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
+                        <thead>
+                            <tr>
+                                <th>No.</th>
+                                <th>Nombre del Trabajador</th>
+                                <th>Pago Diario (Q)</th>
+                                <th>Días Trabajados</th>
+                                <th>Total a Pagar (Q)</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for trabajador in trabajadores %}
+                            <tr>
+                                <td>{{ forloop.counter }}</td>
+                                <td>
+                                    <strong>{{ trabajador.nombre }}</strong>
+                                    {% if not trabajador.activo %}
+                                        <span class="badge bg-danger ms-1">Inactivo</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-end">Q{{ trabajador.pago_diario|floatformat:2 }}</td>
+                                <td class="text-center">
+                                    <input type="number" 
+                                           class="form-control form-control-sm dias-trabajados-input" 
+                                           value="{{ trabajador.total_dias_trabajados }}"
+                                           data-trabajador-id="{{ trabajador.id }}"
+                                           data-pago-diario="{{ trabajador.pago_diario }}"
+                                           data-anticipos-aplicados="{{ trabajador.total_anticipos_aplicados }}"
+                                           min="0"
+                                           style="width: 80px;">
+                                </td>
+                                <td class="text-end">
+                                    <div class="d-flex flex-column">
+                                        <span class="total-pagar-display" data-trabajador-id="{{ trabajador.id }}">
+                                            Q{{ trabajador.saldo_pendiente|floatformat:2 }}
+                                        </span>
+                                        {% if trabajador.total_anticipos_aplicados > 0 %}
+                                            <small class="text-muted">
+                                                (Anticipos: Q{{ trabajador.total_anticipos_aplicados|floatformat:2 }})
+                                            </small>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="btn-group" role="group">
+                                        <a href="{% url 'trabajador_diario_detail' proyecto.id trabajador.id %}" 
+                                           class="btn btn-info btn-sm" title="Ver detalles">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <a href="{% url 'trabajador_diario_edit' proyecto.id trabajador.id %}" 
+                                           class="btn btn-warning btn-sm" title="Editar">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <a href="{% url 'trabajador_diario_delete' proyecto.id trabajador.id %}" 
+                                           class="btn btn-danger btn-sm" title="Eliminar">
+                                            <i class="fas fa-trash"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                        <tfoot>
+                            <tr style="background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%); border-top: 3px solid #2196f3;">
+                                <th colspan="3" class="text-end" style="font-size: 1.1em; padding: 15px;">
+                                    <i class="fas fa-calculator me-2"></i>
+                                    <strong>TOTAL GENERAL A PAGAR:</strong>
+                                </th>
+                                <th class="text-center" style="font-size: 1.2em; padding: 15px;">
+                                    <span class="badge bg-success fs-5" id="total-general-tabla">Q0.00</span>
+                                </th>
+                                <th colspan="2" style="padding: 15px;"></th>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-users fa-3x text-muted mb-3"></i>
+                    <h5 class="text-muted">No hay trabajadores diarios registrados</h5>
+                    <p class="text-muted">Comienza agregando un nuevo trabajador diario.</p>
+                    <a href="{% url 'trabajador_diario_create' proyecto.id %}" class="btn btn-primary">
+                        <i class="fas fa-plus me-1"></i>Agregar Primer Trabajador
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const diasInputs = document.querySelectorAll('.dias-trabajados-input');
+    
+    diasInputs.forEach(input => {
+        let timeoutId;
+        
+        input.addEventListener('input', function() {
+            const trabajadorId = this.dataset.trabajadorId;
+            const pagoDiario = parseFloat(this.dataset.pagoDiario);
+            const anticiposAplicados = parseFloat(this.dataset.anticiposAplicados) || 0;
+            const diasTrabajados = parseInt(this.value) || 0;
+            const totalPagar = diasTrabajados * pagoDiario;
+            const saldoPendiente = totalPagar - anticiposAplicados;
+            
+            const totalDisplay = document.querySelector(`.total-pagar-display[data-trabajador-id="${trabajadorId}"]`);
+            if (totalDisplay) {
+                totalDisplay.textContent = `Q${saldoPendiente.toFixed(2)}`;
+            }
+            
+            actualizarTotalesGenerales();
+            
+            clearTimeout(timeoutId);
+            timeoutId = setTimeout(() => {
+                guardarDiasTrabajados(trabajadorId, diasTrabajados);
+            }, 1000);
+        });
+    });
+    
+    function actualizarTotalesGenerales() {
+        let totalGeneral = 0;
+        let totalAnticiposAplicados = 0;
+        
+        diasInputs.forEach(input => {
+            const pagoDiario = parseFloat(input.dataset.pagoDiario);
+            const anticiposAplicados = parseFloat(input.dataset.anticiposAplicados) || 0;
+            const diasTrabajados = parseInt(input.value) || 0;
+            const totalPagar = diasTrabajados * pagoDiario;
+            const saldoPendiente = totalPagar - anticiposAplicados;
+            
+            totalGeneral += totalPagar;
+            totalAnticiposAplicados += anticiposAplicados;
+        });
+        
+        const saldoPendienteTotal = totalGeneral - totalAnticiposAplicados;
+        
+        // Actualizar resumen
+        document.getElementById('total-general-pagar').textContent = `Q${totalGeneral.toFixed(2)}`;
+        document.getElementById('total-anticipos').textContent = `Q${totalAnticiposAplicados.toFixed(2)}`;
+        document.getElementById('saldo-pendiente').textContent = `Q${saldoPendienteTotal.toFixed(2)}`;
+        
+        // Actualizar total en la tabla
+        const totalTabla = document.getElementById('total-general-tabla');
+        if (totalTabla) {
+            totalTabla.textContent = `Q${totalGeneral.toFixed(2)}`;
+        }
+    }
+    
+    function guardarDiasTrabajados(trabajadorId, diasTrabajados) {
+        fetch(`{% url 'actualizar_dias_trabajados' proyecto.id 0 %}`.replace('0', trabajadorId), {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            },
+            body: `dias_trabajados=${diasTrabajados}`
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                console.log('Días trabajados actualizados correctamente');
+            } else {
+                console.error('Error al actualizar días trabajados:', data.error);
+            }
+        })
+        .catch(error => {
+            console.error('Error en la petición:', error);
+        });
+    }
+    
+    // Inicializar totales
+    actualizarTotalesGenerales();
+});
+</script>
+{% endblock %}

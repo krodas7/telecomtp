@@ -685,6 +685,7 @@ class ArchivoProyecto(models.Model):
         ('plano', 'Plano'),
         ('documento', 'Documento'),
         ('imagen', 'Imagen'),
+        ('excel', 'Excel'),
         ('contrato', 'Contrato'),
         ('permiso', 'Permiso'),
         ('otro', 'Otro'),
@@ -732,13 +733,18 @@ class ArchivoProyecto(models.Model):
     
     def es_documento(self):
         """Verificar si el archivo es un documento"""
-        extensiones_documento = ['pdf', 'doc', 'docx', 'txt', 'rtf']
+        extensiones_documento = ['pdf', 'doc', 'docx', 'txt', 'rtf', 'xlsx', 'xls']
         return self.get_extension() in extensiones_documento
     
     def es_plano(self):
         """Verificar si el archivo es un plano"""
         extensiones_plano = ['dwg', 'dxf', 'pdf', 'jpg', 'jpeg', 'png']
         return self.get_extension() in extensiones_plano
+    
+    def es_excel(self):
+        """Verificar si el archivo es una hoja de cálculo Excel"""
+        extensiones_excel = ['xlsx', 'xls']
+        return self.get_extension() in extensiones_excel
     
     def generar_thumbnail(self):
         """Generar miniatura del archivo si es posible"""
@@ -1532,5 +1538,110 @@ class EventoCalendario(models.Model):
             event_data['start'] = f"{fecha_inicio.isoformat()}T{self.hora_inicio.isoformat()}"
             if self.hora_fin:
                 event_data['end'] = f"{fecha_fin.isoformat() if fecha_fin else fecha_inicio.isoformat()}T{self.hora_fin.isoformat()}"
-        
+         
         return event_data
+
+
+# ===== MODELOS PARA TRABAJADORES DIARIOS =====
+
+class TrabajadorDiario(models.Model):
+    """Modelo para trabajadores diarios de un proyecto"""
+    proyecto = models.ForeignKey(Proyecto, on_delete=models.CASCADE, related_name='trabajadores_diarios', verbose_name="Proyecto")
+    nombre = models.CharField(max_length=100, verbose_name="Nombre del trabajador")
+    pago_diario = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Pago diario (Q)")
+    activo = models.BooleanField(default=True, verbose_name="Activo")
+    fecha_registro = models.DateTimeField(auto_now_add=True, verbose_name="Fecha de registro")
+    creado_por = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name="Creado por")
+    
+    class Meta:
+        verbose_name = 'Trabajador Diario'
+        verbose_name_plural = 'Trabajadores Diarios'
+        unique_together = ['proyecto', 'nombre']
+        ordering = ['nombre']
+    
+    def __str__(self):
+        return f"{self.nombre} - {self.proyecto.nombre}"
+    
+    @property
+    def total_dias_trabajados(self):
+        """Calcula el total de días trabajados"""
+        return self.registros_trabajo.aggregate(
+            total=Sum('dias_trabajados')
+        )['total'] or 0
+    
+    @property
+    def total_a_pagar(self):
+        """Calcula el total a pagar"""
+        return self.total_dias_trabajados * self.pago_diario
+    
+    @property
+    def total_anticipos_aplicados(self):
+        """Calcula el total de anticipos aplicados para este trabajador"""
+        return sum(anticipo.monto_aplicado for anticipo in self.anticipos.filter(estado='aplicado'))
+    
+    @property
+    def saldo_pendiente(self):
+        """Calcula el saldo pendiente después de aplicar anticipos"""
+        return self.total_a_pagar - self.total_anticipos_aplicados
+
+
+class RegistroTrabajo(models.Model):
+    """Modelo para registrar los días trabajados por período"""
+    trabajador = models.ForeignKey(TrabajadorDiario, on_delete=models.CASCADE, related_name='registros_trabajo', verbose_name="Trabajador")
+    fecha_inicio = models.DateField(verbose_name="Fecha de inicio del período")
+    fecha_fin = models.DateField(verbose_name="Fecha de fin del período")
+    dias_trabajados = models.IntegerField(verbose_name="Días trabajados", help_text="Número de días trabajados en este período")
+    observaciones = models.TextField(blank=True, verbose_name="Observaciones")
+    fecha_registro = models.DateTimeField(auto_now_add=True, verbose_name="Fecha de registro")
+    registrado_por = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name="Registrado por")
+    
+    class Meta:
+        verbose_name = 'Registro de Trabajo'
+        verbose_name_plural = 'Registros de Trabajo'
+        ordering = ['-fecha_inicio']
+    
+    def __str__(self):
+        return f"{self.trabajador.nombre} - {self.fecha_inicio} a {self.fecha_fin}"
+    
+    @property
+    def total_pagar(self):
+        """Calcula el total a pagar"""
+        return self.dias_trabajados * self.trabajador.pago_diario
+
+
+class AnticipoTrabajadorDiario(models.Model):
+    """Modelo para anticipos específicos de trabajadores diarios"""
+    ESTADO_CHOICES = [
+        ('pendiente', 'Pendiente'),
+        ('aplicado', 'Aplicado'),
+        ('liquidado', 'Liquidado'),
+        ('cancelado', 'Cancelado'),
+    ]
+    
+    trabajador = models.ForeignKey(TrabajadorDiario, on_delete=models.CASCADE, related_name='anticipos', verbose_name="Trabajador")
+    monto = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Monto del anticipo")
+    fecha_anticipo = models.DateField(verbose_name="Fecha del anticipo", default=timezone.now)
+    estado = models.CharField(max_length=20, choices=ESTADO_CHOICES, default='pendiente', verbose_name="Estado")
+    observaciones = models.TextField(blank=True, verbose_name="Observaciones")
+    creado_por = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name="Creado por")
+    fecha_creacion = models.DateTimeField(auto_now_add=True, verbose_name="Fecha de creación")
+    
+    class Meta:
+        verbose_name = 'Anticipo de Trabajador Diario'
+        verbose_name_plural = 'Anticipos de Trabajadores Diarios'
+        ordering = ['-fecha_creacion']
+    
+    def __str__(self):
+        return f"Anticipo {self.trabajador.nombre} - Q{self.monto}"
+    
+    @property
+    def monto_aplicado(self):
+        """Calcula cuánto del anticipo se ha aplicado"""
+        if self.estado == 'aplicado':
+            return min(self.monto, self.trabajador.total_a_pagar)
+        return 0
+    
+    @property
+    def saldo_pendiente(self):
+        """Calcula el saldo pendiente del anticipo"""
+        return self.monto - self.monto_aplicado

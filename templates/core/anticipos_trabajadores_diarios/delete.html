@@ -1,0 +1,110 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Eliminar Anticipo - {{ anticipo.trabajador.nombre }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">
+            <i class="fas fa-trash me-2"></i>Eliminar Anticipo
+        </h1>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{% url 'proyectos_list' %}">Proyectos</a></li>
+                <li class="breadcrumb-item"><a href="{% url 'proyecto_dashboard' proyecto.id %}">{{ proyecto.nombre }}</a></li>
+                <li class="breadcrumb-item"><a href="{% url 'trabajadores_diarios_list' proyecto.id %}">Trabajadores Diarios</a></li>
+                <li class="breadcrumb-item"><a href="{% url 'anticipo_trabajador_diario_list' proyecto.id %}">Anticipos</a></li>
+                <li class="breadcrumb-item"><a href="{% url 'anticipo_trabajador_diario_detail' proyecto.id anticipo.id %}">Detalle</a></li>
+                <li class="breadcrumb-item active">Eliminar</li>
+            </ol>
+        </nav>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow">
+                <div class="card-header py-3 bg-danger text-white">
+                    <h6 class="m-0 font-weight-bold">
+                        <i class="fas fa-exclamation-triangle me-2"></i>Confirmar Eliminación
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-danger" role="alert">
+                        <h4 class="alert-heading">
+                            <i class="fas fa-exclamation-triangle me-2"></i>¡Atención!
+                        </h4>
+                        <p>Estás a punto de eliminar permanentemente el anticipo de <strong>{{ anticipo.trabajador.nombre }}</strong>.</p>
+                        <hr>
+                        <p class="mb-0">Esta acción no se puede deshacer.</p>
+                    </div>
+
+                    <!-- Información del anticipo -->
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <h6><strong>Información del Anticipo:</strong></h6>
+                            <ul class="list-unstyled">
+                                <li><strong>Monto:</strong> Q{{ anticipo.monto|floatformat:2 }}</li>
+                                <li><strong>Fecha:</strong> {{ anticipo.fecha_anticipo|date:"d/m/Y" }}</li>
+                                <li><strong>Estado:</strong> 
+                                    {% if anticipo.estado == 'pendiente' %}
+                                        <span class="badge bg-warning">Pendiente</span>
+                                    {% elif anticipo.estado == 'aplicado' %}
+                                        <span class="badge bg-success">Aplicado</span>
+                                    {% elif anticipo.estado == 'liquidado' %}
+                                        <span class="badge bg-info">Liquidado</span>
+                                    {% else %}
+                                        <span class="badge bg-danger">Cancelado</span>
+                                    {% endif %}
+                                </li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h6><strong>Información del Trabajador:</strong></h6>
+                            <ul class="list-unstyled">
+                                <li><strong>Nombre:</strong> {{ anticipo.trabajador.nombre }}</li>
+                                <li><strong>Pago Diario:</strong> Q{{ anticipo.trabajador.pago_diario|floatformat:2 }}</li>
+                                <li><strong>Total a Pagar:</strong> Q{{ anticipo.trabajador.total_a_pagar|floatformat:2 }}</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <h6><strong>Monto Aplicado:</strong></h6>
+                            <p class="text-muted">Q{{ anticipo.monto_aplicado|floatformat:2 }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <h6><strong>Saldo Pendiente:</strong></h6>
+                            <p class="text-muted">Q{{ anticipo.saldo_pendiente|floatformat:2 }}</p>
+                        </div>
+                    </div>
+
+                    {% if anticipo.observaciones %}
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h6><strong>Observaciones:</strong></h6>
+                            <p class="text-muted">{{ anticipo.observaciones }}</p>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- Formulario de confirmación -->
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'anticipo_trabajador_diario_detail' proyecto.id anticipo.id %}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left me-1"></i>Cancelar
+                            </a>
+                            <button type="submit" class="btn btn-danger">
+                                <i class="fas fa-trash me-1"></i>Eliminar Anticipo
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

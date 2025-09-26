@@ -37,6 +37,26 @@ urlpatterns = [
     path('anticipos/<int:anticipo_id>/liquidar/', views.liquidar_anticipo, name='liquidar_anticipo'),
     path('proyectos/<int:proyecto_id>/calendario-pagos/', views.calendario_pagos_proyecto, name='calendario_pagos_proyecto'),
     
+    # Trabajadores Diarios
+    path('proyectos/<int:proyecto_id>/trabajadores-diarios/', views.trabajadores_diarios_list, name='trabajadores_diarios_list'),
+    path('proyectos/<int:proyecto_id>/trabajadores-diarios/crear/', views.trabajador_diario_create, name='trabajador_diario_create'),
+    path('proyectos/<int:proyecto_id>/trabajadores-diarios/<int:trabajador_id>/', views.trabajador_diario_detail, name='trabajador_diario_detail'),
+    path('proyectos/<int:proyecto_id>/trabajadores-diarios/<int:trabajador_id>/editar/', views.trabajador_diario_edit, name='trabajador_diario_edit'),
+    path('proyectos/<int:proyecto_id>/trabajadores-diarios/<int:trabajador_id>/eliminar/', views.trabajador_diario_delete, name='trabajador_diario_delete'),
+    path('proyectos/<int:proyecto_id>/trabajadores-diarios/<int:trabajador_id>/registro/crear/', views.registro_trabajo_create, name='registro_trabajo_create'),
+    path('proyectos/<int:proyecto_id>/trabajadores-diarios/<int:trabajador_id>/registro/<int:registro_id>/editar/', views.registro_trabajo_edit, name='registro_trabajo_edit'),
+    path('proyectos/<int:proyecto_id>/trabajadores-diarios/<int:trabajador_id>/registro/<int:registro_id>/eliminar/', views.registro_trabajo_delete, name='registro_trabajo_delete'),
+    path('proyectos/<int:proyecto_id>/trabajadores-diarios/<int:trabajador_id>/actualizar-dias/', views.actualizar_dias_trabajados, name='actualizar_dias_trabajados'),
+    path('proyectos/<int:proyecto_id>/trabajadores-diarios/pdf/', views.trabajadores_diarios_pdf, name='trabajadores_diarios_pdf'),
+    
+    # Anticipos de Trabajadores Diarios
+    path('proyectos/<int:proyecto_id>/anticipos-trabajadores-diarios/', views.anticipo_trabajador_diario_list, name='anticipo_trabajador_diario_list'),
+    path('proyectos/<int:proyecto_id>/anticipos-trabajadores-diarios/crear/', views.anticipo_trabajador_diario_create, name='anticipo_trabajador_diario_create'),
+    path('proyectos/<int:proyecto_id>/anticipos-trabajadores-diarios/<int:anticipo_id>/', views.anticipo_trabajador_diario_detail, name='anticipo_trabajador_diario_detail'),
+    path('proyectos/<int:proyecto_id>/anticipos-trabajadores-diarios/<int:anticipo_id>/editar/', views.anticipo_trabajador_diario_edit, name='anticipo_trabajador_diario_edit'),
+    path('proyectos/<int:proyecto_id>/anticipos-trabajadores-diarios/<int:anticipo_id>/aplicar/', views.anticipo_trabajador_diario_aplicar, name='anticipo_trabajador_diario_aplicar'),
+    path('proyectos/<int:proyecto_id>/anticipos-trabajadores-diarios/<int:anticipo_id>/eliminar/', views.anticipo_trabajador_diario_delete, name='anticipo_trabajador_diario_delete'),
+    
     # Colaboradores
     path('colaboradores/', views.colaboradores_list, name='colaboradores_list'),
     path('colaboradores/crear/', views.colaborador_create, name='colaborador_create'),

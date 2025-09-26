@@ -355,34 +355,6 @@
         </div>
     </div>
 
-    <!-- Charts Section -->
-    <div class="row mb-4">
-        <div class="col-md-6">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="card-title mb-0">
-                        <i class="fas fa-chart-line me-2"></i>Evolución de Proyectos
-                    </h5>
-                </div>
-                <div class="card-body">
-                    <canvas id="evolucionChart" height="300"></canvas>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-6">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="card-title mb-0">
-                        <i class="fas fa-chart-pie me-2"></i>Gastos por Categoría
-                    </h5>
-                </div>
-                <div class="card-body">
-                    <canvas id="gastosChart" height="300"></canvas>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <!-- Calendar Section -->
     <div class="calendar-container">
         <div class="calendar-header">
@@ -454,8 +426,6 @@
 
 {% block extra_js %}
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script src="{% static 'js/dashboard-charts.js' %}"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         const calendarEl = document.getElementById('calendar');
@@ -472,7 +442,7 @@
             eventDisplay: 'block',
             eventTextColor: 'white',
             dayMaxEventRows: 3,
-            events: JSON.parse('{{ eventos_calendario_json|escapejs }}'),
+            events: JSON.parse('{{ eventos_calendario|escapejs }}'),
             eventClick: function(info) {
                 mostrarInfoEvento(info.event);
             }
@@ -480,18 +450,6 @@
         
         calendar.render();
         window.calendar = calendar;
-        
-        // Inicializar gráficos del dashboard
-        const evolucionData = JSON.parse('{{ evolucion_proyectos|escapejs }}');
-        const categoriasGastos = JSON.parse('{{ categorias_gastos|escapejs }}');
-        const montosGastos = JSON.parse('{{ montos_gastos|escapejs }}');
-        
-        // Esperar un poco para que Chart.js se cargue completamente
-        setTimeout(() => {
-            if (typeof initializeDashboardCharts === 'function') {
-                initializeDashboardCharts(evolucionData, categoriasGastos, montosGastos);
-            }
-        }, 500);
     });
     
     function mostrarNotificacion(mensaje, tipo = 'info') {
@@ -751,3 +709,4 @@
     }
 </script>
 {% endblock %}
+

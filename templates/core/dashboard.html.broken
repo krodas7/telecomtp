@@ -1,0 +1,1709 @@
+{% extends "base.html" %}
+{% load static %}
+{% load custom_filters %}
+
+{% block title %}Dashboard - Sistema ARCA Construcción{% endblock %}
+
+{% block extra_css %}
+<style>
+    .dashboard-hero {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 3rem 2rem;
+        border-radius: 20px;
+        margin-bottom: 2rem;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .dashboard-hero::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="white" opacity="0.1"/><circle cx="75" cy="75" r="1" fill="white" opacity="0.1"/><circle cx="50" cy="10" r="0.5" fill="white" opacity="0.1"/><circle cx="10" cy="60" r="0.5" fill="white" opacity="0.1"/><circle cx="90" cy="40" r="0.5" fill="white" opacity="0.1"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+        opacity: 0.3;
+    }
+    
+    .dashboard-hero-content {
+        position: relative;
+        z-index: 2;
+    }
+    
+    .dashboard-hero-title {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin-bottom: 1rem;
+        text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    }
+    
+    .dashboard-hero-subtitle {
+        font-size: 1.2rem;
+        opacity: 0.9;
+        margin-bottom: 2rem;
+    }
+    
+    .dashboard-actions {
+        display: flex;
+        justify-content: center;
+        gap: 1.5rem;
+        flex-wrap: wrap;
+        margin-top: 2rem;
+    }
+    
+    .dashboard-action {
+        background: rgba(255,255,255,0.1);
+        backdrop-filter: blur(10px);
+        border-radius: 15px;
+        border: 1px solid rgba(255,255,255,0.2);
+        transition: all 0.3s ease;
+        overflow: hidden;
+    }
+    
+    .dashboard-action:hover {
+        transform: translateY(-5px);
+        background: rgba(255,255,255,0.2);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+    }
+    
+    .dashboard-action-link {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 1.5rem 1rem;
+        text-decoration: none;
+        color: white;
+        min-width: 120px;
+        text-align: center;
+    }
+    
+    .dashboard-action-link:hover {
+        color: white;
+        text-decoration: none;
+    }
+    
+    .dashboard-action-icon {
+        width: 50px;
+        height: 50px;
+        background: rgba(255,255,255,0.2);
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 1rem;
+        font-size: 1.2rem;
+        transition: all 0.3s ease;
+    }
+    
+    .dashboard-action:hover .dashboard-action-icon {
+        background: rgba(255,255,255,0.3);
+        transform: scale(1.1);
+    }
+    
+    .dashboard-action-label {
+        font-size: 0.9rem;
+        font-weight: 500;
+        opacity: 0.9;
+        line-height: 1.2;
+    }
+    
+    .stat-card {
+        background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+        border-radius: 16px;
+        padding: 25px;
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        border: 1px solid rgba(0, 0, 0, 0.05);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        overflow: hidden;
+        height: 100%;
+    }
+    
+    .stat-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 4px;
+        background: linear-gradient(90deg, #4ecdc4, #ff6b6b, #667eea);
+    }
+    
+    .stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+    }
+    
+    .stat-card .stat-icon {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 20px;
+        font-size: 24px;
+        color: white;
+    }
+    
+    .stat-card:nth-child(1) .stat-icon {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+    }
+    
+    .stat-card:nth-child(2) .stat-icon {
+        background: linear-gradient(135deg, #f093fb, #f5576c);
+    }
+    
+    .stat-card:nth-child(3) .stat-icon {
+        background: linear-gradient(135deg, #4facfe, #00f2fe);
+    }
+    
+    .stat-card:nth-child(4) .stat-icon {
+        background: linear-gradient(135deg, #43e97b, #38f9d7);
+    }
+    
+    .stat-card .stat-number {
+        font-size: 32px;
+        font-weight: 700;
+        color: #2c3e50;
+        margin-bottom: 5px;
+    }
+    
+    .stat-card .stat-label {
+        color: #6c757d;
+        font-size: 14px;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .stat-card .stat-breakdown {
+        margin-top: 8px;
+        padding-top: 8px;
+        border-top: 1px solid rgba(0, 0, 0, 0.1);
+    }
+    
+    .stat-card .stat-breakdown small {
+        font-size: 11px;
+        line-height: 1.3;
+    }
+    
+    .chart-area {
+        background: white;
+        border-radius: 20px;
+        padding: 2rem;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        border: 1px solid rgba(255,255,255,0.2);
+        margin-bottom: 2rem;
+    }
+    
+    .chart-header {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        margin: -2rem -2rem 2rem -2rem;
+        padding: 1.5rem 2rem;
+        border-bottom: 1px solid #dee2e6;
+        border-radius: 20px 20px 0 0;
+    }
+    
+    .timeline {
+        background: white;
+        border-radius: 20px;
+        padding: 2rem;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        border: 1px solid rgba(255,255,255,0.2);
+    }
+    
+    .timeline-item {
+        display: flex;
+        align-items: flex-start;
+        margin-bottom: 1.5rem;
+        padding: 1rem;
+        border-radius: 12px;
+        transition: all 0.3s ease;
+    }
+    
+    .timeline-item:hover {
+        background: linear-gradient(135deg, rgba(78, 205, 196, 0.05), rgba(255, 107, 107, 0.05));
+        transform: translateX(5px);
+    }
+    
+    .timeline-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 1rem;
+        font-size: 16px;
+        color: white;
+        flex-shrink: 0;
+    }
+    
+    .timeline-icon.primary {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+    }
+    
+    .timeline-icon.success {
+        background: linear-gradient(135deg, #43e97b, #38f9d7);
+    }
+    
+    .timeline-icon.warning {
+        background: linear-gradient(135deg, #fa709a, #fee140);
+    }
+    
+    .timeline-icon.info {
+        background: linear-gradient(135deg, #4facfe, #00f2fe);
+    }
+    
+    .timeline-content h6 {
+        margin: 0 0 0.5rem 0;
+        color: #2c3e50;
+        font-weight: 600;
+    }
+    
+    .timeline-content p {
+        margin: 0;
+        color: #6c757d;
+        font-size: 14px;
+    }
+    
+    .btn-neostructure {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        color: white;
+        border: none;
+        border-radius: 12px;
+        padding: 12px 24px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+    }
+    
+    .btn-neostructure:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        color: white;
+    }
+    
+    .calendar-container {
+        background: white;
+        border-radius: 20px;
+        padding: 2rem;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        border: 1px solid rgba(255,255,255,0.2);
+        margin-bottom: 2rem;
+    }
+    
+    .fc-header-toolbar {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        margin: -2rem -2rem 2rem -2rem;
+        padding: 1.5rem 2rem;
+        border-bottom: 1px solid #dee2e6;
+        border-radius: 20px 20px 0 0;
+    }
+    
+    .fc-button-primary {
+        background: linear-gradient(135deg, #667eea, #764ba2) !important;
+        border: none !important;
+        border-radius: 8px !important;
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3) !important;
+    }
+    
+    .fc-button-primary:hover {
+        transform: translateY(-2px) !important;
+        box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4) !important;
+    }
+    
+    /* Estilos para gráficos compactos */
+    .chart-compact {
+        padding: 1rem;
+        margin-bottom: 1rem;
+    }
+    
+    .chart-compact .chart-header h6 {
+        font-size: 0.9rem;
+        margin-bottom: 0.5rem;
+    }
+    
+    .chart-compact .chart-header p {
+        font-size: 0.75rem;
+        margin-bottom: 0.5rem;
+    }
+    
+    .chart-container {
+        height: 200px;
+        position: relative;
+    }
+    
+    .periodo-selector {
+        margin-left: 1rem;
+    }
+    
+    .periodo-selector .btn-group .btn {
+        border-radius: 8px;
+        font-size: 0.8rem;
+        padding: 0.375rem 0.75rem;
+        transition: all 0.3s ease;
+    }
+    
+    .periodo-selector .btn-group .btn:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+    
+    .periodo-selector .btn-group .btn.active {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        border-color: #667eea;
+        color: white;
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+    }
+    
+    @media (max-width: 768px) {
+        .chart-container {
+            height: 150px;
+        }
+        
+        .periodo-selector {
+            margin-left: 0.5rem;
+        }
+        
+        .periodo-selector .btn-group .btn {
+            font-size: 0.7rem;
+            padding: 0.25rem 0.5rem;
+        }
+    }
+    
+    /* Estilos para Acciones Rápidas */
+    .quick-actions {
+        background: white;
+        border-radius: 20px;
+        padding: 2rem;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        border: 1px solid rgba(255,255,255,0.2);
+        margin-bottom: 2rem;
+    }
+    
+    .quick-actions h5 {
+        color: #2c3e50;
+        font-weight: 600;
+        margin-bottom: 1.5rem;
+    }
+    
+    .quick-action-card {
+        display: block;
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        border-radius: 15px;
+        padding: 1.5rem;
+        text-decoration: none;
+        color: #2c3e50;
+        transition: all 0.3s ease;
+        border: 1px solid #dee2e6;
+        height: 100%;
+    }
+    
+    .quick-action-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        text-decoration: none;
+    }
+    
+    .quick-action-card:hover .quick-action-icon {
+        background: rgba(255,255,255,0.2);
+        color: white;
+    }
+    
+    .quick-action-icon {
+        width: 50px;
+        height: 50px;
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 1rem;
+        color: white;
+        font-size: 1.2rem;
+        transition: all 0.3s ease;
+    }
+    
+    .quick-action-text h6 {
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        font-size: 0.9rem;
+    }
+    
+    .quick-action-text p {
+        margin: 0;
+        font-size: 0.8rem;
+        opacity: 0.8;
+    }
+    
+    /* Estilos para notificaciones y modales mejorados */
+    .toast {
+        border: none;
+        border-radius: 12px;
+        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+    }
+    
+    .toast-header {
+        border-radius: 12px 12px 0 0;
+        border-bottom: none;
+        font-weight: 600;
+    }
+    
+    .toast-body {
+        background: white;
+        color: #333;
+        border-radius: 0 0 12px 12px;
+        font-weight: 500;
+    }
+    
+    .modal-content {
+        border: none;
+        border-radius: 20px;
+        box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    }
+    
+    .modal-header {
+        border-radius: 20px 20px 0 0;
+        border-bottom: none;
+        padding: 1.5rem;
+    }
+    
+    .modal-body {
+        padding: 2rem;
+    }
+    
+    .modal-footer {
+        border-radius: 0 0 20px 20px;
+        border-top: 1px solid #e9ecef;
+        padding: 1.5rem;
+    }
+    
+    .evento-info {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        border-radius: 15px;
+        padding: 1.5rem;
+        margin: -1rem;
+    }
+    
+    .evento-titulo h4 {
+        color: #2c3e50;
+        font-weight: 700;
+        text-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    }
+    
+    .detail-item {
+        display: flex;
+        align-items: center;
+        padding: 0.5rem 0;
+        border-bottom: 1px solid rgba(0,0,0,0.05);
+    }
+    
+    .detail-item:last-child {
+        border-bottom: none;
+    }
+    
+    .detail-item i {
+        width: 20px;
+        text-align: center;
+    }
+    
+    .color-preview {
+        border-radius: 6px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .form-label {
+        font-weight: 600;
+        color: #2c3e50;
+        margin-bottom: 0.5rem;
+    }
+    
+    .form-control, .form-select {
+        border-radius: 10px;
+        border: 2px solid #e9ecef;
+        padding: 0.75rem 1rem;
+        transition: all 0.3s ease;
+    }
+    
+    .form-control:focus, .form-select:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+    }
+    
+    .btn {
+        border-radius: 10px;
+        font-weight: 600;
+        padding: 0.75rem 1.5rem;
+        transition: all 0.3s ease;
+    }
+    
+    .btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    }
+    
+    /* Estilos para modal de confirmación de eliminación */
+    .modal-confirmacion {
+        border-radius: 20px;
+        box-shadow: 0 20px 60px rgba(220, 53, 69, 0.3);
+    }
+    
+    .modal-confirmacion .modal-header {
+        border-radius: 20px 20px 0 0;
+        border-bottom: none;
+    }
+    
+    .modal-confirmacion .modal-body {
+        padding: 2rem;
+    }
+    
+    .modal-confirmacion .modal-footer {
+        border-radius: 0 0 20px 20px;
+        border-top: 1px solid #e9ecef;
+        padding: 1.5rem;
+    }
+    
+    .btn-danger {
+        background: linear-gradient(135deg, #dc3545, #c82333);
+        border: none;
+        box-shadow: 0 4px 15px rgba(220, 53, 69, 0.3);
+    }
+    
+    .btn-danger:hover {
+        background: linear-gradient(135deg, #c82333, #bd2130);
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(220, 53, 69, 0.4);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Hero Banner -->
+    <div class="dashboard-hero">
+        <div class="dashboard-hero-content">
+            <h1 class="dashboard-hero-title">
+                <i class="fas fa-tachometer-alt me-2"></i>Dashboard Neostructure
+            </h1>
+            <p class="dashboard-hero-subtitle">Panel de control inteligente para tu empresa de construcción</p>
+            
+            <!-- Acciones Rápidas en el Banner Principal -->
+            <div class="dashboard-actions">
+                <div class="dashboard-action">
+                    <a href="{% url 'proyecto_create' %}" class="dashboard-action-link">
+                        <div class="dashboard-action-icon">
+                            <i class="fas fa-plus"></i>
+                        </div>
+                        <span class="dashboard-action-label">Nuevo Proyecto</span>
+                    </a>
+                </div>
+                <div class="dashboard-action">
+                    <a href="{% url 'factura_create' %}" class="dashboard-action-link">
+                        <div class="dashboard-action-icon">
+                            <i class="fas fa-file-invoice-dollar"></i>
+                        </div>
+                        <span class="dashboard-action-label">Nueva Factura</span>
+                    </a>
+                </div>
+                <div class="dashboard-action">
+                    <a href="{% url 'cliente_create' %}" class="dashboard-action-link">
+                        <div class="dashboard-action-icon">
+                            <i class="fas fa-user-plus"></i>
+                        </div>
+                        <span class="dashboard-action-label">Nuevo Cliente</span>
+                    </a>
+                </div>
+                <div class="dashboard-action">
+                    <a href="{% url 'colaborador_create' %}" class="dashboard-action-link">
+                        <div class="dashboard-action-icon">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <span class="dashboard-action-label">Nuevo Colaborador</span>
+                    </a>
+                </div>
+                <div class="dashboard-action">
+                    <a href="{% url 'item_create' %}" class="dashboard-action-link">
+                        <div class="dashboard-action-icon">
+                            <i class="fas fa-boxes"></i>
+                        </div>
+                        <span class="dashboard-action-label">Nuevo Item</span>
+                    </a>
+                </div>
+                <div class="dashboard-action">
+                    <a href="{% url 'pago_create' %}" class="dashboard-action-link">
+                        <div class="dashboard-action-icon">
+                            <i class="fas fa-credit-card"></i>
+                        </div>
+                        <span class="dashboard-action-label">Nuevo Pago</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+
+    <!-- Tarjetas de Estadísticas Principales -->
+    <div class="row mb-4">
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-project-diagram"></i>
+                </div>
+                <div class="stat-number">{{ total_proyectos|default:"0" }}</div>
+                <div class="stat-label">Proyectos Activos</div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-users"></i>
+                </div>
+                <div class="stat-number">{{ total_clientes|default:"0" }}</div>
+                <div class="stat-label">Clientes</div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-file-invoice-dollar"></i>
+                </div>
+                <div class="stat-number">{{ total_facturado|currency_gtq }}</div>
+                <div class="stat-label">Total Facturado</div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-credit-card"></i>
+                </div>
+                <div class="stat-number">{{ total_cobrado|currency_gtq }}</div>
+                <div class="stat-label">Total Cobrado</div>
+                <div class="stat-breakdown">
+                    <small class="text-muted">
+                        Facturas: {{ total_facturas_pagadas|currency_gtq }}<br>
+                        Anticipos: {{ total_anticipos_aplicados|currency_gtq }}
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Gráficos Financieros -->
+    <div class="row mb-4">
+        <!-- Gráfico de Ingresos vs Gastos -->
+        <div class="col-xl-6 col-lg-6 col-md-12">
+            <div class="chart-area chart-compact">
+                <div class="chart-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="mb-0"><i class="fas fa-chart-line me-2"></i>Ingresos vs Gastos</h6>
+                            <p class="text-muted mb-0 small">
+                                {% if periodo_actual == '1' %}
+                                    Mes actual
+                                {% elif periodo_actual == '3' %}
+                                    Últimos 3 meses
+                                {% else %}
+                                    Últimos 6 meses
+                                {% endif %}
+                            </p>
+                        </div>
+                        <div class="periodo-selector">
+                            <div class="btn-group btn-group-sm" role="group">
+                                <button type="button" class="btn btn-outline-primary {% if periodo_actual == '1' %}active{% endif %}" 
+                                        onclick="cambiarPeriodo(1)" data-periodo="1">
+                                    <i class="fas fa-calendar-day me-1"></i>Mes
+                                </button>
+                                <button type="button" class="btn btn-outline-primary {% if periodo_actual == '3' %}active{% endif %}" 
+                                        onclick="cambiarPeriodo(3)" data-periodo="3">
+                                    <i class="fas fa-calendar-week me-1"></i>3M
+                                </button>
+                                <button type="button" class="btn btn-outline-primary {% if periodo_actual == '6' %}active{% endif %}" 
+                                        onclick="cambiarPeriodo(6)" data-periodo="6">
+                                    <i class="fas fa-calendar-alt me-1"></i>6M
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <canvas id="financialChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Gráfico de Proyectos por Estado -->
+        <div class="col-xl-3 col-lg-3 col-md-6">
+            <div class="chart-area chart-compact">
+                <div class="chart-header">
+                    <h6 class="mb-0"><i class="fas fa-chart-pie me-2"></i>Estado Proyectos</h6>
+                    <p class="text-muted mb-0 small">Distribución actual</p>
+                </div>
+                <div class="chart-container">
+                    <canvas id="projectsChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Gráfico de Evolución de Proyectos -->
+        <div class="col-xl-3 col-lg-3 col-md-6">
+            <div class="chart-area chart-compact">
+                <div class="chart-header">
+                    <h6 class="mb-0"><i class="fas fa-chart-bar me-2"></i>Evolución</h6>
+                    <p class="text-muted mb-0 small">Nuevos por mes</p>
+                </div>
+                <div class="chart-container">
+                    <canvas id="evolutionChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Calendario de Eventos y Actividad Reciente -->
+    <div class="row mb-4">
+        <!-- Calendario de Eventos -->
+        <div class="col-xl-8 col-lg-7">
+            <div class="calendar-container">
+                <div class="chart-header">
+                    <h5 class="mb-0"><i class="fas fa-calendar-alt me-2"></i>Calendario de Eventos</h5>
+                    <p class="text-muted mb-0">Próximos vencimientos y eventos importantes</p>
+                    <button class="btn btn-sm btn-neostructure mt-2" onclick="abrirModalEvento()">
+                        <i class="fas fa-plus me-1"></i>Agregar Evento
+                    </button>
+                </div>
+                <div id="calendar"></div>
+            </div>
+        </div>
+        
+        <!-- Modal para Agregar Evento -->
+        <div class="modal fade" id="modalEvento" tabindex="-1" aria-labelledby="modalEventoLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header" style="background: linear-gradient(135deg, #667eea, #764ba2); color: white;">
+                        <h5 class="modal-title" id="modalEventoLabel">
+                            <i class="fas fa-calendar-plus me-2"></i>Agregar Nuevo Evento
+                        </h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="formEvento">
+                            {% csrf_token %}
+                            <div class="mb-3">
+                                <label for="tituloEvento" class="form-label">
+                                    <i class="fas fa-heading me-1"></i>Título del Evento
+                                </label>
+                                <input type="text" class="form-control" id="tituloEvento" placeholder="Ingrese el título del evento" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="fechaEvento" class="form-label">
+                                    <i class="fas fa-calendar-alt me-1"></i>Fecha
+                                </label>
+                                <input type="date" class="form-control" id="fechaEvento" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="tipoEvento" class="form-label">
+                                    <i class="fas fa-tag me-1"></i>Tipo de Evento
+                                </label>
+                                <select class="form-select" id="tipoEvento" required>
+                                    <option value="">Seleccionar tipo...</option>
+                                    <option value="proyecto">📋 Proyecto</option>
+                                    <option value="factura">📄 Factura</option>
+                                    <option value="reunion">👥 Reunión</option>
+                                    <option value="entrega">📦 Entrega</option>
+                                    <option value="vencimiento">⏰ Vencimiento</option>
+                                    <option value="otro">📝 Otro</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label for="descripcionEvento" class="form-label">
+                                    <i class="fas fa-align-left me-1"></i>Descripción
+                                </label>
+                                <textarea class="form-control" id="descripcionEvento" rows="3" placeholder="Descripción opcional del evento"></textarea>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                            <i class="fas fa-times me-1"></i>Cancelar
+                        </button>
+                        <button type="button" class="btn btn-primary" onclick="guardarEvento()">
+                            <i class="fas fa-save me-1"></i>Guardar Evento
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Actividad Reciente -->
+        <div class="col-xl-4 col-lg-5">
+            <div class="timeline">
+                <div class="chart-header">
+                    <h5 class="mb-0"><i class="fas fa-clock me-2"></i>Actividad Reciente</h5>
+                    <p class="text-muted mb-0">Últimas acciones del sistema</p>
+                </div>
+                
+                <div class="timeline-item">
+                    <div class="timeline-icon primary">
+                        <i class="fas fa-plus"></i>
+                    </div>
+                    <div class="timeline-content">
+                        <h6>Nuevo Proyecto Creado</h6>
+                        <p>Proyecto "Edificio Residencial Centro" agregado al sistema</p>
+                    </div>
+                </div>
+                
+                <div class="timeline-item">
+                    <div class="timeline-icon success">
+                        <i class="fas fa-check"></i>
+                    </div>
+                    <div class="timeline-content">
+                        <h6>Factura Pagada</h6>
+                        <p>Factura #F-001-2024 marcada como pagada</p>
+                    </div>
+                </div>
+                
+                <div class="timeline-item">
+                    <div class="timeline-icon warning">
+                        <i class="fas fa-exclamation-triangle"></i>
+                    </div>
+                    <div class="timeline-content">
+                        <h6>Stock Bajo</h6>
+                        <p>Material "Cemento Portland" requiere reabastecimiento</p>
+                    </div>
+                </div>
+                
+                <div class="timeline-item">
+                    <div class="timeline-icon info">
+                        <i class="fas fa-user-plus"></i>
+                    </div>
+                    <div class="timeline-content">
+                        <h6>Nuevo Colaborador</h6>
+                        <p>Juan Pérez agregado al proyecto "Edificio Residencial"</p>
+                    </div>
+                </div>
+                
+                <div class="text-center mt-3">
+                    <a href="#" class="btn btn-neostructure">
+                        <i class="fas fa-eye"></i> Ver Todas las Actividades
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<!-- FullCalendar -->
+<link href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js"></script>
+
+<script>
+        // jshint ignore:start
+        // Funciones para notificaciones - Definir primero
+        function mostrarNotificacion(mensaje, tipo) {
+            // Crear notificación bonita
+            var notificacionHtml = '<div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 9999;">' +
+                '<div class="toast show" role="alert" aria-live="assertive" aria-atomic="true">' +
+                    '<div class="toast-header ' + (tipo === 'success' ? 'bg-success text-white' : tipo === 'error' ? 'bg-danger text-white' : 'bg-info text-white') + '">' +
+                        '<i class="fas ' + (tipo === 'success' ? 'fa-check-circle' : tipo === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle') + ' me-2"></i>' +
+                        '<strong class="me-auto">Sistema ARCA</strong>' +
+                        '<button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" aria-label="Close"></button>' +
+                    '</div>' +
+                    '<div class="toast-body">' + mensaje + '</div>' +
+                '</div>' +
+            '</div>';
+            
+            // Agregar notificación al body
+            document.body.insertAdjacentHTML('beforeend', notificacionHtml);
+            
+            // Auto-remover después de 5 segundos
+            setTimeout(function() {
+                var toast = document.querySelector('.toast-container');
+                if (toast) {
+                    toast.remove();
+                }
+            }, 5000);
+        }
+        
+        function editarEvento(eventoId) {
+            // Cerrar modal de información
+            const modalInfo = bootstrap.Modal.getInstance(document.getElementById('modalInfoEvento'));
+            if (modalInfo) {
+                modalInfo.hide();
+            }
+            
+            // Obtener el evento del calendario
+            const evento = window.calendar.getEventById(eventoId);
+            if (!evento) {
+                mostrarNotificacion('❌ Evento no encontrado', 'error');
+                return;
+            }
+            
+            // Llenar el formulario con los datos del evento
+            document.getElementById('tituloEvento').value = evento.title;
+            document.getElementById('fechaEvento').value = evento.startStr.split('T')[0];
+            document.getElementById('tipoEvento').value = evento.extendedProps.tipo || '';
+            document.getElementById('descripcionEvento').value = evento.extendedProps.descripcion || '';
+            
+            // Cambiar el título del modal
+            document.getElementById('modalEventoLabel').innerHTML = '<i class="fas fa-edit me-2"></i>Editar Evento';
+            
+            // Cambiar el botón de guardar
+            const botonGuardar = document.querySelector('#modalEvento .btn-primary');
+            botonGuardar.innerHTML = '<i class="fas fa-save me-1"></i>Actualizar Evento';
+            botonGuardar.setAttribute('onclick', 'actualizarEvento(' + eventoId + ')');
+            
+            // Mostrar modal de edición
+            const modal = new bootstrap.Modal(document.getElementById('modalEvento'));
+            modal.show();
+        }
+        
+        function eliminarEvento(eventoId) {
+            console.log('eliminarEvento llamado con ID:', eventoId);
+            
+            // Determinar el tipo de evento y el mensaje apropiado
+            let mensaje = "Esta acción no se puede deshacer. El evento será eliminado permanentemente del sistema.";
+            let titulo = "¿Eliminar Evento?";
+            
+            if (eventoId.startsWith('proyecto_')) {
+                titulo = "¿Eliminar Proyecto?";
+                mensaje = "⚠️ ATENCIÓN: Esto eliminará el PROYECTO COMPLETO de la base de datos, incluyendo todas sus facturas, gastos y datos relacionados. Esta acción no se puede deshacer.";
+            } else if (eventoId.startsWith('factura_')) {
+                titulo = "¿Eliminar Factura?";
+                mensaje = "⚠️ ATENCIÓN: Esto eliminará la FACTURA COMPLETA de la base de datos. Esta acción no se puede deshacer.";
+            }
+            
+            console.log('Tipo de evento detectado:', eventoId.startsWith('proyecto_') ? 'proyecto' : eventoId.startsWith('factura_') ? 'factura' : 'personalizado');
+            
+            // Crear modal de confirmación personalizado
+            const confirmacionHtml = `
+                <div class="modal fade" id="modalConfirmarEliminar" tabindex="-1" aria-labelledby="modalConfirmarEliminarLabel" aria-hidden="true">
+                    <div class="modal-dialog modal-dialog-centered">
+                        <div class="modal-content modal-confirmacion">
+                            <div class="modal-header" style="background: linear-gradient(135deg, #dc3545, #c82333); color: white;">
+                                <h5 class="modal-title" id="modalConfirmarEliminarLabel">
+                                    <i class="fas fa-exclamation-triangle me-2"></i>${titulo}
+                                </h5>
+                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                <div class="text-center">
+                                    <i class="fas fa-trash-alt text-danger" style="font-size: 3rem; margin-bottom: 1rem;"></i>
+                                    <h5 class="text-danger mb-3">${titulo}</h5>
+                                    <p class="text-muted">${mensaje}</p>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                                    <i class="fas fa-times me-1"></i>Cancelar
+                                </button>
+                                <button type="button" class="btn btn-danger" onclick="confirmarEliminacion('${eventoId}')">
+                                    <i class="fas fa-trash me-1"></i>Eliminar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Remover modal anterior si existe
+            const existingModal = document.getElementById('modalConfirmarEliminar');
+            if (existingModal) {
+                existingModal.remove();
+            }
+            
+            // Agregar nuevo modal al body
+            document.body.insertAdjacentHTML('beforeend', confirmacionHtml);
+            
+            // Mostrar modal
+            const modal = new bootstrap.Modal(document.getElementById('modalConfirmarEliminar'));
+            modal.show();
+        }
+        
+        function confirmarEliminacion(eventoId) {
+            console.log('confirmarEliminacion llamado con ID:', eventoId);
+            
+            // Cerrar modal de confirmación
+            const modalConfirmar = bootstrap.Modal.getInstance(document.getElementById('modalConfirmarEliminar'));
+            if (modalConfirmar) {
+                modalConfirmar.hide();
+            }
+            
+            let url = '';
+            let mensajeExito = 'Evento eliminado correctamente';
+            
+            // Determinar la URL y mensaje según el tipo de evento
+            if (eventoId.startsWith('proyecto_')) {
+                const proyectoId = eventoId.replace('proyecto_', '');
+                url = '/api/proyectos/' + proyectoId + '/eliminar/';
+                mensajeExito = 'Proyecto eliminado correctamente';
+                console.log('URL de eliminación de proyecto:', url);
+            } else if (eventoId.startsWith('factura_')) {
+                const facturaId = eventoId.replace('factura_', '');
+                url = '/api/facturas/' + facturaId + '/eliminar/';
+                mensajeExito = 'Factura eliminada correctamente';
+                console.log('URL de eliminación de factura:', url);
+            } else {
+                url = '/api/eventos/' + eventoId + '/eliminar/';
+                console.log('URL de eliminación de evento personalizado:', url);
+            }
+            
+            // Enviar petición de eliminación
+            fetch(url, {
+                method: 'DELETE',
+                headers: {
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Remover evento del calendario
+                    if (window.calendar) {
+                        const evento = window.calendar.getEventById(eventoId);
+                        if (evento) {
+                            evento.remove();
+                        }
+                    }
+                    
+                    // Cerrar modal de información
+                    const modalInfo = bootstrap.Modal.getInstance(document.getElementById('modalInfoEvento'));
+                    if (modalInfo) {
+                        modalInfo.hide();
+                    }
+                    
+                    mostrarNotificacion('✅ ' + mensajeExito, 'success');
+                    
+                    // Si es un proyecto o factura, recargar la página después de un breve delay
+                    if (eventoId.startsWith('proyecto_') || eventoId.startsWith('factura_')) {
+                        setTimeout(() => {
+                            window.location.reload();
+                        }, 2000);
+                    }
+                } else {
+                    mostrarNotificacion('❌ Error al eliminar: ' + data.message, 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                mostrarNotificacion('❌ Error de conexión al eliminar', 'error');
+            });
+        }
+        
+        function actualizarEvento(eventoId) {
+            const titulo = document.getElementById('tituloEvento').value;
+            const fecha = document.getElementById('fechaEvento').value;
+            const tipo = document.getElementById('tipoEvento').value;
+            const descripcion = document.getElementById('descripcionEvento').value;
+            
+            if (!titulo || !fecha || !tipo) {
+                mostrarNotificacion('❌ Complete todos los campos requeridos', 'error');
+                return;
+            }
+            
+            // Obtener color basado en el tipo
+            const colores = {
+                'proyecto': '#28a745',
+                'factura': '#dc3545',
+                'reunion': '#667eea',
+                'entrega': '#ffc107',
+                'vencimiento': '#dc3545',
+                'otro': '#6c757d'
+            };
+            
+            const color = colores[tipo] || '#667eea';
+            
+            const eventoData = {
+                titulo: titulo,
+                fecha_inicio: fecha,
+                tipo: tipo,
+                descripcion: descripcion,
+                color: color,
+                todo_el_dia: true
+            };
+            
+            // Enviar evento actualizado al servidor
+            fetch('/api/eventos/' + eventoId + '/actualizar/', {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                },
+                body: JSON.stringify(eventoData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Actualizar evento en el calendario
+                    if (window.calendar) {
+                        const evento = window.calendar.getEventById(eventoId);
+                        if (evento) {
+                            evento.setProp('title', titulo);
+                            evento.setStart(fecha);
+                            evento.setProp('backgroundColor', color);
+                            evento.setExtendedProp('tipo', tipo);
+                            evento.setExtendedProp('descripcion', descripcion);
+                        }
+                    }
+                    
+                    // Cerrar modal
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('modalEvento'));
+                    modal.hide();
+                    
+                    // Restaurar botón original
+                    const botonGuardar = document.querySelector('#modalEvento .btn-primary');
+                    botonGuardar.innerHTML = '<i class="fas fa-save me-1"></i>Guardar Evento';
+                    botonGuardar.setAttribute('onclick', 'guardarEvento()');
+                    document.getElementById('modalEventoLabel').innerHTML = '<i class="fas fa-calendar-plus me-2"></i>Agregar Nuevo Evento';
+                    
+                    // Mostrar notificación de éxito
+                    mostrarNotificacion('✅ Evento actualizado correctamente', 'success');
+                } else {
+                    mostrarNotificacion('❌ Error al actualizar evento: ' + data.message, 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error de red:', error);
+                mostrarNotificacion('❌ Error de conexión al actualizar evento', 'error');
+            });
+        }
+        
+        // Funciones para el modal de eventos - Definir primero
+        function abrirModalEvento(fechaEspecifica = null) {
+            // Si se pasa una fecha específica, usarla; si no, usar fecha actual
+            const fecha = fechaEspecifica ? fechaEspecifica.split('T')[0] : new Date().toISOString().split('T')[0];
+            document.getElementById('fechaEvento').value = fecha;
+            
+            // Limpiar formulario
+            document.getElementById('formEvento').reset();
+            document.getElementById('fechaEvento').value = fecha; // Mantener la fecha seleccionada
+            
+            // Mostrar modal
+            const modal = new bootstrap.Modal(document.getElementById('modalEvento'));
+            modal.show();
+        }
+        
+        function guardarEvento() {
+            const titulo = document.getElementById('tituloEvento').value;
+            const fecha = document.getElementById('fechaEvento').value;
+            const tipo = document.getElementById('tipoEvento').value;
+            const descripcion = document.getElementById('descripcionEvento').value;
+            
+            if (!titulo || !fecha || !tipo) {
+                alert('Complete todos los campos requeridos');
+                return;
+            }
+            
+            // Obtener color basado en el tipo
+            const colores = {
+                'proyecto': '#28a745',
+                'factura': '#dc3545',
+                'reunion': '#667eea',
+                'entrega': '#ffc107',
+                'vencimiento': '#dc3545',
+                'otro': '#6c757d'
+            };
+            
+            const color = colores[tipo] || '#667eea';
+            
+            const eventoData = {
+                titulo: titulo,
+                fecha_inicio: fecha,
+                tipo: tipo,
+                descripcion: descripcion,
+                color: color,
+                todo_el_dia: true
+            };
+            
+            // Enviar evento al servidor via AJAX
+            fetch('{% url "evento_calendario_create_ajax" %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                },
+                body: JSON.stringify(eventoData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Agregar evento al calendario
+                    if (window.calendar) {
+                        window.calendar.addEvent(data.evento);
+                    }
+                    
+                    // Cerrar modal
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('modalEvento'));
+                    modal.hide();
+                    
+                    // Mostrar mensaje de éxito con notificación bonita
+                    mostrarNotificacion('✅ Evento agregado correctamente', 'success');
+                } else {
+                    console.error('Error del servidor:', data);
+                    let errorMsg = 'Error al crear evento: ' + data.message;
+                    if (data.debug) {
+                        console.error('Debug info:', data.debug);
+                        errorMsg += '\n\nDetalles técnicos en la consola del navegador.';
+                    }
+                    mostrarNotificacion('❌ ' + data.message, 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error de red:', error);
+                mostrarNotificacion('❌ Error de conexión al crear evento', 'error');
+            });
+        }
+        
+        function mostrarInfoEvento(evento) {
+            const props = evento.extendedProps || {};
+            
+            // Crear modal de información del evento
+            const modalHtml = `
+                <div class="modal fade" id="modalInfoEvento" tabindex="-1" aria-labelledby="modalInfoEventoLabel" aria-hidden="true">
+                    <div class="modal-dialog modal-dialog-centered">
+                        <div class="modal-content">
+                            <div class="modal-header" style="background: linear-gradient(135deg, #667eea, #764ba2); color: white;">
+                                <h5 class="modal-title" id="modalInfoEventoLabel">
+                                    <i class="fas fa-calendar-check me-2"></i>Información del Evento
+                                </h5>
+                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                <div class="evento-info">
+                                    <div class="evento-titulo mb-3">
+                                        <h4 class="text-primary mb-0">${evento.title}</h4>
+                                    </div>
+                                    
+                                    <div class="evento-details">
+                                        <div class="detail-item mb-2">
+                                            <i class="fas fa-calendar-alt text-primary me-2"></i>
+                                            <strong>Fecha:</strong> ${evento.startStr}
+                                        </div>
+                                        
+                                        ${props.tipo ? `
+                                        <div class="detail-item mb-2">
+                                            <i class="fas fa-tag text-success me-2"></i>
+                                            <strong>Tipo:</strong> 
+                                            <span class="badge bg-primary">${props.tipo}</span>
+                                        </div>
+                                        ` : ''}
+                                        
+                                        ${props.descripcion ? `
+                                        <div class="detail-item mb-2">
+                                            <i class="fas fa-align-left text-info me-2"></i>
+                                            <strong>Descripción:</strong>
+                                            <p class="mt-1 mb-0 text-muted">${props.descripcion}</p>
+                                        </div>
+                                        ` : ''}
+                                        
+                                        <div class="detail-item mb-2">
+                                            <i class="fas fa-palette text-warning me-2"></i>
+                                            <strong>Color:</strong>
+                                            <span class="color-preview ms-2" style="background-color: ${evento.backgroundColor}; width: 20px; height: 20px; display: inline-block; border-radius: 4px; border: 1px solid #ddd;"></span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                                    <i class="fas fa-times me-1"></i>Cerrar
+                                </button>
+                                <button type="button" class="btn btn-danger" onclick="eliminarEvento('${evento.id}')">
+                                    <i class="fas fa-trash me-1"></i>Eliminar
+                                </button>
+                                <button type="button" class="btn btn-primary" onclick="editarEvento('${evento.id}')">
+                                    <i class="fas fa-edit me-1"></i>Editar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Remover modal anterior si existe
+            const existingModal = document.getElementById('modalInfoEvento');
+            if (existingModal) {
+                existingModal.remove();
+            }
+            
+            // Agregar nuevo modal al body
+            document.body.insertAdjacentHTML('beforeend', modalHtml);
+            
+            // Mostrar modal
+            const modal = new bootstrap.Modal(document.getElementById('modalInfoEvento'));
+            modal.show();
+        }
+        
+        function obtenerColorEvento(tipo) {
+            const colores = {
+                'reunion': '#667eea',
+                'vencimiento': '#ff6b6b',
+                'proyecto': '#4ecdc4',
+                'personal': '#ffe66d',
+                'otro': '#95a5a6'
+            };
+            return colores[tipo] || '#667eea';
+        }
+        
+        // Gráfico Financiero con datos reales y escala ajustada
+            const financialCtx = document.getElementById('financialChart').getContext('2d');
+            
+            // Calcular el rango de datos para ajustar la escala
+            const ingresosData = {{ ingresos_mensuales|safe }};
+            const gastosData = {{ gastos_mensuales|safe }};
+            const allData = [...ingresosData, ...gastosData];
+            const maxValue = Math.max(...allData);
+            const minValue = Math.min(...allData);
+            const range = maxValue - minValue;
+            const padding = range * 0.1; // 10% de padding
+            
+            window.financialChart = new Chart(financialCtx, {
+                type: 'line',
+                data: {
+                    labels: {{ meses_grafico|safe }},
+                    datasets: [{
+                        label: 'Ingresos',
+                        data: ingresosData,
+                        borderColor: '#667eea',
+                        backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                        tension: 0.4,
+                        fill: true,
+                        pointBackgroundColor: '#667eea',
+                        pointBorderColor: '#ffffff',
+                        pointBorderWidth: 2
+                    }, {
+                        label: 'Gastos',
+                        data: gastosData,
+                        borderColor: '#ff6b6b',
+                        backgroundColor: 'rgba(255, 107, 107, 0.1)',
+                        tension: 0.4,
+                        fill: true,
+                        pointBackgroundColor: '#ff6b6b',
+                        pointBorderColor: '#ffffff',
+                        pointBorderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                            labels: {
+                                usePointStyle: true,
+                                padding: 20,
+                                font: {
+                                    size: 12,
+                                    weight: 'bold'
+                                }
+                            }
+                        },
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false,
+                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                            titleColor: 'white',
+                            bodyColor: 'white',
+                            borderColor: '#667eea',
+                            borderWidth: 1,
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.dataset.label || '';
+                                    if (label) {
+                                        label += ': ';
+                                    }
+                                    label += 'Q' + context.parsed.y.toLocaleString('es-GT');
+                                    return label;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            min: Math.max(0, minValue - padding),
+                            max: maxValue + padding,
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.1)',
+                                drawBorder: false
+                            },
+                            ticks: {
+                                callback: function(value) {
+                                    return 'Q' + value.toLocaleString('es-GT');
+                                },
+                                font: {
+                                    size: 11
+                                },
+                                color: '#666'
+                            },
+                            title: {
+                                display: true,
+                                text: 'Monto (Q)',
+                                font: {
+                                    size: 12,
+                                    weight: 'bold'
+                                },
+                                color: '#333'
+                            }
+                        },
+                        x: {
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.1)',
+                                drawBorder: false
+                            },
+                            ticks: {
+                                font: {
+                                    size: 11
+                                },
+                                color: '#666'
+                            },
+                            title: {
+                                display: true,
+                                text: 'Período',
+                                font: {
+                                    size: 12,
+                                    weight: 'bold'
+                                },
+                                color: '#333'
+                            }
+                        }
+                    },
+                    interaction: {
+                        intersect: false,
+                        mode: 'index'
+                    },
+                    elements: {
+                        point: {
+                            radius: 6,
+                            hoverRadius: 8,
+                            borderWidth: 3,
+                            hoverBorderWidth: 4
+                        },
+                        line: {
+                            borderWidth: 3
+                        }
+                    }
+                }
+});
+
+            // Gráfico de Proyectos con datos reales
+            const projectsCtx = document.getElementById('projectsChart').getContext('2d');
+            const projectsChart = new Chart(projectsCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['En Progreso', 'Pendiente', 'Completado', 'Pausado'],
+                    datasets: [{
+                        data: [{{ total_proyectos|safe }}, 2, 1, 0],
+                        backgroundColor: [
+                            '#667eea',
+                            '#fa709a',
+                            '#43e97b',
+                            '#ff6b6b'
+                        ],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                        }
+                    }
+                }
+            });
+            
+            // Gráfico de Evolución de Proyectos
+            const evolutionCtx = document.getElementById('evolutionChart').getContext('2d');
+            window.evolutionChart = new Chart(evolutionCtx, {
+                type: 'bar',
+                data: {
+                    labels: {{ meses_grafico|safe }},
+                    datasets: [{
+                        label: 'Nuevos Proyectos',
+                        data: {{ evolucion_proyectos|safe }},
+                        backgroundColor: 'rgba(102, 126, 234, 0.8)',
+                        borderColor: '#667eea',
+                        borderWidth: 2,
+                        borderRadius: 8,
+                        borderSkipped: false,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.1)'
+                            }
+                        },
+                        x: {
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.1)'
+                            }
+                        }
+                    }
+                }
+            });
+            
+                        // Calendario
+            document.addEventListener('DOMContentLoaded', function() {
+                console.log('🚀 Inicializando FullCalendar en Dashboard...');
+                
+                const calendarEl = document.getElementById('calendar');
+                if (!calendarEl) {
+                    console.error('❌ Elemento calendar no encontrado');
+                    return;
+                }
+                
+                try {
+                    // Verificar si FullCalendar está disponible
+                    if (typeof FullCalendar === 'undefined') {
+                        console.error('❌ FullCalendar no está disponible');
+                        calendarEl.innerHTML = '<div class="alert alert-danger">Error: FullCalendar no se pudo cargar</div>';
+                        return;
+                    }
+                    
+                    console.log('✅ FullCalendar disponible, creando calendario...');
+                    
+                    const calendar = new FullCalendar.Calendar(calendarEl, {
+                        initialView: 'dayGridMonth',
+                        locale: 'es',
+                        headerToolbar: {
+                            left: 'prev,next today',
+                            center: 'title',
+                            right: 'dayGridMonth,timeGridWeek,timeGridDay'
+                        },
+                        events: {{ eventos_calendario_json|safe }},
+                        eventColor: '#667eea',
+                        height: 'auto',
+                        // Configuración para múltiples eventos
+                        dayMaxEvents: 3, // Mostrar hasta 3 eventos por día
+                        moreLinkClick: 'popover', // Mostrar popover con eventos adicionales
+                        eventDisplay: 'block', // Mostrar eventos como bloques
+                        eventTextColor: 'white', // Color del texto de los eventos
+                        eventTimeFormat: {
+                            hour: '2-digit',
+                            minute: '2-digit',
+                            hour12: false
+                        },
+                        // Hacer el calendario interactivo
+                        selectable: true,
+                        select: function(info) {
+                            console.log('📅 Fecha seleccionada:', info.startStr);
+                            // Cuando se hace clic en una fecha
+                            const fechaSeleccionada = info.startStr;
+                            abrirModalEvento(fechaSeleccionada);
+                        },
+                        // Hacer clic en eventos existentes
+                        eventClick: function(info) {
+                            console.log('📝 Evento clickeado:', info.event.title);
+                            // Mostrar información del evento
+                            mostrarInfoEvento(info.event);
+                        },
+                        // Configuración para mostrar mejor los eventos múltiples
+                        dayMaxEventRows: 3,
+                        moreLinkContent: function(args) {
+                            return `+${args.num} más`;
+                        }
+                    });
+                    
+                    calendar.render();
+                    console.log('✅ FullCalendar renderizado correctamente');
+                    
+                    // Hacer el calendario global para acceder desde otras funciones
+                    window.calendar = calendar;
+                    
+                } catch (error) {
+                    console.error('❌ Error inicializando FullCalendar:', error);
+                    calendarEl.innerHTML = '<div class="alert alert-danger">Error al cargar el calendario: ' + error.message + '</div>';
+                }
+            });
+        
+
+        
+        // Función para cambiar el período del gráfico
+        function cambiarPeriodo(periodo) {
+            // Actualizar botones activos
+            document.querySelectorAll('.periodo-selector .btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.querySelector(`[data-periodo="${periodo}"]`).classList.add('active');
+            
+            // Actualizar texto del período
+            const textoPeriodo = document.querySelector('.chart-header .text-muted');
+            if (periodo === 1) {
+                textoPeriodo.textContent = 'Mes actual';
+            } else if (periodo === 3) {
+                textoPeriodo.textContent = 'Últimos 3 meses';
+            } else {
+                textoPeriodo.textContent = 'Últimos 6 meses';
+            }
+            
+            // Generar nuevos datos según el período
+            let nuevosMeses, nuevosIngresos, nuevosGastos, nuevosEvolucion;
+            
+            if (periodo === 1) {
+                // Mes actual
+                const mesActual = new Date().toLocaleDateString('es-ES', { month: 'short' });
+                nuevosMeses = [mesActual];
+                nuevosIngresos = [{{ total_facturado|safe }} * 0.35];
+                nuevosGastos = [{{ total_facturado|safe }} * 0.3];
+                nuevosEvolucion = [{{ total_proyectos|safe }}];
+            } else if (periodo === 3) {
+                // 3 meses
+                nuevosMeses = ['Abr', 'May', 'Jun'];
+                nuevosIngresos = [{{ total_facturado|safe }} * 0.25, {{ total_facturado|safe }} * 0.3, {{ total_facturado|safe }} * 0.35];
+                nuevosGastos = [{{ total_facturado|safe }} * 0.2, {{ total_facturado|safe }} * 0.25, {{ total_facturado|safe }} * 0.3];
+                nuevosEvolucion = [3, 2, {{ total_proyectos|safe }}];
+            } else {
+                // 6 meses
+                nuevosMeses = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun'];
+                nuevosIngresos = [{{ total_facturado|safe }} * 0.1, {{ total_facturado|safe }} * 0.15, {{ total_facturado|safe }} * 0.2, {{ total_facturado|safe }} * 0.25, {{ total_facturado|safe }} * 0.3, {{ total_facturado|safe }} * 0.35];
+                nuevosGastos = [{{ total_facturado|safe }} * 0.05, {{ total_facturado|safe }} * 0.1, {{ total_facturado|safe }} * 0.15, {{ total_facturado|safe }} * 0.2, {{ total_facturado|safe }} * 0.25, {{ total_facturado|safe }} * 0.3];
+                nuevosEvolucion = [1, 2, 1, 3, 2, {{ total_proyectos|safe }}];
+            }
+            
+            // Actualizar gráfico financiero
+            if (window.financialChart) {
+                window.financialChart.data.labels = nuevosMeses;
+                window.financialChart.data.datasets[0].data = nuevosIngresos;
+                window.financialChart.data.datasets[1].data = nuevosGastos;
+                window.financialChart.update();
+            }
+            
+            // Actualizar gráfico de evolución
+            if (window.evolutionChart) {
+                window.evolutionChart.data.labels = nuevosMeses;
+                window.evolutionChart.data.datasets[0].data = nuevosEvolucion;
+                window.evolutionChart.update();
+            }
+            
+            // Mostrar notificación
+            mostrarNotificacion(`Período cambiado a ${periodo === 1 ? 'mes actual' : periodo === 3 ? '3 meses' : '6 meses'}`, 'info');
+        }
+        // jshint ignore:end
+        </script>
+{% endblock %}
+
+

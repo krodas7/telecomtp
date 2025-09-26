@@ -1,0 +1,121 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Editar Trabajador Diario - {{ trabajador.nombre }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">
+            <i class="fas fa-user-edit me-2"></i>Editar Trabajador Diario
+        </h1>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{% url 'proyectos_list' %}">Proyectos</a></li>
+                <li class="breadcrumb-item"><a href="{% url 'proyecto_dashboard' proyecto.id %}">{{ proyecto.nombre }}</a></li>
+                <li class="breadcrumb-item"><a href="{% url 'trabajadores_diarios_list' proyecto.id %}">Trabajadores Diarios</a></li>
+                <li class="breadcrumb-item"><a href="{% url 'trabajador_diario_detail' proyecto.id trabajador.id %}">{{ trabajador.nombre }}</a></li>
+                <li class="breadcrumb-item active">Editar</li>
+            </ol>
+        </nav>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-user-edit me-2"></i>Editar Información
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label for="{{ form.nombre.id_for_label }}" class="form-label">
+                                        <i class="fas fa-user me-1"></i>{{ form.nombre.label }}
+                                    </label>
+                                    {{ form.nombre }}
+                                    {% if form.nombre.errors %}
+                                        <div class="text-danger">
+                                            {% for error in form.nombre.errors %}
+                                                <small>{{ error }}</small>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label for="{{ form.pago_diario.id_for_label }}" class="form-label">
+                                        <i class="fas fa-dollar-sign me-1"></i>{{ form.pago_diario.label }}
+                                    </label>
+                                    {{ form.pago_diario }}
+                                    {% if form.pago_diario.errors %}
+                                        <div class="text-danger">
+                                            {% for error in form.pago_diario.errors %}
+                                                <small>{{ error }}</small>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group mb-3">
+                            <div class="form-check">
+                                {{ form.activo }}
+                                <label class="form-check-label" for="{{ form.activo.id_for_label }}">
+                                    {{ form.activo.label }}
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'trabajador_diario_detail' proyecto.id trabajador.id %}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left me-1"></i>Cancelar
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-1"></i>Guardar Cambios
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-info">
+                        <i class="fas fa-info-circle me-2"></i>Información Actual
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <h6><strong>Nombre:</strong></h6>
+                    <p class="text-muted">{{ trabajador.nombre }}</p>
+                    
+                    <h6><strong>Pago Diario:</strong></h6>
+                    <p class="text-muted">Q{{ trabajador.pago_diario|floatformat:2 }}</p>
+                    
+                    <h6><strong>Estado:</strong></h6>
+                    <span class="badge bg-{{ trabajador.activo and 'success' or 'danger' }}">
+                        {{ trabajador.activo and 'Activo' or 'Inactivo' }}
+                    </span>
+                    
+                    <hr>
+                    
+                    <h6><strong>Días Trabajados:</strong></h6>
+                    <p class="text-muted">{{ trabajador.total_dias_trabajados }}</p>
+                    
+                    <h6><strong>Total a Pagar:</strong></h6>
+                    <p class="text-muted">Q{{ trabajador.total_a_pagar|floatformat:2 }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

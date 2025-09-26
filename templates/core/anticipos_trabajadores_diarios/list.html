@@ -1,0 +1,205 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Anticipos de Trabajadores Diarios - {{ proyecto.nombre }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">
+            <i class="fas fa-money-bill-wave me-2"></i>Anticipos de Trabajadores Diarios
+        </h1>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{% url 'proyectos_list' %}">Proyectos</a></li>
+                <li class="breadcrumb-item"><a href="{% url 'proyecto_dashboard' proyecto.id %}">{{ proyecto.nombre }}</a></li>
+                <li class="breadcrumb-item"><a href="{% url 'trabajadores_diarios_list' proyecto.id %}">Trabajadores Diarios</a></li>
+                <li class="breadcrumb-item active">Anticipos</li>
+            </ol>
+        </nav>
+    </div>
+
+    <!-- Botones de acción -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="btn-group" role="group">
+                <a href="{% url 'anticipo_trabajador_diario_create' proyecto.id %}" class="btn btn-primary">
+                    <i class="fas fa-plus me-1"></i>Nuevo Anticipo
+                </a>
+                <a href="{% url 'trabajadores_diarios_list' proyecto.id %}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left me-1"></i>Volver a Trabajadores
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Resumen de anticipos -->
+    <div class="row mb-4">
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-primary shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                Total a Pagar
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                Q{{ total_a_pagar|floatformat:2 }}
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-calculator fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-info shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                Total Anticipos
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                Q{{ total_anticipos|floatformat:2 }}
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-list fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-success shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                Anticipos Aplicados
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                Q{{ total_aplicado|floatformat:2 }}
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-check-circle fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-warning shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                Saldo Pendiente
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                Q{{ saldo_pendiente|floatformat:2 }}
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-exclamation-triangle fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabla de anticipos -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">
+                <i class="fas fa-table me-2"></i>Lista de Anticipos
+            </h6>
+        </div>
+        <div class="card-body">
+            {% if anticipos %}
+                <div class="table-responsive">
+                    <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
+                        <thead>
+                            <tr>
+                                <th>Trabajador</th>
+                                <th>Monto (Q)</th>
+                                <th>Fecha</th>
+                                <th>Estado</th>
+                                <th>Monto Aplicado</th>
+                                <th>Saldo Pendiente</th>
+                                <th>Observaciones</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for anticipo in anticipos %}
+                            <tr>
+                                <td>
+                                    <strong>{{ anticipo.trabajador.nombre }}</strong>
+                                </td>
+                                <td class="text-end">Q{{ anticipo.monto|floatformat:2 }}</td>
+                                <td>{{ anticipo.fecha_anticipo|date:"d/m/Y" }}</td>
+                                <td>
+                                    {% if anticipo.estado == 'pendiente' %}
+                                        <span class="badge bg-warning">Pendiente</span>
+                                    {% elif anticipo.estado == 'aplicado' %}
+                                        <span class="badge bg-success">Aplicado</span>
+                                    {% elif anticipo.estado == 'liquidado' %}
+                                        <span class="badge bg-info">Liquidado</span>
+                                    {% else %}
+                                        <span class="badge bg-danger">Cancelado</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-end">Q{{ anticipo.monto_aplicado|floatformat:2 }}</td>
+                                <td class="text-end">Q{{ anticipo.saldo_pendiente|floatformat:2 }}</td>
+                                <td>{{ anticipo.observaciones|default:"-"|truncatechars:30 }}</td>
+                                <td>
+                                    <div class="btn-group" role="group">
+                                        <a href="{% url 'anticipo_trabajador_diario_detail' proyecto.id anticipo.id %}" 
+                                           class="btn btn-info btn-sm" title="Ver detalles">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <a href="{% url 'anticipo_trabajador_diario_edit' proyecto.id anticipo.id %}" 
+                                           class="btn btn-warning btn-sm" title="Editar">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        {% if anticipo.estado == 'pendiente' %}
+                                        <a href="{% url 'anticipo_trabajador_diario_aplicar' proyecto.id anticipo.id %}" 
+                                           class="btn btn-success btn-sm" title="Aplicar">
+                                            <i class="fas fa-check"></i>
+                                        </a>
+                                        {% endif %}
+                                        <a href="{% url 'anticipo_trabajador_diario_delete' proyecto.id anticipo.id %}" 
+                                           class="btn btn-danger btn-sm" title="Eliminar">
+                                            <i class="fas fa-trash"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-money-bill-wave fa-3x text-muted mb-3"></i>
+                    <h5 class="text-muted">No hay anticipos registrados</h5>
+                    <p class="text-muted">Comienza agregando un nuevo anticipo.</p>
+                    <a href="{% url 'anticipo_trabajador_diario_create' proyecto.id %}" class="btn btn-primary">
+                        <i class="fas fa-plus me-1"></i>Agregar Primer Anticipo
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

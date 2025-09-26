@@ -1,6 +1,6 @@
 from django import forms
 from django.core.exceptions import ValidationError
-from .models import Anticipo, Cliente, Proyecto, ArchivoProyecto, Colaborador, Factura, Gasto, Pago, CategoriaGasto, Presupuesto, PartidaPresupuesto, VariacionPresupuesto, CategoriaInventario, ItemInventario, AsignacionInventario, CarpetaProyecto, EventoCalendario
+from .models import Anticipo, Cliente, Proyecto, ArchivoProyecto, Colaborador, Factura, Gasto, Pago, CategoriaGasto, Presupuesto, PartidaPresupuesto, VariacionPresupuesto, CategoriaInventario, ItemInventario, AsignacionInventario, CarpetaProyecto, EventoCalendario, TrabajadorDiario, RegistroTrabajo, AnticipoTrabajadorDiario
 from .constants import ICONOS_CARPETAS
 from decimal import Decimal
 
@@ -182,7 +182,7 @@ class ArchivoProyectoForm(forms.ModelForm):
             }),
             'archivo': forms.FileInput(attrs={
                 'class': 'form-control',
-                'accept': '.pdf,.doc,.docx,.txt,.dwg,.dxf,.jpg,.jpeg,.png,.gif,.bmp,.webp'
+                'accept': '.pdf,.doc,.docx,.txt,.dwg,.dxf,.jpg,.jpeg,.png,.gif,.bmp,.webp,.xlsx,.xls'
             }),
             'tipo': forms.Select(attrs={
                 'class': 'form-control'
@@ -222,7 +222,8 @@ class ArchivoProyectoForm(forms.ModelForm):
             extensiones_permitidas = [
                 'pdf', 'doc', 'docx', 'txt', 'rtf',  # Documentos
                 'dwg', 'dxf',  # Planos CAD
-                'jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'  # Imágenes
+                'jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp',  # Imágenes
+                'xlsx', 'xls'  # Hojas de cálculo Excel
             ]
             extension = archivo.name.split('.')[-1].lower()
             if extension not in extensiones_permitidas:
@@ -817,3 +818,122 @@ class EventoCalendarioForm(forms.ModelForm):
                 raise forms.ValidationError('La hora de fin debe ser posterior a la hora de inicio.')
         
         return cleaned_data
+
+
+# ==================== FORMULARIOS TRABAJADORES DIARIOS ====================
+
+class TrabajadorDiarioForm(forms.ModelForm):
+    """Formulario para trabajadores diarios"""
+    
+    class Meta:
+        model = TrabajadorDiario
+        fields = ['nombre', 'pago_diario', 'activo']
+        widgets = {
+            'nombre': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Nombre completo del trabajador'
+            }),
+            'pago_diario': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'step': '0.01',
+                'min': '0',
+                'placeholder': '0.00'
+            }),
+            'activo': forms.CheckboxInput(attrs={
+                'class': 'form-check-input'
+            })
+        }
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['nombre'].label = 'Nombre del Trabajador'
+        self.fields['pago_diario'].label = 'Pago Diario (Q)'
+        self.fields['activo'].label = 'Activo'
+
+
+class RegistroTrabajoForm(forms.ModelForm):
+    """Formulario para registros de trabajo"""
+    
+    class Meta:
+        model = RegistroTrabajo
+        fields = ['fecha_inicio', 'fecha_fin', 'dias_trabajados', 'observaciones']
+        widgets = {
+            'fecha_inicio': forms.DateInput(attrs={
+                'class': 'form-control',
+                'type': 'date'
+            }),
+            'fecha_fin': forms.DateInput(attrs={
+                'class': 'form-control',
+                'type': 'date'
+            }),
+            'dias_trabajados': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'min': '0',
+                'placeholder': '0'
+            }),
+            'observaciones': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 3,
+                'placeholder': 'Observaciones sobre el trabajo realizado'
+            })
+        }
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['fecha_inicio'].label = 'Fecha de Inicio'
+        self.fields['fecha_fin'].label = 'Fecha de Fin'
+        self.fields['dias_trabajados'].label = 'Días Trabajados'
+        self.fields['observaciones'].label = 'Observaciones'
+    
+    def clean(self):
+        cleaned_data = super().clean()
+        fecha_inicio = cleaned_data.get('fecha_inicio')
+        fecha_fin = cleaned_data.get('fecha_fin')
+        
+        if fecha_fin and fecha_inicio and fecha_fin < fecha_inicio:
+            raise forms.ValidationError('La fecha de fin no puede ser anterior a la fecha de inicio.')
+        
+        return cleaned_data
+
+
+class AnticipoTrabajadorDiarioForm(forms.ModelForm):
+    """Formulario para anticipos de trabajadores diarios"""
+    
+    class Meta:
+        model = AnticipoTrabajadorDiario
+        fields = ['trabajador', 'monto', 'fecha_anticipo', 'observaciones']
+        widgets = {
+            'trabajador': forms.Select(attrs={
+                'class': 'form-select'
+            }),
+            'monto': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'step': '0.01',
+                'min': '0',
+                'placeholder': '0.00'
+            }),
+            'fecha_anticipo': forms.DateInput(attrs={
+                'class': 'form-control',
+                'type': 'date'
+            }),
+            'observaciones': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 3,
+                'placeholder': 'Observaciones sobre el anticipo'
+            })
+        }
+    
+    def __init__(self, *args, **kwargs):
+        proyecto_id = kwargs.pop('proyecto_id', None)
+        super().__init__(*args, **kwargs)
+        
+        if proyecto_id:
+            self.fields['trabajador'].queryset = TrabajadorDiario.objects.filter(
+                proyecto_id=proyecto_id, 
+                activo=True
+            ).order_by('nombre')
+        
+        self.fields['trabajador'].label = 'Trabajador'
+        self.fields['monto'].label = 'Monto del Anticipo (Q)'
+        self.fields['fecha_anticipo'].label = 'Fecha del Anticipo'
+        self.fields['observaciones'].label = 'Observaciones'
