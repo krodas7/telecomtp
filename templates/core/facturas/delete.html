@@ -1,7 +1,23 @@
 {% extends "base.html" %}
 {% load custom_filters %}
 
-{% block title %}Eliminar Factura - Sistema de Construcción{% endblock %}
+{% block title %}Eliminar Factura - Sistema de Construcción
+<script>
+// Función para mostrar ayuda usando notificaciones toast
+function mostrarAyudaFacturas() {
+    if (typeof toastNotification !== 'undefined') {
+        toastNotification.info(
+            'Información del Sistema',
+            'Información contextual disponible cuando la necesites.',
+            6000
+        );
+    } else {
+        alert('Información del sistema disponible');
+    }
+}
+</script>
+
+{% endblock %}
 
 {% block content %}
 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
@@ -72,17 +88,12 @@
                     </div>
                 </div>
                 
-                <div class="alert alert-info">
-                    <h6 class="alert-heading">
-                        <i class="fas fa-info-circle me-2"></i>Información Importante
-                    </h6>
-                    <ul class="mb-0">
-                        <li>La factura será marcada como inactiva, no se eliminará físicamente de la base de datos.</li>
-                        <li>Los pagos existentes asociados a esta factura no se verán afectados.</li>
-                        <li>No se podrán crear nuevos pagos para esta factura.</li>
-                        <li>Esta acción se puede revertir editando la factura y marcándola como activa.</li>
-                    </ul>
-                </div>
+                <!-- Botón de ayuda contextual -->
+                    <div class="mt-2">
+                        <button type="button" class="btn btn-outline-info btn-sm" onclick="mostrarAyudaFacturas()">
+                            <i class="fas fa-question-circle me-1"></i>Ayuda sobre Facturas
+                        </button>
+                    </div>
                 
                 <form method="post">
                     {% csrf_token %}
@@ -176,4 +187,20 @@
         </div>
     </div>
 </div>
+
+<script>
+// Función para mostrar ayuda usando notificaciones toast
+function mostrarAyudaFacturas() {
+    if (typeof toastNotification !== 'undefined') {
+        toastNotification.info(
+            'Información del Sistema',
+            'Información contextual disponible cuando la necesites.',
+            6000
+        );
+    } else {
+        alert('Información del sistema disponible');
+    }
+}
+</script>
+
 {% endblock %}

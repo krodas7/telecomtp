@@ -576,7 +576,7 @@
                                     <i class="fas fa-cloud-upload-alt file-upload-icon"></i>
                                     <h4 class="file-upload-title">Haz clic o arrastra archivos aquí</h4>
                                     <p class="file-upload-subtitle">
-                                        Formatos: PDF, DOC, DOCX, TXT, DWG, DXF, JPG, PNG, GIF, BMP, WEBP<br>
+                                        Formatos: PDF, DOC, DOCX, XLS, XLSX, TXT, DWG, DXF, JPG, PNG, GIF, BMP, WEBP, ZIP, RAR<br>
                                         Tamaño máximo: 50MB
                                     </p>
                                 </div>
@@ -699,7 +699,7 @@
             }
 
             // Validar tipo de archivo
-            const allowedExtensions = ['pdf', 'doc', 'docx', 'txt', 'rtf', 'dwg', 'dxf', 'jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'];
+            const allowedExtensions = ['pdf', 'doc', 'docx', 'xls', 'xlsx', 'txt', 'rtf', 'dwg', 'dxf', 'jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'zip', 'rar'];
             const fileExtension = file.name.split('.').pop().toLowerCase();
             
             if (!allowedExtensions.includes(fileExtension)) {

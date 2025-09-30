@@ -3,6 +3,7 @@ from django.db.models import Sum
 from django.contrib.auth.models import User
 from django.utils import timezone
 from decimal import Decimal
+from django.core.exceptions import ValidationError
 
 
 class Rol(models.Model):
@@ -200,6 +201,14 @@ class Proyecto(models.Model):
         verbose_name = 'Proyecto'
         verbose_name_plural = 'Proyectos'
     
+    def clean(self):
+        """Validaciones del modelo Proyecto"""
+        if self.fecha_fin and self.fecha_inicio and self.fecha_fin < self.fecha_inicio:
+            raise ValidationError("La fecha de fin debe ser posterior a la fecha de inicio.")
+        
+        if self.presupuesto and self.presupuesto < 0:
+            raise ValidationError("El presupuesto no puede ser negativo.")
+    
     def __str__(self):
         return f"{self.nombre} - {self.cliente.razon_social}"
 
@@ -306,6 +315,20 @@ class Factura(models.Model):
             models.Index(fields=['estado', 'fecha_vencimiento']),
             models.Index(fields=['numero_factura']),
         ]
+    
+    def clean(self):
+        """Validaciones del modelo Factura"""
+        if self.fecha_vencimiento and self.fecha_emision and self.fecha_vencimiento < self.fecha_emision:
+            raise ValidationError("La fecha de vencimiento debe ser posterior a la fecha de emisión.")
+        
+        if self.monto_total and self.monto_total < 0:
+            raise ValidationError("El monto total no puede ser negativo.")
+        
+        if self.monto_pagado and self.monto_pagado < 0:
+            raise ValidationError("El monto pagado no puede ser negativo.")
+        
+        if self.monto_pagado and self.monto_total and self.monto_pagado > self.monto_total:
+            raise ValidationError("El monto pagado no puede ser mayor al monto total.")
     
     def __str__(self):
         return f"Factura {self.numero_factura} - {self.cliente.razon_social} - Q{self.monto_total}"
@@ -452,10 +475,12 @@ class Gasto(models.Model):
     proyecto = models.ForeignKey(Proyecto, on_delete=models.CASCADE)
     categoria = models.ForeignKey(CategoriaGasto, on_delete=models.CASCADE)
     descripcion = models.TextField()
-    monto = models.DecimalField(max_digits=10, decimal_places=2)
+    monto = models.FloatField()
     fecha_gasto = models.DateField()
+    fecha_vencimiento = models.DateField(null=True, blank=True, help_text="Fecha límite para el pago (opcional)")
     aprobado = models.BooleanField(default=False)
     aprobado_por = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+    observaciones = models.TextField(blank=True, help_text="Observaciones adicionales sobre el gasto")
     comprobante = models.FileField(upload_to='comprobantes_gastos/', blank=True)
     creado_en = models.DateTimeField(auto_now_add=True)
     

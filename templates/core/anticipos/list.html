@@ -476,14 +476,11 @@ function showSuccessNotification(message) {
                             </div>
                         </div>
                     </div>
-                    <div class="alert alert-info">
-                        <strong>ℹ️ Información:</strong>
-                        <ul class="mb-0 mt-2">
-                            <li>Esta acción no se puede deshacer</li>
-                            <li>Se eliminarán todos los registros relacionados al anticipo</li>
-                            <li>Si el anticipo ya fue aplicado, se recomienda cambiar su estado en lugar de eliminarlo</li>
-                            <li>Se actualizarán automáticamente los totales del proyecto</li>
-                        </ul>
+                    <!-- Botón de ayuda contextual -->
+                    <div class="mt-2">
+                        <button type="button" class="btn btn-outline-info btn-sm" onclick="mostrarAyudaAnticipos()">
+                            <i class="fas fa-question-circle me-1"></i>Ayuda sobre Anticipos
+                        </button>
                     </div>
                 </div>
             </div>
@@ -498,5 +495,31 @@ function showSuccessNotification(message) {
         </div>
     </div>
 </div>
+
+<script>
+// Función para mostrar ayuda sobre anticipos usando notificaciones toast
+function mostrarAyudaAnticipos() {
+    // Mostrar información sobre eliminación de anticipos
+    if (typeof toastNotification !== 'undefined') {
+        toastNotification.info(
+            'Información sobre Anticipos',
+            'Esta acción no se puede deshacer. Se eliminarán todos los registros relacionados al anticipo.',
+            6000
+        );
+        
+        // Mostrar información adicional después de un breve delay
+        setTimeout(() => {
+            toastNotification.warning(
+                'Recomendaciones para Anticipos',
+                'Si el anticipo ya fue aplicado, se recomienda cambiar su estado en lugar de eliminarlo. Se actualizarán automáticamente los totales del proyecto.',
+                6000
+            );
+        }, 1000);
+    } else {
+        // Fallback si toastNotification no está disponible
+        alert('Información sobre Anticipos:\n\n• Esta acción no se puede deshacer\n• Se eliminarán todos los registros relacionados al anticipo\n• Si el anticipo ya fue aplicado, se recomienda cambiar su estado\n• Se actualizarán automáticamente los totales del proyecto');
+    }
+}
+</script>
 
 {% endblock %}

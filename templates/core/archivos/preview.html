@@ -124,19 +124,33 @@
                     {% if archivo.es_imagen %}
                         <!-- Vista previa de imagen -->
                         <div class="text-center">
-                            <img src="{{ archivo.archivo.url }}" alt="{{ archivo.nombre }}" 
-                                 class="img-fluid" style="max-height: 600px;">
+                            {% if archivo.archivo %}
+                                <img src="{{ archivo.archivo.url }}" alt="{{ archivo.nombre }}" 
+                                     class="img-fluid" style="max-height: 600px;">
+                            {% else %}
+                                <div class="alert alert-warning">
+                                    <i class="fas fa-exclamation-triangle"></i>
+                                    No hay archivo asociado
+                                </div>
+                            {% endif %}
                         </div>
                         
                     {% elif archivo.es_documento and archivo.get_extension == 'pdf' %}
                         <!-- Vista previa de PDF -->
                         <div class="text-center">
-                            <iframe src="{{ archivo.archivo.url }}" 
-                                    width="100%" height="600" 
-                                    style="border: 1px solid #ddd; border-radius: 5px;">
-                                <p>Tu navegador no soporta la vista previa de PDF. 
-                                <a href="{% url 'archivo_download' archivo.id %}">Descarga el archivo</a> para verlo.</p>
-                            </iframe>
+                            {% if archivo.archivo %}
+                                <iframe src="{{ archivo.archivo.url }}" 
+                                        width="100%" height="600" 
+                                        style="border: 1px solid #ddd; border-radius: 5px;">
+                                    <p>Tu navegador no soporta la vista previa de PDF. 
+                                    <a href="{% url 'archivo_download' archivo.id %}">Descarga el archivo</a> para verlo.</p>
+                                </iframe>
+                            {% else %}
+                                <div class="alert alert-warning">
+                                    <i class="fas fa-exclamation-triangle"></i>
+                                    No hay archivo asociado
+                                </div>
+                            {% endif %}
                         </div>
                         
                     {% elif archivo.es_documento %}
@@ -150,20 +164,22 @@
                         
                     {% elif archivo.es_plano %}
                         <!-- Vista previa de planos -->
-                        {% if archivo.get_extension in 'jpg,jpeg,png' %}
-                            <div class="text-center">
-                                <img src="{{ archivo.archivo.url }}" alt="{{ archivo.nombre }}" 
-                                     class="img-fluid" style="max-height: 600px;">
-                            </div>
-                        {% elif archivo.get_extension == 'pdf' %}
-                            <div class="text-center">
-                                <iframe src="{{ archivo.archivo.url }}" 
-                                        width="100%" height="600" 
-                                        style="border: 1px solid #ddd; border-radius: 5px;">
-                                    <p>Tu navegador no soporta la vista previa de PDF. 
-                                    <a href="{% url 'archivo_download' archivo.id %}">Descarga el archivo</a> para verlo.</p>
-                                </iframe>
-                            </div>
+                        {% if archivo.archivo %}
+                            {% if archivo.get_extension in 'jpg,jpeg,png' %}
+                                <div class="text-center">
+                                    <img src="{{ archivo.archivo.url }}" alt="{{ archivo.nombre }}" 
+                                         class="img-fluid" style="max-height: 600px;">
+                                </div>
+                            {% elif archivo.get_extension == 'pdf' %}
+                                <div class="text-center">
+                                    <iframe src="{{ archivo.archivo.url }}" 
+                                            width="100%" height="600" 
+                                            style="border: 1px solid #ddd; border-radius: 5px;">
+                                        <p>Tu navegador no soporta la vista previa de PDF. 
+                                        <a href="{% url 'archivo_download' archivo.id %}">Descarga el archivo</a> para verlo.</p>
+                                    </iframe>
+                                </div>
+                            {% endif %}
                         {% else %}
                             <div class="alert alert-warning">
                                 <i class="fas fa-exclamation-triangle"></i>

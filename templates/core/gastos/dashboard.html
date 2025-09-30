@@ -5,6 +5,7 @@
 
 {% block extra_css %}
 <style>
+    /* Hero Section con gradiente */
     .gastos-hero {
         background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
         color: white;
@@ -30,6 +31,12 @@
         position: relative;
         z-index: 1;
         text-align: center;
+    }
+    
+    .hero-icon {
+        font-size: 4rem;
+        margin-bottom: 20px;
+        opacity: 0.9;
     }
     
     .gastos-hero-title {
@@ -61,6 +68,9 @@
         text-decoration: none;
         transition: all 0.3s ease;
         backdrop-filter: blur(10px);
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
     }
     
     .gastos-action-btn:hover {
@@ -71,21 +81,24 @@
         text-decoration: none;
     }
     
+    /* Tarjetas de estadísticas principales */
     .stats-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        grid-template-columns: repeat(4, 1fr);
         gap: 20px;
         margin-bottom: 40px;
     }
     
     .stat-card {
-        background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
-        border-radius: 20px;
+        background: white;
+        border-radius: 15px;
         padding: 30px;
         text-align: center;
         box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
         border: 1px solid rgba(255, 255, 255, 0.2);
         transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
     }
     
     .stat-card:hover {
@@ -93,13 +106,30 @@
         box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
     }
     
-    .stat-icon {
-        font-size: 3rem;
-        margin-bottom: 20px;
-        background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
+    .stat-card::before {
+        content: '';
+        position: absolute;
+        top: 20px;
+        left: 20px;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+    }
+    
+    .stat-card:nth-child(1)::before {
+        background: #9b59b6;
+    }
+    
+    .stat-card:nth-child(2)::before {
+        background: #e91e63;
+    }
+    
+    .stat-card:nth-child(3)::before {
+        background: #3498db;
+    }
+    
+    .stat-card:nth-child(4)::before {
+        background: #27ae60;
     }
     
     .stat-value {
@@ -107,6 +137,7 @@
         font-weight: 900;
         color: #2C3E50;
         margin-bottom: 10px;
+        margin-top: 20px;
     }
     
     .stat-label {
@@ -114,10 +145,12 @@
         color: #6c757d;
         text-transform: uppercase;
         letter-spacing: 1px;
+        font-weight: 600;
     }
     
-    .content-section {
-        background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+    /* Sección de categorías */
+    .categorias-section {
+        background: white;
         border-radius: 20px;
         padding: 30px;
         margin-bottom: 30px;
@@ -135,93 +168,24 @@
         gap: 10px;
     }
     
-    .section-title i {
-        background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
-    }
-    
-    .gasto-card {
-        background: white;
-        border-radius: 15px;
-        padding: 20px;
-        margin-bottom: 15px;
-        border: 1px solid #e9ecef;
-        transition: all 0.3s ease;
-    }
-    
-    .gasto-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
-    }
-    
-    .gasto-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 15px;
-    }
-    
-    .gasto-descripcion {
-        font-weight: 600;
-        color: #2C3E50;
-        margin: 0;
-    }
-    
-    .gasto-monto {
+    .section-title .icon {
+        color: #e74c3c;
         font-size: 1.2rem;
-        font-weight: 700;
-        color: #ff6b6b;
     }
     
-    .gasto-details {
+    .categorias-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-        gap: 15px;
-        margin-bottom: 15px;
-    }
-    
-    .gasto-detail {
-        text-align: center;
-    }
-    
-    .detail-label {
-        font-size: 0.8rem;
-        color: #6c757d;
-        text-transform: uppercase;
-        margin-bottom: 5px;
-    }
-    
-    .detail-value {
-        font-weight: 600;
-        color: #2C3E50;
-    }
-    
-    .estado-badge {
-        padding: 4px 12px;
-        border-radius: 20px;
-        font-size: 0.8rem;
-        font-weight: 600;
-    }
-    
-    .estado-aprobado {
-        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
-        color: white;
-    }
-    
-    .estado-pendiente {
-        background: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%);
-        color: #2C3E50;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 20px;
     }
     
     .categoria-card {
         background: white;
         border-radius: 15px;
         padding: 20px;
-        margin-bottom: 15px;
         border: 1px solid #e9ecef;
         transition: all 0.3s ease;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
     }
     
     .categoria-card:hover {
@@ -231,21 +195,312 @@
     
     .categoria-header {
         display: flex;
-        justify-content: space-between;
         align-items: center;
         margin-bottom: 15px;
     }
     
+    .categoria-icon {
+        font-size: 2rem;
+        margin-right: 15px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 50px;
+        height: 50px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 12px;
+        border: 2px solid rgba(255, 255, 255, 0.2);
+    }
+    
+    .categoria-info {
+        flex: 1;
+    }
+    
     .categoria-nombre {
+        font-size: 1.1rem;
         font-weight: 600;
-        color: #2C3E50;
-        margin: 0;
+        margin-bottom: 5px;
     }
     
     .categoria-total {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #e74c3c;
+    }
+    
+    .categoria-stats {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 15px;
+    }
+    
+    .categoria-stat {
+        text-align: center;
+    }
+    
+    .categoria-stat-label {
+        font-size: 0.8rem;
+        color: #6c757d;
+        text-transform: uppercase;
+        margin-bottom: 5px;
+        font-weight: 500;
+    }
+    
+    .categoria-stat-value {
+        font-weight: 600;
+        color: #2c3e50;
+    }
+    
+    /* Gastos Recientes */
+    .gastos-recientes-section {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(20px);
+        border-radius: 24px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    
+    .gastos-recientes-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    
+    .gasto-item {
+        background: white;
+        border-radius: 16px;
+        padding: 1.5rem;
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+        border: 1px solid #e9ecef;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .gasto-item::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+    
+    .gasto-item:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
+    }
+    
+    .gasto-header {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 1rem;
+    }
+    
+    .gasto-categoria {
+        width: 50px;
+        height: 50px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1.2rem;
+        flex-shrink: 0;
+    }
+    
+    .gasto-info {
+        flex: 1;
+        min-width: 0;
+    }
+    
+    .gasto-descripcion {
+        font-weight: 600;
+        color: #2c3e50;
+        margin-bottom: 0.25rem;
+        font-size: 1rem;
+    }
+    
+    .gasto-proyecto {
+        color: #6c757d;
+        font-size: 0.9rem;
+        font-weight: 500;
+    }
+    
+    .gasto-monto {
+        font-size: 1.3rem;
+        font-weight: 700;
+        color: #e74c3c;
+        text-align: right;
+    }
+    
+    .gasto-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding-top: 1rem;
+        border-top: 1px solid #e9ecef;
+    }
+    
+    .gasto-fecha {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: #6c757d;
+        font-size: 0.9rem;
+        font-weight: 500;
+    }
+    
+    .gasto-fecha i {
+        color: #667eea;
+    }
+    
+    .gasto-estado {
+        display: flex;
+        align-items: center;
+    }
+    
+    .estado-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 500;
+    }
+    
+    .estado-badge.aprobado {
+        background: rgba(40, 167, 69, 0.1);
+        color: #28a745;
+        border: 1px solid rgba(40, 167, 69, 0.2);
+    }
+    
+    .estado-badge.pendiente {
+        background: rgba(255, 193, 7, 0.1);
+        color: #ffc107;
+        border: 1px solid rgba(255, 193, 7, 0.2);
+    }
+    
+    .gastos-recientes-footer {
+        text-align: center;
+        padding-top: 1rem;
+        border-top: 1px solid #e9ecef;
+    }
+    
+    .ver-todos-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.75rem 1.5rem;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        text-decoration: none;
+        border-radius: 12px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        border: none;
+    }
+    
+    .ver-todos-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+        color: white;
+    }
+    
+    /* Sección de gastos recientes */
+    .gastos-recientes-section {
+        background: white;
+        border-radius: 20px;
+        padding: 30px;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    
+    .gasto-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 20px 0;
+        border-bottom: 1px solid #f1f3f4;
+    }
+    
+    .gasto-item:last-child {
+        border-bottom: none;
+    }
+    
+    .gasto-info {
+        flex: 1;
+    }
+    
+    .gasto-titulo {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: #2c3e50;
+        margin-bottom: 8px;
+    }
+    
+    .gasto-details {
+        display: flex;
+        gap: 20px;
+        font-size: 0.9rem;
+        color: #6c757d;
+    }
+    
+    .gasto-detail {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+    
+    .gasto-detail-label {
+        font-weight: 500;
+    }
+    
+    .gasto-detail-value {
+        color: #2c3e50;
+    }
+    
+    .gasto-right {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+    }
+    
+    .gasto-fecha {
+        font-size: 0.9rem;
+        color: #6c757d;
+        text-align: right;
+    }
+    
+    .gasto-estado {
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+    
+    .estado-aprobado {
+        background: #d4edda;
+        color: #155724;
+    }
+    
+    .estado-pendiente {
+        background: #fff3cd;
+        color: #856404;
+    }
+    
+    .gasto-monto {
         font-size: 1.2rem;
         font-weight: 700;
-        color: #ff6b6b;
+        color: #e74c3c;
+        text-align: right;
     }
     
     .empty-state {
@@ -255,179 +510,214 @@
     }
     
     .empty-state i {
-        font-size: 4rem;
+        font-size: 3rem;
         margin-bottom: 20px;
         opacity: 0.3;
+        color: #e74c3c;
     }
     
     .empty-state h3 {
         margin-bottom: 10px;
-        color: #2C3E50;
+        color: #2c3e50;
     }
     
     .empty-state p {
         margin-bottom: 30px;
     }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+        .gastos-header h1 {
+            font-size: 2rem;
+        }
+        
+        .stats-grid {
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        }
+        
+        .categorias-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .gasto-item {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 15px;
+        }
+        
+        .gasto-right {
+            width: 100%;
+            justify-content: space-between;
+        }
+        
+        .gasto-details {
+            flex-direction: column;
+            gap: 10px;
+        }
+    }
 </style>
 {% endblock %}
 
 {% block content %}
-<!-- Hero Section de Gastos -->
+<!-- Hero Section con gradiente -->
 <div class="gastos-hero">
     <div class="gastos-hero-content">
-        <h1 class="gastos-hero-title">
-            <i class="fas fa-receipt me-3"></i>Gestión de Gastos
-        </h1>
-        <p class="gastos-hero-subtitle">
-            Control y seguimiento de todos los gastos del sistema de construcción
-        </p>
+        <div class="hero-icon">
+            <i class="fas fa-receipt"></i>
+        </div>
+        <h1 class="gastos-hero-title">Gestión de Gastos</h1>
+        <p class="gastos-hero-subtitle">Control y seguimiento de todos los gastos del sistema de construcción</p>
         
         <div class="gastos-actions">
             <a href="{% url 'gasto_create' %}" class="gastos-action-btn">
-                <i class="fas fa-plus me-2"></i>Nuevo Gasto
+                <i class="fas fa-plus"></i>Nuevo Gasto
             </a>
             <a href="{% url 'categorias_gasto_list' %}" class="gastos-action-btn">
-                <i class="fas fa-tags me-2"></i>Categorías
+                <i class="fas fa-tags"></i>Categorías
             </a>
             <a href="{% url 'gastos_list' %}" class="gastos-action-btn">
-                <i class="fas fa-list me-2"></i>Ver Todo
+                <i class="fas fa-list"></i>Ver Todo
             </a>
         </div>
     </div>
 </div>
 
-<!-- Estadísticas Principales -->
-<div class="stats-grid">
-    <div class="stat-card">
-        <div class="stat-icon">
-            <i class="fas fa-receipt"></i>
+<div class="container-fluid">
+    <!-- Estadísticas Principales -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-value">{{ total_gastos }}</div>
+            <div class="stat-label">Total Gastos</div>
         </div>
-        <div class="stat-value">{{ total_gastos }}</div>
-        <div class="stat-label">Total Gastos</div>
-    </div>
-    
-    <div class="stat-card">
-        <div class="stat-icon">
-            <i class="fas fa-dollar-sign"></i>
+        
+        <div class="stat-card">
+            <div class="stat-value">Q{{ total_monto|currency_format }}</div>
+            <div class="stat-label">Monto Total</div>
         </div>
-        <div class="stat-value">Q{{ total_monto|currency_format }}</div>
-        <div class="stat-label">Monto Total</div>
-    </div>
-    
-    <div class="stat-card">
-        <div class="stat-icon">
-            <i class="fas fa-check-circle"></i>
+        
+        <div class="stat-card">
+            <div class="stat-value">{{ gastos_aprobados }}</div>
+            <div class="stat-label">Aprobados</div>
         </div>
-        <div class="stat-value">{{ gastos_aprobados }}</div>
-        <div class="stat-label">Aprobados</div>
-    </div>
-    
-    <div class="stat-card">
-        <div class="stat-icon">
-            <i class="fas fa-clock"></i>
+        
+        <div class="stat-card">
+            <div class="stat-value">{{ gastos_pendientes }}</div>
+            <div class="stat-label">Pendientes</div>
         </div>
-        <div class="stat-value">{{ gastos_pendientes }}</div>
-        <div class="stat-label">Pendientes</div>
     </div>
-</div>
 
-<!-- Gastos por Categoría -->
-<div class="content-section">
-    <h2 class="section-title">
-        <i class="fas fa-chart-pie"></i>
-        Gastos por Categoría
-    </h2>
-    
-    {% if gastos_por_categoria %}
-        <div class="row">
-            {% for categoria in gastos_por_categoria %}
-            <div class="col-md-6 col-lg-4 mb-3">
+    <!-- Gastos por Categoría -->
+    <div class="categorias-section">
+        <h2 class="section-title">
+            <i class="fas fa-chart-pie icon"></i>
+            Gastos por Categoría
+        </h2>
+        
+        {% if gastos_por_categoria %}
+            <div class="categorias-grid">
+                {% for categoria in gastos_por_categoria %}
                 <div class="categoria-card">
                     <div class="categoria-header">
-                        <h4 class="categoria-nombre">{{ categoria.categoria__nombre|default:"Sin categoría" }}</h4>
-                        <span class="categoria-total">Q{{ categoria.total|currency_format }}</span>
+                        <div class="categoria-icon" style="color: {{ categoria.categoria__color|default:'#007bff' }};">
+                            <i class="{{ categoria.categoria__icono|default:'fas fa-tools' }}"></i>
+                        </div>
+                        <div class="categoria-info">
+                            <div class="categoria-nombre" style="color: {{ categoria.categoria__color|default:'#007bff' }};">{{ categoria.categoria__nombre|default:"Sin categoría" }}</div>
+                            <div class="categoria-total">Q{{ categoria.total|currency_format }}</div>
+                        </div>
                     </div>
                     
-                    <div class="gasto-details">
-                        <div class="gasto-detail">
-                            <div class="detail-label">Cantidad</div>
-                            <div class="detail-value">{{ categoria.cantidad }} gastos</div>
+                    <div class="categoria-stats">
+                        <div class="categoria-stat">
+                            <div class="categoria-stat-label">Cantidad</div>
+                            <div class="categoria-stat-value">{{ categoria.cantidad }} gastos</div>
                         </div>
-                        <div class="gasto-detail">
-                            <div class="detail-label">Promedio</div>
-                            <div class="detail-value">Q{% widthratio categoria.total categoria.cantidad 1 %}</div>
+                        <div class="categoria-stat">
+                            <div class="categoria-stat-label">Promedio</div>
+                            <div class="categoria-stat-value">Q{% widthratio categoria.total categoria.cantidad 1 %}</div>
                         </div>
                     </div>
                 </div>
+                {% endfor %}
             </div>
-            {% endfor %}
-        </div>
-    {% else %}
-        <div class="empty-state">
-            <i class="fas fa-chart-pie"></i>
-            <h3>No hay gastos registrados</h3>
-            <p>Comienza registrando los gastos del sistema</p>
-            <a href="{% url 'gasto_create' %}" class="btn btn-primary">
-                <i class="fas fa-plus me-2"></i>Registrar Primer Gasto
-            </a>
-        </div>
-    {% endif %}
-</div>
+        {% else %}
+            <div class="empty-state">
+                <i class="fas fa-chart-pie"></i>
+                <h3>No hay gastos registrados</h3>
+                <p>Comienza registrando los gastos del sistema</p>
+                <a href="{% url 'gasto_create' %}" class="gastos-action-btn">
+                    <i class="fas fa-plus"></i>Registrar Primer Gasto
+                </a>
+            </div>
+        {% endif %}
+    </div>
 
-<!-- Gastos Recientes -->
-<div class="content-section">
-    <h2 class="section-title">
-        <i class="fas fa-history"></i>
-        Gastos Recientes
-    </h2>
-    
-    {% if gastos_recientes %}
-        {% for gasto in gastos_recientes %}
-        <div class="gasto-card">
-            <div class="gasto-header">
-                <h4 class="gasto-descripcion">{{ gasto.descripcion }}</h4>
-                <span class="gasto-monto">Q{{ gasto.monto|currency_format }}</span>
+    <!-- Gastos Recientes -->
+    <div class="gastos-recientes-section">
+        <h2 class="section-title">
+            <i class="fas fa-clock icon"></i>
+            Gastos Recientes
+        </h2>
+        
+        {% if gastos_recientes %}
+            <div class="gastos-recientes-lista">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Descripción</th>
+                            <th>Proyecto</th>
+                            <th>Monto</th>
+                            <th>Fecha</th>
+                            <th>Estado</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for gasto in gastos_recientes %}
+                        <tr>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="categoria-mini" style="background-color: {{ gasto.categoria.color|default:'#667eea' }}; width: 20px; height: 20px; border-radius: 50%; margin-right: 10px; display: flex; align-items: center; justify-content: center;">
+                                        <i class="{{ gasto.categoria.icono|default:'fas fa-tag' }}" style="color: white; font-size: 10px;"></i>
+                                    </div>
+                                    <span>{{ gasto.descripcion|truncatechars:30 }}</span>
+                                </div>
+                            </td>
+                            <td>{{ gasto.proyecto.nombre|truncatechars:20 }}</td>
+                            <td class="text-end fw-bold text-danger">Q{{ gasto.monto|floatformat:2 }}</td>
+                            <td>{{ gasto.fecha_gasto|date:"d/m/Y" }}</td>
+                            <td>
+                                {% if gasto.aprobado %}
+                                    <span class="badge bg-success">
+                                        <i class="fas fa-check"></i> Aprobado
+                                    </span>
+                                {% else %}
+                                    <span class="badge bg-warning">
+                                        <i class="fas fa-clock"></i> Pendiente
+                                    </span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
             </div>
             
-            <div class="gasto-details">
-                <div class="gasto-detail">
-                    <div class="detail-label">Categoría</div>
-                    <div class="detail-value">{{ gasto.categoria.nombre|default:"Sin categoría" }}</div>
-                </div>
-                <div class="gasto-detail">
-                    <div class="detail-label">Proyecto</div>
-                    <div class="detail-value">{{ gasto.proyecto.nombre|default:"General" }}</div>
-                </div>
-                <div class="gasto-detail">
-                    <div class="detail-label">Fecha</div>
-                    <div class="detail-value">{{ gasto.fecha_gasto|date:"d/m/Y" }}</div>
-                </div>
-                <div class="gasto-detail">
-                    <div class="detail-label">Estado</div>
-                    <div class="detail-value">
-                        <span class="estado-badge estado-{% if gasto.aprobado %}aprobado{% else %}pendiente{% endif %}">
-                            {% if gasto.aprobado %}Aprobado{% else %}Pendiente{% endif %}
-                        </span>
-                    </div>
-                </div>
+            <div class="gastos-recientes-footer">
+                <a href="{% url 'gastos_list' %}" class="ver-todos-btn">
+                    <i class="fas fa-list"></i>Ver Todos los Gastos
+                </a>
             </div>
-        </div>
-        {% endfor %}
-        
-        <div class="text-center mt-4">
-            <a href="{% url 'gastos_list' %}" class="btn btn-primary">
-                <i class="fas fa-list me-2"></i>Ver Todos los Gastos
-            </a>
-        </div>
-    {% else %}
-        <div class="empty-state">
-            <i class="fas fa-receipt"></i>
-            <h3>No hay gastos registrados</h3>
-            <p>Comienza registrando los gastos del sistema</p>
-            <a href="{% url 'gasto_create' %}" class="btn btn-primary">
-                <i class="fas fa-plus me-2"></i>Registrar Primer Gasto
-            </a>
-        </div>
-    {% endif %}
+        {% else %}
+            <div class="empty-state">
+                <i class="fas fa-receipt"></i>
+                <h3>No hay gastos recientes</h3>
+                <p>Los gastos recientes aparecerán aquí</p>
+                <a href="{% url 'gasto_create' %}" class="gastos-action-btn">
+                    <i class="fas fa-plus"></i>Registrar Primer Gasto
+                </a>
+            </div>
+        {% endif %}
+    </div>
+
 </div>
 {% endblock %}

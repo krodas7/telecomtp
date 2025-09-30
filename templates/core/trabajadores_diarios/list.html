@@ -26,9 +26,14 @@
                 <a href="{% url 'trabajador_diario_create' proyecto.id %}" class="btn btn-primary">
                     <i class="fas fa-plus me-1"></i>Nuevo Trabajador
                 </a>
-                <a href="{% url 'trabajadores_diarios_pdf' proyecto.id %}" class="btn btn-success">
+                <button type="button" class="btn btn-success" onclick="generarPDF()">
                     <i class="fas fa-file-pdf me-1"></i>Descargar PDF
-                </a>
+                </button>
+                {% if total_trabajadores > 0 %}
+                <button type="button" class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#finalizarPlanillaModal">
+                    <i class="fas fa-check-circle me-1"></i>Finalizar Planilla
+                </button>
+                {% endif %}
                 <a href="{% url 'proyecto_dashboard' proyecto.id %}" class="btn btn-secondary">
                     <i class="fas fa-arrow-left me-1"></i>Volver al Proyecto
                 </a>
@@ -136,23 +141,19 @@
                                 <td class="text-center">
                                     <input type="number" 
                                            class="form-control form-control-sm dias-trabajados-input" 
-                                           value="{{ trabajador.total_dias_trabajados }}"
+                                           value="0"
                                            data-trabajador-id="{{ trabajador.id }}"
                                            data-pago-diario="{{ trabajador.pago_diario }}"
-                                           data-anticipos-aplicados="{{ trabajador.total_anticipos_aplicados }}"
                                            min="0"
+                                           placeholder="Días"
                                            style="width: 80px;">
+                                    <small class="text-muted">Temporal</small>
                                 </td>
                                 <td class="text-end">
                                     <div class="d-flex flex-column">
                                         <span class="total-pagar-display" data-trabajador-id="{{ trabajador.id }}">
-                                            Q{{ trabajador.saldo_pendiente|floatformat:2 }}
+                                            Q0.00
                                         </span>
-                                        {% if trabajador.total_anticipos_aplicados > 0 %}
-                                            <small class="text-muted">
-                                                (Anticipos: Q{{ trabajador.total_anticipos_aplicados|floatformat:2 }})
-                                            </small>
-                                        {% endif %}
                                     </div>
                                 </td>
                                 <td>
@@ -181,7 +182,7 @@
                                     <strong>TOTAL GENERAL A PAGAR:</strong>
                                 </th>
                                 <th class="text-center" style="font-size: 1.2em; padding: 15px;">
-                                    <span class="badge bg-success fs-5" id="total-general-tabla">Q0.00</span>
+                                    <span class="badge bg-success fs-5 total-general-display" id="total-general-tabla">Q0.00</span>
                                 </th>
                                 <th colspan="2" style="padding: 15px;"></th>
                             </tr>
@@ -284,6 +285,104 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Inicializar totales
     actualizarTotalesGenerales();
+});
+</script>
+
+<!-- Modal de Finalizar Planilla -->
+<div class="modal fade" id="finalizarPlanillaModal" tabindex="-1" aria-labelledby="finalizarPlanillaModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="finalizarPlanillaModalLabel">
+                    <i class="fas fa-check-circle text-warning me-2"></i>Finalizar Planilla
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    <strong>¿Está seguro que desea finalizar esta planilla?</strong>
+                </div>
+                <p>Esta acción realizará lo siguiente:</p>
+                <ul class="list-unstyled">
+                    <li><i class="fas fa-file-pdf text-success me-2"></i>Generará un PDF de la planilla actual</li>
+                    <li><i class="fas fa-folder-plus text-primary me-2"></i>Creará una carpeta "Trabajadores Diarios" en los archivos del proyecto</li>
+                    <li><i class="fas fa-save text-info me-2"></i>Guardará el PDF en la carpeta del proyecto</li>
+                    <li><i class="fas fa-trash text-danger me-2"></i>Limpiará la lista de trabajadores para una nueva planilla</li>
+                </ul>
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <strong>Advertencia:</strong> Esta acción no se puede deshacer.
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-1"></i>Cancelar
+                </button>
+                <a href="{% url 'finalizar_planilla_trabajadores' proyecto.id %}" class="btn btn-warning">
+                    <i class="fas fa-check-circle me-1"></i>Finalizar Planilla
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Formulario oculto para generar PDF -->
+<form id="pdfForm" method="post" action="{% url 'trabajadores_diarios_pdf' proyecto.id %}" style="display: none;">
+    {% csrf_token %}
+    {% for trabajador in trabajadores %}
+        <input type="hidden" name="dias_trabajador_{{ trabajador.id }}" id="dias_trabajador_{{ trabajador.id }}" value="0">
+    {% endfor %}
+</form>
+
+<script>
+// Función para generar PDF con datos temporales
+function generarPDF() {
+    // Recopilar datos de días trabajados
+    document.querySelectorAll('.dias-trabajados-input').forEach(function(input) {
+        const trabajadorId = input.dataset.trabajadorId;
+        const diasTrabajados = input.value || 0;
+        document.getElementById(`dias_trabajador_${trabajadorId}`).value = diasTrabajados;
+    });
+    
+    // Enviar formulario
+    document.getElementById('pdfForm').submit();
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Función para calcular totales
+    function calcularTotales() {
+        let totalGeneral = 0;
+        
+        document.querySelectorAll('.dias-trabajados-input').forEach(function(input) {
+            const trabajadorId = input.dataset.trabajadorId;
+            const pagoDiario = parseFloat(input.dataset.pagoDiario);
+            const diasTrabajados = parseFloat(input.value) || 0;
+            const totalTrabajador = pagoDiario * diasTrabajados;
+            
+            // Actualizar el total del trabajador
+            const totalDisplay = document.querySelector(`.total-pagar-display[data-trabajador-id="${trabajadorId}"]`);
+            if (totalDisplay) {
+                totalDisplay.textContent = `Q${totalTrabajador.toFixed(2)}`;
+            }
+            
+            totalGeneral += totalTrabajador;
+        });
+        
+        // Actualizar total general
+        const totalGeneralDisplay = document.querySelector('.total-general-display');
+        if (totalGeneralDisplay) {
+            totalGeneralDisplay.textContent = `Q${totalGeneral.toFixed(2)}`;
+        }
+    }
+    
+    // Calcular totales al cargar la página
+    calcularTotales();
+    
+    // Recalcular cuando cambien los días trabajados
+    document.querySelectorAll('.dias-trabajados-input').forEach(function(input) {
+        input.addEventListener('input', calcularTotales);
+    });
 });
 </script>
 {% endblock %}

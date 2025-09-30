@@ -112,10 +112,10 @@
                         {% csrf_token %}
                         <div class="mb-3">
                             <label for="confirmacion" class="form-label">
-                                <strong>Escribe "ELIMINAR" para confirmar:</strong>
+                                <strong>Escribe ELIMINAR para confirmar:</strong>
                             </label>
                             <input type="text" class="form-control" id="confirmacion" name="confirmacion" 
-                                   placeholder="Escribe ELIMINAR aquí" required>
+                                   placeholder="Escribe ELIMINAR aquí" required autocomplete="off">
                             <div class="form-text">Esta medida de seguridad previene eliminaciones accidentales.</div>
                         </div>
 
@@ -162,87 +162,47 @@
 </div>
 
 <script>
-$(document).ready(function() {
-    // Habilitar botón solo cuando se escriba "ELIMINAR"
-    $('#confirmacion').on('input', function() {
-        var confirmacion = $(this).val().toUpperCase();
+document.addEventListener('DOMContentLoaded', function() {
+    // Limpiar el campo al cargar la página
+    document.getElementById('confirmacion').value = '';
+    
+    // Habilitar botón solo cuando se escriba "ELIMINAR" (sin comillas)
+    document.getElementById('confirmacion').addEventListener('input', function() {
+        var confirmacion = this.value.trim().toUpperCase();
+        var btnEliminar = document.getElementById('btnEliminar');
+        console.log('Texto ingresado:', confirmacion);
+        
         if (confirmacion === 'ELIMINAR') {
-            $('#btnEliminar').prop('disabled', false).removeClass('btn-secondary').addClass('btn-danger');
+            btnEliminar.disabled = false;
+            btnEliminar.classList.remove('btn-secondary');
+            btnEliminar.classList.add('btn-danger');
+            console.log('Botón habilitado');
         } else {
-            $('#btnEliminar').prop('disabled', true).removeClass('btn-danger').addClass('btn-secondary');
+            btnEliminar.disabled = true;
+            btnEliminar.classList.remove('btn-danger');
+            btnEliminar.classList.add('btn-secondary');
+            console.log('Botón deshabilitado');
         }
     });
     
-    // Confirmación adicional antes de enviar
-    $('form').on('submit', function(e) {
-        var confirmacion = $('#confirmacion').val().toUpperCase();
+    // Validación simple antes de enviar
+    document.querySelector('form').addEventListener('submit', function(e) {
+        var confirmacion = document.getElementById('confirmacion').value.trim().toUpperCase();
+        console.log('Validando envío:', confirmacion);
+        
         if (confirmacion !== 'ELIMINAR') {
             e.preventDefault();
-            alert('Debes escribir "ELIMINAR" para confirmar la eliminación.');
+            alert('Debes escribir ELIMINAR (sin comillas) para confirmar la eliminación.');
             return false;
         }
         
-        // Mostrar modal de confirmación
-        const modal = new bootstrap.Modal(document.getElementById('confirmDeleteModal'));
-        modal.show();
-        e.preventDefault();
-    });
-    
-    // Manejar la confirmación del modal
-    document.getElementById('confirmDelete').addEventListener('click', function() {
-        // Enviar el formulario
-        document.querySelector('form').submit();
+        // Mostrar confirmación final
+        if (!confirm('¿Estás completamente seguro de que quieres eliminar este archivo?\n\nEsta acción no se puede deshacer.')) {
+            e.preventDefault();
+            return false;
+        }
     });
 });
 </script>
 
-<!-- Modal de Confirmación de Eliminación -->
-<div class="modal fade" id="confirmDeleteModal" tabindex="-1" aria-labelledby="confirmDeleteModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header bg-danger text-white">
-                <h5 class="modal-title" id="confirmDeleteModalLabel">
-                    <i class="fas fa-exclamation-triangle me-2"></i>Confirmar Eliminación
-                </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <div class="text-center">
-                    <div class="mb-3">
-                        <i class="fas fa-file-alt fa-3x text-danger"></i>
-                    </div>
-                    <h6 class="mb-3">¿Estás completamente seguro de que quieres eliminar este archivo?</h6>
-                    <div class="alert alert-danger">
-                        <strong>⚠️ Advertencia:</strong> Esta acción no se puede deshacer.
-                        <br><br>
-                        <div class="row">
-                            <div class="col-6">
-                                <strong>Archivo:</strong><br>
-                                <span>{{ archivo.nombre }}</span>
-                            </div>
-                            <div class="col-6">
-                                <strong>Tamaño:</strong><br>
-                                <span class="text-danger fw-bold">{{ archivo.archivo.size|filesizeformat }}</span>
-                            </div>
-                        </div>
-                        <div class="row mt-2">
-                            <div class="col-12">
-                                <strong>Proyecto:</strong><br>
-                                <span>{{ archivo.proyecto.nombre }}</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                    <i class="fas fa-times me-2"></i>Cancelar
-                </button>
-                <button type="button" class="btn btn-danger" id="confirmDelete">
-                    <i class="fas fa-trash me-2"></i>Eliminar Archivo
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
 {% endblock %}

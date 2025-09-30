@@ -1,7 +1,23 @@
 {% extends "base.html" %}
 {% load custom_filters %}
 
-{% block title %}Eliminar Proyecto - Sistema de Construcción{% endblock %}
+{% block title %}Eliminar Proyecto - Sistema de Construcción
+<script>
+// Función para mostrar ayuda usando notificaciones toast
+function mostrarAyudaProyectos() {
+    if (typeof toastNotification !== 'undefined') {
+        toastNotification.info(
+            'Información del Sistema',
+            'Información contextual disponible cuando la necesites.',
+            6000
+        );
+    } else {
+        alert('Información del sistema disponible');
+    }
+}
+</script>
+
+{% endblock %}
 
 {% block content %}
 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
@@ -66,17 +82,12 @@
                     </div>
                 </div>
                 
-                <div class="alert alert-info">
-                    <h6 class="alert-heading">
-                        <i class="fas fa-info-circle me-2"></i>Información Importante
-                    </h6>
-                    <ul class="mb-0">
-                        <li>El proyecto será marcado como inactivo, no se eliminará físicamente de la base de datos.</li>
-                        <li>Las facturas y gastos existentes asociados a este proyecto no se verán afectados.</li>
-                        <li>No se podrán crear nuevas facturas o gastos para este proyecto.</li>
-                        <li>Esta acción se puede revertir editando el proyecto y marcándolo como activo.</li>
-                    </ul>
-                </div>
+                <!-- Botón de ayuda contextual -->
+                    <div class="mt-2">
+                        <button type="button" class="btn btn-outline-info btn-sm" onclick="mostrarAyudaProyectos()">
+                            <i class="fas fa-question-circle me-1"></i>Ayuda sobre Proyectos
+                        </button>
+                    </div>
                 
                 <form method="post">
                     {% csrf_token %}
@@ -191,4 +202,20 @@
         </div>
     </div>
 </div>
+
+<script>
+// Función para mostrar ayuda usando notificaciones toast
+function mostrarAyudaProyectos() {
+    if (typeof toastNotification !== 'undefined') {
+        toastNotification.info(
+            'Información del Sistema',
+            'Información contextual disponible cuando la necesites.',
+            6000
+        );
+    } else {
+        alert('Información del sistema disponible');
+    }
+}
+</script>
+
 {% endblock %}

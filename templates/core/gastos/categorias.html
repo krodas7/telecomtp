@@ -1,0 +1,379 @@
+{% extends "base.html" %}
+{% load custom_filters %}
+
+{% block title %}Categorías de Gastos - Sistema de Construcción{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* ============================================================================
+       ESTILOS PARA GESTIÓN DE CATEGORÍAS DE GASTOS - Sistema ARCA Construcción
+       ============================================================================ */
+    
+    .hero-section {
+        background: linear-gradient(135deg, #6c5ce7 0%, #a29bfe 100%);
+        color: white;
+        padding: 3rem 2rem;
+        border-radius: 20px;
+        margin-bottom: 2rem;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .hero-section::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="50" cy="50" r="1" fill="white" opacity="0.1"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+        opacity: 0.3;
+    }
+    
+    .hero-content {
+        position: relative;
+        z-index: 2;
+    }
+    
+    .hero-title {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin-bottom: 1rem;
+        text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    }
+    
+    .hero-subtitle {
+        font-size: 1.2rem;
+        margin-bottom: 2rem;
+        opacity: 0.9;
+    }
+    
+    .card-modern {
+        background: white;
+        border-radius: 20px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        border: none;
+        overflow: hidden;
+        margin-bottom: 2rem;
+    }
+    
+    .card-header-modern {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        border-bottom: 1px solid #dee2e6;
+        padding: 1.5rem 2rem;
+        font-weight: 600;
+        color: #495057;
+    }
+    
+    .card-body-modern {
+        padding: 2rem;
+    }
+    
+    .btn {
+        padding: 0.75rem 1.5rem;
+        border-radius: 12px;
+        font-weight: 600;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: all 0.3s ease;
+        border: none;
+    }
+    
+    .btn-success {
+        background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%);
+        color: white;
+    }
+    
+    .btn-success:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(40, 167, 69, 0.4);
+        color: white;
+    }
+    
+    .btn-primary {
+        background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+        color: white;
+    }
+    
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(0, 123, 255, 0.4);
+        color: white;
+    }
+    
+    .btn-warning {
+        background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%);
+        color: #212529;
+    }
+    
+    .btn-warning:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(255, 193, 7, 0.4);
+        color: #212529;
+    }
+    
+    .btn-danger {
+        background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+        color: white;
+    }
+    
+    .btn-danger:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(220, 53, 69, 0.4);
+        color: white;
+    }
+    
+    .btn-sm {
+        padding: 0.5rem 1rem;
+        font-size: 0.875rem;
+    }
+    
+    .table-modern {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 1rem;
+    }
+    
+    .table-modern th,
+    .table-modern td {
+        padding: 1rem;
+        text-align: left;
+        border-bottom: 1px solid #dee2e6;
+    }
+    
+    .table-modern th {
+        background: #f8f9fa;
+        font-weight: 600;
+        color: #495057;
+    }
+    
+    .table-modern tbody tr:hover {
+        background: #f8f9fa;
+    }
+    
+    .badge-modern {
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-size: 0.875rem;
+        font-weight: 500;
+    }
+    
+    .badge-modern.primary {
+        background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+        color: white;
+    }
+    
+    .badge-modern.success {
+        background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%);
+        color: white;
+    }
+    
+    .badge-modern.warning {
+        background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%);
+        color: #212529;
+    }
+    
+    .badge-modern.danger {
+        background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+        color: white;
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 3rem 2rem;
+        color: #6c757d;
+    }
+    
+    .empty-state i {
+        font-size: 4rem;
+        margin-bottom: 1rem;
+        opacity: 0.5;
+    }
+    
+    .empty-state h5 {
+        margin-bottom: 1rem;
+        color: #495057;
+    }
+    
+    .empty-state p {
+        margin-bottom: 2rem;
+    }
+    
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    
+    .stat-card {
+        background: white;
+        padding: 1.5rem;
+        border-radius: 15px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+        text-align: center;
+        border: 1px solid #e9ecef;
+    }
+    
+    .stat-number {
+        font-size: 2rem;
+        font-weight: 700;
+        color: #495057;
+        margin-bottom: 0.5rem;
+    }
+    
+    .stat-label {
+        color: #6c757d;
+        font-size: 0.875rem;
+        font-weight: 500;
+    }
+</style>
+{% endblock %}
+
+{% block page_title %}Categorías de Gastos{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<div class="hero-section">
+    <div class="hero-content">
+        <h1 class="hero-title">
+            <i class="fas fa-tags me-3"></i>Gestión de Categorías
+        </h1>
+        <p class="hero-subtitle">Organiza y gestiona las categorías de gastos del sistema</p>
+    </div>
+</div>
+
+<!-- Estadísticas -->
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-number">{{ categorias.count }}</div>
+        <div class="stat-label">Total Categorías</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-number">{{ categorias_activas|default:0 }}</div>
+        <div class="stat-label">Categorías Activas</div>
+    </div>
+</div>
+
+<!-- Lista de Categorías -->
+<div class="card-modern">
+    <div class="card-header-modern">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h5 class="mb-0">
+                    <i class="fas fa-list me-2"></i>Lista de Categorías
+                </h5>
+                <p class="text-muted mb-0">Gestiona las categorías de gastos</p>
+            </div>
+            <a href="{% url 'categoria_gasto_create' %}" class="btn btn-success">
+                <i class="fas fa-plus me-2"></i>Nueva Categoría
+            </a>
+        </div>
+    </div>
+    <div class="card-body-modern">
+        {% if categorias %}
+            <div class="table-responsive">
+                <table class="table-modern">
+                    <thead>
+                        <tr>
+                            <th>Color</th>
+                            <th>Icono</th>
+                            <th>Nombre</th>
+                            <th>Descripción</th>
+                            <th>Estado</th>
+                            <th>Gastos</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for categoria in categorias %}
+                        <tr>
+                            <td>
+                                <div class="color-preview" style="
+                                    width: 30px; 
+                                    height: 30px; 
+                                    border-radius: 50%; 
+                                    background-color: {{ categoria.color|default:'#667eea' }}; 
+                                    border: 2px solid #e9ecef;
+                                    margin: 0 auto;
+                                "></div>
+                            </td>
+                            <td>
+                                <i class="{{ categoria.icono|default:'fas fa-tag' }}" style="
+                                    font-size: 1.2rem; 
+                                    color: {{ categoria.color|default:'#667eea' }};
+                                "></i>
+                            </td>
+                            <td>
+                                <strong>{{ categoria.nombre }}</strong>
+                            </td>
+                            <td>{{ categoria.descripcion|default:"Sin descripción" }}</td>
+                            <td>
+                                <span class="badge-modern success">Activa</span>
+                            </td>
+                            <td>
+                                <span class="badge-modern primary">{{ categoria.gasto_set.count }}</span>
+                            </td>
+                            <td>
+                                <div class="d-flex gap-2">
+                                    <a href="{% url 'categoria_gasto_edit' categoria.id %}" class="btn btn-warning btn-sm" title="Editar">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <a href="{% url 'categoria_gasto_delete' categoria.id %}" class="btn btn-danger btn-sm" title="Eliminar">
+                                        <i class="fas fa-trash"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="empty-state">
+                <i class="fas fa-tags"></i>
+                <h5>No hay categorías registradas</h5>
+                <p>Comienza agregando la primera categoría de gastos para organizar mejor tus gastos</p>
+                <a href="{% url 'categoria_gasto_create' %}" class="btn btn-success">
+                    <i class="fas fa-plus me-2"></i>Agregar Primera Categoría
+                </a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Botón de regreso -->
+<div class="text-center">
+    <a href="{% url 'gastos_list' %}" class="btn btn-primary">
+        <i class="fas fa-arrow-left me-2"></i>Volver a Gastos
+    </a>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Confirmar eliminación de categoría
+    function confirmarEliminarCategoria(categoriaId, nombre) {
+        if (confirm(`¿Estás seguro de que quieres eliminar la categoría "${nombre}"?\n\nEsta acción no se puede deshacer.`)) {
+            window.location.href = `/categorias-gasto/${categoriaId}/eliminar/`;
+        }
+    }
+    
+    // Agregar confirmación a los enlaces de eliminar
+    document.addEventListener('DOMContentLoaded', function() {
+        const deleteLinks = document.querySelectorAll('a[href*="eliminar"]');
+        deleteLinks.forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                const href = this.getAttribute('href');
+                const categoriaId = href.match(/\/(\d+)\/eliminar\//)[1];
+                const nombre = this.closest('tr').querySelector('td:first-child strong').textContent;
+                confirmarEliminarCategoria(categoriaId, nombre);
+            });
+        });
+    });
+</script>
+{% endblock %}

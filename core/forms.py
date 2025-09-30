@@ -1,326 +1,16 @@
+"""
+Formularios del sistema ARCA Construcción
+Centralizados para mejor mantenimiento
+"""
+
 from django import forms
-from django.core.exceptions import ValidationError
-from .models import Anticipo, Cliente, Proyecto, ArchivoProyecto, Colaborador, Factura, Gasto, Pago, CategoriaGasto, Presupuesto, PartidaPresupuesto, VariacionPresupuesto, CategoriaInventario, ItemInventario, AsignacionInventario, CarpetaProyecto, EventoCalendario, TrabajadorDiario, RegistroTrabajo, AnticipoTrabajadorDiario
-from .constants import ICONOS_CARPETAS
-from decimal import Decimal
-
-
-class AnticipoForm(forms.ModelForm):
-    """Formulario para crear y editar anticipos"""
-    
-    class Meta:
-        model = Anticipo
-        fields = [
-            'numero_anticipo', 'cliente', 'proyecto', 'tipo', 'estado',
-            'monto', 'fecha_recepcion', 'fecha_vencimiento',
-            'metodo_pago', 'referencia_pago', 'banco_origen',
-            'descripcion', 'observaciones'
-        ]
-        widgets = {
-            'numero_anticipo': forms.TextInput(attrs={
-                'class': 'form-control',
-                'placeholder': 'ANT-2024-001'
-            }),
-            'cliente': forms.Select(attrs={
-                'class': 'form-select',
-                'id': 'cliente-select'
-            }),
-            'proyecto': forms.Select(attrs={
-                'class': 'form-select',
-                'id': 'proyecto-select'
-            }),
-            'tipo': forms.Select(attrs={
-                'class': 'form-select'
-            }),
-            'estado': forms.Select(attrs={
-                'class': 'form-select'
-            }),
-            'monto': forms.NumberInput(attrs={
-                'class': 'form-control',
-                'step': '0.01',
-                'min': '0.01',
-                'placeholder': '0.00'
-            }),
-            'fecha_recepcion': forms.DateInput(attrs={
-                'class': 'form-control',
-                'type': 'date'
-            }),
-            'fecha_vencimiento': forms.DateInput(attrs={
-                'class': 'form-control',
-                'type': 'date'
-            }),
-            'metodo_pago': forms.Select(attrs={
-                'class': 'form-select'
-            }),
-            'referencia_pago': forms.TextInput(attrs={
-                'class': 'form-control',
-                'placeholder': 'Número de referencia, cheque, etc.'
-            }),
-            'banco_origen': forms.TextInput(attrs={
-                'class': 'form-control',
-                'placeholder': 'Banco de origen del pago'
-            }),
-            'descripcion': forms.Textarea(attrs={
-                'class': 'form-control',
-                'rows': '3',
-                'placeholder': 'Descripción detallada del anticipo'
-            }),
-            'observaciones': forms.Textarea(attrs={
-                'class': 'form-control',
-                'rows': '2',
-                'placeholder': 'Observaciones adicionales'
-            }),
-        }
-    
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        
-        # Filtrar proyectos por cliente seleccionado
-        if self.instance.pk and self.instance.cliente:
-            self.fields['proyecto'].queryset = Proyecto.objects.filter(cliente=self.instance.cliente)
-        else:
-            # Para nuevos anticipos, mostrar todos los proyectos activos
-            # El filtro dinámico se manejará en el frontend
-            self.fields['proyecto'].queryset = Proyecto.objects.filter(activo=True)
-        
-        # Hacer algunos campos requeridos
-        self.fields['numero_anticipo'].required = True
-        self.fields['cliente'].required = True
-        self.fields['proyecto'].required = True
-        self.fields['monto'].required = True
-        self.fields['fecha_recepcion'].required = True
-    
-    def clean_monto(self):
-        """Validar que el monto sea positivo"""
-        monto = self.cleaned_data.get('monto')
-        if monto and monto <= 0:
-            raise ValidationError('El monto debe ser mayor a cero')
-        return monto
-    
-    def clean_fecha_vencimiento(self):
-        """Validar que la fecha de vencimiento sea posterior a la recepción"""
-        fecha_recepcion = self.cleaned_data.get('fecha_recepcion')
-        fecha_vencimiento = self.cleaned_data.get('fecha_vencimiento')
-        
-        if fecha_recepcion and fecha_vencimiento and fecha_vencimiento <= fecha_recepcion:
-            raise ValidationError('La fecha de vencimiento debe ser posterior a la fecha de recepción')
-        
-        return fecha_vencimiento
-    
-    def clean(self):
-        """Validaciones generales del formulario"""
-        cleaned_data = super().clean()
-        cliente = cleaned_data.get('cliente')
-        proyecto = cleaned_data.get('proyecto')
-        
-        # Verificar que el proyecto pertenezca al cliente
-        if cliente and proyecto and proyecto.cliente != cliente:
-            raise ValidationError('El proyecto seleccionado no pertenece al cliente especificado')
-        
-        return cleaned_data
-
-
-class AplicacionAnticipoForm(forms.Form):
-    """Formulario para aplicar anticipos a facturas"""
-    
-    factura = forms.ModelChoiceField(
-        queryset=None,
-        empty_label="Seleccionar factura...",
-        widget=forms.Select(attrs={
-            'class': 'form-select',
-            'id': 'factura-select'
-        })
-    )
-    
-    monto_aplicar = forms.DecimalField(
-        max_digits=12,
-        decimal_places=2,
-        min_value=Decimal('0.01'),
-        widget=forms.NumberInput(attrs={
-            'class': 'form-control',
-            'step': '0.01',
-            'min': '0.01',
-            'placeholder': '0.00'
-        })
-    )
-    
-    def __init__(self, anticipo=None, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        if anticipo:
-            # Filtrar facturas disponibles para este anticipo
-            self.fields['factura'].queryset = anticipo.proyecto.facturas.filter(
-                estado__in=['emitida', 'enviada']
-            ).exclude(
-                id__in=anticipo.aplicaciones.values_list('factura_id', flat=True)
-            )
-            
-            # Establecer monto máximo disponible
-            self.fields['monto_aplicar'].max_value = anticipo.monto_disponible
-            self.fields['monto_aplicar'].widget.attrs['max'] = str(anticipo.monto_disponible)
-    
-    def clean_monto_aplicar(self):
-        """Validar que el monto a aplicar no exceda el disponible"""
-        monto = self.cleaned_data.get('monto_aplicar')
-        anticipo = getattr(self, 'anticipo', None)
-        
-        if anticipo and monto and monto > anticipo.monto_disponible:
-            raise ValidationError(f'El monto no puede exceder Q{anticipo.monto_disponible} disponible')
-        
-        return monto
-
-
-class ArchivoProyectoForm(forms.ModelForm):
-    """Formulario para subir archivos de proyectos"""
-    
-    class Meta:
-        model = ArchivoProyecto
-        fields = ['nombre', 'archivo', 'tipo', 'descripcion', 'carpeta']
-        widgets = {
-            'nombre': forms.TextInput(attrs={
-                'class': 'form-control',
-                'placeholder': 'Nombre descriptivo del archivo'
-            }),
-            'archivo': forms.FileInput(attrs={
-                'class': 'form-control',
-                'accept': '.pdf,.doc,.docx,.txt,.dwg,.dxf,.jpg,.jpeg,.png,.gif,.bmp,.webp,.xlsx,.xls'
-            }),
-            'tipo': forms.Select(attrs={
-                'class': 'form-control'
-            }),
-            'carpeta': forms.Select(attrs={
-                'class': 'form-control'
-            }),
-            'descripcion': forms.Textarea(attrs={
-                'class': 'form-control',
-                'rows': 3,
-                'placeholder': 'Descripción del archivo (opcional)'
-            })
-        }
-    
-    def __init__(self, *args, **kwargs):
-        proyecto = kwargs.pop('proyecto', None)
-        super().__init__(*args, **kwargs)
-        
-        if proyecto:
-            # Filtrar carpetas solo del proyecto actual
-            self.fields['carpeta'].queryset = CarpetaProyecto.objects.filter(
-                proyecto=proyecto, 
-                activa=True
-            ).order_by('nombre')
-            
-            # Agregar opción para "Sin carpeta"
-            self.fields['carpeta'].empty_label = "Sin carpeta (carpeta raíz)"
-    
-    def clean_archivo(self):
-        archivo = self.cleaned_data.get('archivo')
-        if archivo:
-            # Validar tamaño del archivo (máximo 50MB)
-            if archivo.size > 50 * 1024 * 1024:
-                raise forms.ValidationError('El archivo no puede ser mayor a 50MB')
-            
-            # Validar extensión
-            extensiones_permitidas = [
-                'pdf', 'doc', 'docx', 'txt', 'rtf',  # Documentos
-                'dwg', 'dxf',  # Planos CAD
-                'jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp',  # Imágenes
-                'xlsx', 'xls'  # Hojas de cálculo Excel
-            ]
-            extension = archivo.name.split('.')[-1].lower()
-            if extension not in extensiones_permitidas:
-                raise forms.ValidationError(
-                    f'Extensión no permitida. Solo se permiten: {", ".join(extensiones_permitidas)}'
-                )
-        
-        return archivo
-
-
-class CarpetaProyectoForm(forms.ModelForm):
-    """Formulario para crear y editar carpetas de proyectos"""
-    
-    class Meta:
-        model = CarpetaProyecto
-        fields = ['nombre', 'descripcion', 'color', 'icono', 'carpeta_padre']
-        widgets = {
-            'nombre': forms.TextInput(attrs={
-                'class': 'form-control',
-                'placeholder': 'Nombre de la carpeta'
-            }),
-            'descripcion': forms.Textarea(attrs={
-                'class': 'form-control',
-                'rows': 3,
-                'placeholder': 'Descripción de la carpeta (opcional)'
-            }),
-            'color': forms.TextInput(attrs={
-                'class': 'form-control',
-                'type': 'color',
-                'title': 'Selecciona un color para la carpeta'
-            }),
-            'icono': forms.Select(attrs={
-                'class': 'form-control'
-            }, choices=ICONOS_CARPETAS),
-            'carpeta_padre': forms.Select(attrs={
-                'class': 'form-control'
-            })
-        }
-    
-    def __init__(self, *args, **kwargs):
-        proyecto = kwargs.pop('proyecto', None)
-        carpeta_actual = kwargs.pop('carpeta_actual', None)
-        super().__init__(*args, **kwargs)
-        
-        if proyecto:
-            # Filtrar carpetas solo del proyecto actual
-            queryset = CarpetaProyecto.objects.filter(proyecto=proyecto, activa=True)
-            
-            # Si estamos editando una carpeta, excluirla y sus subcarpetas para evitar referencias circulares
-            if carpeta_actual:
-                queryset = queryset.exclude(id=carpeta_actual.id)
-                # También excluir subcarpetas para evitar referencias circulares
-                subcarpetas_ids = self._get_subcarpetas_ids(carpeta_actual)
-                queryset = queryset.exclude(id__in=subcarpetas_ids)
-            
-            self.fields['carpeta_padre'].queryset = queryset.order_by('nombre')
-            self.fields['carpeta_padre'].empty_label = "Carpeta raíz (sin carpeta padre)"
-    
-    def _get_subcarpetas_ids(self, carpeta):
-        """Obtener IDs de todas las subcarpetas de una carpeta"""
-        ids = []
-        for subcarpeta in carpeta.subcarpetas.filter(activa=True):
-            ids.append(subcarpeta.id)
-            ids.extend(self._get_subcarpetas_ids(subcarpeta))
-        return ids
-    
-    def clean_nombre(self):
-        nombre = self.cleaned_data.get('nombre')
-        proyecto = self.instance.proyecto if self.instance.pk else None
-        carpeta_padre = self.cleaned_data.get('carpeta_padre')
-        
-        if proyecto:
-            # Verificar que no exista otra carpeta con el mismo nombre en el mismo nivel
-            queryset = CarpetaProyecto.objects.filter(
-                proyecto=proyecto,
-                carpeta_padre=carpeta_padre,
-                activa=True
-            )
-            
-            if self.instance.pk:
-                queryset = queryset.exclude(pk=self.instance.pk)
-            
-            if queryset.filter(nombre=nombre).exists():
-                if carpeta_padre:
-                    raise forms.ValidationError(
-                        f'Ya existe una carpeta llamada "{nombre}" en "{carpeta_padre.nombre}"'
-                    )
-                else:
-                    raise forms.ValidationError(
-                        f'Ya existe una carpeta raíz llamada "{nombre}"'
-                    )
-        
-        return nombre
+from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth.models import User
+from .models import *
 
 
 class ClienteForm(forms.ModelForm):
-    """Formulario para crear y editar clientes"""
+    """Formulario para clientes"""
     
     class Meta:
         model = Cliente
@@ -331,11 +21,11 @@ class ClienteForm(forms.ModelForm):
         widgets = {
             'razon_social': forms.TextInput(attrs={
                 'class': 'form-control',
-                'placeholder': 'Razón Social o Nombre'
+                'placeholder': 'Razón social del cliente'
             }),
             'codigo_fiscal': forms.TextInput(attrs={
                 'class': 'form-control',
-                'placeholder': 'NIT, DPI, etc.'
+                'placeholder': 'Código fiscal o NIT'
             }),
             'email': forms.EmailInput(attrs={
                 'class': 'form-control',
@@ -343,7 +33,7 @@ class ClienteForm(forms.ModelForm):
             }),
             'telefono': forms.TextInput(attrs={
                 'class': 'form-control',
-                'placeholder': 'Teléfono de contacto'
+                'placeholder': '+502 1234-5678'
             }),
             'direccion': forms.Textarea(attrs={
                 'class': 'form-control',
@@ -352,13 +42,12 @@ class ClienteForm(forms.ModelForm):
             }),
             'activo': forms.CheckboxInput(attrs={
                 'class': 'form-check-input'
-            }),
-
+            })
         }
 
 
 class ProyectoForm(forms.ModelForm):
-    """Formulario para crear y editar proyectos"""
+    """Formulario para proyectos"""
     
     class Meta:
         model = Proyecto
@@ -373,8 +62,8 @@ class ProyectoForm(forms.ModelForm):
             }),
             'descripcion': forms.Textarea(attrs={
                 'class': 'form-control',
-                'rows': 4,
-                'placeholder': 'Descripción detallada del proyecto'
+                'rows': 3,
+                'placeholder': 'Descripción del proyecto'
             }),
             'cliente': forms.Select(attrs={
                 'class': 'form-select'
@@ -382,8 +71,7 @@ class ProyectoForm(forms.ModelForm):
             'presupuesto': forms.NumberInput(attrs={
                 'class': 'form-control',
                 'step': '0.01',
-                'min': '0.01',
-                'placeholder': '0.00'
+                'min': '0'
             }),
             'fecha_inicio': forms.DateInput(attrs={
                 'class': 'form-control',
@@ -403,13 +91,13 @@ class ProyectoForm(forms.ModelForm):
 
 
 class ColaboradorForm(forms.ModelForm):
-    """Formulario para crear y editar colaboradores"""
+    """Formulario para colaboradores"""
     
     class Meta:
         model = Colaborador
         fields = [
             'nombre', 'dpi', 'direccion', 'telefono', 'email', 
-            'salario', 'fecha_contratacion', 'activo'
+            'salario', 'fecha_contratacion', 'fecha_vencimiento_contrato', 'activo'
         ]
         widgets = {
             'nombre': forms.TextInput(attrs={
@@ -418,16 +106,16 @@ class ColaboradorForm(forms.ModelForm):
             }),
             'dpi': forms.TextInput(attrs={
                 'class': 'form-control',
-                'placeholder': 'Número de DPI'
+                'placeholder': '1234567890101'
             }),
             'direccion': forms.Textarea(attrs={
                 'class': 'form-control',
-                'rows': 3,
-                'placeholder': 'Dirección completa'
+                'rows': 2,
+                'placeholder': 'Dirección'
             }),
             'telefono': forms.TextInput(attrs={
                 'class': 'form-control',
-                'placeholder': 'Teléfono de contacto'
+                'placeholder': '+502 1234-5678'
             }),
             'email': forms.EmailInput(attrs={
                 'class': 'form-control',
@@ -436,10 +124,13 @@ class ColaboradorForm(forms.ModelForm):
             'salario': forms.NumberInput(attrs={
                 'class': 'form-control',
                 'step': '0.01',
-                'min': '0.01',
-                'placeholder': '0.00'
+                'min': '0'
             }),
             'fecha_contratacion': forms.DateInput(attrs={
+                'class': 'form-control',
+                'type': 'date'
+            }),
+            'fecha_vencimiento_contrato': forms.DateInput(attrs={
                 'class': 'form-control',
                 'type': 'date'
             }),
@@ -450,19 +141,21 @@ class ColaboradorForm(forms.ModelForm):
 
 
 class FacturaForm(forms.ModelForm):
-    """Formulario para crear y editar facturas"""
+    """Formulario para facturas"""
     
     class Meta:
         model = Factura
         fields = [
-            'numero_factura', 'proyecto', 'cliente', 'tipo', 
-            'fecha_emision', 'fecha_vencimiento', 'monto_subtotal', 
-            'monto_iva', 'descripcion_servicios', 'estado'
+            'numero_factura', 'proyecto', 'cliente', 'tipo', 'estado',
+            'fecha_emision', 'fecha_vencimiento', 'monto_subtotal',
+            'monto_iva', 'monto_total', 'descripcion_servicios',
+            'porcentaje_avance', 'metodo_pago', 'referencia_pago',
+            'banco_origen', 'observaciones'
         ]
         widgets = {
             'numero_factura': forms.TextInput(attrs={
                 'class': 'form-control',
-                'placeholder': 'FAC-2024-001'
+                'placeholder': 'F001-2025'
             }),
             'proyecto': forms.Select(attrs={
                 'class': 'form-select'
@@ -471,6 +164,9 @@ class FacturaForm(forms.ModelForm):
                 'class': 'form-select'
             }),
             'tipo': forms.Select(attrs={
+                'class': 'form-select'
+            }),
+            'estado': forms.Select(attrs={
                 'class': 'form-select'
             }),
             'fecha_emision': forms.DateInput(attrs={
@@ -484,34 +180,56 @@ class FacturaForm(forms.ModelForm):
             'monto_subtotal': forms.NumberInput(attrs={
                 'class': 'form-control',
                 'step': '0.01',
-                'min': '0.01',
-                'placeholder': '0.00'
+                'min': '0'
             }),
             'monto_iva': forms.NumberInput(attrs={
                 'class': 'form-control',
                 'step': '0.01',
-                'min': '0.00',
-                'placeholder': '0.00'
+                'min': '0'
+            }),
+            'monto_total': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'step': '0.01',
+                'min': '0'
             }),
             'descripcion_servicios': forms.Textarea(attrs={
                 'class': 'form-control',
-                'rows': 4,
+                'rows': 3,
                 'placeholder': 'Descripción de los servicios facturados'
             }),
-            'estado': forms.Select(attrs={
+            'porcentaje_avance': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'step': '0.01',
+                'min': '0',
+                'max': '100'
+            }),
+            'metodo_pago': forms.Select(attrs={
                 'class': 'form-select'
+            }),
+            'referencia_pago': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Número de referencia'
+            }),
+            'banco_origen': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Banco de origen'
+            }),
+            'observaciones': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 2,
+                'placeholder': 'Observaciones adicionales'
             })
         }
 
 
 class GastoForm(forms.ModelForm):
-    """Formulario para crear y editar gastos"""
+    """Formulario para gastos"""
     
     class Meta:
         model = Gasto
         fields = [
             'proyecto', 'categoria', 'descripcion', 'monto', 
-            'fecha_gasto', 'aprobado'
+            'fecha_gasto', 'comprobante'
         ]
         widgets = {
             'proyecto': forms.Select(attrs={
@@ -528,54 +246,21 @@ class GastoForm(forms.ModelForm):
             'monto': forms.NumberInput(attrs={
                 'class': 'form-control',
                 'step': '0.01',
-                'min': '0.01',
-                'placeholder': '0.00'
+                'min': '0'
             }),
             'fecha_gasto': forms.DateInput(attrs={
                 'class': 'form-control',
                 'type': 'date'
             }),
-            'aprobado': forms.CheckboxInput(attrs={
-                'class': 'form-check-input'
+            'comprobante': forms.FileInput(attrs={
+                'class': 'form-control',
+                'accept': '.pdf,.jpg,.jpeg,.png'
             })
         }
 
 
-class PagoForm(forms.ModelForm):
-    """Formulario para crear y editar pagos"""
-    
-    class Meta:
-        model = Pago
-        fields = [
-            'factura', 'monto', 'fecha_pago', 'metodo_pago', 
-            'estado'
-        ]
-        widgets = {
-            'factura': forms.Select(attrs={
-                'class': 'form-select'
-            }),
-            'monto': forms.NumberInput(attrs={
-                'class': 'form-control',
-                'step': '0.01',
-                'min': '0.01',
-                'placeholder': '0.00'
-            }),
-            'fecha_pago': forms.DateInput(attrs={
-                'class': 'form-control',
-                'type': 'date'
-            }),
-            'metodo_pago': forms.Select(attrs={
-                'class': 'form-select'
-            }),
-            'estado': forms.Select(attrs={
-                'class': 'form-select'
-            }),
-
-        }
-
-
 class CategoriaGastoForm(forms.ModelForm):
-    """Formulario para crear y editar categorías de gasto"""
+    """Formulario para categorías de gasto"""
     
     class Meta:
         model = CategoriaGasto
@@ -587,175 +272,128 @@ class CategoriaGastoForm(forms.ModelForm):
             }),
             'descripcion': forms.Textarea(attrs={
                 'class': 'form-control',
-                'rows': 3,
+                'rows': 2,
                 'placeholder': 'Descripción de la categoría'
             }),
             'color': forms.TextInput(attrs={
                 'class': 'form-control',
-                'placeholder': '#007bff',
-                'type': 'text'
+                'type': 'color'
             }),
             'icono': forms.TextInput(attrs={
                 'class': 'form-control',
                 'placeholder': 'fas fa-tools'
-            }),
-        }
-
-class PresupuestoForm(forms.ModelForm):
-    class Meta:
-        model = Presupuesto
-        fields = ['nombre', 'version', 'estado', 'observaciones']
-        widgets = {
-            'nombre': forms.TextInput(attrs={'class': 'form-control'}),
-            'version': forms.TextInput(attrs={'class': 'form-control'}),
-            'estado': forms.Select(attrs={'class': 'form-select'}),
-            'observaciones': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
-        }
-
-class PartidaPresupuestoForm(forms.ModelForm):
-    class Meta:
-        model = PartidaPresupuesto
-        fields = ['codigo', 'descripcion', 'unidad', 'cantidad', 'precio_unitario', 'categoria', 'subcategoria', 'notas', 'orden']
-        widgets = {
-            'codigo': forms.TextInput(attrs={'class': 'form-control'}),
-            'descripcion': forms.TextInput(attrs={'class': 'form-control'}),
-            'unidad': forms.TextInput(attrs={'class': 'form-control'}),
-            'cantidad': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
-            'precio_unitario': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
-            'categoria': forms.Select(attrs={'class': 'form-select'}),
-            'subcategoria': forms.TextInput(attrs={'class': 'form-control'}),
-            'notas': forms.Textarea(attrs={'class': 'form-control', 'rows': 2}),
-            'orden': forms.NumberInput(attrs={'class': 'form-control'}),
-        }
-
-class VariacionPresupuestoForm(forms.ModelForm):
-    class Meta:
-        model = VariacionPresupuesto
-        fields = ['tipo', 'monto_anterior', 'monto_nuevo', 'motivo']
-        widgets = {
-            'tipo': forms.Select(attrs={'class': 'form-select'}),
-            'monto_anterior': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
-            'monto_nuevo': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
-            'motivo': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
-        }
-
-# ===== FORMULARIOS DEL MÓDULO DE INVENTARIO =====
-
-class CategoriaInventarioForm(forms.ModelForm):
-    """Formulario para categorías de inventario"""
-    class Meta:
-        model = CategoriaInventario
-        fields = ['nombre', 'descripcion']
-        widgets = {
-            'nombre': forms.TextInput(attrs={
-                'class': 'form-control',
-                'placeholder': 'Nombre de la categoría'
-            }),
-            'descripcion': forms.Textarea(attrs={
-                'class': 'form-control',
-                'rows': 3,
-                'placeholder': 'Descripción de la categoría'
             })
         }
 
-class ItemInventarioForm(forms.ModelForm):
-    """Formulario para items del inventario"""
+
+class UsuarioForm(UserCreationForm):
+    """Formulario para crear usuarios"""
+    
+    email = forms.EmailField(required=True)
+    first_name = forms.CharField(max_length=30, required=True)
+    last_name = forms.CharField(max_length=30, required=True)
+    
     class Meta:
-        model = ItemInventario
-        fields = [
-            'nombre', 'codigo', 'descripcion', 'categoria', 'stock_actual', 'activo'
-        ]
+        model = User
+        fields = ('username', 'first_name', 'last_name', 'email', 'password1', 'password2')
+        widgets = {
+            'username': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Nombre de usuario'
+            }),
+            'first_name': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Nombre'
+            }),
+            'last_name': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Apellido'
+            }),
+            'email': forms.EmailInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'correo@ejemplo.com'
+            }),
+            'password1': forms.PasswordInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Contraseña'
+            }),
+            'password2': forms.PasswordInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Confirmar contraseña'
+            })
+        }
+
+
+class RolForm(forms.ModelForm):
+    """Formulario para roles"""
+    
+    class Meta:
+        model = Rol
+        fields = ['nombre', 'descripcion', 'modulos_activos']
         widgets = {
             'nombre': forms.TextInput(attrs={
                 'class': 'form-control',
-                'placeholder': 'Nombre del item'
-            }),
-            'codigo': forms.TextInput(attrs={
-                'class': 'form-control',
-                'placeholder': 'Código único del item'
+                'placeholder': 'Nombre del rol'
             }),
             'descripcion': forms.Textarea(attrs={
                 'class': 'form-control',
-                'rows': 3,
-                'placeholder': 'Descripción detallada del item'
+                'rows': 2,
+                'placeholder': 'Descripción del rol'
             }),
-            'categoria': forms.Select(attrs={
+            'modulos_activos': forms.CheckboxSelectMultiple(attrs={
+                'class': 'form-check-input'
+            })
+        }
+
+
+class PerfilUsuarioForm(forms.ModelForm):
+    """Formulario para perfil de usuario"""
+    
+    class Meta:
+        model = PerfilUsuario
+        fields = ['rol', 'telefono', 'direccion', 'activo']
+        widgets = {
+            'rol': forms.Select(attrs={
                 'class': 'form-select'
             }),
-            'stock_actual': forms.NumberInput(attrs={
+            'telefono': forms.TextInput(attrs={
                 'class': 'form-control',
-                'step': '0.01',
-                'min': '0'
+                'placeholder': '+502 1234-5678'
+            }),
+            'direccion': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 2,
+                'placeholder': 'Dirección'
             }),
             'activo': forms.CheckboxInput(attrs={
                 'class': 'form-check-input'
             })
         }
 
-class AsignacionInventarioForm(forms.ModelForm):
-    """Formulario para asignaciones de inventario"""
-    class Meta:
-        model = AsignacionInventario
-        fields = ['item', 'proyecto', 'cantidad_asignada', 'estado', 'notas']
-        widgets = {
-            'item': forms.Select(attrs={
-                'class': 'form-select'
-            }),
-            'proyecto': forms.Select(attrs={
-                'class': 'form-select'
-            }),
-            'cantidad_asignada': forms.NumberInput(attrs={
-                'class': 'form-control',
-                'min': '1'
-            }),
-            'estado': forms.Select(attrs={
-                'class': 'form-select'
-            }),
-            'notas': forms.Textarea(attrs={
-                'class': 'form-control',
-                'rows': 3,
-                'placeholder': 'Notas adicionales sobre la asignación'
-            })
-        }
-    
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        # Filtrar solo items activos y con stock disponible
-        self.fields['item'].queryset = ItemInventario.objects.filter(
-            activo=True
-        ).order_by('nombre')
-        
-        # Filtrar solo proyectos activos
-        self.fields['proyecto'].queryset = Proyecto.objects.filter(
-            estado__in=['activo', 'en_progreso', 'planificado']
-        ).order_by('nombre')
-
 
 class EventoCalendarioForm(forms.ModelForm):
-    """Formulario para crear y editar eventos del calendario"""
+    """Formulario para eventos del calendario"""
     
     class Meta:
         model = EventoCalendario
         fields = [
-            'titulo', 'descripcion', 'fecha_inicio', 'fecha_fin', 
+            'titulo', 'descripcion', 'fecha_inicio', 'fecha_fin',
             'hora_inicio', 'hora_fin', 'tipo', 'color', 'todo_el_dia',
             'proyecto', 'factura'
         ]
         widgets = {
             'titulo': forms.TextInput(attrs={
                 'class': 'form-control',
-                'placeholder': 'Título del evento',
-                'required': True
+                'placeholder': 'Título del evento'
             }),
             'descripcion': forms.Textarea(attrs={
                 'class': 'form-control',
-                'rows': 3,
-                'placeholder': 'Descripción del evento (opcional)'
+                'rows': 2,
+                'placeholder': 'Descripción del evento'
             }),
             'fecha_inicio': forms.DateInput(attrs={
                 'class': 'form-control',
-                'type': 'date',
-                'required': True
+                'type': 'date'
             }),
             'fecha_fin': forms.DateInput(attrs={
                 'class': 'form-control',
@@ -770,15 +408,13 @@ class EventoCalendarioForm(forms.ModelForm):
                 'type': 'time'
             }),
             'tipo': forms.Select(attrs={
-                'class': 'form-select',
-                'required': True
+                'class': 'form-select'
             }),
             'color': forms.Select(attrs={
                 'class': 'form-select'
             }),
             'todo_el_dia': forms.CheckboxInput(attrs={
-                'class': 'form-check-input',
-                'onchange': 'toggleTimeFields()'
+                'class': 'form-check-input'
             }),
             'proyecto': forms.Select(attrs={
                 'class': 'form-select'
@@ -787,68 +423,402 @@ class EventoCalendarioForm(forms.ModelForm):
                 'class': 'form-select'
             })
         }
+
+
+class ArchivoProyectoForm(forms.ModelForm):
+    """Formulario para archivos de proyecto"""
     
     def __init__(self, *args, **kwargs):
+        proyecto = kwargs.pop('proyecto', None)
         super().__init__(*args, **kwargs)
-        # Filtrar solo proyectos activos
-        self.fields['proyecto'].queryset = Proyecto.objects.filter(
-            estado__in=['activo', 'en_progreso', 'planificado']
-        ).order_by('nombre')
-        
-        # Filtrar solo facturas pendientes o pagadas
-        self.fields['factura'].queryset = Factura.objects.filter(
-            estado__in=['pendiente', 'pagada']
-        ).order_by('-fecha_creacion')
+        if proyecto:
+            self.fields['carpeta'].queryset = CarpetaProyecto.objects.filter(proyecto=proyecto, activa=True)
     
-    def clean(self):
-        cleaned_data = super().clean()
-        fecha_inicio = cleaned_data.get('fecha_inicio')
-        fecha_fin = cleaned_data.get('fecha_fin')
-        hora_inicio = cleaned_data.get('hora_inicio')
-        hora_fin = cleaned_data.get('hora_fin')
-        todo_el_dia = cleaned_data.get('todo_el_dia')
-        
-        # Validar que la fecha de fin no sea anterior a la fecha de inicio
-        if fecha_fin and fecha_inicio and fecha_fin < fecha_inicio:
-            raise forms.ValidationError('La fecha de fin no puede ser anterior a la fecha de inicio.')
-        
-        # Validar que la hora de fin no sea anterior a la hora de inicio si es el mismo día
-        if not todo_el_dia and hora_inicio and hora_fin and fecha_inicio == fecha_fin:
-            if hora_fin <= hora_inicio:
-                raise forms.ValidationError('La hora de fin debe ser posterior a la hora de inicio.')
-        
-        return cleaned_data
+    class Meta:
+        model = ArchivoProyecto
+        fields = ['nombre', 'descripcion', 'archivo', 'carpeta', 'tipo', 'activo']
+        widgets = {
+            'nombre': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Nombre del archivo'
+            }),
+            'descripcion': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 2,
+                'placeholder': 'Descripción del archivo'
+            }),
+            'archivo': forms.FileInput(attrs={
+                'class': 'form-control',
+                'accept': '.pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.gif,.zip,.rar'
+            }),
+            'carpeta': forms.Select(attrs={
+                'class': 'form-select'
+            }),
+            'tipo': forms.Select(attrs={
+                'class': 'form-select'
+            }),
+            'activo': forms.CheckboxInput(attrs={
+                'class': 'form-check-input'
+            })
+        }
 
 
-# ==================== FORMULARIOS TRABAJADORES DIARIOS ====================
+class CarpetaProyectoForm(forms.ModelForm):
+    """Formulario para carpetas de proyecto"""
+    
+    class Meta:
+        model = CarpetaProyecto
+        fields = ['nombre', 'descripcion', 'carpeta_padre', 'activa']
+        widgets = {
+            'nombre': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Nombre de la carpeta'
+            }),
+            'descripcion': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 2,
+                'placeholder': 'Descripción de la carpeta'
+            }),
+            'carpeta_padre': forms.Select(attrs={
+                'class': 'form-select'
+            }),
+            'activa': forms.CheckboxInput(attrs={
+                'class': 'form-check-input'
+            })
+        }
+
+
+class PagoForm(forms.ModelForm):
+    """Formulario para pagos"""
+    
+    class Meta:
+        model = Pago
+        fields = [
+            'factura', 'monto', 'fecha_pago', 'metodo_pago', 
+            'estado', 'comprobante_pago'
+        ]
+        widgets = {
+            'factura': forms.Select(attrs={
+                'class': 'form-select'
+            }),
+            'monto': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'step': '0.01',
+                'min': '0'
+            }),
+            'fecha_pago': forms.DateInput(attrs={
+                'class': 'form-control',
+                'type': 'date'
+            }),
+            'metodo_pago': forms.Select(attrs={
+                'class': 'form-select'
+            }),
+            'estado': forms.Select(attrs={
+                'class': 'form-select'
+            }),
+            'comprobante_pago': forms.FileInput(attrs={
+                'class': 'form-control',
+                'accept': '.pdf,.jpg,.jpeg,.png'
+            })
+        }
+
+
+class AnticipoForm(forms.ModelForm):
+    """Formulario para anticipos"""
+    
+    class Meta:
+        model = Anticipo
+        fields = [
+            'cliente', 'proyecto', 'monto', 'tipo', 'estado', 
+            'fecha_recepcion', 'observaciones'
+        ]
+        widgets = {
+            'cliente': forms.Select(attrs={
+                'class': 'form-select'
+            }),
+            'proyecto': forms.Select(attrs={
+                'class': 'form-select'
+            }),
+            'monto': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'step': '0.01',
+                'min': '0'
+            }),
+            'tipo': forms.Select(attrs={
+                'class': 'form-select'
+            }),
+            'estado': forms.Select(attrs={
+                'class': 'form-select'
+            }),
+            'fecha_recepcion': forms.DateInput(attrs={
+                'class': 'form-control',
+                'type': 'date'
+            }),
+            'observaciones': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 2,
+                'placeholder': 'Observaciones del anticipo'
+            })
+        }
+
+
+class PresupuestoForm(forms.ModelForm):
+    """Formulario para presupuestos"""
+    
+    class Meta:
+        model = Presupuesto
+        fields = ['proyecto', 'nombre', 'version', 'estado']
+        widgets = {
+            'proyecto': forms.Select(attrs={
+                'class': 'form-select'
+            }),
+            'nombre': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Nombre del presupuesto'
+            }),
+            'version': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': '1.0'
+            }),
+            'estado': forms.Select(attrs={
+                'class': 'form-select'
+            })
+        }
+
+
+class PartidaPresupuestoForm(forms.ModelForm):
+    """Formulario para partidas de presupuesto"""
+    
+    class Meta:
+        model = PartidaPresupuesto
+        fields = [
+            'presupuesto', 'codigo', 'descripcion', 'unidad', 
+            'cantidad', 'precio_unitario', 'subtotal'
+        ]
+        widgets = {
+            'presupuesto': forms.Select(attrs={
+                'class': 'form-select'
+            }),
+            'codigo': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Código de la partida'
+            }),
+            'descripcion': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 2,
+                'placeholder': 'Descripción de la partida'
+            }),
+            'unidad': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Unidad de medida'
+            }),
+            'cantidad': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'step': '0.01',
+                'min': '0'
+            }),
+            'precio_unitario': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'step': '0.01',
+                'min': '0'
+            }),
+            'subtotal': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'step': '0.01',
+                'min': '0'
+            })
+        }
+
+
+class VariacionPresupuestoForm(forms.ModelForm):
+    """Formulario para variaciones de presupuesto"""
+    
+    class Meta:
+        model = VariacionPresupuesto
+        fields = [
+            'presupuesto', 'tipo', 'descripcion', 'monto_variacion', 
+            'fecha_variacion', 'aprobado'
+        ]
+        widgets = {
+            'presupuesto': forms.Select(attrs={
+                'class': 'form-select'
+            }),
+            'tipo': forms.Select(attrs={
+                'class': 'form-select'
+            }),
+            'descripcion': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 2,
+                'placeholder': 'Descripción de la variación'
+            }),
+            'monto_variacion': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'step': '0.01'
+            }),
+            'fecha_variacion': forms.DateInput(attrs={
+                'class': 'form-control',
+                'type': 'date'
+            }),
+            'aprobado': forms.CheckboxInput(attrs={
+                'class': 'form-check-input'
+            })
+        }
+
+
+class CategoriaInventarioForm(forms.ModelForm):
+    """Formulario para categorías de inventario"""
+    
+    class Meta:
+        model = CategoriaInventario
+        fields = ['nombre', 'descripcion', 'color', 'icono', 'activa']
+        widgets = {
+            'nombre': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Nombre de la categoría'
+            }),
+            'descripcion': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 2,
+                'placeholder': 'Descripción de la categoría'
+            }),
+            'color': forms.TextInput(attrs={
+                'class': 'form-control',
+                'type': 'color'
+            }),
+            'icono': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'fas fa-tools'
+            }),
+            'activa': forms.CheckboxInput(attrs={
+                'class': 'form-check-input'
+            })
+        }
+
+
+class ItemInventarioForm(forms.ModelForm):
+    """Formulario para items de inventario"""
+    
+    class Meta:
+        model = ItemInventario
+        fields = [
+            'categoria', 'nombre', 'descripcion', 'codigo', 
+            'unidad_medida', 'precio_unitario', 'stock_minimo', 'activo'
+        ]
+        widgets = {
+            'categoria': forms.Select(attrs={
+                'class': 'form-select'
+            }),
+            'nombre': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Nombre del item'
+            }),
+            'descripcion': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 2,
+                'placeholder': 'Descripción del item'
+            }),
+            'codigo': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Código del item'
+            }),
+            'unidad_medida': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Unidad de medida'
+            }),
+            'precio_unitario': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'step': '0.01',
+                'min': '0'
+            }),
+            'stock_minimo': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'min': '0'
+            }),
+            'activo': forms.CheckboxInput(attrs={
+                'class': 'form-check-input'
+            })
+        }
+
+
+class AsignacionInventarioForm(forms.ModelForm):
+    """Formulario para asignaciones de inventario"""
+    
+    class Meta:
+        model = AsignacionInventario
+        fields = [
+            'proyecto', 'item', 'cantidad', 'fecha_asignacion', 
+            'responsable', 'observaciones', 'activa'
+        ]
+        widgets = {
+            'proyecto': forms.Select(attrs={
+                'class': 'form-select'
+            }),
+            'item': forms.Select(attrs={
+                'class': 'form-select'
+            }),
+            'cantidad': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'min': '0'
+            }),
+            'fecha_asignacion': forms.DateInput(attrs={
+                'class': 'form-control',
+                'type': 'date'
+            }),
+            'responsable': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Responsable de la asignación'
+            }),
+            'observaciones': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 2,
+                'placeholder': 'Observaciones de la asignación'
+            }),
+            'activa': forms.CheckboxInput(attrs={
+                'class': 'form-check-input'
+            })
+        }
+
 
 class TrabajadorDiarioForm(forms.ModelForm):
     """Formulario para trabajadores diarios"""
     
     class Meta:
         model = TrabajadorDiario
-        fields = ['nombre', 'pago_diario', 'activo']
+        fields = [
+            'nombre', 'dpi', 'telefono', 'direccion', 'salario_diario', 
+            'fecha_contratacion', 'activo'
+        ]
         widgets = {
             'nombre': forms.TextInput(attrs={
                 'class': 'form-control',
-                'placeholder': 'Nombre completo del trabajador'
+                'placeholder': 'Nombre completo'
             }),
-            'pago_diario': forms.NumberInput(attrs={
+            'dpi': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': '1234567890101'
+            }),
+            'telefono': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': '+502 1234-5678'
+            }),
+            'direccion': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 2,
+                'placeholder': 'Dirección'
+            }),
+            'salario_diario': forms.NumberInput(attrs={
                 'class': 'form-control',
                 'step': '0.01',
-                'min': '0',
-                'placeholder': '0.00'
+                'min': '0'
+            }),
+            'fecha_contratacion': forms.DateInput(attrs={
+                'class': 'form-control',
+                'type': 'date'
             }),
             'activo': forms.CheckboxInput(attrs={
                 'class': 'form-check-input'
             })
         }
-    
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.fields['nombre'].label = 'Nombre del Trabajador'
-        self.fields['pago_diario'].label = 'Pago Diario (Q)'
-        self.fields['activo'].label = 'Activo'
 
 
 class RegistroTrabajoForm(forms.ModelForm):
@@ -856,44 +826,38 @@ class RegistroTrabajoForm(forms.ModelForm):
     
     class Meta:
         model = RegistroTrabajo
-        fields = ['fecha_inicio', 'fecha_fin', 'dias_trabajados', 'observaciones']
+        fields = [
+            'proyecto', 'trabajador', 'fecha_trabajo', 'horas_trabajadas', 
+            'descripcion_trabajo', 'observaciones'
+        ]
         widgets = {
-            'fecha_inicio': forms.DateInput(attrs={
+            'proyecto': forms.Select(attrs={
+                'class': 'form-select'
+            }),
+            'trabajador': forms.Select(attrs={
+                'class': 'form-select'
+            }),
+            'fecha_trabajo': forms.DateInput(attrs={
                 'class': 'form-control',
                 'type': 'date'
             }),
-            'fecha_fin': forms.DateInput(attrs={
+            'horas_trabajadas': forms.NumberInput(attrs={
                 'class': 'form-control',
-                'type': 'date'
-            }),
-            'dias_trabajados': forms.NumberInput(attrs={
-                'class': 'form-control',
+                'step': '0.5',
                 'min': '0',
-                'placeholder': '0'
+                'max': '24'
+            }),
+            'descripcion_trabajo': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 2,
+                'placeholder': 'Descripción del trabajo realizado'
             }),
             'observaciones': forms.Textarea(attrs={
                 'class': 'form-control',
-                'rows': 3,
-                'placeholder': 'Observaciones sobre el trabajo realizado'
+                'rows': 2,
+                'placeholder': 'Observaciones adicionales'
             })
         }
-    
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.fields['fecha_inicio'].label = 'Fecha de Inicio'
-        self.fields['fecha_fin'].label = 'Fecha de Fin'
-        self.fields['dias_trabajados'].label = 'Días Trabajados'
-        self.fields['observaciones'].label = 'Observaciones'
-    
-    def clean(self):
-        cleaned_data = super().clean()
-        fecha_inicio = cleaned_data.get('fecha_inicio')
-        fecha_fin = cleaned_data.get('fecha_fin')
-        
-        if fecha_fin and fecha_inicio and fecha_fin < fecha_inicio:
-            raise forms.ValidationError('La fecha de fin no puede ser anterior a la fecha de inicio.')
-        
-        return cleaned_data
 
 
 class AnticipoTrabajadorDiarioForm(forms.ModelForm):
@@ -901,39 +865,39 @@ class AnticipoTrabajadorDiarioForm(forms.ModelForm):
     
     class Meta:
         model = AnticipoTrabajadorDiario
-        fields = ['trabajador', 'monto', 'fecha_anticipo', 'observaciones']
+        fields = [
+            'proyecto', 'trabajador', 'monto', 'fecha_anticipo', 
+            'descripcion', 'metodo_pago', 'referencia', 'activo'
+        ]
         widgets = {
+            'proyecto': forms.Select(attrs={
+                'class': 'form-select'
+            }),
             'trabajador': forms.Select(attrs={
                 'class': 'form-select'
             }),
             'monto': forms.NumberInput(attrs={
                 'class': 'form-control',
                 'step': '0.01',
-                'min': '0',
-                'placeholder': '0.00'
+                'min': '0'
             }),
             'fecha_anticipo': forms.DateInput(attrs={
                 'class': 'form-control',
                 'type': 'date'
             }),
-            'observaciones': forms.Textarea(attrs={
+            'descripcion': forms.Textarea(attrs={
                 'class': 'form-control',
-                'rows': 3,
-                'placeholder': 'Observaciones sobre el anticipo'
+                'rows': 2,
+                'placeholder': 'Descripción del anticipo'
+            }),
+            'metodo_pago': forms.Select(attrs={
+                'class': 'form-select'
+            }),
+            'referencia': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Número de referencia'
+            }),
+            'activo': forms.CheckboxInput(attrs={
+                'class': 'form-check-input'
             })
         }
-    
-    def __init__(self, *args, **kwargs):
-        proyecto_id = kwargs.pop('proyecto_id', None)
-        super().__init__(*args, **kwargs)
-        
-        if proyecto_id:
-            self.fields['trabajador'].queryset = TrabajadorDiario.objects.filter(
-                proyecto_id=proyecto_id, 
-                activo=True
-            ).order_by('nombre')
-        
-        self.fields['trabajador'].label = 'Trabajador'
-        self.fields['monto'].label = 'Monto del Anticipo (Q)'
-        self.fields['fecha_anticipo'].label = 'Fecha del Anticipo'
-        self.fields['observaciones'].label = 'Observaciones'

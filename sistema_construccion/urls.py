@@ -24,7 +24,8 @@ urlpatterns = [
     path('', include('core.urls')),
 ]
 
-# Configuración para archivos media en desarrollo
+# Configuración para archivos media y estáticos en desarrollo
 if settings.DEBUG:
+    from django.contrib.staticfiles.urls import staticfiles_urlpatterns
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
-    urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+    urlpatterns += staticfiles_urlpatterns()

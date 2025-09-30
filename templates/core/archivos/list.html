@@ -770,7 +770,11 @@
                                 </span>
                             </td>
                             <td>
-                                <span class="text-muted">{{ archivo.archivo.size|filesizeformat }}</span>
+                                {% if archivo.archivo %}
+                                    <span class="text-muted">{{ archivo.archivo.size|filesizeformat }}</span>
+                                {% else %}
+                                    <span class="text-muted">Sin archivo</span>
+                                {% endif %}
                             </td>
                             <td>
                                 <span class="text-muted">{{ archivo.fecha_subida|date:"d/m/Y H:i" }}</span>
@@ -781,10 +785,17 @@
                                         <i class="fas fa-eye"></i>
                                         Ver
                                     </a>
-                                    <a href="{{ archivo.archivo.url }}" class="btn-archivo btn-download" download title="Descargar">
-                                        <i class="fas fa-download"></i>
-                                        Descargar
-                                    </a>
+                                    {% if archivo.archivo %}
+                                        <a href="{{ archivo.archivo.url }}" class="btn-archivo btn-download" download title="Descargar">
+                                            <i class="fas fa-download"></i>
+                                            Descargar
+                                        </a>
+                                    {% else %}
+                                        <span class="btn-archivo btn-disabled" title="Sin archivo">
+                                            <i class="fas fa-download"></i>
+                                            Sin archivo
+                                        </span>
+                                    {% endif %}
                                     <a href="{% url 'archivo_delete' archivo.id %}" class="btn-archivo btn-delete" title="Eliminar" 
                                        onclick="return confirm('¿Estás seguro de que quieres eliminar este archivo?')">
                                         <i class="fas fa-trash"></i>

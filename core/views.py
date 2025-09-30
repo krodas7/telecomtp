@@ -22,18 +22,22 @@ from .models import (
     CarpetaProyecto, ConfiguracionSistema, EventoCalendario,
     TrabajadorDiario, RegistroTrabajo, AnticipoTrabajadorDiario
 )
-from .forms import (
-    AnticipoForm, ArchivoProyectoForm, ClienteForm, ProyectoForm, 
-    ColaboradorForm, FacturaForm, GastoForm, PagoForm, CategoriaGastoForm, PresupuestoForm, PartidaPresupuestoForm, VariacionPresupuestoForm,
-    CategoriaInventarioForm, ItemInventarioForm, AsignacionInventarioForm,
-    CarpetaProyectoForm, EventoCalendarioForm,
-    TrabajadorDiarioForm, RegistroTrabajoForm, AnticipoTrabajadorDiarioForm
+from .forms_simple import (
+    ClienteForm, ProyectoForm, ColaboradorForm, FacturaForm, 
+    GastoForm, CategoriaGastoForm, UsuarioForm, RolForm, 
+    PerfilUsuarioForm, ArchivoProyectoForm, CarpetaProyectoForm,
+    AnticipoForm, PagoForm, EventoCalendarioForm, PresupuestoForm,
+    PartidaPresupuestoForm, CategoriaInventarioForm, ItemInventarioForm,
+    AsignacionInventarioForm, TrabajadorDiarioForm, RegistroTrabajoForm,
+    AnticipoTrabajadorDiarioForm
 )
 from django.contrib.auth.models import User
 from django.contrib.auth.forms import UserCreationForm, UserChangeForm
 from django.core.paginator import Paginator
 from django.http import JsonResponse, HttpResponse
-from .services import NotificacionService, SistemaNotificacionesAutomaticas
+from .services import NotificacionService, DashboardService, ProyectoService
+from .query_utils import QueryOptimizer, DashboardQueries
+from .decorators import api_view, secure_view, cache_view
 from reportlab.lib.pagesizes import letter, A4
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, PageBreak
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
@@ -100,11 +104,11 @@ def dashboard(request):
         # Datos básicos del sistema
         total_clientes = Cliente.objects.filter(activo=True).count()
         total_proyectos = Proyecto.objects.filter(activo=True).count()
-        total_facturado = Factura.objects.aggregate(total=Sum('monto_total'))['total'] or 0
+        total_facturado = Factura.objects.aggregate(total=Sum('monto_total'))['total'] or Decimal('0.00')
         
         # Total cobrado = Facturas pagadas + Anticipos aplicados al proyecto
-        total_facturas_pagadas = Factura.objects.filter(estado='pagada').aggregate(total=Sum('monto_total'))['total'] or 0
-        total_anticipos_aplicados = Anticipo.objects.filter(aplicado_al_proyecto=True).aggregate(total=Sum('monto_aplicado_proyecto'))['total'] or 0
+        total_facturas_pagadas = Factura.objects.filter(estado='pagada').aggregate(total=Sum('monto_total'))['total'] or Decimal('0.00')
+        total_anticipos_aplicados = Anticipo.objects.filter(aplicado_al_proyecto=True).aggregate(total=Sum('monto_aplicado_proyecto'))['total'] or Decimal('0.00')
         total_cobrado = total_facturas_pagadas + total_anticipos_aplicados
         
         # ============================================================================
@@ -141,11 +145,12 @@ def dashboard(request):
         logger.debug(f"Dashboard - Mes: {mes_actual}/{año_actual}, Facturado: Q{total_facturado_mes}, Cobrado: Q{ingresos_mes}")
         
         # Gastos del mes (gastos aprobados)
-        gastos_mes = Gasto.objects.filter(
+        gastos_mes_raw = Gasto.objects.filter(
             fecha_gasto__month=mes_actual,
             fecha_gasto__year=año_actual,
             aprobado=True
-        ).aggregate(total=Sum('monto'))['total'] or Decimal('0.00')
+        ).aggregate(total=Sum('monto'))['total'] or 0
+        gastos_mes = Decimal(str(gastos_mes_raw))
         
         # Calcular rentabilidad
         rentabilidad_mes = ingresos_mes - gastos_mes
@@ -182,12 +187,13 @@ def dashboard(request):
             
             ingresos_proyecto = facturas_pagadas_proyecto + anticipos_aplicados_proyecto
             
-            gastos_proyecto = Gasto.objects.filter(
+            gastos_proyecto_raw = Gasto.objects.filter(
                 proyecto=proyecto,
                 fecha_gasto__month=mes_actual,
                 fecha_gasto__year=año_actual,
                 aprobado=True
-            ).aggregate(total=Sum('monto'))['total'] or Decimal('0.00')
+            ).aggregate(total=Sum('monto'))['total'] or 0
+            gastos_proyecto = Decimal(str(gastos_proyecto_raw))
             
             rentabilidad_proyecto = ingresos_proyecto - gastos_proyecto
             
@@ -247,6 +253,12 @@ def dashboard(request):
         for evento in eventos_personalizados:
             eventos_calendario.append(evento.to_calendar_event())
         
+        # Inicializar variables para gráficos
+        evolucion_proyectos = []
+        meses_grafico = []
+        ingresos_mensuales = []
+        gastos_mensuales = []
+        
         # Convertir a JSON para el template
         import json
         eventos_calendario_json = json.dumps(eventos_calendario, default=str)
@@ -265,10 +277,6 @@ def dashboard(request):
         periodo = request.GET.get('periodo', '6')
         
         # Calcular datos reales para el gráfico según el período
-        meses_grafico = []
-        ingresos_mensuales = []
-        gastos_mensuales = []
-        evolucion_proyectos = []
         
         from datetime import datetime, timedelta
         hoy = timezone.now().date()
@@ -296,11 +304,12 @@ def dashboard(request):
             ingresos_mensuales = [float(ingresos_mes_real)]
             
             # Gastos reales del mes: todos los gastos aprobados
-            gastos_mes_real = Gasto.objects.filter(
+            gastos_mes_real_raw = Gasto.objects.filter(
                 aprobado=True,
                 fecha_gasto__month=mes_actual,
                 fecha_gasto__year=año_actual
-            ).aggregate(total=Sum('monto'))['total'] or Decimal('0.00')
+            ).aggregate(total=Sum('monto'))['total'] or 0
+            gastos_mes_real = Decimal(str(gastos_mes_real_raw))
             
             gastos_mensuales = [float(gastos_mes_real)]
             evolucion_proyectos = [total_proyectos]
@@ -332,11 +341,12 @@ def dashboard(request):
                 ingresos_mensuales.insert(0, float(ingresos_mes_real))
                 
                 # Gastos reales del mes
-                gastos_mes_real = Gasto.objects.filter(
+                gastos_mes_real_raw = Gasto.objects.filter(
                     aprobado=True,
                     fecha_gasto__month=mes,
                     fecha_gasto__year=año
-                ).aggregate(total=Sum('monto'))['total'] or Decimal('0.00')
+                ).aggregate(total=Sum('monto'))['total'] or 0
+                gastos_mes_real = Decimal(str(gastos_mes_real_raw))
                 
                 gastos_mensuales.insert(0, float(gastos_mes_real))
                 
@@ -373,11 +383,12 @@ def dashboard(request):
                 ingresos_mensuales.insert(0, float(ingresos_mes_real))
                 
                 # Gastos reales del mes
-                gastos_mes_real = Gasto.objects.filter(
+                gastos_mes_real_raw = Gasto.objects.filter(
                     aprobado=True,
                     fecha_gasto__month=mes,
                     fecha_gasto__year=año
-                ).aggregate(total=Sum('monto'))['total'] or Decimal('0.00')
+                ).aggregate(total=Sum('monto'))['total'] or 0
+                gastos_mes_real = Decimal(str(gastos_mes_real_raw))
                 
                 gastos_mensuales.insert(0, float(gastos_mes_real))
                 
@@ -512,7 +523,7 @@ def cliente_create(request):
                 ip_address=request.META.get('REMOTE_ADDR')
             )
             
-            messages.success(request, 'Cliente creado exitosamente')
+            messages.success(request, f'Cliente "{cliente.razon_social}" creado exitosamente')
             return redirect('clientes_list')
     else:
         form = ClienteForm()
@@ -539,7 +550,7 @@ def cliente_edit(request, cliente_id):
                 ip_address=request.META.get('REMOTE_ADDR')
             )
             
-            messages.success(request, 'Cliente actualizado exitosamente')
+            messages.success(request, f'Cliente "{cliente.razon_social}" actualizado exitosamente')
             return redirect('clientes_list')
     else:
         form = ClienteForm(instance=cliente)
@@ -565,7 +576,7 @@ def cliente_delete(request, cliente_id):
             ip_address=request.META.get('REMOTE_ADDR')
         )
         
-        messages.success(request, 'Cliente eliminado exitosamente')
+        messages.success(request, f'Cliente "{cliente.razon_social}" eliminado exitosamente')
         return redirect('clientes_list')
     
     return render(request, 'core/clientes/delete.html', {'cliente': cliente})
@@ -1247,29 +1258,76 @@ def factura_marcar_pagada(request, factura_id):
 # ===== CRUD GASTOS =====
 @login_required
 def gastos_list(request):
-    """Lista de gastos"""
-    # Obtener todos los gastos sin filtros
-    gastos = Gasto.objects.all().order_by('-fecha_gasto')
-    
-    # Log información de gastos
-    logger.debug(f"Total gastos en BD: {gastos.count()}")
-    # Log detalles de gastos para debugging
-    for g in gastos[:5]:  # Solo los primeros 5 para no saturar logs
-        logger.debug(f"Gasto: {g.descripcion} - Q{g.monto} - Aprobado: {g.aprobado}")
-    
-    # Calcular estadísticas
-    total_gastos = sum(gasto.monto for gasto in gastos)
-    gastos_aprobados = gastos.filter(aprobado=True).count()
-    gastos_pendientes = gastos.filter(aprobado=False).count()
-    
-    context = {
-        'gastos': gastos,
-        'total_gastos': total_gastos,
-        'gastos_aprobados': gastos_aprobados,
-        'gastos_pendientes': gastos_pendientes,
-    }
-    
-    return render(request, 'core/gastos/list.html', context)
+    """Lista completa de gastos"""
+    try:
+        # Obtener todos los gastos con información relacionada
+        gastos = Gasto.objects.select_related(
+            'proyecto', 'categoria', 'aprobado_por'
+        ).order_by('-fecha_gasto')
+        
+        # Filtros
+        filtro_estado = request.GET.get('estado', 'todos')
+        filtro_categoria = request.GET.get('categoria', '')
+        filtro_proyecto = request.GET.get('proyecto', '')
+        filtro_fecha_desde = request.GET.get('fecha_desde', '')
+        filtro_fecha_hasta = request.GET.get('fecha_hasta', '')
+        
+        # Aplicar filtros
+        if filtro_estado == 'aprobados':
+            gastos = gastos.filter(aprobado=True)
+        elif filtro_estado == 'pendientes':
+            gastos = gastos.filter(aprobado=False)
+        
+        if filtro_categoria:
+            gastos = gastos.filter(categoria_id=filtro_categoria)
+        
+        if filtro_proyecto:
+            gastos = gastos.filter(proyecto_id=filtro_proyecto)
+        
+        if filtro_fecha_desde:
+            gastos = gastos.filter(fecha_gasto__gte=filtro_fecha_desde)
+        
+        if filtro_fecha_hasta:
+            gastos = gastos.filter(fecha_gasto__lte=filtro_fecha_hasta)
+        
+        # Paginación
+        from django.core.paginator import Paginator
+        paginator = Paginator(gastos, 20)  # 20 gastos por página
+        page_number = request.GET.get('page')
+        page_obj = paginator.get_page(page_number)
+        
+        # Obtener opciones para filtros
+        categorias = CategoriaGasto.objects.all().order_by('nombre')
+        proyectos = Proyecto.objects.all().order_by('nombre')
+        
+        # Estadísticas para la página
+        total_gastos = gastos.count()
+        total_monto = gastos.aggregate(total=Sum('monto'))['total'] or Decimal('0.00')
+        gastos_aprobados = gastos.filter(aprobado=True).count()
+        gastos_pendientes = gastos.filter(aprobado=False).count()
+        
+        context = {
+            'page_obj': page_obj,
+            'gastos': page_obj,
+            'categorias': categorias,
+            'proyectos': proyectos,
+            'filtro_estado': filtro_estado,
+            'filtro_categoria': filtro_categoria,
+            'filtro_proyecto': filtro_proyecto,
+            'filtro_fecha_desde': filtro_fecha_desde,
+            'filtro_fecha_hasta': filtro_fecha_hasta,
+            'total_gastos': total_gastos,
+            'total_monto': total_monto,
+            'gastos_aprobados': gastos_aprobados,
+            'gastos_pendientes': gastos_pendientes,
+        }
+        
+        return render(request, 'core/gastos/list_moderno.html', context)
+        
+    except Exception as e:
+        logger.error(f'Error en gastos_list: {e}')
+        messages.error(request, 'Error al cargar la lista de gastos')
+        return redirect('gastos_dashboard')
 
 
 @login_required
@@ -1278,12 +1336,12 @@ def gastos_dashboard(request):
     try:
         # Estadísticas generales
         total_gastos = Gasto.objects.count()
-        total_monto = Gasto.objects.aggregate(total=Sum('monto'))['total'] or 0
+        total_monto = Gasto.objects.aggregate(total=Sum('monto'))['total'] or Decimal('0.00')
         gastos_aprobados = Gasto.objects.filter(aprobado=True).count()
         gastos_pendientes = Gasto.objects.filter(aprobado=False).count()
         
         # Gastos por categoría
-        gastos_por_categoria = Gasto.objects.values('categoria__nombre').annotate(
+        gastos_por_categoria = Gasto.objects.values('categoria__nombre', 'categoria__color', 'categoria__icono').annotate(
             total=Sum('monto'),
             cantidad=Count('id')
         ).order_by('-total')
@@ -1344,7 +1402,92 @@ def gasto_create(request):
     else:
         form = GastoForm()
     
-    return render(request, 'core/gastos/create.html', {'form': form})
+    return render(request, 'core/gastos/create_moderno.html', {'form': form})
+
+
+@login_required
+def gasto_aprobar(request, gasto_id):
+    """Aprobar un gasto pendiente"""
+    try:
+        gasto = Gasto.objects.get(id=gasto_id)
+        
+        if gasto.aprobado:
+            messages.warning(request, 'Este gasto ya está aprobado')
+        else:
+            gasto.aprobado = True
+            gasto.aprobado_por = request.user
+            gasto.save()
+            
+            # Aplicar el gasto al proyecto
+            proyecto = gasto.proyecto
+            if proyecto:
+                # Actualizar el presupuesto del proyecto restando el gasto
+                if proyecto.presupuesto:
+                    proyecto.presupuesto -= gasto.monto
+                    proyecto.save()
+                
+                # Registrar actividad
+                LogActividad.objects.create(
+                    usuario=request.user,
+                    accion='Aprobar',
+                    modulo='Gastos',
+                    descripcion=f'Gasto aprobado y aplicado al proyecto {proyecto.nombre}: {gasto.descripcion} - Q{gasto.monto}',
+                    ip_address=request.META.get('REMOTE_ADDR')
+                )
+            
+            messages.success(request, f'Gasto "{gasto.descripcion}" aprobado y aplicado al proyecto exitosamente')
+        
+        return redirect('gastos_list')
+        
+    except Gasto.DoesNotExist:
+        messages.error(request, 'Gasto no encontrado')
+        return redirect('gastos_list')
+    except Exception as e:
+        logger.error(f'Error aprobando gasto {gasto_id}: {e}')
+        messages.error(request, 'Error al aprobar el gasto')
+        return redirect('gastos_list')
+
+
+@login_required
+def gasto_desaprobar(request, gasto_id):
+    """Desaprobar un gasto"""
+    try:
+        gasto = Gasto.objects.get(id=gasto_id)
+        
+        if not gasto.aprobado:
+            messages.warning(request, 'Este gasto ya está pendiente')
+        else:
+            # Revertir el gasto del proyecto
+            proyecto = gasto.proyecto
+            if proyecto:
+                # Actualizar el presupuesto del proyecto sumando el gasto de vuelta
+                if proyecto.presupuesto is not None:
+                    proyecto.presupuesto += gasto.monto
+                    proyecto.save()
+                
+                # Registrar actividad
+                LogActividad.objects.create(
+                    usuario=request.user,
+                    accion='Desaprobar',
+                    modulo='Gastos',
+                    descripcion=f'Gasto desaprobado y revertido del proyecto {proyecto.nombre}: {gasto.descripcion} - Q{gasto.monto}',
+                    ip_address=request.META.get('REMOTE_ADDR')
+                )
+            
+            gasto.aprobado = False
+            gasto.aprobado_por = None
+            gasto.save()
+            messages.success(request, f'Gasto "{gasto.descripcion}" desaprobado y revertido del proyecto exitosamente')
+        
+        return redirect('gastos_list')
+        
+    except Gasto.DoesNotExist:
+        messages.error(request, 'Gasto no encontrado')
+        return redirect('gastos_list')
+    except Exception as e:
+        logger.error(f'Error desaprobando gasto {gasto_id}: {e}')
+        messages.error(request, 'Error al desaprobar el gasto')
+        return redirect('gastos_list')
 
 
 @login_required
@@ -1526,6 +1669,20 @@ def categorias_gasto_list(request):
 
 
 @login_required
+def categorias_gasto_list(request):
+    """Lista de categorías de gastos"""
+    categorias = CategoriaGasto.objects.all().order_by('nombre')
+    
+    # Calcular estadísticas
+    categorias_activas = categorias.count()
+    
+    context = {
+        'categorias': categorias,
+        'categorias_activas': categorias_activas,
+    }
+    
+    return render(request, 'core/gastos/categorias.html', context)
+
 def categoria_gasto_create(request):
     """Crear categoría de gasto"""
     if request.method == 'POST':
@@ -1968,7 +2125,13 @@ def anticipo_create(request):
                 ip_address=request.META.get('REMOTE_ADDR')
             )
             
-            messages.success(request, 'Anticipo creado exitosamente')
+            messages.success(request, 
+                f'✅ <strong>Anticipo creado exitosamente</strong><br>'
+                f'💰 Monto: <strong>Q{anticipo.monto:,.2f}</strong><br>'
+                f'🏗️ Proyecto: <strong>{anticipo.proyecto.nombre}</strong><br>'
+                f'👤 Cliente: <strong>{anticipo.cliente.razon_social}</strong>',
+                extra_tags='html'
+            )
             logger.info("✅ Redirigiendo a anticipos_list")
             return redirect('anticipos_list')
         else:
@@ -2052,7 +2215,13 @@ def anticipo_edit(request, anticipo_id):
                 ip_address=request.META.get('REMOTE_ADDR')
             )
             
-            messages.success(request, 'Anticipo actualizado exitosamente')
+            messages.success(request, 
+                f'✅ <strong>Anticipo actualizado exitosamente</strong><br>'
+                f'💰 Monto: <strong>Q{anticipo.monto:,.2f}</strong><br>'
+                f'🏗️ Proyecto: <strong>{anticipo.proyecto.nombre}</strong><br>'
+                f'👤 Cliente: <strong>{anticipo.cliente.razon_social}</strong>',
+                extra_tags='html'
+            )
             return redirect('anticipos_list')
         else:
             # Mostrar errores de validación
@@ -2088,7 +2257,13 @@ def anticipo_delete(request, anticipo_id):
             ip_address=request.META.get('REMOTE_ADDR')
         )
         
-        messages.success(request, 'Anticipo eliminado exitosamente')
+        messages.success(request, 
+            f'🗑️ <strong>Anticipo eliminado exitosamente</strong><br>'
+            f'💰 Monto: <strong>Q{anticipo.monto:,.2f}</strong><br>'
+            f'🏗️ Proyecto: <strong>{anticipo.proyecto.nombre}</strong><br>'
+            f'👤 Cliente: <strong>{anticipo.cliente.razon_social}</strong>',
+            extra_tags='html'
+        )
         return redirect('anticipos_list')
     
     return render(request, 'core/anticipos/delete.html', {'anticipo': anticipo})
@@ -2118,7 +2293,13 @@ def aplicar_anticipo(request, anticipo_id):
                     ip_address=request.META.get('REMOTE_ADDR')
                 )
                 
-                messages.success(request, f'Anticipo aplicado exitosamente a la factura {factura.numero_factura}')
+                messages.success(request, 
+                    f'✅ <strong>Anticipo aplicado a factura</strong><br>'
+                    f'💰 Monto: <strong>Q{monto_aplicar:,.2f}</strong><br>'
+                    f'📄 Factura: <strong>{factura.numero_factura}</strong><br>'
+                    f'🏗️ Proyecto: <strong>{anticipo.proyecto.nombre}</strong>',
+                    extra_tags='html'
+                )
                 
             elif tipo_aplicacion == 'proyecto':
                 anticipo.aplicar_al_proyecto(monto_aplicar)
@@ -2132,7 +2313,13 @@ def aplicar_anticipo(request, anticipo_id):
                     ip_address=request.META.get('REMOTE_ADDR')
                 )
                 
-                messages.success(request, f'Anticipo aplicado exitosamente al proyecto {anticipo.proyecto.nombre}')
+                messages.success(request, 
+                    f'✅ <strong>Anticipo aplicado exitosamente</strong><br>'
+                    f'💰 Monto: <strong>Q{monto_aplicar:,.2f}</strong><br>'
+                    f'🏗️ Proyecto: <strong>{anticipo.proyecto.nombre}</strong><br>'
+                    f'👤 Cliente: <strong>{anticipo.cliente.razon_social}</strong>',
+                    extra_tags='html'
+                )
             
             return redirect('anticipo_detail', anticipo_id=anticipo.id)
             
@@ -2198,7 +2385,7 @@ def proyecto_dashboard(request, proyecto_id=None):
     total_anticipos_aplicados_proyecto = anticipos_aplicados_proyecto.aggregate(total=Sum('monto_aplicado_proyecto'))['total'] or Decimal('0.00')
     
     # Fondos disponibles: anticipos aplicados al proyecto - gastos del proyecto
-    total_anticipos_disponibles = max(total_anticipos_aplicados_proyecto - total_gastos, Decimal('0.00'))
+    total_anticipos_disponibles = max(total_anticipos_aplicados_proyecto - Decimal(str(total_gastos)), Decimal('0.00'))
     
     # Fondos pendientes: monto disponible de anticipos que aún no se ha aplicado
     total_anticipos_pendientes = total_anticipos_disponibles_base
@@ -2214,7 +2401,7 @@ def proyecto_dashboard(request, proyecto_id=None):
     anticipos_recientes = anticipos_proyecto.order_by('-fecha_recepcion')[:5]
     
     # Rentabilidad del proyecto: Total cobrado REAL - Total gastos
-    rentabilidad_proyecto = total_cobrado - total_gastos
+    rentabilidad_proyecto = total_cobrado - Decimal(str(total_gastos))
     
     # Archivos del proyecto
     archivos_proyecto = ArchivoProyecto.objects.filter(proyecto=proyecto, activo=True)
@@ -2326,31 +2513,41 @@ def archivo_upload(request, proyecto_id):
     proyecto = get_object_or_404(Proyecto, id=proyecto_id, activo=True)
     
     if request.method == 'POST':
-        form = ArchivoProyectoForm(request.POST, request.FILES)
+        logger.info(f"POST request recibido para proyecto {proyecto.id}")
+        form = ArchivoProyectoForm(request.POST, request.FILES, proyecto=proyecto)
+        logger.info(f"Formulario creado, válido: {form.is_valid()}")
+        
         if form.is_valid():
-            archivo = form.save(commit=False)
-            archivo.proyecto = proyecto
-            archivo.subido_por = request.user
-            archivo.save()
-            
-            # Generar thumbnail automáticamente
             try:
-                archivo.generar_thumbnail()
+                archivo = form.save(commit=False)
+                archivo.subido_por = request.user
+                archivo.save()
+                logger.info(f"Archivo guardado: {archivo.id} - {archivo.nombre}")
+                
+                # Generar thumbnail automáticamente
+                try:
+                    archivo.generar_thumbnail()
+                except Exception as e:
+                    logger.warning(f"Error generando thumbnail: {e}")
+                    pass
+                
+                # Registrar actividad
+                LogActividad.objects.create(
+                    usuario=request.user,
+                    accion='Subir Archivo',
+                    modulo='Archivos',
+                    descripcion=f'Archivo subido: {archivo.nombre} al proyecto {proyecto.nombre}',
+                    ip_address=request.META.get('REMOTE_ADDR')
+                )
+                
+                messages.success(request, 'Archivo subido exitosamente')
+                return redirect('archivos_proyecto_list', proyecto_id=proyecto.id)
             except Exception as e:
-                logger.warning(f"Error generando thumbnail: {e}")
-                pass
-            
-            # Registrar actividad
-            LogActividad.objects.create(
-                usuario=request.user,
-                accion='Subir Archivo',
-                modulo='Archivos',
-                descripcion=f'Archivo subido: {archivo.nombre} al proyecto {proyecto.nombre}',
-                ip_address=request.META.get('REMOTE_ADDR')
-            )
-            
-            messages.success(request, 'Archivo subido exitosamente')
-            return redirect('archivos_proyecto_list', proyecto_id=proyecto.id)
+                logger.error(f"Error guardando archivo: {e}")
+                messages.error(request, f'Error al subir archivo: {str(e)}')
+        else:
+            logger.error(f"Formulario inválido: {form.errors}")
+            messages.error(request, 'Error en el formulario')
     else:
         form = ArchivoProyectoForm(proyecto=proyecto)
     
@@ -2384,13 +2581,37 @@ def archivo_download(request, archivo_id):
     # Retornar archivo para descarga
     from django.http import FileResponse
     
-    file_path = archivo.archivo.path
-    if os.path.exists(file_path):
-        response = FileResponse(open(file_path, 'rb'))
-        response['Content-Disposition'] = f'attachment; filename="{archivo.nombre}.{archivo.get_extension()}"'
-        return response
-    else:
-        messages.error(request, 'El archivo no existe en el servidor')
+    # Verificar si el archivo tiene contenido físico
+    if not archivo.archivo:
+        # Para archivos generados (como planillas), crear contenido temporal
+        if archivo.es_documento and archivo.get_extension() in ['txt', 'pdf']:
+            from django.core.files.base import ContentFile
+            if archivo.get_extension() == 'pdf':
+                # Para PDFs, crear un mensaje de error más claro
+                messages.error(request, 'El archivo PDF no está disponible para descarga')
+                return redirect('archivos_proyecto_list', proyecto_id=archivo.proyecto.id)
+            else:
+                # Para archivos de texto, crear contenido temporal
+                contenido = f"Archivo: {archivo.nombre}\nProyecto: {archivo.proyecto.nombre}\nDescripción: {archivo.descripcion}\nFecha: {archivo.fecha_subida.strftime('%d/%m/%Y %H:%M')}"
+                buffer = ContentFile(contenido.encode('utf-8'))
+                response = FileResponse(buffer, as_attachment=True)
+                response['Content-Disposition'] = f'attachment; filename="{archivo.nombre}"'
+                return response
+        else:
+            messages.error(request, 'No hay archivo asociado para descargar')
+            return redirect('archivos_proyecto_list', proyecto_id=archivo.proyecto.id)
+    
+    try:
+        file_path = archivo.archivo.path
+        if os.path.exists(file_path):
+            response = FileResponse(open(file_path, 'rb'))
+            response['Content-Disposition'] = f'attachment; filename="{archivo.nombre}.{archivo.get_extension()}"'
+            return response
+        else:
+            messages.error(request, 'El archivo no existe en el servidor')
+            return redirect('archivos_proyecto_list', proyecto_id=archivo.proyecto.id)
+    except ValueError as e:
+        messages.error(request, f'Error al acceder al archivo: {str(e)}')
         return redirect('archivos_proyecto_list', proyecto_id=archivo.proyecto.id)
 
 
@@ -2400,18 +2621,62 @@ def archivo_delete(request, archivo_id):
     archivo = get_object_or_404(ArchivoProyecto, id=archivo_id, activo=True)
     
     if request.method == 'POST':
-        # Registrar actividad antes de eliminar
-        LogActividad.objects.create(
-            usuario=request.user,
-            accion='Eliminar Archivo',
-            modulo='Archivos',
-            descripcion=f'Archivo eliminado: {archivo.nombre} del proyecto {archivo.proyecto.nombre}',
-            ip_address=request.META.get('REMOTE_ADDR')
-        )
+        # Validar confirmación
+        confirmacion = request.POST.get('confirmacion', '').strip().upper()
         
-        archivo.delete()
-        messages.success(request, 'Archivo eliminado exitosamente')
-        return redirect('archivos_proyecto_list', proyecto_id=archivo.proyecto.id)
+        print(f"🔍 Confirmación recibida: '{confirmacion}'")
+        print(f"🔍 Método: {request.method}")
+        print(f"🔍 POST data: {request.POST}")
+        
+        if confirmacion != 'ELIMINAR':
+            print(f"❌ Confirmación inválida: '{confirmacion}' != 'ELIMINAR'")
+            messages.error(request, 'Debes escribir "ELIMINAR" para confirmar la eliminación.')
+            return render(request, 'core/archivos/delete.html', {'archivo': archivo})
+        
+        print(f"✅ Confirmación válida, procediendo con eliminación...")
+        
+        try:
+            # Registrar actividad antes de eliminar
+            LogActividad.objects.create(
+                usuario=request.user,
+                accion='Eliminar Archivo',
+                modulo='Archivos',
+                descripcion=f'Archivo eliminado: {archivo.nombre} del proyecto {archivo.proyecto.nombre}',
+                ip_address=request.META.get('REMOTE_ADDR')
+            )
+            
+            # Obtener el ID del proyecto antes de eliminar
+            proyecto_id = archivo.proyecto.id
+            
+            # Eliminar el archivo físico del servidor si existe
+            if archivo.archivo and archivo.archivo.name:
+                try:
+                    if os.path.isfile(archivo.archivo.path):
+                        os.remove(archivo.archivo.path)
+                        logger.info(f"Archivo físico eliminado: {archivo.archivo.path}")
+                except Exception as e:
+                    logger.warning(f"Error eliminando archivo físico: {e}")
+            
+            # Eliminar el thumbnail si existe
+            if archivo.thumbnail and archivo.thumbnail.name:
+                try:
+                    if os.path.isfile(archivo.thumbnail.path):
+                        os.remove(archivo.thumbnail.path)
+                        logger.info(f"Thumbnail eliminado: {archivo.thumbnail.path}")
+                except Exception as e:
+                    logger.warning(f"Error eliminando thumbnail: {e}")
+            
+            # Eliminar el registro de la base de datos
+            archivo.delete()
+            
+            print(f"✅ Archivo eliminado exitosamente: {archivo.nombre}")
+            messages.success(request, f'Archivo "{archivo.nombre}" eliminado exitosamente')
+            return redirect('archivos_proyecto_list', proyecto_id=proyecto_id)
+            
+        except Exception as e:
+            logger.error(f"Error eliminando archivo {archivo_id}: {e}")
+            messages.error(request, f'Error al eliminar el archivo: {str(e)}')
+            return render(request, 'core/archivos/delete.html', {'archivo': archivo})
     
     return render(request, 'core/archivos/delete.html', {'archivo': archivo})
 
@@ -2731,6 +2996,10 @@ def sistema_logs(request):
 
 
 @login_required
+def offline_page(request):
+    """Página offline para PWA"""
+    return render(request, 'offline.html')
+
 def sistema_reset_app(request):
     """Reset completo de la aplicación - SOLO SUPERUSUARIOS"""
     if not request.user.is_superuser:
@@ -2916,10 +3185,11 @@ def rentabilidad_view(request):
         logger.debug(f"Período: {fecha_inicio} a {fecha_fin}, Facturado: Q{total_facturado}, Cobrado: Q{ingresos}")
         
         # Calcular gastos
-        gastos = Gasto.objects.filter(
+        gastos_raw = Gasto.objects.filter(
             fecha_gasto__range=[fecha_inicio_dt, fecha_fin_dt],
             aprobado=True
-        ).aggregate(total=Sum('monto'))['total'] or Decimal('0.00')
+        ).aggregate(total=Sum('monto'))['total'] or 0
+        gastos = Decimal(str(gastos_raw))
         
         # Gastos fijos (por ahora 0)
         gastos_fijos = Decimal('0.00')
@@ -2944,11 +3214,12 @@ def rentabilidad_view(request):
             ).aggregate(total=Sum('monto_pagado'))['total'] or Decimal('0.00')
             
             # Gastos del proyecto
-            gastos_proyecto = Gasto.objects.filter(
+            gastos_proyecto_raw = Gasto.objects.filter(
                 proyecto=proyecto,
                 fecha_gasto__range=[fecha_inicio_dt, fecha_fin_dt],
                 aprobado=True
-            ).aggregate(total=Sum('monto'))['total'] or Decimal('0.00')
+            ).aggregate(total=Sum('monto'))['total'] or 0
+            gastos_proyecto = Decimal(str(gastos_proyecto_raw))
             
             rentabilidad_proyecto = ingresos_proyecto - gastos_proyecto
             margen_proyecto = (rentabilidad_proyecto / ingresos_proyecto * 100) if ingresos_proyecto > 0 else Decimal('0.00')
@@ -2986,11 +3257,12 @@ def rentabilidad_view(request):
                 monto_pagado__gt=0
             ).aggregate(total=Sum('monto_pagado'))['total'] or Decimal('0.00')
             
-            gastos_mes = Gasto.objects.filter(
+            gastos_mes_raw = Gasto.objects.filter(
                 fecha_gasto__month=mes,
                 fecha_gasto__year=año,
                 aprobado=True
-            ).aggregate(total=Sum('monto'))['total'] or Decimal('0.00')
+            ).aggregate(total=Sum('monto'))['total'] or 0
+            gastos_mes = Decimal(str(gastos_mes_raw))
             
             rentabilidad_mes = ingresos_mes - gastos_mes
             
@@ -3018,11 +3290,12 @@ def rentabilidad_view(request):
             monto_pagado__gt=0
         ).aggregate(total=Sum('monto_pagado'))['total'] or Decimal('0.00')
         
-        gastos_mes_actual = Gasto.objects.filter(
+        gastos_mes_actual_raw = Gasto.objects.filter(
             fecha_gasto__month=mes_actual,
             fecha_gasto__year=año_actual,
             aprobado=True
-        ).aggregate(total=Sum('monto'))['total'] or Decimal('0.00')
+        ).aggregate(total=Sum('monto'))['total'] or 0
+        gastos_mes_actual = Decimal(str(gastos_mes_actual_raw))
         
         rentabilidad_mes_actual = ingresos_mes_actual - gastos_mes_actual
         margen_mes_actual = (rentabilidad_mes_actual / ingresos_mes_actual * 100) if ingresos_mes_actual > 0 else Decimal('0.00')
@@ -3692,10 +3965,11 @@ def rentabilidad_exportar_pdf(request):
             estado='pagada'
         ).aggregate(total=Sum('monto_total'))['total'] or Decimal('0.00')
         
-        gastos = Gasto.objects.filter(
+        gastos_raw = Gasto.objects.filter(
             fecha_gasto__range=[fecha_inicio_dt, fecha_fin_dt],
             aprobado=True
-        ).aggregate(total=Sum('monto'))['total'] or Decimal('0.00')
+        ).aggregate(total=Sum('monto'))['total'] or 0
+        gastos = Decimal(str(gastos_raw))
         
         rentabilidad_bruta = ingresos - gastos
         margen_rentabilidad = (rentabilidad_bruta / ingresos * 100) if ingresos > 0 else Decimal('0.00')
@@ -3804,10 +4078,11 @@ def rentabilidad_exportar_excel(request):
             estado='pagada'
         ).aggregate(total=Sum('monto_total'))['total'] or Decimal('0.00')
         
-        gastos = Gasto.objects.filter(
+        gastos_raw = Gasto.objects.filter(
             fecha_gasto__range=[fecha_inicio_dt, fecha_fin_dt],
             aprobado=True
-        ).aggregate(total=Sum('monto'))['total'] or Decimal('0.00')
+        ).aggregate(total=Sum('monto'))['total'] or 0
+        gastos = Decimal(str(gastos_raw))
         
         rentabilidad_bruta = ingresos - gastos
         margen_rentabilidad = (rentabilidad_bruta / ingresos * 100) if ingresos > 0 else Decimal('0.00')
@@ -4543,16 +4818,18 @@ def dashboard_intelligent_data(request):
         
         for proyecto in proyectos:
             # Calcular ingresos del proyecto
-            ingresos_proyecto = Factura.objects.filter(
+            ingresos_proyecto_raw = Factura.objects.filter(
                 proyecto=proyecto,
                 estado__in=['pagada', 'enviada']
             ).aggregate(total=Sum('monto_total'))['total'] or 0
+            ingresos_proyecto = Decimal(str(ingresos_proyecto_raw))
             
             # Calcular gastos del proyecto
-            gastos_proyecto = Gasto.objects.filter(
+            gastos_proyecto_raw = Gasto.objects.filter(
                 proyecto=proyecto,
                 aprobado=True
             ).aggregate(total=Sum('monto'))['total'] or 0
+            gastos_proyecto = Decimal(str(gastos_proyecto_raw))
             
             # Calcular rentabilidad
             if ingresos_proyecto > 0:
@@ -5882,6 +6159,210 @@ def trabajadores_diarios_list(request, proyecto_id):
 
 
 @login_required
+def finalizar_planilla_trabajadores(request, proyecto_id):
+    """Finalizar planilla de trabajadores diarios: generar PDF, guardarlo y limpiar lista"""
+    proyecto = get_object_or_404(Proyecto, id=proyecto_id)
+    
+    try:
+        # Verificar que hay trabajadores para finalizar
+        trabajadores = TrabajadorDiario.objects.filter(proyecto=proyecto, activo=True)
+        if not trabajadores.exists():
+            messages.warning(request, 'No hay trabajadores activos para finalizar la planilla.')
+            return redirect('trabajadores_diarios_list', proyecto_id=proyecto_id)
+        
+        # 1. Generar PDF de la planilla usando la misma lógica que trabajadores_diarios_pdf
+        from django.core.files.base import ContentFile
+        from django.utils import timezone
+        from io import BytesIO
+        from reportlab.lib.pagesizes import A4
+        from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
+        from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+        from reportlab.lib import colors
+        from reportlab.lib.units import inch
+        from reportlab.lib.enums import TA_CENTER
+        import os
+        
+        # Crear el buffer para el PDF
+        buffer = BytesIO()
+        
+        # Crear el documento PDF
+        doc = SimpleDocTemplate(buffer, pagesize=A4, rightMargin=72, leftMargin=72, topMargin=72, bottomMargin=18)
+        
+        # Obtener estilos
+        styles = getSampleStyleSheet()
+        
+        # Crear estilos personalizados
+        title_style = ParagraphStyle(
+            'CustomTitle',
+            parent=styles['Heading1'],
+            fontSize=18,
+            spaceAfter=30,
+            alignment=TA_CENTER,
+            textColor=colors.darkblue
+        )
+        
+        subtitle_style = ParagraphStyle(
+            'CustomSubtitle',
+            parent=styles['Heading2'],
+            fontSize=14,
+            spaceAfter=20,
+            alignment=TA_CENTER,
+            textColor=colors.darkgreen
+        )
+        
+        normal_style = ParagraphStyle(
+            'CustomNormal',
+            parent=styles['Normal'],
+            fontSize=10,
+            spaceAfter=12
+        )
+        
+        # Contenido del PDF
+        story = []
+        
+        # Título principal
+        story.append(Paragraph("PLANILLA DE TRABAJADORES DIARIOS", title_style))
+        story.append(Spacer(1, 12))
+        
+        # Información del proyecto
+        story.append(Paragraph(f"<b>Proyecto:</b> {proyecto.nombre}", normal_style))
+        story.append(Paragraph(f"<b>Cliente:</b> {proyecto.cliente.razon_social}", normal_style))
+        story.append(Paragraph(f"<b>Fecha de Generación:</b> {timezone.now().strftime('%d/%m/%Y %H:%M')}", normal_style))
+        story.append(Spacer(1, 20))
+        
+        # Calcular totales
+        total_trabajadores = trabajadores.count()
+        total_a_pagar = 0
+        data = [['No.', 'Nombre del Trabajador', 'Pago Diario (Q)', 'Días Trabajados', 'Total a Pagar (Q)']]
+        
+        for i, trabajador in enumerate(trabajadores, 1):
+            dias_trabajados = sum(registro.dias_trabajados for registro in trabajador.registros_trabajo.all())
+            total_trabajador = float(trabajador.pago_diario) * dias_trabajados
+            total_a_pagar += total_trabajador
+            
+            data.append([
+                str(i),
+                trabajador.nombre,
+                f"Q{trabajador.pago_diario:.2f}",
+                str(dias_trabajados),
+                f"Q{total_trabajador:.2f}"
+            ])
+        
+        # Agregar fila de totales
+        data.append(['', '', '', 'TOTAL GENERAL:', f"Q{total_a_pagar:.2f}"])
+        
+        # Crear la tabla
+        table = Table(data, colWidths=[0.5*inch, 2.5*inch, 1.2*inch, 1.2*inch, 1.2*inch])
+        
+        # Estilo de la tabla
+        table.setStyle(TableStyle([
+            # Encabezados
+            ('BACKGROUND', (0, 0), (-1, 0), colors.darkblue),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+            ('ALIGN', (0, 0), (-1, 0), 'CENTER'),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, 0), 10),
+            
+            # Fila de totales
+            ('BACKGROUND', (0, -1), (-1, -1), colors.lightgrey),
+            ('TEXTCOLOR', (0, -1), (-1, -1), colors.black),
+            ('ALIGN', (0, -1), (-1, -1), 'CENTER'),
+            ('FONTNAME', (0, -1), (-1, -1), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, -1), (-1, -1), 10),
+            
+            # Bordes
+            ('GRID', (0, 0), (-1, -1), 1, colors.black),
+            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+        ]))
+        
+        story.append(table)
+        story.append(Spacer(1, 30))
+        
+        # Información adicional
+        story.append(Paragraph(f"<b>Total de Trabajadores:</b> {total_trabajadores}", normal_style))
+        story.append(Paragraph(f"<b>Total a Pagar:</b> Q{total_a_pagar:.2f}", normal_style))
+        
+        # Construir el PDF
+        doc.build(story)
+        
+        # Obtener el contenido del buffer
+        pdf_content = buffer.getvalue()
+        buffer.close()
+        
+        # 2. Crear o obtener carpeta "Trabajadores Diarios" en archivos del proyecto
+        from core.models import CarpetaProyecto
+        
+        carpeta, created = CarpetaProyecto.objects.get_or_create(
+            proyecto=proyecto,
+            nombre='Trabajadores Diarios',
+            defaults={
+                'creada_por': request.user,
+                'descripcion': 'Carpeta para almacenar planillas de trabajadores diarios'
+            }
+        )
+        
+        if created:
+            print(f"✅ Carpeta 'Trabajadores Diarios' creada para proyecto {proyecto.nombre}")
+        else:
+            print(f"✅ Carpeta 'Trabajadores Diarios' ya existe para proyecto {proyecto.nombre}")
+        
+        # 3. Guardar archivo PDF en los archivos del proyecto
+        from core.models import ArchivoProyecto
+        
+        nombre_archivo = f"planilla_trabajadores_{timezone.now().strftime('%Y%m%d_%H%M%S')}.pdf"
+        
+        # Crear ContentFile con el contenido PDF
+        archivo_pdf = ContentFile(pdf_content)
+        archivo_pdf.name = nombre_archivo
+        
+        archivo = ArchivoProyecto.objects.create(
+            proyecto=proyecto,
+            carpeta=carpeta,
+            nombre=nombre_archivo,
+            archivo=archivo_pdf,
+            descripcion=f'Planilla de trabajadores diarios finalizada el {timezone.now().strftime("%d/%m/%Y %H:%M")}',
+            subido_por=request.user,
+            activo=True
+        )
+        
+        print(f"✅ PDF guardado: {nombre_archivo}")
+        print(f"✅ Archivo ID: {archivo.id}")
+        print(f"✅ Tiene archivo físico: {bool(archivo.archivo)}")
+        if archivo.archivo:
+            print(f"✅ Tamaño: {archivo.archivo.size} bytes")
+            print(f"✅ Ruta: {archivo.archivo.path}")
+            print(f"✅ Existe archivo: {os.path.exists(archivo.archivo.path)}")
+        
+        # 4. Limpiar lista de trabajadores (marcar como inactivos)
+        trabajadores_eliminados = trabajadores.count()
+        trabajadores.update(activo=False)
+        
+        print(f"✅ {trabajadores_eliminados} trabajadores marcados como inactivos")
+        
+        # 5. Registrar actividad
+        from core.models import LogActividad
+        LogActividad.objects.create(
+            usuario=request.user,
+            accion='Finalizar Planilla',
+            modulo='Trabajadores Diarios',
+            descripcion=f'Planilla de trabajadores finalizada para proyecto {proyecto.nombre}. Archivo guardado: {nombre_archivo}. Trabajadores procesados: {trabajadores_eliminados}',
+            ip_address=request.META.get('REMOTE_ADDR')
+        )
+        
+        # 6. Mostrar mensaje de éxito
+        messages.success(request, f'Planilla finalizada exitosamente. Archivo guardado como "{nombre_archivo}". Se procesaron {trabajadores_eliminados} trabajadores.')
+        
+        return redirect('trabajadores_diarios_list', proyecto_id=proyecto_id)
+        
+    except Exception as e:
+        print(f"❌ Error al finalizar planilla: {e}")
+        import traceback
+        traceback.print_exc()
+        messages.error(request, f'Error al finalizar la planilla: {str(e)}')
+        return redirect('trabajadores_diarios_list', proyecto_id=proyecto_id)
+
+
+@login_required
 def trabajador_diario_create(request, proyecto_id):
     """Crear trabajador diario"""
     proyecto = get_object_or_404(Proyecto, id=proyecto_id)
@@ -5896,6 +6377,10 @@ def trabajador_diario_create(request, proyecto_id):
             
             messages.success(request, 'Trabajador diario creado correctamente.')
             return redirect('trabajadores_diarios_list', proyecto_id=proyecto_id)
+        else:
+            # Agregar logging para debug
+            print(f"❌ Formulario inválido: {form.errors}")
+            messages.error(request, 'Por favor corrige los errores en el formulario.')
     else:
         form = TrabajadorDiarioForm()
     
@@ -6063,6 +6548,17 @@ def trabajadores_diarios_pdf(request, proyecto_id):
     proyecto = get_object_or_404(Proyecto, id=proyecto_id)
     trabajadores = TrabajadorDiario.objects.filter(proyecto=proyecto, activo=True).order_by('nombre')
     
+    # Obtener días trabajados temporales del POST o usar datos de la base de datos
+    dias_trabajados_data = {}
+    if request.method == 'POST':
+        for trabajador in trabajadores:
+            dias_key = f'dias_trabajador_{trabajador.id}'
+            dias_trabajados_data[trabajador.id] = int(request.POST.get(dias_key, 0))
+    else:
+        # Si no hay datos POST, usar datos de la base de datos
+        for trabajador in trabajadores:
+            dias_trabajados_data[trabajador.id] = sum(registro.dias_trabajados for registro in trabajador.registros_trabajo.all())
+    
     # Crear el buffer para el PDF
     buffer = BytesIO()
     
@@ -6112,9 +6608,13 @@ def trabajadores_diarios_pdf(request, proyecto_id):
     story.append(Spacer(1, 20))
     
     if trabajadores.exists():
-        # Calcular totales
+        # Calcular totales usando datos temporales
         total_trabajadores = trabajadores.count()
-        total_a_pagar = sum(t.total_a_pagar for t in trabajadores)
+        total_a_pagar = 0
+        for trabajador in trabajadores:
+            dias_trabajados = dias_trabajados_data.get(trabajador.id, 0)
+            total_trabajador = float(trabajador.pago_diario) * dias_trabajados
+            total_a_pagar += total_trabajador
         
         # Anticipos específicos de trabajadores diarios
         anticipos_trabajadores = AnticipoTrabajadorDiario.objects.filter(
@@ -6128,12 +6628,16 @@ def trabajadores_diarios_pdf(request, proyecto_id):
         data = [['No.', 'Nombre del Trabajador', 'Pago Diario (Q)', 'Días Trabajados', 'Total a Pagar (Q)']]
         
         for i, trabajador in enumerate(trabajadores, 1):
+            # Usar días trabajados temporales
+            dias_trabajados = dias_trabajados_data.get(trabajador.id, 0)
+            total_trabajador = float(trabajador.pago_diario) * dias_trabajados
+            
             data.append([
                 str(i),
                 trabajador.nombre,
                 f"Q{trabajador.pago_diario:.2f}",
-                str(trabajador.total_dias_trabajados),
-                f"Q{trabajador.total_a_pagar:.2f}"
+                str(dias_trabajados),
+                f"Q{total_trabajador:.2f}"
             ])
         
         # Agregar fila de totales
@@ -6205,6 +6709,50 @@ def trabajadores_diarios_pdf(request, proyecto_id):
     pdf_content = buffer.getvalue()
     buffer.close()
     
+    # Guardar el PDF en la carpeta de archivos del proyecto
+    try:
+        from core.models import CarpetaProyecto, ArchivoProyecto
+        from django.core.files.base import ContentFile
+        
+        # Crear o obtener carpeta "Trabajadores Diarios"
+        carpeta, created = CarpetaProyecto.objects.get_or_create(
+            proyecto=proyecto,
+            nombre='Trabajadores Diarios',
+            defaults={
+                'creada_por': request.user,
+                'descripcion': 'Carpeta para almacenar planillas de trabajadores diarios'
+            }
+        )
+        
+        # Crear archivo PDF
+        nombre_archivo = f"planilla_trabajadores_{timezone.now().strftime('%Y%m%d_%H%M%S')}.pdf"
+        
+        # Crear ContentFile con el contenido PDF
+        archivo_pdf = ContentFile(pdf_content)
+        archivo_pdf.name = nombre_archivo
+        
+        archivo = ArchivoProyecto.objects.create(
+            proyecto=proyecto,
+            carpeta=carpeta,
+            nombre=nombre_archivo,
+            archivo=archivo_pdf,
+            descripcion=f'Planilla de trabajadores diarios generada el {timezone.now().strftime("%d/%m/%Y %H:%M")}',
+            subido_por=request.user,
+            activo=True
+        )
+        
+        print(f"✅ PDF guardado automáticamente: {nombre_archivo}")
+        print(f"✅ Archivo ID: {archivo.id}")
+        print(f"✅ Tiene archivo físico: {bool(archivo.archivo)}")
+        if archivo.archivo:
+            print(f"✅ Tamaño: {archivo.archivo.size} bytes")
+            print(f"✅ Ruta: {archivo.archivo.path}")
+            print(f"✅ Existe archivo: {os.path.exists(archivo.archivo.path)}")
+        
+    except Exception as e:
+        print(f"⚠️ Error guardando PDF automáticamente: {e}")
+        # Continuar con la descarga aunque falle el guardado
+    
     # Crear la respuesta HTTP
     response = HttpResponse(content_type='application/pdf')
     response['Content-Disposition'] = f'attachment; filename="planilla_trabajadores_diarios_{proyecto.nombre}_{timezone.now().strftime("%Y%m%d")}.pdf"'
@@ -6215,7 +6763,7 @@ def trabajadores_diarios_pdf(request, proyecto_id):
         usuario=request.user,
         accion='Exportar',
         modulo='Trabajadores Diarios',
-        descripcion=f'PDF de planilla generado para proyecto {proyecto.nombre}',
+        descripcion=f'PDF de planilla generado y guardado para proyecto {proyecto.nombre}',
         ip_address=request.META.get('REMOTE_ADDR')
     )
     
@@ -6369,3 +6917,287 @@ def anticipo_trabajador_diario_aplicar(request, proyecto_id, anticipo_id):
         'proyecto': proyecto,
         'anticipo': anticipo
     })
+
+
+# ==================== NUEVAS FUNCIONES OPTIMIZADAS ====================
+
+@api_view()
+def api_login(request):
+    """API de login para AJAX"""
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            username = data.get('username')
+            password = data.get('password')
+            
+            if username and password:
+                user = authenticate(request, username=username, password=password)
+                if user is not None and user.is_active:
+                    login(request, user)
+                    return JsonResponse({
+                        'success': True,
+                        'message': 'Login exitoso',
+                        'redirect_url': reverse('dashboard')
+                    })
+                else:
+                    return JsonResponse({
+                        'success': False,
+                        'message': 'Credenciales inválidas'
+                    })
+            else:
+                return JsonResponse({
+                    'success': False,
+                    'message': 'Datos incompletos'
+                })
+        except Exception as e:
+            return JsonResponse({
+                'success': False,
+                'message': f'Error: {str(e)}'
+            })
+    
+    return JsonResponse({
+        'success': False,
+        'message': 'Método no permitido'
+    })
+
+
+@api_view()
+def dashboard_data_api(request):
+    """API para obtener datos del dashboard en tiempo real"""
+    try:
+        # Estadísticas generales
+        estadisticas = DashboardService.obtener_estadisticas_generales()
+        
+        # Datos de gráficos
+        gastos_por_categoria = Gasto.objects.filter(aprobado=True).values(
+            'categoria__nombre'
+        ).annotate(
+            total=Sum('monto')
+        ).order_by('-total')[:5]
+        
+        proyectos_por_estado = Proyecto.objects.filter(activo=True).values(
+            'estado'
+        ).annotate(
+            total=Count('id')
+        )
+        
+        # Facturas por mes (últimos 6 meses)
+        fecha_inicio = timezone.now().date() - timedelta(days=180)
+        facturas_por_mes = Factura.objects.filter(
+            fecha_emision__gte=fecha_inicio
+        ).extra(
+            select={'mes': "strftime('%%Y-%%m', fecha_emision)"}
+        ).values('mes').annotate(
+            total=Sum('monto_total')
+        ).order_by('mes')
+        
+        return JsonResponse({
+            'success': True,
+            'data': {
+                'estadisticas': estadisticas,
+                'gastos_por_categoria': list(gastos_por_categoria),
+                'proyectos_por_estado': list(proyectos_por_estado),
+                'facturas_por_mes': list(facturas_por_mes),
+            }
+        })
+    
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        })
+
+
+@api_view()
+def dashboard_intelligent_data(request):
+    """API para datos de análisis inteligente"""
+    try:
+        # Datos para gráficos avanzados
+        data = {
+            'proyectos_rentabilidad': [],
+            'gastos_tendencia': [],
+            'facturas_estado': [],
+            'colaboradores_activos': 0,
+        }
+        
+        # Proyectos con rentabilidad
+        for proyecto in Proyecto.objects.filter(activo=True)[:5]:
+            rentabilidad = ProyectoService.calcular_rentabilidad(proyecto)
+            data['proyectos_rentabilidad'].append({
+                'nombre': proyecto.nombre,
+                'rentabilidad': rentabilidad.get('rentabilidad_porcentaje', 0)
+            })
+        
+        # Tendencia de gastos últimos 12 meses
+        fecha_inicio = timezone.now().date() - timedelta(days=365)
+        gastos_tendencia = Gasto.objects.filter(
+            fecha_gasto__gte=fecha_inicio,
+            aprobado=True
+        ).extra(
+            select={'mes': "strftime('%%Y-%%m', fecha_gasto)"}
+        ).values('mes').annotate(
+            total=Sum('monto')
+        ).order_by('mes')
+        
+        data['gastos_tendencia'] = list(gastos_tendencia)
+        
+        # Estado de facturas
+        facturas_estado = Factura.objects.values('estado').annotate(
+            total=Count('id')
+        )
+        data['facturas_estado'] = list(facturas_estado)
+        
+        # Colaboradores activos
+        data['colaboradores_activos'] = Colaborador.objects.filter(activo=True).count()
+        
+        return JsonResponse({
+            'success': True,
+            'data': data
+        })
+    
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        })
+
+
+@login_required
+def dashboard_intelligent_analytics(request):
+    """Dashboard con análisis inteligente"""
+    try:
+        # Análisis de rentabilidad por proyecto
+        proyectos_rentabilidad = []
+        for proyecto in Proyecto.objects.filter(activo=True)[:10]:
+            rentabilidad = ProyectoService.calcular_rentabilidad(proyecto)
+            proyectos_rentabilidad.append({
+                'proyecto': proyecto.nombre,
+                'rentabilidad': rentabilidad
+            })
+        
+        # Análisis de tendencias de gastos
+        ultimos_6_meses = timezone.now().date() - timedelta(days=180)
+        gastos_tendencia = Gasto.objects.filter(
+            fecha_gasto__gte=ultimos_6_meses,
+            aprobado=True
+        ).extra(
+            select={'mes': "strftime('%%Y-%%m', fecha_gasto)"}
+        ).values('mes').annotate(
+            total=Sum('monto')
+        ).order_by('mes')
+        
+        # Proyectos con mayor riesgo (gastos altos vs presupuesto)
+        proyectos_riesgo = []
+        for proyecto in Proyecto.objects.filter(activo=True, presupuesto__gt=0):
+            estadisticas = ProyectoService.obtener_estadisticas_proyecto(proyecto)
+            if estadisticas.get('gastos', {}).get('total', 0) > 0:
+                porcentaje_gastado = (estadisticas['gastos']['total'] / proyecto.presupuesto) * 100
+                if porcentaje_gastado > 80:  # Más del 80% gastado
+                    proyectos_riesgo.append({
+                        'proyecto': proyecto.nombre,
+                        'porcentaje_gastado': round(porcentaje_gastado, 2),
+                        'presupuesto': proyecto.presupuesto,
+                        'gastado': estadisticas['gastos']['total']
+                    })
+        
+        context = {
+            'proyectos_rentabilidad': proyectos_rentabilidad,
+            'gastos_tendencia': list(gastos_tendencia),
+            'proyectos_riesgo': proyectos_riesgo,
+        }
+        
+        return render(request, 'core/dashboard/intelligent_analytics.html', context)
+    
+    except Exception as e:
+        messages.error(request, f'Error en análisis inteligente: {str(e)}')
+        return render(request, 'core/dashboard/intelligent_analytics.html', {
+            'proyectos_rentabilidad': [],
+            'gastos_tendencia': [],
+            'proyectos_riesgo': [],
+        })
+
+
+@api_view()
+def cliente_toggle_estado(request, cliente_id):
+    """Activar/desactivar cliente"""
+    try:
+        cliente = get_object_or_404(Cliente, id=cliente_id)
+        cliente.activo = not cliente.activo
+        cliente.save()
+        
+        estado = "activado" if cliente.activo else "desactivado"
+        messages.success(request, f'Cliente "{cliente.razon_social}" {estado} correctamente')
+        
+        return JsonResponse({
+            'success': True,
+            'activo': cliente.activo,
+            'message': f'Cliente {estado} correctamente.'
+        })
+    
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        })
+
+
+@login_required
+def cliente_estadisticas(request, cliente_id):
+    """Estadísticas detalladas del cliente"""
+    try:
+        cliente = get_object_or_404(Cliente, id=cliente_id)
+        
+        # Estadísticas de proyectos
+        proyectos_stats = Proyecto.objects.filter(cliente=cliente).aggregate(
+            total=Count('id'),
+            presupuesto_total=Sum('presupuesto')
+        )
+        
+        # Estadísticas de facturas
+        facturas_stats = Factura.objects.filter(cliente=cliente).aggregate(
+            total=Count('id'),
+            monto_total=Sum('monto_total'),
+            monto_pagado=Sum('monto_pagado')
+        )
+        
+        # Proyectos por estado
+        proyectos_por_estado = Proyecto.objects.filter(cliente=cliente).values(
+            'estado'
+        ).annotate(
+            total=Count('id')
+        )
+        
+        # Facturas por estado
+        facturas_por_estado = Factura.objects.filter(cliente=cliente).values(
+            'estado'
+        ).annotate(
+            total=Count('id')
+        )
+        
+        # Gastos por proyecto (últimos 6 meses)
+        fecha_inicio = timezone.now().date() - timedelta(days=180)
+        
+        gastos_por_proyecto = Gasto.objects.filter(
+            proyecto__cliente=cliente,
+            fecha_gasto__gte=fecha_inicio,
+            aprobado=True
+        ).values(
+            'proyecto__nombre'
+        ).annotate(
+            total=Sum('monto')
+        ).order_by('-total')[:10]
+        
+        context = {
+            'cliente': cliente,
+            'proyectos_stats': proyectos_stats,
+            'facturas_stats': facturas_stats,
+            'proyectos_por_estado': list(proyectos_por_estado),
+            'facturas_por_estado': list(facturas_por_estado),
+            'gastos_por_proyecto': list(gastos_por_proyecto),
+        }
+        
+        return render(request, 'core/clientes/estadisticas.html', context)
+    
+    except Exception as e:
+        messages.error(request, f'Error al cargar estadísticas: {str(e)}')
+        return redirect('cliente_detail', cliente_id=cliente_id)

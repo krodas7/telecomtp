@@ -1,0 +1,885 @@
+{% load static %}
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Sistema ARCA Construcción{% endblock %}</title>
+    
+    <!-- PWA Meta Tags -->
+    <meta name="theme-color" content="#007bff">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="ARCA Construcción">
+    <meta name="msapplication-TileColor" content="#007bff">
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="{% static 'manifest.json' %}?v=2">
+    
+    <!-- Apple Touch Icons -->
+    <link rel="apple-touch-icon" href="{% static 'images/icon-192x192.png' %}?v=2">
+    <link rel="apple-touch-icon" sizes="152x152" href="{% static 'images/icon-192x192.png' %}?v=2">
+    <link rel="apple-touch-icon" sizes="180x180" href="{% static 'images/icon-192x192.png' %}?v=2">
+    <link rel="apple-touch-icon" sizes="167x167" href="{% static 'images/icon-192x192.png' %}?v=2">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" sizes="32x32" href="{% static 'images/icon-32x32.png' %}?v=2">
+    <link rel="icon" type="image/png" sizes="16x16" href="{% static 'images/icon-16x16.png' %}?v=2">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- CSS Personalizado -->
+    <link rel="stylesheet" href="{% static 'css/global-styles.css' %}">
+    <link rel="stylesheet" href="{% static 'css/neostructure-theme.css' %}">
+    <link rel="stylesheet" href="{% static 'css/sidebar-layout.css' %}">
+    <link rel="stylesheet" href="{% static 'css/mobile-styles.css' %}">
+    <link rel="stylesheet" href="{% static 'css/neostructure-enhanced.css' %}">
+    
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <!-- Sidebar - Solo mostrar si no es la página de login -->
+    {% if not request.resolver_match.url_name == 'login' %}
+    <div class="sidebar" id="sidebar">
+        <!-- Header del Sidebar -->
+        <div class="sidebar-header">
+            <div class="sidebar-logo">
+                <div class="logo-icon">
+                    <div class="logo-buildings">
+                        <div class="building building-left"></div>
+                        <div class="building building-center"></div>
+                        <div class="building building-right"></div>
+                    </div>
+                </div>
+                <div class="logo-text">
+                    <div class="logo-line-1">SISTEMA</div>
+                    <div class="logo-line-2">
+                        <span class="logo-ar">GEST</span><span class="logo-ca">ION</span>
+                    </div>
+                    <div class="logo-line-3">DE PROYECTOS</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Navegación del Sidebar -->
+        <nav class="sidebar-nav">
+            <ul class="nav-list">
+                <li class="nav-item">
+                    <a href="{% url 'dashboard' %}" class="nav-link">
+                        <i class="fas fa-tachometer-alt"></i>
+                        <span>Dashboard</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{% url 'proyectos_list' %}" class="nav-link">
+                        <i class="fas fa-project-diagram"></i>
+                        <span>Proyectos</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{% url 'clientes_list' %}" class="nav-link">
+                        <i class="fas fa-users"></i>
+                        <span>Clientes</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{% url 'colaboradores_list' %}" class="nav-link">
+                        <i class="fas fa-hard-hat"></i>
+                        <span>Colaboradores</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{% url 'facturas_list' %}" class="nav-link">
+                        <i class="fas fa-file-invoice-dollar"></i>
+                        <span>Facturas</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{% url 'gastos_dashboard' %}" class="nav-link">
+                        <i class="fas fa-receipt"></i>
+                        <span>Gastos</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{% url 'inventario_dashboard' %}" class="nav-link">
+                        <i class="fas fa-boxes"></i>
+                        <span>Inventario</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{% url 'presupuestos_list' %}" class="nav-link">
+                        <i class="fas fa-calculator"></i>
+                        <span>Presupuestos</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{% url 'usuarios_lista_mejorada' %}" class="nav-link">
+                        <i class="fas fa-users-cog"></i>
+                        <span>Usuarios</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{% url 'archivos_proyectos_list' %}" class="nav-link">
+                        <i class="fas fa-folder"></i>
+                        <span>Archivos</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{% url 'anticipos_list' %}" class="nav-link">
+                        <i class="fas fa-hand-holding-usd"></i>
+                        <span>Anticipos</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{% url 'pagos_list' %}" class="nav-link">
+                        <i class="fas fa-credit-card"></i>
+                        <span>Pagos</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{% url 'rentabilidad' %}" class="nav-link">
+                        <i class="fas fa-chart-line"></i>
+                        <span>Rentabilidad</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{% url 'sistema' %}" class="nav-link">
+                        <i class="fas fa-cog"></i>
+                        <span>Sistema</span>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+    </div>
+    {% endif %}
+
+    <!-- Contenido Principal -->
+    <div class="main-content" id="mainContent">
+        <!-- Navegación Superior - Solo mostrar si no es la página de login -->
+        {% if not request.resolver_match.url_name == 'login' %}
+        <nav class="top-nav">
+            <div class="nav-left">
+                <button class="sidebar-toggle-mobile" id="sidebarToggleMobile">
+                    <i class="fas fa-bars"></i>
+                </button>
+            </div>
+            <div class="nav-right">
+                <!-- Indicador de conexión -->
+                <div class="connection-indicator me-3">
+                    <span id="connectionStatus" class="badge bg-success">
+                        <i class="fas fa-wifi me-1"></i>Online
+                    </span>
+                </div>
+                
+                <div class="user-menu">
+                    <span class="user-name">{{ user.get_full_name|default:user.username }}</span>
+                    <div class="user-dropdown">
+                        <a href="{% url 'perfil' %}"><i class="fas fa-user"></i> Perfil</a>
+                        <a href="{% url 'logout' %}"><i class="fas fa-sign-out-alt"></i> Cerrar Sesión</a>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+            
+            <style>
+                .user-menu {
+                    position: relative;
+                    cursor: pointer;
+                    padding: 8px 16px;
+                    background: rgba(0, 0, 0, 0.1);
+                    border-radius: 20px;
+                    transition: all 0.3s ease;
+                }
+                
+                .user-menu:hover {
+                    background: rgba(0, 0, 0, 0.2);
+                }
+                
+                .user-name {
+                    color: #333;
+                    font-weight: 500;
+                }
+                
+                .user-dropdown {
+                    position: absolute;
+                    top: 100%;
+                    right: 0;
+                    background: white;
+                    border: 1px solid #ddd;
+                    border-radius: 8px;
+                    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+                    min-width: 180px;
+                    opacity: 0;
+                    visibility: hidden;
+                    transform: translateY(-10px);
+                    transition: all 0.3s ease;
+                    z-index: 1000;
+                }
+                
+                .user-dropdown.active {
+                    opacity: 1;
+                    visibility: visible;
+                    transform: translateY(0);
+                }
+                
+                .user-dropdown a {
+                    display: block;
+                    padding: 12px 16px;
+                    color: #333;
+                    text-decoration: none;
+                    border-bottom: 1px solid #f0f0f0;
+                    transition: all 0.3s ease;
+                }
+                
+                .user-dropdown a:last-child {
+                    border-bottom: none;
+                }
+                
+                .user-dropdown a:hover {
+                    background: #f8f9fa;
+                    color: #007bff;
+                }
+                
+                .user-dropdown i {
+                    margin-right: 8px;
+                    width: 16px;
+                }
+                
+                /* Estilos para submenús */
+                .nav-item.has-submenu {
+                    position: relative;
+                }
+                
+                .submenu-toggle {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                }
+                
+                .submenu-arrow {
+                    font-size: 0.8rem;
+                    transition: transform 0.3s ease;
+                }
+                
+                .nav-item.has-submenu.active .submenu-arrow {
+                    transform: rotate(180deg);
+                }
+                
+                .submenu {
+                    list-style: none;
+                    padding: 0;
+                    margin: 0;
+                    background: rgba(255, 255, 255, 0.1);
+                    border-left: 3px solid rgba(255, 255, 255, 0.3);
+                    margin-left: 1rem;
+                    max-height: 0;
+                    overflow: hidden;
+                    transition: max-height 0.3s ease;
+                }
+                
+                .nav-item.has-submenu.active .submenu {
+                    max-height: 300px;
+                }
+                
+                .submenu li {
+                    margin: 0;
+                }
+                
+                .submenu-link {
+                    display: flex;
+                    align-items: center;
+                    padding: 0.75rem 1rem;
+                    color: rgba(255, 255, 255, 0.8);
+                    text-decoration: none;
+                    font-size: 0.9rem;
+                    transition: all 0.3s ease;
+                    border-radius: 8px;
+                    margin: 0.25rem 0.5rem;
+                }
+                
+                .submenu-link:hover {
+                    background: rgba(255, 255, 255, 0.1);
+                    color: white;
+                    text-decoration: none;
+                    transform: translateX(5px);
+                }
+                
+                .submenu-link i {
+                    margin-right: 0.75rem;
+                    width: 16px;
+                    text-align: center;
+                }
+                
+                .submenu-link span {
+                    font-weight: 500;
+                }
+                
+                /* ===== NOTIFICACIONES MODERNAS ===== */
+                .messages-container {
+                    position: fixed;
+                    top: 20px;
+                    right: 20px;
+                    z-index: 10000;
+                    max-width: 400px;
+                    width: 100%;
+                }
+                
+                .modern-notification {
+                    background: white;
+                    border-radius: 12px;
+                    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+                    margin-bottom: 16px;
+                    overflow: hidden;
+                    position: relative;
+                    transform: translateX(100%);
+                    opacity: 0;
+                    animation: slideInRight 0.5s ease forwards;
+                    border-left: 4px solid;
+                }
+                
+                .modern-notification.alert-success {
+                    border-left-color: #28a745;
+                }
+                
+                .modern-notification.alert-error {
+                    border-left-color: #dc3545;
+                }
+                
+                .modern-notification.alert-warning {
+                    border-left-color: #ffc107;
+                }
+                
+                .modern-notification.alert-info {
+                    border-left-color: #17a2b8;
+                }
+                
+                .notification-content {
+                    display: flex;
+                    align-items: flex-start;
+                    padding: 16px;
+                    position: relative;
+                }
+                
+                .notification-icon {
+                    margin-right: 12px;
+                    font-size: 20px;
+                    margin-top: 2px;
+                }
+                
+                .modern-notification.alert-success .notification-icon {
+                    color: #28a745;
+                }
+                
+                .modern-notification.alert-error .notification-icon {
+                    color: #dc3545;
+                }
+                
+                .modern-notification.alert-warning .notification-icon {
+                    color: #ffc107;
+                }
+                
+                .modern-notification.alert-info .notification-icon {
+                    color: #17a2b8;
+                }
+                
+                .notification-text {
+                    flex: 1;
+                }
+                
+                .notification-title {
+                    font-weight: 600;
+                    font-size: 14px;
+                    margin-bottom: 4px;
+                    color: #333;
+                }
+                
+                .notification-message {
+                    font-size: 13px;
+                    color: #666;
+                    line-height: 1.4;
+                }
+                
+                .notification-close {
+                    background: none;
+                    border: none;
+                    color: #999;
+                    cursor: pointer;
+                    font-size: 14px;
+                    padding: 4px;
+                    margin-left: 8px;
+                    border-radius: 4px;
+                    transition: all 0.2s ease;
+                }
+                
+                .notification-close:hover {
+                    background: rgba(0, 0, 0, 0.1);
+                    color: #666;
+                }
+                
+                .notification-progress {
+                    height: 3px;
+                    background: linear-gradient(90deg, rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 0.05));
+                    position: relative;
+                    overflow: hidden;
+                }
+                
+                .modern-notification.alert-success .notification-progress::after {
+                    content: '';
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    height: 100%;
+                    width: 100%;
+                    background: linear-gradient(90deg, #28a745, #20c997);
+                    animation: progressBar 5s linear forwards;
+                }
+                
+                .modern-notification.alert-error .notification-progress::after {
+                    content: '';
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    height: 100%;
+                    width: 100%;
+                    background: linear-gradient(90deg, #dc3545, #e74c3c);
+                    animation: progressBar 5s linear forwards;
+                }
+                
+                .modern-notification.alert-warning .notification-progress::after {
+                    content: '';
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    height: 100%;
+                    width: 100%;
+                    background: linear-gradient(90deg, #ffc107, #f39c12);
+                    animation: progressBar 5s linear forwards;
+                }
+                
+                .modern-notification.alert-info .notification-progress::after {
+                    content: '';
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    height: 100%;
+                    width: 100%;
+                    background: linear-gradient(90deg, #17a2b8, #3498db);
+                    animation: progressBar 5s linear forwards;
+                }
+                
+                @keyframes slideInRight {
+                    from {
+                        transform: translateX(100%);
+                        opacity: 0;
+                    }
+                    to {
+                        transform: translateX(0);
+                        opacity: 1;
+                    }
+                }
+                
+                @keyframes slideOutRight {
+                    from {
+                        transform: translateX(0);
+                        opacity: 1;
+                    }
+                    to {
+                        transform: translateX(100%);
+                        opacity: 0;
+                    }
+                }
+                
+                @keyframes progressBar {
+                    from {
+                        width: 100%;
+                    }
+                    to {
+                        width: 0%;
+                    }
+                }
+                
+                .modern-notification.closing {
+                    animation: slideOutRight 0.3s ease forwards;
+                }
+                
+                /* Responsive */
+                @media (max-width: 768px) {
+                    .messages-container {
+                        top: 10px;
+                        right: 10px;
+                        left: 10px;
+                        max-width: none;
+                    }
+                    
+                    .modern-notification {
+                        margin-bottom: 12px;
+                    }
+                    
+                    .notification-content {
+                        padding: 12px;
+                    }
+                }
+            </style>
+        </nav>
+
+        <!-- Contenido de la Página -->
+        <div class="page-content">
+            <!-- Mensajes del Sistema -->
+            {% if messages %}
+                <div class="messages-container">
+                    {% for message in messages %}
+                        <div class="modern-notification alert-{{ message.tags }}" data-message-id="{{ forloop.counter }}">
+                            <div class="notification-content">
+                                <div class="notification-icon">
+                                    {% if message.tags == 'success' %}
+                                        <i class="fas fa-check-circle"></i>
+                                    {% elif message.tags == 'error' %}
+                                        <i class="fas fa-exclamation-circle"></i>
+                                    {% elif message.tags == 'warning' %}
+                                        <i class="fas fa-exclamation-triangle"></i>
+                                    {% elif message.tags == 'info' %}
+                                        <i class="fas fa-info-circle"></i>
+                                    {% else %}
+                                        <i class="fas fa-bell"></i>
+                                    {% endif %}
+                                </div>
+                                <div class="notification-text">
+                                    <div class="notification-title">
+                                        {% if message.tags == 'success' %}
+                                            ¡Éxito!
+                                        {% elif message.tags == 'error' %}
+                                            Error
+                                        {% elif message.tags == 'warning' %}
+                                            Advertencia
+                                        {% elif message.tags == 'info' %}
+                                            Información
+                                        {% else %}
+                                            Notificación
+                                        {% endif %}
+                                    </div>
+                                    <div class="notification-message">{{ message }}</div>
+                                </div>
+                                <button type="button" class="notification-close" onclick="closeNotification(this)">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                            <div class="notification-progress"></div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+            <!-- Contenido del Bloque -->
+            {% block content %}{% endblock %}
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- JavaScript Personalizado -->
+    <script src="{% static 'js/global-functions.js' %}"></script>
+    
+    <!-- PWA Scripts -->
+    <script src="{% static 'js/pwa-diagnostic.js' %}"></script>
+    <script src="{% static 'js/pwa-register.js' %}"></script>
+    
+    <script>
+        // Función para instalar la PWA
+        let deferredPrompt;
+        
+        // Detectar cuando se puede instalar la PWA (DESHABILITADO)
+        window.addEventListener('beforeinstallprompt', function(e) {
+            console.log('🚀 Evento beforeinstallprompt detectado (botón deshabilitado)');
+            e.preventDefault();
+            deferredPrompt = e;
+            
+            // NO mostrar botón de instalación
+            // showInstallButton();
+        });
+        
+        // Detectar si la PWA ya está instalada
+        window.addEventListener('appinstalled', function(e) {
+            console.log('✅ PWA instalada exitosamente');
+            deferredPrompt = null;
+            hideInstallButton();
+        });
+        
+        function showInstallButton() {
+            console.log('📱 Mostrando botón de instalación PWA');
+            
+            // Crear botón de instalación si no existe
+            if (!document.getElementById('pwa-install-btn')) {
+                const installBtn = document.createElement('button');
+                installBtn.id = 'pwa-install-btn';
+                installBtn.className = 'btn btn-primary position-fixed';
+                installBtn.style.cssText = `
+                    bottom: 20px; 
+                    right: 20px; 
+                    z-index: 9999; 
+                    border-radius: 50px; 
+                    padding: 15px 25px; 
+                    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+                    background: linear-gradient(135deg, #667eea, #764ba2);
+                    border: none;
+                    color: white;
+                    font-weight: 600;
+                    font-size: 14px;
+                    transition: all 0.3s ease;
+                    animation: slideIn 0.5s ease;
+                `;
+                installBtn.innerHTML = '<i class="fas fa-download me-2"></i>📱 Instalar App';
+                
+                // Agregar estilos de animación
+                const style = document.createElement('style');
+                style.textContent = `
+                    @keyframes slideIn {
+                        from { transform: translateX(100%); opacity: 0; }
+                        to { transform: translateX(0); opacity: 1; }
+                    }
+                    
+                    #pwa-install-btn:hover {
+                        transform: translateY(-3px) scale(1.05);
+                        box-shadow: 0 12px 35px rgba(102, 126, 234, 0.6);
+                    }
+                `;
+                document.head.appendChild(style);
+                
+                installBtn.addEventListener('click', function() {
+                    console.log('🔄 Usuario hizo clic en instalar PWA');
+                    if (deferredPrompt) {
+                        deferredPrompt.prompt();
+                        deferredPrompt.userChoice.then(function(choiceResult) {
+                            if (choiceResult.outcome === 'accepted') {
+                                console.log('✅ Usuario aceptó instalar la PWA');
+                                showNotification('🚀 Instalando PWA...', 'success');
+                            } else {
+                                console.log('❌ Usuario rechazó instalar la PWA');
+                                showNotification('❌ Instalación cancelada', 'warning');
+                            }
+                            deferredPrompt = null;
+                            hideInstallButton();
+                        });
+                    }
+                });
+                
+                document.body.appendChild(installBtn);
+                
+                // Mostrar notificación
+                showNotification('📱 ¡Puedes instalar esta app como PWA!', 'info');
+            }
+        }
+        
+        function hideInstallButton() {
+            const installBtn = document.getElementById('pwa-install-btn');
+            if (installBtn) {
+                installBtn.style.animation = 'slideOut 0.5s ease';
+                setTimeout(() => {
+                    if (installBtn.parentNode) {
+                        installBtn.remove();
+                    }
+                }, 500);
+            }
+        }
+        
+        function showNotification(message, type = 'info', title = null) {
+            // Crear contenedor si no existe
+            let container = document.querySelector('.messages-container');
+            if (!container) {
+                container = document.createElement('div');
+                container.className = 'messages-container';
+                document.body.appendChild(container);
+            }
+            
+            // Generar ID único
+            const notificationId = 'notification-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+            
+            // Determinar título e icono según el tipo
+            let notificationTitle = title;
+            let iconClass = 'fas fa-bell';
+            
+            if (!notificationTitle) {
+                switch(type) {
+                    case 'success':
+                        notificationTitle = '¡Éxito!';
+                        iconClass = 'fas fa-check-circle';
+                        break;
+                    case 'error':
+                        notificationTitle = 'Error';
+                        iconClass = 'fas fa-exclamation-circle';
+                        break;
+                    case 'warning':
+                        notificationTitle = 'Advertencia';
+                        iconClass = 'fas fa-exclamation-triangle';
+                        break;
+                    case 'info':
+                        notificationTitle = 'Información';
+                        iconClass = 'fas fa-info-circle';
+                        break;
+                    default:
+                        notificationTitle = 'Notificación';
+                        iconClass = 'fas fa-bell';
+                }
+            }
+            
+            // Crear notificación
+            const notification = document.createElement('div');
+            notification.className = `modern-notification alert-${type}`;
+            notification.setAttribute('data-message-id', notificationId);
+            
+            notification.innerHTML = `
+                <div class="notification-content">
+                    <div class="notification-icon">
+                        <i class="${iconClass}"></i>
+                    </div>
+                    <div class="notification-text">
+                        <div class="notification-title">${notificationTitle}</div>
+                        <div class="notification-message">${message}</div>
+                    </div>
+                    <button type="button" class="notification-close" onclick="closeNotification(this)">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="notification-progress"></div>
+            `;
+            
+            container.appendChild(notification);
+            
+            // Auto-ocultar después de 5 segundos
+            setTimeout(() => {
+                closeNotificationById(notificationId);
+            }, 5000);
+        }
+        
+        function closeNotification(button) {
+            const notification = button.closest('.modern-notification');
+            if (notification) {
+                notification.classList.add('closing');
+                setTimeout(() => {
+                    if (notification.parentNode) {
+                        notification.remove();
+                    }
+                }, 300);
+            }
+        }
+        
+        function closeNotificationById(notificationId) {
+            const notification = document.querySelector(`[data-message-id="${notificationId}"]`);
+            if (notification) {
+                notification.classList.add('closing');
+                setTimeout(() => {
+                    if (notification.parentNode) {
+                        notification.remove();
+                    }
+                }, 300);
+            }
+        }
+        
+        // Verificar si ya está instalado
+        if (window.matchMedia('(display-mode: standalone)').matches) {
+            console.log('✅ PWA ya está instalada y ejecutándose en modo standalone');
+        } else {
+            console.log('📱 PWA no está instalada, mostrando opciones de instalación');
+        }
+    </script>
+    
+    <script>
+        // Funcionalidad del menú de usuario
+        document.addEventListener('DOMContentLoaded', function() {
+            const userMenu = document.querySelector('.user-menu');
+            const userDropdown = document.querySelector('.user-dropdown');
+            
+            if (userMenu && userDropdown) {
+                // Mostrar/ocultar dropdown al hacer clic
+                userMenu.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    userDropdown.classList.toggle('active');
+                });
+                
+                // Cerrar dropdown al hacer clic fuera
+                document.addEventListener('click', function() {
+                    userDropdown.classList.remove('active');
+                });
+                
+                // Prevenir que se cierre al hacer clic en el dropdown
+                userDropdown.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                });
+            }
+            
+            // Funcionalidad de submenús
+            const submenuToggles = document.querySelectorAll('.submenu-toggle');
+            
+            submenuToggles.forEach(toggle => {
+                toggle.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const navItem = this.closest('.nav-item');
+                    const isActive = navItem.classList.contains('active');
+                    
+                    // Cerrar todos los submenús
+                    document.querySelectorAll('.nav-item.has-submenu').forEach(item => {
+                        item.classList.remove('active');
+                    });
+                    
+                    // Abrir el submenú actual si no estaba activo
+                    if (!isActive) {
+                        navItem.classList.add('active');
+                    }
+                });
+            });
+            
+            // Cerrar submenús al hacer clic fuera
+            document.addEventListener('click', function(e) {
+                if (!e.target.closest('.nav-item.has-submenu')) {
+                    document.querySelectorAll('.nav-item.has-submenu').forEach(item => {
+                        item.classList.remove('active');
+                    });
+                }
+            });
+            
+            // Ocultar sidebar en páginas de autenticación
+            const currentPath = window.location.pathname;
+            const sidebar = document.getElementById('sidebar');
+            const mainContent = document.getElementById('mainContent');
+            
+            if (currentPath.includes('/login/') || currentPath.includes('/register/') || currentPath.includes('/password/')) {
+                if (sidebar) sidebar.style.display = 'none';
+                if (mainContent) mainContent.style.marginLeft = '0';
+            }
+        });
+    </script>
+    
+    {% block extra_js %}{% endblock %}
+    
+    <!-- Service Worker Registration - Manejado por pwa-register.js -->
+        
+        // Indicador de conexión
+        function updateConnectionStatus() {
+            const statusElement = document.getElementById('connectionStatus');
+            if (statusElement) {
+                if (navigator.onLine) {
+                    statusElement.className = 'badge bg-success';
+                    statusElement.innerHTML = '<i class="fas fa-wifi me-1"></i>Online';
+                } else {
+                    statusElement.className = 'badge bg-danger';
+                    statusElement.innerHTML = '<i class="fas fa-wifi-slash me-1"></i>Offline';
+                }
+            }
+        }
+        
+        // Actualizar estado al cargar
+        updateConnectionStatus();
+        
+        // Escuchar cambios de conexión
+        window.addEventListener('online', updateConnectionStatus);
+        window.addEventListener('offline', updateConnectionStatus);
+    </script>
+</body>
+</html>
+ 

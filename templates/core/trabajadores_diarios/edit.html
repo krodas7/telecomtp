@@ -102,20 +102,48 @@
                     <p class="text-muted">Q{{ trabajador.pago_diario|floatformat:2 }}</p>
                     
                     <h6><strong>Estado:</strong></h6>
-                    <span class="badge bg-{{ trabajador.activo and 'success' or 'danger' }}">
-                        {{ trabajador.activo and 'Activo' or 'Inactivo' }}
-                    </span>
+                    {% if trabajador.activo %}
+                        <span class="badge bg-success">Activo</span>
+                    {% else %}
+                        <span class="badge bg-danger">Inactivo</span>
+                    {% endif %}
                     
                     <hr>
                     
                     <h6><strong>Días Trabajados:</strong></h6>
-                    <p class="text-muted">{{ trabajador.total_dias_trabajados }}</p>
+                    <p class="text-muted" id="dias-trabajados-display">
+                        {% for registro in trabajador.registros_trabajo.all %}
+                            {{ registro.dias_trabajados }}{% if not forloop.last %}, {% endif %}
+                        {% empty %}
+                            0
+                        {% endfor %}
+                    </p>
                     
                     <h6><strong>Total a Pagar:</strong></h6>
-                    <p class="text-muted">Q{{ trabajador.total_a_pagar|floatformat:2 }}</p>
+                    <p class="text-muted" id="total-pagar-display">
+                        Q0.00
+                    </p>
                 </div>
             </div>
         </div>
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Calcular total a pagar basado en días trabajados
+    const diasTrabajadosText = document.getElementById('dias-trabajados-display').textContent.trim();
+    const pagoDiario = {{ trabajador.pago_diario }};
+    
+    let totalDias = 0;
+    if (diasTrabajadosText !== '0') {
+        // Sumar todos los días trabajados
+        const diasArray = diasTrabajadosText.split(',').map(d => parseInt(d.trim()) || 0);
+        totalDias = diasArray.reduce((sum, dias) => sum + dias, 0);
+    }
+    
+    const totalPagar = pagoDiario * totalDias;
+    document.getElementById('total-pagar-display').textContent = `Q${totalPagar.toFixed(2)}`;
+});
+</script>
 {% endblock %}

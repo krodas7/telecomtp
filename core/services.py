@@ -1,585 +1,332 @@
 """
-Servicios para el sistema de construcción
+Servicios del sistema ARCA Construcción
+Contiene la lógica de negocio separada de las vistas
 """
-import os
-from django.core.mail import send_mail, EmailMultiAlternatives
-from django.template.loader import render_to_string
-from django.utils.html import strip_tags
-from django.conf import settings
-from django.utils import timezone
-from django.contrib.auth.models import User
-from .models import (
-    NotificacionSistema, ConfiguracionNotificaciones, 
-    HistorialNotificaciones, Factura, Gasto, Proyecto, Presupuesto
-)
-from datetime import datetime, timedelta
-import logging
 
-logger = logging.getLogger(__name__)
+from django.db.models import Sum, Count, Q, F
+from django.utils import timezone
+from decimal import Decimal
+from datetime import datetime, timedelta
+from .models import *
+from .query_utils import QueryOptimizer, DashboardQueries, ReporteQueries
+
+
+class ProyectoService:
+    """Servicio para operaciones relacionadas con proyectos"""
+    
+    @staticmethod
+    def calcular_rentabilidad(proyecto):
+        """Calcula la rentabilidad de un proyecto"""
+        try:
+            # Obtener gastos aprobados del proyecto
+            gastos_totales = Gasto.objects.filter(
+                proyecto=proyecto,
+                aprobado=True
+            ).aggregate(total=Sum('monto'))['total'] or 0
+            
+            # Obtener facturas pagadas
+            facturas_pagadas = Factura.objects.filter(
+                proyecto=proyecto,
+                estado='pagada'
+            ).aggregate(total=Sum('monto_total'))['total'] or 0
+            
+            # Calcular rentabilidad
+            presupuesto = proyecto.presupuesto or 0
+            ingresos = facturas_pagadas
+            gastos = gastos_totales
+            
+            if presupuesto > 0:
+                rentabilidad_porcentaje = ((ingresos - gastos) / presupuesto) * 100
+            else:
+                rentabilidad_porcentaje = 0
+            
+            return {
+                'presupuesto': presupuesto,
+                'ingresos': ingresos,
+                'gastos': gastos,
+                'utilidad': ingresos - gastos,
+                'rentabilidad_porcentaje': round(rentabilidad_porcentaje, 2)
+            }
+        except Exception as e:
+            return {
+                'presupuesto': 0,
+                'ingresos': 0,
+                'gastos': 0,
+                'utilidad': 0,
+                'rentabilidad_porcentaje': 0,
+                'error': str(e)
+            }
+    
+    @staticmethod
+    def obtener_estadisticas_proyecto(proyecto):
+        """Obtiene estadísticas detalladas de un proyecto"""
+        try:
+            # Estadísticas básicas
+            total_gastos = Gasto.objects.filter(proyecto=proyecto).aggregate(
+                total=Sum('monto')
+            )['total'] or 0
+            
+            gastos_aprobados = Gasto.objects.filter(
+                proyecto=proyecto,
+                aprobado=True
+            ).aggregate(total=Sum('monto'))['total'] or 0
+            
+            gastos_pendientes = Gasto.objects.filter(
+                proyecto=proyecto,
+                aprobado=False
+            ).aggregate(total=Sum('monto'))['total'] or 0
+            
+            # Estadísticas de facturas
+            total_facturas = Factura.objects.filter(proyecto=proyecto).count()
+            facturas_pagadas = Factura.objects.filter(
+                proyecto=proyecto,
+                estado='pagada'
+            ).count()
+            
+            monto_facturado = Factura.objects.filter(proyecto=proyecto).aggregate(
+                total=Sum('monto_total')
+            )['total'] or 0
+            
+            monto_pagado = Factura.objects.filter(proyecto=proyecto).aggregate(
+                total=Sum('monto_pagado')
+            )['total'] or 0
+            
+            # Estadísticas de colaboradores
+            total_colaboradores = proyecto.colaboradores.count()
+            
+            return {
+                'gastos': {
+                    'total': total_gastos,
+                    'aprobados': gastos_aprobados,
+                    'pendientes': gastos_pendientes,
+                    'por_aprobar': gastos_pendientes
+                },
+                'facturas': {
+                    'total': total_facturas,
+                    'pagadas': facturas_pagadas,
+                    'pendientes': total_facturas - facturas_pagadas,
+                    'monto_facturado': monto_facturado,
+                    'monto_pagado': monto_pagado,
+                    'monto_pendiente': monto_facturado - monto_pagado
+                },
+                'colaboradores': {
+                    'total': total_colaboradores
+                }
+            }
+        except Exception as e:
+            return {'error': str(e)}
+
+
+class FacturaService:
+    """Servicio para operaciones relacionadas con facturas"""
+    
+    @staticmethod
+    def generar_numero_factura():
+        """Genera un número de factura único"""
+        try:
+            # Obtener el último número de factura
+            ultima_factura = Factura.objects.order_by('-id').first()
+            if ultima_factura and ultima_factura.numero_factura:
+                # Extraer el número y incrementar
+                try:
+                    numero = int(ultima_factura.numero_factura.split('-')[-1])
+                    nuevo_numero = numero + 1
+                except (ValueError, IndexError):
+                    nuevo_numero = 1
+            else:
+                nuevo_numero = 1
+            
+            # Formatear como F001-2025
+            return f"F{nuevo_numero:03d}-{timezone.now().year}"
+        except Exception:
+            return f"F001-{timezone.now().year}"
+    
+    @staticmethod
+    def calcular_montos_factura(monto_subtotal, porcentaje_iva=12):
+        """Calcula los montos de una factura"""
+        monto_iva = monto_subtotal * (porcentaje_iva / 100)
+        monto_total = monto_subtotal + monto_iva
+        
+        return {
+            'monto_subtotal': monto_subtotal,
+            'monto_iva': monto_iva,
+            'monto_total': monto_total,
+            'porcentaje_iva': porcentaje_iva
+        }
+    
+    @staticmethod
+    def obtener_facturas_vencidas():
+        """Obtiene facturas vencidas"""
+        hoy = timezone.now().date()
+        return Factura.objects.filter(
+            fecha_vencimiento__lt=hoy,
+            estado__in=['emitida', 'enviada']
+        ).order_by('fecha_vencimiento')
+
+
+class GastoService:
+    """Servicio para operaciones relacionadas con gastos"""
+    
+    @staticmethod
+    def obtener_gastos_por_categoria(proyecto_id=None, fecha_inicio=None, fecha_fin=None):
+        """Obtiene gastos agrupados por categoría"""
+        queryset = Gasto.objects.filter(aprobado=True)
+        
+        if proyecto_id:
+            queryset = queryset.filter(proyecto_id=proyecto_id)
+        
+        if fecha_inicio:
+            queryset = queryset.filter(fecha_gasto__gte=fecha_inicio)
+        
+        if fecha_fin:
+            queryset = queryset.filter(fecha_gasto__lte=fecha_fin)
+        
+        return queryset.values('categoria__nombre').annotate(
+            total=Sum('monto'),
+            cantidad=Count('id')
+        ).order_by('-total')
+    
+    @staticmethod
+    def obtener_gastos_pendientes_aprobacion():
+        """Obtiene gastos pendientes de aprobación"""
+        return Gasto.objects.filter(aprobado=False).order_by('-creado_en')
+
+
+class DashboardService:
+    """Servicio para datos del dashboard"""
+    
+    @staticmethod
+    def obtener_estadisticas_generales():
+        """Obtiene estadísticas generales para el dashboard"""
+        try:
+            # Usar consultas optimizadas
+            stats = DashboardQueries.estadisticas_generales()
+            
+            # Facturas vencidas
+            facturas_vencidas = DashboardQueries.facturas_vencidas().count()
+            
+            # Gastos pendientes
+            gastos_pendientes = DashboardQueries.gastos_pendientes_aprobacion().count()
+            
+            return {
+                'proyectos': {
+                    'total': stats['proyectos']['total'],
+                    'en_progreso': stats['proyectos']['en_progreso'],
+                    'completados': stats['proyectos']['completados'],
+                    'pendientes': stats['proyectos']['total'] - stats['proyectos']['en_progreso'] - stats['proyectos']['completados']
+                },
+                'financiero': {
+                    'total_facturado': stats['facturas']['total_facturado'] or 0,
+                    'total_pagado': stats['facturas']['total_pagado'] or 0,
+                    'total_gastos': stats['gastos']['total'] or 0,
+                    'utilidad': (stats['facturas']['total_pagado'] or 0) - (stats['gastos']['total'] or 0)
+                },
+                'alertas': {
+                    'facturas_vencidas': facturas_vencidas,
+                    'gastos_pendientes': gastos_pendientes
+                }
+            }
+        except Exception as e:
+            return {'error': str(e)}
+    
+    @staticmethod
+    def obtener_proyectos_recientes(limite=5):
+        """Obtiene los proyectos más recientes"""
+        return Proyecto.objects.filter(activo=True).order_by('-creado_en')[:limite]
+    
+    @staticmethod
+    def obtener_gastos_recientes(limite=5):
+        """Obtiene los gastos más recientes"""
+        return Gasto.objects.filter(aprobado=True).order_by('-creado_en')[:limite]
+
 
 class NotificacionService:
-    """Servicio para manejar notificaciones del sistema"""
+    """Servicio para manejo de notificaciones"""
     
     @staticmethod
-    def crear_notificacion(usuario, tipo, titulo, mensaje, prioridad='media', 
-                          proyecto=None, factura=None, gasto=None):
+    def crear_notificacion(usuario, tipo, titulo, mensaje, **kwargs):
         """Crea una nueva notificación"""
-        try:
-            # Verificar si el usuario quiere recibir este tipo de notificación
-            config = ConfiguracionNotificaciones.objects.get_or_create(usuario=usuario)[0]
-            
-            if not getattr(config, f"{tipo.split('_')[0]}s", True):
-                return None
-            
-            # Crear la notificación
-            notificacion = NotificacionSistema.objects.create(
-                usuario=usuario,
-                tipo=tipo,
-                titulo=titulo,
-                mensaje=mensaje,
-                prioridad=prioridad,
-                proyecto=proyecto,
-                factura=factura,
-                gasto=gasto
-            )
-            
-            # Registrar en el historial
-            HistorialNotificaciones.objects.create(
-                usuario=usuario,
-                tipo=tipo,
-                titulo=titulo,
-                mensaje=mensaje,
-                metodo_envio='sistema',
-                estado='enviada'
-            )
-            
-            return notificacion
-            
-        except Exception as e:
-            print(f"Error creando notificación: {e}")
-            return None
-    
-    @staticmethod
-    def notificar_factura_vencida(factura):
-        """Notifica sobre facturas vencidas"""
-        if factura.estado == 'vencida':
-            usuarios = User.objects.filter(is_active=True)
-            for usuario in usuarios:
-                NotificacionService.crear_notificacion(
-                    usuario=usuario,
-                    tipo='factura_vencida',
-                    titulo=f'Factura Vencida: {factura.numero_factura}',
-                    mensaje=f'La factura {factura.numero_factura} del proyecto {factura.proyecto.nombre} está vencida desde {factura.fecha_vencimiento.strftime("%d/%m/%Y")}',
-                    prioridad='alta',
-                    factura=factura,
-                    proyecto=factura.proyecto
-                )
-    
-    @staticmethod
-    def notificar_pago_pendiente(factura):
-        """Notifica sobre pagos pendientes"""
-        if factura.monto_pendiente > 0:
-            usuarios = User.objects.filter(is_active=True)
-            for usuario in usuarios:
-                NotificacionService.crear_notificacion(
-                    usuario=usuario,
-                    tipo='pago_pendiente',
-                    titulo=f'Pago Pendiente: {factura.numero_factura}',
-                    mensaje=f'La factura {factura.numero_factura} tiene un pago pendiente de Q{factura.monto_pendiente}',
-                    prioridad='media',
-                    factura=factura,
-                    proyecto=factura.proyecto
-                )
-    
-    @staticmethod
-    def notificar_gasto_aprobacion(gasto):
-        """Notifica sobre gastos que requieren aprobación"""
-        if not gasto.aprobado:
-            usuarios = User.objects.filter(is_active=True, is_superuser=True)
-            for usuario in usuarios:
-                NotificacionService.crear_notificacion(
-                    usuario=usuario,
-                    tipo='gasto_aprobacion',
-                    titulo=f'Gasto Requiere Aprobación: {gasto.descripcion}',
-                    mensaje=f'El gasto "{gasto.descripcion}" por Q{gasto.monto} requiere aprobación',
-                    prioridad='media',
-                    gasto=gasto,
-                    proyecto=gasto.proyecto
-                )
-    
-    @staticmethod
-    def notificar_cambio_proyecto(proyecto, estado_anterior, estado_nuevo):
-        """Notifica sobre cambios de estado en proyectos"""
-        usuarios = User.objects.filter(is_active=True)
-        for usuario in usuarios:
-            NotificacionService.crear_notificacion(
-                usuario=usuario,
-                tipo='proyecto_estado',
-                titulo=f'Cambio de Estado: {proyecto.nombre}',
-                mensaje=f'El proyecto {proyecto.nombre} cambió de estado de {estado_anterior} a {estado_nuevo}',
-                prioridad='baja',
-                proyecto=proyecto
-            )
-    
-    @staticmethod
-    def notificar_anticipo_disponible(anticipo):
-        """Notifica sobre anticipos disponibles"""
-        usuarios = User.objects.filter(is_active=True)
-        for usuario in usuarios:
-            NotificacionService.crear_notificacion(
-                usuario=usuario,
-                tipo='anticipo_disponible',
-                titulo=f'Anticipo Disponible: {anticipo.numero_anticipo}',
-                mensaje=f'El anticipo {anticipo.numero_anticipo} por Q{anticipo.monto_disponible} está disponible para aplicar',
-                prioridad='media',
-                proyecto=anticipo.proyecto
-            )
-    
-    @staticmethod
-    def notificar_presupuesto_revision(presupuesto):
-        """Notifica sobre presupuestos que requieren revisión"""
-        if presupuesto.estado == 'en_revision':
-            usuarios = User.objects.filter(is_active=True, is_superuser=True)
-            for usuario in usuarios:
-                NotificacionService.crear_notificacion(
-                    usuario=usuario,
-                    tipo='presupuesto_revision',
-                    titulo=f'Presupuesto Requiere Revisión: {presupuesto.nombre}',
-                    mensaje=f'El presupuesto {presupuesto.nombre} del proyecto {presupuesto.proyecto.nombre} requiere revisión',
-                    prioridad='media',
-                    proyecto=presupuesto.proyecto
-                )
-    
-    @staticmethod
-    def notificar_archivo_subido(archivo):
-        """Notifica sobre nuevos archivos subidos"""
-        usuarios = User.objects.filter(is_active=True)
-        for usuario in usuarios:
-            NotificacionService.crear_notificacion(
-                usuario=usuario,
-                tipo='archivo_subido',
-                titulo=f'Nuevo Archivo: {archivo.nombre}',
-                mensaje=f'Se subió el archivo "{archivo.nombre}" al proyecto {archivo.proyecto.nombre}',
-                prioridad='baja',
-                proyecto=archivo.proyecto
-            )
-    
-    @staticmethod
-    def limpiar_notificaciones_antiguas(dias=30):
-        """Limpia notificaciones antiguas"""
-        fecha_limite = timezone.now() - timedelta(days=dias)
-        NotificacionSistema.objects.filter(
-            fecha_creacion__lt=fecha_limite,
-            leida=True
-        ).delete()
-    
-    @staticmethod
-    def obtener_notificaciones_no_leidas(usuario):
-        """Obtiene las notificaciones no leídas de un usuario"""
-        return NotificacionSistema.objects.filter(
-            usuario=usuario,
-            leida=False
-        ).order_by('-fecha_creacion')
-    
-    @staticmethod
-    def marcar_como_leida(notificacion_id, usuario):
-        """Marca una notificación como leída"""
-        try:
-            notificacion = NotificacionSistema.objects.get(
-                id=notificacion_id,
-                usuario=usuario
-            )
-            notificacion.marcar_como_leida()
-            return True
-        except NotificacionSistema.DoesNotExist:
-            return False
-    
-    @staticmethod
-    def enviar_email_notificacion(notificacion, usuario_destino=None):
-        """
-        Envía una notificación por email con plantilla HTML personalizada
-        """
-        try:
-            if not usuario_destino:
-                usuario_destino = notificacion.usuario
-            
-            # Obtener configuración del usuario
-            config = ConfiguracionNotificaciones.objects.filter(usuario=usuario_destino).first()
-            if not config or not config.email_habilitado:
-                return False
-            
-            # Verificar horario de notificaciones
-            hora_actual = timezone.now().time()
-            if config.horario_inicio and config.horario_fin:
-                if not (config.horario_inicio <= hora_actual <= config.horario_fin):
-                    return False
-            
-            # Renderizar plantilla HTML
-            context = {
-                'notificacion': notificacion,
-                'usuario': usuario_destino,
-                'fecha': timezone.now(),
-                'base_url': settings.BASE_URL if hasattr(settings, 'BASE_URL') else 'http://localhost:8000'
-            }
-            
-            html_content = render_to_string('notificaciones/email_template.html', context)
-            text_content = strip_tags(html_content)
-            
-            # Crear email
-            subject = f"🔔 {notificacion.titulo}"
-            from_email = settings.DEFAULT_FROM_EMAIL
-            to_email = usuario_destino.email
-            
-            email = EmailMultiAlternatives(
-                subject=subject,
-                body=text_content,
-                from_email=from_email,
-                to=[to_email]
-            )
-            email.attach_alternative(html_content, "text/html")
-            
-            # Enviar email
-            email.send()
-            
-            # Registrar en historial
-            HistorialNotificaciones.objects.create(
-                usuario=usuario_destino,
-                tipo=notificacion.tipo,
-                titulo=notificacion.titulo,
-                mensaje=notificacion.mensaje,
-                fecha_envio=timezone.now(),
-                metodo_envio='email',
-                estado='enviado'
-            )
-            
-            logger.info(f"Email enviado exitosamente a {usuario_destino.email}")
-            return True
-            
-        except Exception as e:
-            logger.error(f"Error enviando email: {str(e)}")
-            
-            # Registrar error en historial
-            if usuario_destino:
-                HistorialNotificaciones.objects.create(
-                    usuario=usuario_destino,
-                    tipo=notificacion.tipo if notificacion else 'sistema',
-                    titulo=notificacion.titulo if notificacion else 'Error de Email',
-                    mensaje=f"Error enviando email: {str(e)}",
-                    fecha_envio=timezone.now(),
-                    metodo_envio='email',
-                    estado='error'
-                )
-            
-            return False
-    
-    @staticmethod
-    def enviar_notificacion_masiva(tipo, titulo, mensaje, usuarios=None, prioridad='normal'):
-        """
-        Envía una notificación masiva a múltiples usuarios
-        """
-        if not usuarios:
-            usuarios = User.objects.filter(is_active=True)
-        
-        notificaciones_creadas = []
-        for usuario in usuarios:
-            notificacion = NotificacionSistema.objects.create(
-                usuario=usuario,
-                tipo=tipo,
-                titulo=titulo,
-                mensaje=mensaje,
-                prioridad=prioridad
-            )
-            notificaciones_creadas.append(notificacion)
-            
-            # Enviar email si está habilitado
-            NotificacionService.enviar_email_notificacion(notificacion, usuario)
-        
-        return notificaciones_creadas
-    
-    @staticmethod
-    def programar_notificacion(tipo, titulo, mensaje, usuario, fecha_envio, prioridad='normal'):
-        """
-        Programa una notificación para ser enviada en una fecha específica
-        """
-        from .models import NotificacionProgramada
-        
-        notificacion = NotificacionProgramada.objects.create(
+        return NotificacionSistema.objects.create(
             usuario=usuario,
             tipo=tipo,
             titulo=titulo,
             mensaje=mensaje,
-            fecha_envio=fecha_envio,
-            prioridad=prioridad,
-            estado='programada'
+            **kwargs
         )
-        
-        return notificacion
-    
-    @staticmethod
-    def procesar_notificaciones_programadas():
-        """
-        Procesa y envía las notificaciones programadas
-        """
-        from .models import NotificacionProgramada
-        
-        ahora = timezone.now()
-        notificaciones_pendientes = NotificacionProgramada.objects.filter(
-            fecha_envio__lte=ahora,
-            estado='programada'
-        )
-        
-        for notif_programada in notificaciones_pendientes:
-            # Crear notificación del sistema
-            notificacion = NotificacionSistema.objects.create(
-                usuario=notif_programada.usuario,
-                tipo=notif_programada.tipo,
-                titulo=notif_programada.titulo,
-                mensaje=notif_programada.mensaje,
-                prioridad=notif_programada.prioridad
-            )
-            
-            # Enviar email
-            NotificacionService.enviar_email_notificacion(notificacion)
-            
-            # Marcar como procesada
-            notif_programada.estado = 'enviada'
-            notif_programada.fecha_envio_real = ahora
-            notif_programada.save()
-            
-            logger.info(f"Notificación programada procesada: {notif_programada.id}")
-
-    @staticmethod
-    def enviar_notificacion_push(notificacion):
-        """
-        Envía una notificación push al navegador del usuario
-        """
-        try:
-            # En un entorno real, aquí se enviaría la notificación push
-            # usando Web Push API o servicios como Firebase Cloud Messaging
-            
-            logger.info(f"Notificación push enviada: {notificacion.titulo} a {notificacion.usuario.username}")
-            return True
-        except Exception as e:
-            logger.error(f"Error enviando notificación push: {str(e)}")
-            return False
-
-    @staticmethod
-    def enviar_notificacion_push_masiva(notificaciones, usuarios=None):
-        """
-        Envía notificaciones push masivas a múltiples usuarios
-        """
-        try:
-            if usuarios is None:
-                usuarios = User.objects.filter(is_active=True)
-            
-            for usuario in usuarios:
-                for notificacion in notificaciones:
-                    if notificacion.usuario == usuario:
-                        NotificacionService.enviar_notificacion_push(notificacion)
-            
-            logger.info(f"Notificaciones push masivas enviadas a {usuarios.count()} usuarios")
-            return True
-        except Exception as e:
-            logger.error(f"Error enviando notificaciones push masivas: {str(e)}")
-            return False
-
-
-class SistemaNotificacionesAutomaticas:
-    """Sistema para enviar notificaciones automáticas basadas en eventos"""
     
     @staticmethod
     def verificar_facturas_vencidas():
-        """Verifica y notifica sobre facturas vencidas"""
-        hoy = timezone.now().date()
-        facturas_vencidas = Factura.objects.filter(
-            fecha_vencimiento__lt=hoy,
-            estado__in=['emitida', 'enviada']
-        )
+        """Verifica y crea notificaciones para facturas vencidas"""
+        facturas_vencidas = FacturaService.obtener_facturas_vencidas()
         
         for factura in facturas_vencidas:
-            factura.estado = 'vencida'
-            factura.save()
-            NotificacionService.notificar_factura_vencida(factura)
-    
-    @staticmethod
-    def verificar_pagos_pendientes():
-        """Verifica y notifica sobre pagos pendientes"""
-        facturas_con_pendiente = Factura.objects.filter(
-            monto_pendiente__gt=0,
-            estado__in=['emitida', 'enviada', 'vencida']
-        )
-        
-        for factura in facturas_con_pendiente:
-            NotificacionService.notificar_pago_pendiente(factura)
+            # Crear notificación para el usuario que creó la factura
+            if factura.creado_por:
+                NotificacionService.crear_notificacion(
+                    usuario=factura.creado_por,
+                    tipo='factura_vencida',
+                    titulo=f'Factura vencida: {factura.numero_factura}',
+                    mensaje=f'La factura {factura.numero_factura} está vencida desde {factura.fecha_vencimiento}',
+                    factura=factura,
+                    prioridad='alta'
+                )
     
     @staticmethod
     def verificar_gastos_pendientes():
-        """Verifica y notifica sobre gastos pendientes de aprobación"""
-        gastos_pendientes = Gasto.objects.filter(
-            aprobado=False,
-            fecha_gasto__gte=timezone.now() - timedelta(days=7)
-        )
+        """Verifica y crea notificaciones para gastos pendientes"""
+        gastos_pendientes = GastoService.obtener_gastos_pendientes_aprobacion()
+        
+        # Obtener usuarios con permisos de aprobación
+        usuarios_aprobacion = User.objects.filter(
+            perfilusuario__rol__rolpermiso__permiso__codigo='gastos_editar',
+            perfilusuario__rol__rolpermiso__activo=True
+        ).distinct()
         
         for gasto in gastos_pendientes:
-            NotificacionService.notificar_gasto_aprobacion(gasto)
-    
-    @staticmethod
-    def verificar_presupuestos_revision():
-        """Verifica y notifica sobre presupuestos en revisión"""
-        presupuestos_revision = Presupuesto.objects.filter(
-            estado='en_revision',
-            fecha_creacion__gte=timezone.now() - timedelta(days=3)
-        )
-        
-        for presupuesto in presupuestos_revision:
-            NotificacionService.notificar_presupuesto_revision(presupuesto)
-    
-    @staticmethod
-    def verificar_y_enviar_recordatorios():
-        """
-        Verifica y envía recordatorios automáticos por email
-        """
-        # Recordatorios de facturas próximas a vencer
-        fecha_limite = timezone.now() + timedelta(days=7)
-        facturas_proximas = Factura.objects.filter(
-            fecha_vencimiento__lte=fecha_limite,
-            estado='pendiente'
-        )
-        
-        for factura in facturas_proximas:
-            dias_restantes = (factura.fecha_vencimiento - timezone.now().date()).days
-            
-            if dias_restantes <= 3:
-                prioridad = 'alta'
-            elif dias_restantes <= 7:
-                prioridad = 'normal'
-            else:
-                continue
-            
-            titulo = f"⚠️ Factura próxima a vencer"
-            mensaje = f"La factura #{factura.numero} vence en {dias_restantes} días. Monto: ${factura.monto_total}"
-            
-            notificacion = NotificacionSistema.objects.create(
-                usuario=factura.proyecto.cliente,
-                tipo='factura',
-                factura=factura,
-                titulo=titulo,
-                mensaje=mensaje,
-                prioridad=prioridad
-            )
-            
-            # Enviar email
-            NotificacionService.enviar_email_notificacion(notificacion)
-    
-    @staticmethod
-    def enviar_resumen_diario(usuario):
-        """
-        Envía un resumen diario de notificaciones por email
-        """
-        hoy = timezone.now().date()
-        notificaciones_hoy = NotificacionSistema.objects.filter(
-            usuario=usuario,
-            fecha_creacion__date=hoy
-        ).order_by('-fecha_creacion')
-        
-        if not notificaciones_hoy.exists():
-            return
-        
-        # Contar por tipo
-        resumen = {}
-        for notif in notificaciones_hoy:
-            if notif.tipo not in resumen:
-                resumen[notif.tipo] = 0
-            resumen[notif.tipo] += 1
-        
-        # Crear mensaje de resumen
-        titulo = "📊 Resumen Diario de Notificaciones"
-        mensaje = f"Tienes {notificaciones_hoy.count()} notificaciones hoy:\n\n"
-        
-        for tipo, cantidad in resumen.items():
-            mensaje += f"• {tipo.title()}: {cantidad}\n"
-        
-        # Crear notificación de resumen
-        notificacion = NotificacionSistema.objects.create(
-            usuario=usuario,
-            tipo='sistema',
-            titulo=titulo,
-            mensaje=mensaje,
-            prioridad='baja'
-        )
-        
-        # Enviar email de resumen
-        NotificacionService.enviar_email_notificacion(notificacion)
-    
-    @staticmethod
-    def ejecutar_verificaciones_diarias():
-        """
-        Ejecuta todas las verificaciones automáticas diarias
-        """
-        logger.info("Iniciando verificaciones automáticas diarias...")
-        
-        # Verificaciones existentes
-        SistemaNotificacionesAutomaticas.verificar_facturas_vencidas()
-        SistemaNotificacionesAutomaticas.verificar_pagos_pendientes()
-        SistemaNotificacionesAutomaticas.verificar_archivos_recientes()
-        
-        # Nuevas verificaciones
-        SistemaNotificacionesAutomaticas.verificar_y_enviar_recordatorios()
-        
-        # Procesar notificaciones programadas
-        NotificacionService.procesar_notificaciones_programadas()
-        
-        # Enviar resúmenes diarios a usuarios que lo tengan habilitado
-        configuraciones = ConfiguracionNotificaciones.objects.filter(
-            email_habilitado=True,
-            resumen_diario=True
-        )
-        
-        for config in configuraciones:
-            SistemaNotificacionesAutomaticas.enviar_resumen_diario(config.usuario)
-        
-        logger.info("Verificaciones automáticas diarias completadas")
+            for usuario in usuarios_aprobacion:
+                NotificacionService.crear_notificacion(
+                    usuario=usuario,
+                    tipo='gasto_aprobacion',
+                    titulo=f'Gasto pendiente de aprobación',
+                    mensaje=f'Gasto por Q{gasto.monto:,.2f} requiere aprobación',
+                    gasto=gasto,
+                    prioridad='media'
+                )
 
 
-class EmailTemplateService:
-    """
-    Servicio para gestionar plantillas de email
-    """
+class ArchivoService:
+    """Servicio para manejo de archivos"""
     
     @staticmethod
-    def generar_plantilla_personalizada(tipo_notificacion, datos_personalizados):
-        """
-        Genera una plantilla HTML personalizada basada en el tipo de notificación
-        """
-        plantillas_base = {
-            'factura': {
-                'color_principal': '#dc3545',
-                'icono': '📄',
-                'estilo_boton': 'background-color: #dc3545;'
-            },
-            'proyecto': {
-                'color_principal': '#007bff',
-                'icono': '🏗️',
-                'estilo_boton': 'background-color: #007bff;'
-            },
-            'gasto': {
-                'color_principal': '#ffc107',
-                'icono': '💰',
-                'estilo_boton': 'background-color: #ffc107;'
-            },
-            'archivo': {
-                'color_principal': '#28a745',
-                'icono': '📁',
-                'estilo_boton': 'background-color: #28a745;'
-            },
-            'sistema': {
-                'color_principal': '#6c757d',
-                'icono': '🔔',
-                'estilo_boton': 'background-color: #6c757d;'
-            }
+    def obtener_archivos_por_proyecto(proyecto_id):
+        """Obtiene archivos organizados por carpetas para un proyecto"""
+        proyecto = Proyecto.objects.get(id=proyecto_id)
+        
+        # Obtener carpetas raíz
+        carpetas_raiz = CarpetaProyecto.objects.filter(
+            proyecto=proyecto,
+            carpeta_padre__isnull=True,
+            activa=True
+        ).order_by('nombre')
+        
+        # Obtener archivos sin carpeta
+        archivos_sin_carpeta = ArchivoProyecto.objects.filter(
+            proyecto=proyecto,
+            carpeta__isnull=True,
+            activo=True
+        ).order_by('-fecha_subida')
+        
+        return {
+            'carpetas': carpetas_raiz,
+            'archivos_sin_carpeta': archivos_sin_carpeta
         }
-        
-        plantilla = plantillas_base.get(tipo_notificacion, plantillas_base['sistema'])
-        plantilla.update(datos_personalizados)
-        
-        return plantilla
+    
+    @staticmethod
+    def crear_carpeta(proyecto, nombre, carpeta_padre=None, creado_por=None):
+        """Crea una nueva carpeta en un proyecto"""
+        return CarpetaProyecto.objects.create(
+            proyecto=proyecto,
+            carpeta_padre=carpeta_padre,
+            nombre=nombre,
+            creada_por=creado_por
+        )

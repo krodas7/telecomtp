@@ -1,0 +1,732 @@
+{% extends "base.html" %}
+{% load custom_filters %}
+
+{% block title %}Lista de Gastos - Sistema de Construcción{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* ============================================================================
+       LISTA MODERNA DE GASTOS - Sistema ARCA Construcción
+       Diseño profesional con filtros y paginación
+       ============================================================================ */
+    
+    .page-container {
+        min-height: 100vh;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        padding: 2rem 0;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .page-container::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="50" cy="50" r="1" fill="white" opacity="0.1"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+        opacity: 0.3;
+    }
+    
+    .list-wrapper {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 0 1rem;
+        position: relative;
+        z-index: 2;
+    }
+    
+    .list-header {
+        text-align: center;
+        margin-bottom: 3rem;
+        animation: fadeInDown 0.8s ease-out;
+    }
+    
+    .list-title {
+        font-size: 2.5rem;
+        font-weight: 800;
+        color: white;
+        margin-bottom: 1rem;
+        text-shadow: 0 4px 8px rgba(0,0,0,0.3);
+    }
+    
+    .list-subtitle {
+        font-size: 1.2rem;
+        color: rgba(255,255,255,0.9);
+        margin-bottom: 0;
+        font-weight: 300;
+    }
+    
+    .list-card {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(20px);
+        border-radius: 24px;
+        padding: 2rem;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        animation: fadeInUp 0.8s ease-out 0.2s both;
+    }
+    
+    .filters-section {
+        background: rgba(255, 255, 255, 0.5);
+        border-radius: 16px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+    }
+    
+    .filters-title {
+        font-size: 1.2rem;
+        font-weight: 700;
+        color: #2c3e50;
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+    }
+    
+    .filters-title i {
+        margin-right: 0.5rem;
+        color: #667eea;
+    }
+    
+    .filters-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin-bottom: 1rem;
+    }
+    
+    .filter-group {
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .filter-label {
+        font-weight: 600;
+        color: #2c3e50;
+        margin-bottom: 0.5rem;
+        font-size: 0.9rem;
+    }
+    
+    .filter-input {
+        padding: 0.75rem 1rem;
+        border: 2px solid #e9ecef;
+        border-radius: 8px;
+        font-size: 0.9rem;
+        transition: all 0.3s ease;
+        background: white;
+    }
+    
+    .filter-input:focus {
+        outline: none;
+        border-color: #667eea;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+    
+    .filter-buttons {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+    
+    .filter-btn {
+        padding: 0.75rem 1.5rem;
+        border: none;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .filter-btn-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+    }
+    
+    .filter-btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+        color: white;
+    }
+    
+    .filter-btn-secondary {
+        background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
+        color: white;
+    }
+    
+    .filter-btn-secondary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(108, 117, 125, 0.4);
+        color: white;
+    }
+    
+    .stats-section {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+    
+    .stat-item {
+        background: rgba(255, 255, 255, 0.7);
+        border-radius: 12px;
+        padding: 1rem;
+        text-align: center;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+    }
+    
+    .stat-value {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #2c3e50;
+        margin-bottom: 0.25rem;
+    }
+    
+    .stat-label {
+        font-size: 0.9rem;
+        color: #6c757d;
+        font-weight: 500;
+    }
+    
+    .gastos-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 2rem;
+        background: white;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    }
+    
+    .gastos-table th {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 1rem;
+        text-align: left;
+        font-weight: 600;
+        font-size: 0.9rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .gastos-table td {
+        padding: 1rem;
+        border-bottom: 1px solid #e9ecef;
+        vertical-align: middle;
+    }
+    
+    .gastos-table tbody tr:hover {
+        background: rgba(102, 126, 234, 0.05);
+    }
+    
+    .gastos-table tbody tr:last-child td {
+        border-bottom: none;
+    }
+    
+    .gasto-descripcion {
+        font-weight: 500;
+        color: #2c3e50;
+        max-width: 200px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    
+    .gasto-monto {
+        font-weight: 700;
+        color: #e74c3c;
+        font-size: 1.1rem;
+    }
+    
+    .gasto-fecha {
+        color: #6c757d;
+        font-size: 0.9rem;
+    }
+    
+    .gasto-categoria {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 500;
+        color: white;
+    }
+    
+    .gasto-proyecto {
+        color: #2c3e50;
+        font-weight: 500;
+        max-width: 150px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    
+    .gasto-estado {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 500;
+    }
+    
+    .estado-aprobado {
+        background: rgba(40, 167, 69, 0.1);
+        color: #28a745;
+        border: 1px solid rgba(40, 167, 69, 0.2);
+    }
+    
+    .estado-pendiente {
+        background: rgba(255, 193, 7, 0.1);
+        color: #ffc107;
+        border: 1px solid rgba(255, 193, 7, 0.2);
+    }
+    
+    .gasto-acciones {
+        display: flex;
+        gap: 0.5rem;
+    }
+    
+    .accion-btn {
+        padding: 0.25rem 0.5rem;
+        border: none;
+        border-radius: 4px;
+        font-size: 0.8rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
+    
+    .accion-ver {
+        background: rgba(52, 152, 219, 0.1);
+        color: #3498db;
+        border: 1px solid rgba(52, 152, 219, 0.2);
+    }
+    
+    .accion-ver:hover {
+        background: #3498db;
+        color: white;
+    }
+    
+    .accion-editar {
+        background: rgba(255, 193, 7, 0.1);
+        color: #ffc107;
+        border: 1px solid rgba(255, 193, 7, 0.2);
+    }
+    
+    .accion-editar:hover {
+        background: #ffc107;
+        color: white;
+    }
+    
+    .accion-eliminar {
+        background: rgba(231, 76, 60, 0.1);
+        color: #e74c3c;
+        border: 1px solid rgba(231, 76, 60, 0.2);
+    }
+    
+    .accion-eliminar:hover {
+        background: #e74c3c;
+        color: white;
+    }
+    
+    .accion-aprobar {
+        background: rgba(40, 167, 69, 0.1);
+        color: #28a745;
+        border: 1px solid rgba(40, 167, 69, 0.2);
+    }
+    
+    .accion-aprobar:hover {
+        background: #28a745;
+        color: white;
+    }
+    
+    .accion-desaprobar {
+        background: rgba(255, 193, 7, 0.1);
+        color: #ffc107;
+        border: 1px solid rgba(255, 193, 7, 0.2);
+    }
+    
+    .accion-desaprobar:hover {
+        background: #ffc107;
+        color: white;
+    }
+    
+    .pagination {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 0.5rem;
+        margin-top: 2rem;
+    }
+    
+    .pagination a,
+    .pagination span {
+        padding: 0.5rem 1rem;
+        border-radius: 8px;
+        text-decoration: none;
+        font-weight: 500;
+        transition: all 0.3s ease;
+    }
+    
+    .pagination a {
+        background: rgba(255, 255, 255, 0.7);
+        color: #2c3e50;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+    }
+    
+    .pagination a:hover {
+        background: #667eea;
+        color: white;
+        transform: translateY(-2px);
+    }
+    
+    .pagination .current {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: 1px solid rgba(102, 126, 234, 0.3);
+    }
+    
+    .no-gastos {
+        text-align: center;
+        padding: 3rem;
+        color: #6c757d;
+    }
+    
+    .no-gastos i {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+        opacity: 0.5;
+    }
+    
+    .no-gastos h3 {
+        font-size: 1.5rem;
+        margin-bottom: 0.5rem;
+        color: #2c3e50;
+    }
+    
+    .no-gastos p {
+        font-size: 1rem;
+        margin-bottom: 0;
+    }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+        .list-wrapper {
+            padding: 0 0.5rem;
+        }
+        
+        .list-card {
+            padding: 1.5rem;
+        }
+        
+        .filters-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .stats-section {
+            grid-template-columns: repeat(2, 1fr);
+        }
+        
+        .gastos-table {
+            font-size: 0.8rem;
+        }
+        
+        .gastos-table th,
+        .gastos-table td {
+            padding: 0.5rem;
+        }
+        
+        .gasto-descripcion {
+            max-width: 100px;
+        }
+        
+        .gasto-proyecto {
+            max-width: 100px;
+        }
+    }
+    
+    @media (max-width: 480px) {
+        .list-title {
+            font-size: 2rem;
+        }
+        
+        .stats-section {
+            grid-template-columns: 1fr;
+        }
+        
+        .gastos-table {
+            display: block;
+            overflow-x: auto;
+            white-space: nowrap;
+        }
+    }
+    
+    /* Animaciones */
+    @keyframes fadeInDown {
+        from {
+            opacity: 0;
+            transform: translateY(-30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-container">
+    <div class="list-wrapper">
+        <!-- Header de la lista -->
+        <div class="list-header">
+            <h1 class="list-title">
+                <i class="fas fa-list me-2"></i>Lista de Gastos
+            </h1>
+            <p class="list-subtitle">Gestiona todos los gastos del sistema</p>
+        </div>
+        
+        <!-- Tarjeta principal -->
+        <div class="list-card">
+            <!-- Filtros -->
+            <div class="filters-section">
+                <h3 class="filters-title">
+                    <i class="fas fa-filter"></i>Filtros
+                </h3>
+                
+                <form method="get" class="filters-form">
+                    <div class="filters-grid">
+                        <div class="filter-group">
+                            <label class="filter-label">Estado</label>
+                            <select name="estado" class="filter-input">
+                                <option value="todos" {% if filtro_estado == 'todos' %}selected{% endif %}>Todos</option>
+                                <option value="aprobados" {% if filtro_estado == 'aprobados' %}selected{% endif %}>Aprobados</option>
+                                <option value="pendientes" {% if filtro_estado == 'pendientes' %}selected{% endif %}>Pendientes</option>
+                            </select>
+                        </div>
+                        
+                        <div class="filter-group">
+                            <label class="filter-label">Categoría</label>
+                            <select name="categoria" class="filter-input">
+                                <option value="">Todas las categorías</option>
+                                {% for categoria in categorias %}
+                                    <option value="{{ categoria.id }}" {% if filtro_categoria == categoria.id|stringformat:"s" %}selected{% endif %}>
+                                        {{ categoria.nombre }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="filter-group">
+                            <label class="filter-label">Proyecto</label>
+                            <select name="proyecto" class="filter-input">
+                                <option value="">Todos los proyectos</option>
+                                {% for proyecto in proyectos %}
+                                    <option value="{{ proyecto.id }}" {% if filtro_proyecto == proyecto.id|stringformat:"s" %}selected{% endif %}>
+                                        {{ proyecto.nombre }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="filter-group">
+                            <label class="filter-label">Fecha Desde</label>
+                            <input type="date" name="fecha_desde" value="{{ filtro_fecha_desde }}" class="filter-input">
+                        </div>
+                        
+                        <div class="filter-group">
+                            <label class="filter-label">Fecha Hasta</label>
+                            <input type="date" name="fecha_hasta" value="{{ filtro_fecha_hasta }}" class="filter-input">
+                        </div>
+                    </div>
+                    
+                    <div class="filter-buttons">
+                        <button type="submit" class="filter-btn filter-btn-primary">
+                            <i class="fas fa-search"></i>Filtrar
+                        </button>
+                        <a href="{% url 'gastos_list' %}" class="filter-btn filter-btn-secondary">
+                            <i class="fas fa-times"></i>Limpiar
+                        </a>
+                    </div>
+                </form>
+            </div>
+            
+            <!-- Estadísticas -->
+            <div class="stats-section">
+                <div class="stat-item">
+                    <div class="stat-value">{{ total_gastos }}</div>
+                    <div class="stat-label">Total Gastos</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value">Q{{ total_monto|floatformat:2 }}</div>
+                    <div class="stat-label">Monto Total</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value">{{ gastos_aprobados }}</div>
+                    <div class="stat-label">Aprobados</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value">{{ gastos_pendientes }}</div>
+                    <div class="stat-label">Pendientes</div>
+                </div>
+            </div>
+            
+            <!-- Tabla de gastos -->
+            {% if gastos %}
+                <div class="table-responsive">
+                    <table class="gastos-table">
+                        <thead>
+                            <tr>
+                                <th>Descripción</th>
+                                <th>Monto</th>
+                                <th>Fecha</th>
+                                <th>Categoría</th>
+                                <th>Proyecto</th>
+                                <th>Estado</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for gasto in gastos %}
+                                <tr>
+                                    <td>
+                                        <div class="gasto-descripcion" title="{{ gasto.descripcion }}">
+                                            {{ gasto.descripcion|truncatechars:50 }}
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="gasto-monto">Q{{ gasto.monto|floatformat:2 }}</div>
+                                    </td>
+                                    <td>
+                                        <div class="gasto-fecha">{{ gasto.fecha_gasto|date:"d/m/Y" }}</div>
+                                    </td>
+                                    <td>
+                                        <div class="gasto-categoria" style="background-color: {{ gasto.categoria.color|default:'#667eea' }};">
+                                            <i class="{{ gasto.categoria.icono|default:'fas fa-tag' }}"></i>
+                                            {{ gasto.categoria.nombre }}
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="gasto-proyecto" title="{{ gasto.proyecto.nombre }}">
+                                            {{ gasto.proyecto.nombre|truncatechars:20 }}
+                                        </div>
+                                    </td>
+                                    <td>
+                                        {% if gasto.aprobado %}
+                                            <span class="gasto-estado estado-aprobado">
+                                                <i class="fas fa-check"></i>Aprobado
+                                            </span>
+                                        {% else %}
+                                            <span class="gasto-estado estado-pendiente">
+                                                <i class="fas fa-clock"></i>Pendiente
+                                            </span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="gasto-acciones">
+                                            <a href="#" class="accion-btn accion-ver" title="Ver detalles">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            <a href="#" class="accion-btn accion-editar" title="Editar">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            {% if gasto.aprobado %}
+                                                <a href="{% url 'gasto_desaprobar' gasto.id %}" class="accion-btn accion-desaprobar" title="Desaprobar">
+                                                    <i class="fas fa-times-circle"></i>
+                                                </a>
+                                            {% else %}
+                                                <a href="{% url 'gasto_aprobar' gasto.id %}" class="accion-btn accion-aprobar" title="Aprobar">
+                                                    <i class="fas fa-check-circle"></i>
+                                                </a>
+                                            {% endif %}
+                                            <a href="#" class="accion-btn accion-eliminar" title="Eliminar">
+                                                <i class="fas fa-trash"></i>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- Paginación -->
+                {% if page_obj.has_other_pages %}
+                    <div class="pagination">
+                        {% if page_obj.has_previous %}
+                            <a href="?page=1{% if request.GET.estado %}&estado={{ request.GET.estado }}{% endif %}{% if request.GET.categoria %}&categoria={{ request.GET.categoria }}{% endif %}{% if request.GET.proyecto %}&proyecto={{ request.GET.proyecto }}{% endif %}{% if request.GET.fecha_desde %}&fecha_desde={{ request.GET.fecha_desde }}{% endif %}{% if request.GET.fecha_hasta %}&fecha_hasta={{ request.GET.fecha_hasta }}{% endif %}">
+                                <i class="fas fa-angle-double-left"></i>
+                            </a>
+                            <a href="?page={{ page_obj.previous_page_number }}{% if request.GET.estado %}&estado={{ request.GET.estado }}{% endif %}{% if request.GET.categoria %}&categoria={{ request.GET.categoria }}{% endif %}{% if request.GET.proyecto %}&proyecto={{ request.GET.proyecto }}{% endif %}{% if request.GET.fecha_desde %}&fecha_desde={{ request.GET.fecha_desde }}{% endif %}{% if request.GET.fecha_hasta %}&fecha_hasta={{ request.GET.fecha_hasta }}{% endif %}">
+                                <i class="fas fa-angle-left"></i>
+                            </a>
+                        {% endif %}
+                        
+                        {% for num in page_obj.paginator.page_range %}
+                            {% if page_obj.number == num %}
+                                <span class="current">{{ num }}</span>
+                            {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                                <a href="?page={{ num }}{% if request.GET.estado %}&estado={{ request.GET.estado }}{% endif %}{% if request.GET.categoria %}&categoria={{ request.GET.categoria }}{% endif %}{% if request.GET.proyecto %}&proyecto={{ request.GET.proyecto }}{% endif %}{% if request.GET.fecha_desde %}&fecha_desde={{ request.GET.fecha_desde }}{% endif %}{% if request.GET.fecha_hasta %}&fecha_hasta={{ request.GET.fecha_hasta }}{% endif %}">{{ num }}</a>
+                            {% endif %}
+                        {% endfor %}
+                        
+                        {% if page_obj.has_next %}
+                            <a href="?page={{ page_obj.next_page_number }}{% if request.GET.estado %}&estado={{ request.GET.estado }}{% endif %}{% if request.GET.categoria %}&categoria={{ request.GET.categoria }}{% endif %}{% if request.GET.proyecto %}&proyecto={{ request.GET.proyecto }}{% endif %}{% if request.GET.fecha_desde %}&fecha_desde={{ request.GET.fecha_desde }}{% endif %}{% if request.GET.fecha_hasta %}&fecha_hasta={{ request.GET.fecha_hasta }}{% endif %}">
+                                <i class="fas fa-angle-right"></i>
+                            </a>
+                            <a href="?page={{ page_obj.paginator.num_pages }}{% if request.GET.estado %}&estado={{ request.GET.estado }}{% endif %}{% if request.GET.categoria %}&categoria={{ request.GET.categoria }}{% endif %}{% if request.GET.proyecto %}&proyecto={{ request.GET.proyecto }}{% endif %}{% if request.GET.fecha_desde %}&fecha_desde={{ request.GET.fecha_desde }}{% endif %}{% if request.GET.fecha_hasta %}&fecha_hasta={{ request.GET.fecha_hasta }}{% endif %}">
+                                <i class="fas fa-angle-double-right"></i>
+                            </a>
+                        {% endif %}
+                    </div>
+                {% endif %}
+            {% else %}
+                <div class="no-gastos">
+                    <i class="fas fa-receipt"></i>
+                    <h3>No hay gastos</h3>
+                    <p>No se encontraron gastos con los filtros aplicados.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('Lista de gastos cargada correctamente');
+        
+        // Animación de entrada para las filas de la tabla
+        const tableRows = document.querySelectorAll('.gastos-table tbody tr');
+        tableRows.forEach((row, index) => {
+            row.style.animationDelay = `${index * 0.1}s`;
+            row.style.animation = 'fadeInUp 0.5s ease-out both';
+        });
+    });
+</script>
+{% endblock %}

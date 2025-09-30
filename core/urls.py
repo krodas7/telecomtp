@@ -40,6 +40,7 @@ urlpatterns = [
     # Trabajadores Diarios
     path('proyectos/<int:proyecto_id>/trabajadores-diarios/', views.trabajadores_diarios_list, name='trabajadores_diarios_list'),
     path('proyectos/<int:proyecto_id>/trabajadores-diarios/crear/', views.trabajador_diario_create, name='trabajador_diario_create'),
+    path('proyectos/<int:proyecto_id>/trabajadores-diarios/finalizar/', views.finalizar_planilla_trabajadores, name='finalizar_planilla_trabajadores'),
     path('proyectos/<int:proyecto_id>/trabajadores-diarios/<int:trabajador_id>/', views.trabajador_diario_detail, name='trabajador_diario_detail'),
     path('proyectos/<int:proyecto_id>/trabajadores-diarios/<int:trabajador_id>/editar/', views.trabajador_diario_edit, name='trabajador_diario_edit'),
     path('proyectos/<int:proyecto_id>/trabajadores-diarios/<int:trabajador_id>/eliminar/', views.trabajador_diario_delete, name='trabajador_diario_delete'),
@@ -85,6 +86,7 @@ urlpatterns = [
     path('gastos/<int:gasto_id>/editar/', views.gasto_edit, name='gasto_edit'),
     path('gastos/<int:gasto_id>/eliminar/', views.gasto_delete, name='gasto_delete'),
     path('gastos/<int:gasto_id>/aprobar/', views.gasto_aprobar, name='gasto_aprobar'),
+    path('gastos/<int:gasto_id>/desaprobar/', views.gasto_desaprobar, name='gasto_desaprobar'),
     
     # Pagos
     path('pagos/', views.pagos_list, name='pagos_list'),
@@ -247,4 +249,18 @@ urlpatterns = [
     
     # ==================== URL DE PRUEBA ====================
     path('test/', views.test_view, name='test'),
+    
+    # ==================== NUEVAS RUTAS OPTIMIZADAS ====================
+    # APIs mejoradas
+    path('api/dashboard-data/', views.dashboard_data_api, name='dashboard_data_api'),
+    path('api/dashboard-intelligent-data/', views.dashboard_intelligent_data, name='dashboard_intelligent_data'),
+    path('api/login/', views.api_login, name='api_login'),
+    
+    # Vistas mejoradas
+    path('dashboard-intelligent-analytics/', views.dashboard_intelligent_analytics, name='dashboard_intelligent_analytics'),
+    path('clientes/<int:cliente_id>/toggle-estado/', views.cliente_toggle_estado, name='cliente_toggle_estado'),
+    path('clientes/<int:cliente_id>/estadisticas/', views.cliente_estadisticas, name='cliente_estadisticas'),
+    
+    # PWA
+    path('offline/', views.offline_page, name='offline_page'),
 ]

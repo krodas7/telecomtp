@@ -3,317 +3,646 @@
 
 {% block title %}Crear Gasto - Sistema de Construcción{% endblock %}
 
+{% block extra_css %}
+<style>
+    /* ============================================================================
+       ESTILOS PARA FORMULARIO DE CREAR GASTO - Sistema ARCA Construcción
+       ============================================================================ */
+    
+    .hero-section {
+        background: linear-gradient(135deg, #20bf6b 0%, #26de81 100%);
+        color: white;
+        padding: 1.5rem 2rem;
+        border-radius: 15px;
+        margin-bottom: 1.5rem;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .hero-section::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="50" cy="50" r="1" fill="white" opacity="0.1"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+        opacity: 0.3;
+    }
+    
+    .hero-content {
+        position: relative;
+        z-index: 2;
+    }
+    
+    .hero-title {
+        font-size: 1.8rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+        text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    }
+    
+    .hero-subtitle {
+        font-size: 1rem;
+        margin-bottom: 0;
+        opacity: 0.9;
+    }
+    
+    .form-container {
+        background: white;
+        border-radius: 20px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        overflow: hidden;
+        margin-bottom: 2rem;
+    }
+    
+    .form-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 2rem;
+        text-align: center;
+    }
+    
+    .form-header-icon {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+        opacity: 0.9;
+    }
+    
+    .form-header-title {
+        font-size: 1.8rem;
+        font-weight: 600;
+        margin: 0;
+    }
+    
+    .form-body {
+        padding: 2rem;
+    }
+    
+    .form-section {
+        margin-bottom: 2rem;
+        padding: 1.5rem;
+        background: #f8f9fa;
+        border-radius: 15px;
+        border-left: 4px solid #20bf6b;
+    }
+    
+    .form-section-title {
+        font-size: 1.2rem;
+        font-weight: 600;
+        color: #495057;
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .form-section-title i {
+        color: #20bf6b;
+        font-size: 1.1rem;
+    }
+    
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+    
+    .form-label {
+        font-weight: 600;
+        color: #495057;
+        margin-bottom: 0.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .form-label i {
+        color: #6c757d;
+        font-size: 0.9rem;
+    }
+    
+    .form-control {
+        border: 2px solid #e9ecef;
+        border-radius: 10px;
+        padding: 0.75rem 1rem;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+        background: white;
+    }
+    
+    .form-control:focus {
+        border-color: #20bf6b;
+        box-shadow: 0 0 0 0.2rem rgba(32, 191, 107, 0.25);
+        outline: none;
+    }
+    
+    .form-control.is-invalid {
+        border-color: #dc3545;
+    }
+    
+    .form-control.is-valid {
+        border-color: #28a745;
+    }
+    
+    .form-select {
+        border: 2px solid #e9ecef;
+        border-radius: 10px;
+        padding: 0.75rem 1rem;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+        background: white;
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23343a40' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m1 6 7 7 7-7'/%3e%3c/svg%3e");
+        background-repeat: no-repeat;
+        background-position: right 0.75rem center;
+        background-size: 16px 12px;
+    }
+    
+    .form-select:focus {
+        border-color: #20bf6b;
+        box-shadow: 0 0 0 0.2rem rgba(32, 191, 107, 0.25);
+        outline: none;
+    }
+    
+    .form-text {
+        font-size: 0.875rem;
+        color: #6c757d;
+        margin-top: 0.25rem;
+    }
+    
+    .invalid-feedback {
+        display: block;
+        width: 100%;
+        margin-top: 0.25rem;
+        font-size: 0.875rem;
+        color: #dc3545;
+    }
+    
+    .valid-feedback {
+        display: block;
+        width: 100%;
+        margin-top: 0.25rem;
+        font-size: 0.875rem;
+        color: #28a745;
+    }
+    
+    .btn {
+        padding: 0.75rem 2rem;
+        border-radius: 12px;
+        font-weight: 600;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: all 0.3s ease;
+        border: none;
+        cursor: pointer;
+        font-size: 1rem;
+    }
+    
+    .btn-success {
+        background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%);
+        color: white;
+    }
+    
+    .btn-success:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(40, 167, 69, 0.4);
+        color: white;
+    }
+    
+    .btn-secondary {
+        background: linear-gradient(135deg, #6c757d 0%, #545b62 100%);
+        color: white;
+    }
+    
+    .btn-secondary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(108, 117, 125, 0.4);
+        color: white;
+    }
+    
+    .btn-group {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+        margin-top: 2rem;
+    }
+    
+    .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+    }
+    
+    .form-row-3 {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 1rem;
+    }
+    
+    .form-check {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+    }
+    
+    .form-check-input {
+        width: 1.25rem;
+        height: 1.25rem;
+        border: 2px solid #e9ecef;
+        border-radius: 4px;
+        margin: 0;
+    }
+    
+    .form-check-input:checked {
+        background-color: #20bf6b;
+        border-color: #20bf6b;
+    }
+    
+    .form-check-label {
+        font-weight: 500;
+        color: #495057;
+        margin: 0;
+    }
+    
+    .alert {
+        padding: 1rem 1.5rem;
+        border-radius: 10px;
+        margin-bottom: 1.5rem;
+        border: none;
+    }
+    
+    .alert-danger {
+        background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
+        color: #721c24;
+    }
+    
+    .alert-success {
+        background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+        color: #155724;
+    }
+    
+    .alert-info {
+        background: linear-gradient(135deg, #d1ecf1 0%, #bee5eb 100%);
+        color: #0c5460;
+    }
+    
+    .help-text {
+        font-size: 0.875rem;
+        color: #6c757d;
+        margin-top: 0.25rem;
+        font-style: italic;
+    }
+    
+    .required {
+        color: #dc3545;
+    }
+    
+    .form-floating {
+        position: relative;
+    }
+    
+    .form-floating .form-control {
+        height: calc(3.5rem + 2px);
+        padding: 1rem 0.75rem;
+    }
+    
+    .form-floating label {
+        position: absolute;
+        top: 0;
+        left: 0;
+        height: 100%;
+        padding: 1rem 0.75rem;
+        pointer-events: none;
+        border: 1px solid transparent;
+        transform-origin: 0 0;
+        transition: opacity 0.1s ease-in-out, transform 0.1s ease-in-out;
+        color: #6c757d;
+    }
+    
+    .form-floating .form-control:focus ~ label,
+    .form-floating .form-control:not(:placeholder-shown) ~ label {
+        opacity: 0.65;
+        transform: scale(0.85) translateY(-0.5rem) translateX(0.15rem);
+    }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+        .form-row {
+            grid-template-columns: 1fr;
+        }
+        
+        .form-row-3 {
+            grid-template-columns: 1fr;
+        }
+        
+        .btn-group {
+            flex-direction: column;
+        }
+        
+        .hero-title {
+            font-size: 1.5rem;
+        }
+        
+        .form-body {
+            padding: 1.5rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block page_title %}Crear Gasto{% endblock %}
+
 {% block content %}
-<!-- Hero Section -->
+<!-- Header Compacto -->
 <div class="hero-section">
     <div class="hero-content">
         <h1 class="hero-title">
-            <i class="fas fa-plus-circle me-3"></i>Crear Nuevo Gasto
+            <i class="fas fa-plus-circle me-2"></i>Crear Nuevo Gasto
         </h1>
-        <p class="hero-subtitle">
-            Registra un nuevo gasto en el sistema de construcción
-        </p>
-        
-        <!-- Barra de Progreso -->
-        <div class="progress mb-3" style="max-width: 400px; margin: 0 auto;">
-            <div class="progress-bar bg-success" id="progressBar" style="width: 0%"></div>
-        </div>
+        <p class="hero-subtitle">Registra un nuevo gasto en el sistema</p>
     </div>
 </div>
 
-<div class="row">
-    <!-- Formulario Principal -->
-    <div class="col-lg-8">
-        <div class="form-container">
-            <div class="form-header">
-                <div class="form-header-icon">
-                    <i class="fas fa-edit"></i>
-                </div>
-                <h4 class="form-header-title">Información del Gasto</h4>
-            </div>
-            
-            <form method="post" id="gastoForm">
-                {% csrf_token %}
-                
-                <!-- Sección de Información Básica -->
-                <div class="card-modern mb-4">
-                    <div class="card-header-modern">
-                        <div class="card-header-icon">
-                            <i class="fas fa-info-circle"></i>
-                        </div>
-                        <h5 class="card-header-title">Información Básica</h5>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="{{ form.descripcion.id_for_label }}" class="form-label">
-                            <i class="fas fa-tag me-1"></i>Descripción del Gasto
-                        </label>
-                        {{ form.descripcion }}
-                        <div class="invalid-feedback" id="descripcion-error"></div>
-                        <div class="valid-feedback" id="descripcion-success"></div>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="{{ form.categoria.id_for_label }}" class="form-label">
-                            <i class="fas fa-folder me-1"></i>Categoría
-                        </label>
-                        {{ form.categoria }}
-                        <div class="invalid-feedback" id="categoria-error"></div>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="{{ form.monto.id_for_label }}" class="form-label">
-                            <i class="fas fa-dollar-sign me-1"></i>Monto (Q)
-                        </label>
-                        {{ form.monto }}
-                        <div class="invalid-feedback" id="monto-error"></div>
-                        <div class="valid-feedback" id="monto-success"></div>
-                    </div>
-                </div>
-                
-                <!-- Sección de Proyecto y Fecha -->
-                <div class="card-modern mb-4">
-                    <div class="card-header-modern">
-                        <div class="card-header-icon">
-                            <i class="fas fa-project-diagram"></i>
-                        </div>
-                        <h5 class="card-header-title">Proyecto y Fecha</h5>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="{{ form.proyecto.id_for_label }}" class="form-label">
-                            <i class="fas fa-building me-1"></i>Proyecto (Opcional)
-                        </label>
-                        {{ form.proyecto }}
-                        <div class="invalid-feedback" id="proyecto-error"></div>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="{{ form.fecha_gasto.id_for_label }}" class="form-label">
-                            <i class="fas fa-calendar me-1"></i>Fecha del Gasto
-                        </label>
-                        {{ form.fecha_gasto }}
-                        <div class="invalid-feedback" id="fecha_gasto-error"></div>
-                    </div>
-                </div>
-                
-                <!-- Sección de Observaciones -->
-                <div class="card-modern mb-4">
-                    <div class="card-header-modern">
-                        <div class="card-header-icon">
-                            <i class="fas fa-comment"></i>
-                        </div>
-                        <h5 class="card-header-title">Observaciones</h5>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="{{ form.observaciones.id_for_label }}" class="form-label">
-                            <i class="fas fa-sticky-note me-1"></i>Observaciones Adicionales
-                        </label>
-                        {{ form.observaciones }}
-                        <div class="invalid-feedback" id="observaciones-error"></div>
-                    </div>
-                </div>
-                
-                <button type="submit" class="btn btn-success w-100" id="submitBtn">
-                    <i class="fas fa-save me-2"></i>Crear Gasto
-                </button>
-            </form>
+<!-- Formulario -->
+<div class="form-container">
+    <div class="form-header">
+        <div class="form-header-icon">
+            <i class="fas fa-receipt"></i>
         </div>
+        <h4 class="form-header-title">Información del Gasto</h4>
     </div>
     
-    <!-- Sidebar Informativo -->
-    <div class="col-lg-4">
-        <div class="info-sidebar">
-            <!-- Información del Sistema -->
-            <div class="info-section info mb-4">
-                <i class="fas fa-info-circle"></i>
-                <h6>Información del Sistema</h6>
-                <ul>
-                    <li><strong>Usuario:</strong> {{ user.username }}</li>
-                    <li><strong>Fecha:</strong> <span id="currentDate"></span></li>
-                    <li><strong>Hora:</strong> <span id="currentTime"></span></li>
-                </ul>
-            </div>
+    <div class="form-body">
+        <form method="post" id="gastoForm" novalidate>
+            {% csrf_token %}
             
-            <!-- Vista Previa -->
-            <div class="info-section info mb-4">
-                <i class="fas fa-eye"></i>
-                <h6>Vista Previa</h6>
-                <div class="info-list">
-                    <li>
-                        <span class="info-label">Descripción:</span>
-                        <span class="info-value" id="preview-descripcion">-</span>
-                    </li>
-                    <li>
-                        <span class="info-label">Categoría:</span>
-                        <span class="info-value" id="preview-categoria">-</span>
-                    </li>
-                    <li>
-                        <span class="info-label">Monto:</span>
-                        <span class="info-value" id="preview-monto">-</span>
-                    </li>
-                    <li>
-                        <span class="info-label">Total:</span>
-                        <span class="info-value" id="preview-total">Q0.00</span>
-                    </li>
+            <!-- Mostrar errores del formulario -->
+            {% if form.non_field_errors %}
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    {{ form.non_field_errors }}
+                </div>
+            {% endif %}
+            
+            <!-- Información Básica -->
+            <div class="form-section">
+                <h5 class="form-section-title">
+                    <i class="fas fa-info-circle"></i>
+                    Información Básica
+                </h5>
+                
+                <div class="form-group">
+                    <label for="{{ form.descripcion.id_for_label }}" class="form-label">
+                        <i class="fas fa-tag"></i>
+                        Descripción del Gasto
+                        <span class="required">*</span>
+                    </label>
+                    {{ form.descripcion }}
+                    {% if form.descripcion.errors %}
+                        <div class="invalid-feedback">
+                            {{ form.descripcion.errors.0 }}
+                        </div>
+                    {% endif %}
+                    <div class="help-text">Describe detalladamente el gasto realizado</div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="{{ form.monto.id_for_label }}" class="form-label">
+                        <i class="fas fa-dollar-sign"></i>
+                        Monto del Gasto
+                        <span class="required">*</span>
+                    </label>
+                    {{ form.monto }}
+                    {% if form.monto.errors %}
+                        <div class="invalid-feedback">
+                            {{ form.monto.errors.0 }}
+                        </div>
+                    {% endif %}
+                    <div class="help-text">Ingresa el monto en quetzales</div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="{{ form.categoria.id_for_label }}" class="form-label">
+                        <i class="fas fa-tags"></i>
+                        Categoría del Gasto
+                        <span class="required">*</span>
+                    </label>
+                    {{ form.categoria }}
+                    {% if form.categoria.errors %}
+                        <div class="invalid-feedback">
+                            {{ form.categoria.errors.0 }}
+                        </div>
+                    {% endif %}
+                    <div class="help-text">Selecciona la categoría del gasto</div>
                 </div>
             </div>
             
-            <!-- Ayuda -->
-            <div class="info-section info">
-                <i class="fas fa-question-circle"></i>
-                <h6>Ayuda</h6>
-                <ul>
-                    <li>Completa todos los campos obligatorios marcados con <span class="text-danger">*</span></li>
-                    <li>La descripción debe ser clara y específica</li>
-                    <li>Selecciona la categoría más apropiada</li>
-                    <li>Verifica que el monto sea correcto</li>
-                </ul>
+            <!-- Información del Proyecto -->
+            <div class="form-section">
+                <h5 class="form-section-title">
+                    <i class="fas fa-project-diagram"></i>
+                    Información del Proyecto
+                </h5>
+                
+                <div class="form-group">
+                    <label for="{{ form.proyecto.id_for_label }}" class="form-label">
+                        <i class="fas fa-building"></i>
+                        Proyecto Asociado
+                        <span class="required">*</span>
+                    </label>
+                    {{ form.proyecto }}
+                    {% if form.proyecto.errors %}
+                        <div class="invalid-feedback">
+                            {{ form.proyecto.errors.0 }}
+                        </div>
+                    {% endif %}
+                    <div class="help-text">Selecciona el proyecto al que pertenece este gasto</div>
+                </div>
             </div>
-        </div>
+            
+            <!-- Fechas y Estado -->
+            <div class="form-section">
+                <h5 class="form-section-title">
+                    <i class="fas fa-calendar-alt"></i>
+                    Fechas y Estado
+                </h5>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="{{ form.fecha_gasto.id_for_label }}" class="form-label">
+                            <i class="fas fa-calendar"></i>
+                            Fecha del Gasto
+                            <span class="required">*</span>
+                        </label>
+                        {{ form.fecha_gasto }}
+                        {% if form.fecha_gasto.errors %}
+                            <div class="invalid-feedback">
+                                {{ form.fecha_gasto.errors.0 }}
+                            </div>
+                        {% endif %}
+                        <div class="help-text">Fecha en que se realizó el gasto</div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="{{ form.fecha_vencimiento.id_for_label }}" class="form-label">
+                            <i class="fas fa-calendar-check"></i>
+                            Fecha de Vencimiento
+                        </label>
+                        {{ form.fecha_vencimiento }}
+                        {% if form.fecha_vencimiento.errors %}
+                            <div class="invalid-feedback">
+                                {{ form.fecha_vencimiento.errors.0 }}
+                            </div>
+                        {% endif %}
+                        <div class="help-text">Fecha límite para el pago (opcional)</div>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <div class="form-check">
+                        {{ form.aprobado }}
+                        <label for="{{ form.aprobado.id_for_label }}" class="form-check-label">
+                            <i class="fas fa-check-circle me-1"></i>
+                            Gasto Aprobado
+                        </label>
+                    </div>
+                    <div class="help-text">Marca esta casilla si el gasto ya está aprobado</div>
+                </div>
+            </div>
+            
+            <!-- Información Adicional -->
+            <div class="form-section">
+                <h5 class="form-section-title">
+                    <i class="fas fa-file-alt"></i>
+                    Información Adicional
+                </h5>
+                
+                <div class="form-group">
+                    <label for="{{ form.observaciones.id_for_label }}" class="form-label">
+                        <i class="fas fa-comment-alt"></i>
+                        Observaciones
+                    </label>
+                    {{ form.observaciones }}
+                    {% if form.observaciones.errors %}
+                        <div class="invalid-feedback">
+                            {{ form.observaciones.errors.0 }}
+                        </div>
+                    {% endif %}
+                    <div class="help-text">Información adicional sobre el gasto (opcional)</div>
+                </div>
+            </div>
+            
+            <!-- Botones de Acción -->
+            <div class="btn-group">
+                <button type="submit" class="btn btn-success">
+                    <i class="fas fa-save me-2"></i>Guardar Gasto
+                </button>
+                <a href="{% url 'gastos_list' %}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left me-2"></i>Cancelar
+                </a>
+            </div>
+        </form>
     </div>
 </div>
 {% endblock %}
 
 {% block extra_js %}
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Inicializar fecha y hora actual
-    function updateDateTime() {
-        const now = new Date();
-        document.getElementById('currentDate').textContent = now.toLocaleDateString('es-GT');
-        document.getElementById('currentTime').textContent = now.toLocaleTimeString('es-GT');
-    }
-    
-    updateDateTime();
-    setInterval(updateDateTime, 1000);
-    
-    // Elementos del formulario
-    const form = document.getElementById('gastoForm');
-    const descripcionInput = document.getElementById('{{ form.descripcion.id_for_label }}');
-    const categoriaInput = document.getElementById('{{ form.categoria.id_for_label }}');
-    const montoInput = document.getElementById('{{ form.monto.id_for_label }}');
-    const proyectoInput = document.getElementById('{{ form.proyecto.id_for_label }}');
-    const fechaInput = document.getElementById('{{ form.fecha_gasto.id_for_label }}');
-    const observacionesInput = document.getElementById('{{ form.observaciones.id_for_label }}');
-    
-    // Barra de progreso
-    const progressBar = document.getElementById('progressBar');
-    
-    // Función para actualizar la barra de progreso
-    function updateProgress() {
-        const fields = [descripcionInput, categoriaInput, montoInput, fechaInput];
-        const filledFields = fields.filter(field => field.value.trim() !== '').length;
-        const progress = (filledFields / fields.length) * 100;
-        progressBar.style.width = progress + '%';
-    }
-    
-    // Función para validar campo en tiempo real
-    function validateField(field, fieldName) {
-        const value = field.value.trim();
-        const errorElement = document.getElementById(fieldName + '-error');
-        const successElement = document.getElementById(fieldName + '-success');
+    document.addEventListener('DOMContentLoaded', function() {
+        // Validación en tiempo real
+        const form = document.getElementById('gastoForm');
+        const inputs = form.querySelectorAll('.form-control, .form-select');
         
-        // Limpiar estados previos
-        field.classList.remove('is-valid', 'is-invalid');
-        errorElement.textContent = '';
-        successElement.textContent = '';
+        inputs.forEach(input => {
+            input.addEventListener('blur', function() {
+                validateField(this);
+            });
+            
+            input.addEventListener('input', function() {
+                if (this.classList.contains('is-invalid')) {
+                    validateField(this);
+                }
+            });
+        });
         
-        if (value === '') {
-            field.classList.add('is-invalid');
-            errorElement.textContent = 'Este campo es obligatorio';
-            return false;
-        }
-        
-        // Validaciones específicas
-        if (fieldName === 'monto') {
-            const monto = parseFloat(value);
-            if (isNaN(monto) || monto <= 0) {
-                field.classList.add('is-invalid');
-                errorElement.textContent = 'El monto debe ser un número mayor a 0';
-                return false;
+        // Validación del formulario al enviar
+        form.addEventListener('submit', function(e) {
+            let isValid = true;
+            
+            inputs.forEach(input => {
+                if (!validateField(input)) {
+                    isValid = false;
+                }
+            });
+            
+            if (!isValid) {
+                e.preventDefault();
+                showAlert('Por favor, corrige los errores en el formulario', 'danger');
             }
+        });
+        
+        function validateField(field) {
+            const value = field.value.trim();
+            const isRequired = field.hasAttribute('required');
+            let isValid = true;
+            
+            // Limpiar clases anteriores
+            field.classList.remove('is-valid', 'is-invalid');
+            
+            // Validar campo requerido
+            if (isRequired && !value) {
+                field.classList.add('is-invalid');
+                isValid = false;
+            } else if (value) {
+                // Validaciones específicas
+                if (field.type === 'email' && !isValidEmail(value)) {
+                    field.classList.add('is-invalid');
+                    isValid = false;
+                } else if (field.type === 'number' && isNaN(value)) {
+                    field.classList.add('is-invalid');
+                    isValid = false;
+                } else {
+                    field.classList.add('is-valid');
+                }
+            }
+            
+            return isValid;
         }
         
-        if (fieldName === 'descripcion' && value.length < 10) {
-            field.classList.add('is-invalid');
-            errorElement.textContent = 'La descripción debe tener al menos 10 caracteres';
-            return false;
+        function isValidEmail(email) {
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            return emailRegex.test(email);
         }
         
-        // Campo válido
-        field.classList.add('is-valid');
-        successElement.textContent = 'Campo válido';
-        return true;
-    }
-    
-    // Función para actualizar vista previa
-    function updatePreview() {
-        const descripcion = descripcionInput.value || '-';
-        const categoria = categoriaInput.options[categoriaInput.selectedIndex]?.text || '-';
-        const monto = montoInput.value || '0.00';
-        
-        document.getElementById('preview-descripcion').textContent = descripcion.length > 30 ? descripcion.substring(0, 30) + '...' : descripcion;
-        document.getElementById('preview-categoria').textContent = categoria;
-        document.getElementById('preview-monto').textContent = 'Q' + monto;
-        document.getElementById('preview-total').textContent = 'Q' + monto;
-    }
-    
-    // Event listeners para validación en tiempo real
-    descripcionInput.addEventListener('input', function() {
-        validateField(this, 'descripcion');
-        updatePreview();
-        updateProgress();
-    });
-    
-    categoriaInput.addEventListener('change', function() {
-        validateField(this, 'categoria');
-        updatePreview();
-        updateProgress();
-    });
-    
-    montoInput.addEventListener('input', function() {
-        validateField(this, 'monto');
-        updatePreview();
-        updateProgress();
-    });
-    
-    fechaInput.addEventListener('change', function() {
-        validateField(this, 'fecha_gasto');
-        updateProgress();
-    });
-    
-    // Validación del formulario antes de enviar
-    form.addEventListener('submit', function(e) {
-        const isDescripcionValid = validateField(descripcionInput, 'descripcion');
-        const isCategoriaValid = validateField(categoriaInput, 'categoria');
-        const isMontoValid = validateField(montoInput, 'monto');
-        const isFechaValid = validateField(fechaInput, 'fecha_gasto');
-        
-        if (!isDescripcionValid || !isCategoriaValid || !isMontoValid || !isFechaValid) {
-            e.preventDefault();
-            alert('Por favor, corrige los errores en el formulario antes de continuar.');
-            return false;
+        function showAlert(message, type) {
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type}`;
+            alertDiv.innerHTML = `
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                ${message}
+            `;
+            
+            const formBody = document.querySelector('.form-body');
+            formBody.insertBefore(alertDiv, formBody.firstChild);
+            
+            setTimeout(() => {
+                alertDiv.remove();
+            }, 5000);
         }
         
-        // Deshabilitar botón y mostrar loading
-        const submitBtn = document.getElementById('submitBtn');
-        submitBtn.disabled = true;
-        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Creando...';
-    });
-    
-    // Inicializar vista previa
-    updatePreview();
-    updateProgress();
-    
-    // Aplicar estilos a los campos del formulario
-    const formFields = [descripcionInput, categoriaInput, montoInput, proyectoInput, fechaInput, observacionesInput];
-    formFields.forEach(field => {
-        if (field) {
-            field.classList.add('form-control');
+        // Formatear campo de monto
+        const montoField = document.getElementById('id_monto');
+        if (montoField) {
+            montoField.addEventListener('input', function() {
+                let value = this.value.replace(/[^0-9.]/g, '');
+                if (value) {
+                    value = parseFloat(value).toFixed(2);
+                }
+                this.value = value;
+            });
         }
     });
-});
 </script>
 {% endblock %}

@@ -576,14 +576,11 @@ function showSuccessNotification(message) {
                             </div>
                         </div>
                     </div>
-                    <div class="alert alert-info">
-                        <strong>ℹ️ Información:</strong>
-                        <ul class="mb-0 mt-2">
-                            <li>El proyecto será marcado como inactivo, no se eliminará físicamente</li>
-                            <li>Las facturas y gastos existentes no se verán afectados</li>
-                            <li>No se podrán crear nuevas facturas para este proyecto</li>
-                            <li>Esta acción se puede revertir editando el proyecto</li>
-                        </ul>
+                    <!-- Botón de ayuda contextual -->
+                    <div class="mt-2">
+                        <button type="button" class="btn btn-outline-info btn-sm" onclick="mostrarAyudaProyectos()">
+                            <i class="fas fa-question-circle me-1"></i>Ayuda sobre Proyectos
+                        </button>
                     </div>
                 </div>
             </div>
@@ -598,5 +595,31 @@ function showSuccessNotification(message) {
         </div>
     </div>
 </div>
+
+<script>
+// Función para mostrar ayuda sobre proyectos usando notificaciones toast
+function mostrarAyudaProyectos() {
+    // Mostrar información sobre eliminación de proyectos
+    if (typeof toastNotification !== 'undefined') {
+        toastNotification.info(
+            'Información sobre Proyectos',
+            'El proyecto será marcado como inactivo, no se eliminará físicamente. Las facturas y gastos existentes no se verán afectados.',
+            6000
+        );
+        
+        // Mostrar información adicional después de un breve delay
+        setTimeout(() => {
+            toastNotification.warning(
+                'Restricciones de Proyectos Inactivos',
+                'No se podrán crear nuevas facturas para proyectos inactivos. Esta acción se puede revertir editando el proyecto.',
+                6000
+            );
+        }, 1000);
+    } else {
+        // Fallback si toastNotification no está disponible
+        alert('Información sobre Proyectos:\n\n• El proyecto será marcado como inactivo, no se eliminará físicamente\n• Las facturas y gastos existentes no se verán afectados\n• No se podrán crear nuevas facturas para este proyecto\n• Esta acción se puede revertir editando el proyecto');
+    }
+}
+</script>
 
 {% endblock %}
