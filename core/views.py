@@ -6779,8 +6779,9 @@ def trabajadores_diarios_pdf(request, proyecto_id):
     # Crear el buffer para el PDF
     buffer = BytesIO()
     
-    # Crear el documento PDF
-    doc = SimpleDocTemplate(buffer, pagesize=A4, rightMargin=72, leftMargin=72, topMargin=72, bottomMargin=18)
+    # Crear el documento PDF en formato horizontal para mejor visualización de la tabla
+    from reportlab.lib.pagesizes import landscape
+    doc = SimpleDocTemplate(buffer, pagesize=landscape(A4), rightMargin=50, leftMargin=50, topMargin=50, bottomMargin=50)
     
     # Obtener estilos
     styles = getSampleStyleSheet()
@@ -6855,16 +6856,16 @@ def trabajadores_diarios_pdf(request, proyecto_id):
             total_bruto = float(trabajador.pago_diario) * dias_trabajados
             
             # Obtener anticipos aplicados para este trabajador
-            anticipos_trabajador = trabajador.anticipos_trabajador.all()
+            anticipos_trabajador = trabajador.anticipos.all()
             total_anticipos_trabajador = sum(anticipo.monto for anticipo in anticipos_trabajador)
             
-            # Calcular total neto (bruto - anticipos)
-            total_neto = total_bruto - total_anticipos_trabajador
+            # Calcular total neto (bruto - anticipos) - convertir a Decimal para evitar errores de tipo
+            total_neto = Decimal(str(total_bruto)) - total_anticipos_trabajador
             
             # Acumular totales generales
             total_bruto_general += total_bruto
-            total_anticipos_general += total_anticipos_trabajador
-            total_neto_general += total_neto
+            total_anticipos_general += float(total_anticipos_trabajador)
+            total_neto_general += float(total_neto)
             
             data.append([
                 str(i),
@@ -6872,17 +6873,17 @@ def trabajadores_diarios_pdf(request, proyecto_id):
                 f"Q{trabajador.pago_diario:.2f}",
                 str(dias_trabajados),
                 f"Q{total_bruto:.2f}",
-                f"Q{total_anticipos_trabajador:.2f}",
-                f"Q{total_neto:.2f}"
+                f"Q{float(total_anticipos_trabajador):.2f}",
+                f"Q{float(total_neto):.2f}"
             ])
             
-            print(f"🔍 Trabajador {trabajador.nombre}: {dias_trabajados} días × Q{trabajador.pago_diario} = Q{total_bruto:.2f} - Q{total_anticipos_trabajador:.2f} = Q{total_neto:.2f}")
+            print(f"🔍 Trabajador {trabajador.nombre}: {dias_trabajados} días × Q{trabajador.pago_diario} = Q{total_bruto:.2f} - Q{float(total_anticipos_trabajador):.2f} = Q{float(total_neto):.2f}")
         
         # Agregar fila de totales
         data.append(['', '', '', 'TOTAL GENERAL:', f"Q{total_bruto_general:.2f}", f"Q{total_anticipos_general:.2f}", f"Q{total_neto_general:.2f}"])
         
-        # Crear la tabla con columnas ajustadas para las nuevas columnas
-        table = Table(data, colWidths=[0.4*inch, 2.0*inch, 0.8*inch, 0.8*inch, 1.0*inch, 1.0*inch, 1.0*inch])
+        # Crear la tabla con columnas ajustadas para formato horizontal
+        table = Table(data, colWidths=[0.6*inch, 2.5*inch, 1.2*inch, 1.2*inch, 1.4*inch, 1.4*inch, 1.4*inch])
         
         # Estilo de la tabla
         table.setStyle(TableStyle([
@@ -6891,7 +6892,7 @@ def trabajadores_diarios_pdf(request, proyecto_id):
             ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
             ('ALIGN', (0, 0), (-1, 0), 'CENTER'),
             ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-            ('FONTSIZE', (0, 0), (-1, 0), 10),
+            ('FONTSIZE', (0, 0), (-1, 0), 8),
             
             # Fila de totales
             ('BACKGROUND', (0, -1), (-1, -1), colors.lightgrey),
