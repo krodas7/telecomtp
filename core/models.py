@@ -1349,6 +1349,7 @@ class AnticipoProyecto(models.Model):
     ESTADO_CHOICES = [
         ('pendiente', 'Pendiente'),
         ('liquidado', 'Liquidado'),
+        ('procesado', 'Procesado'),
         ('cancelado', 'Cancelado'),
     ]
     
@@ -1596,8 +1597,10 @@ class TrabajadorDiario(models.Model):
     
     @property
     def total_a_pagar(self):
-        """Calcula el total a pagar"""
-        return self.total_dias_trabajados * self.pago_diario
+        """Calcula el total a pagar (considerando anticipos)"""
+        total_bruto = self.total_dias_trabajados * self.pago_diario
+        anticipos_aplicados = self.total_anticipos_aplicados
+        return total_bruto - anticipos_aplicados
     
     @property
     def total_anticipos_aplicados(self):
@@ -1663,10 +1666,30 @@ class AnticipoTrabajadorDiario(models.Model):
     def monto_aplicado(self):
         """Calcula cuánto del anticipo se ha aplicado"""
         if self.estado == 'aplicado':
-            return min(self.monto, self.trabajador.total_a_pagar)
+            return self.monto
         return 0
     
     @property
     def saldo_pendiente(self):
         """Calcula el saldo pendiente del anticipo"""
         return self.monto - self.monto_aplicado
+
+
+class PlanillaLiquidada(models.Model):
+    """Modelo para registrar planillas de personal liquidadas"""
+    proyecto = models.ForeignKey(Proyecto, on_delete=models.CASCADE, related_name='planillas_liquidadas', verbose_name="Proyecto")
+    fecha_liquidacion = models.DateTimeField(auto_now_add=True, verbose_name="Fecha de liquidación")
+    total_salarios = models.DecimalField(max_digits=12, decimal_places=2, verbose_name="Total Salarios", default=0)
+    total_anticipos = models.DecimalField(max_digits=12, decimal_places=2, verbose_name="Total Anticipos Liquidados", default=0)
+    total_planilla = models.DecimalField(max_digits=12, decimal_places=2, verbose_name="Total de la Planilla", default=0)
+    cantidad_personal = models.IntegerField(verbose_name="Cantidad de Personal", default=0)
+    liquidada_por = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name="Liquidada por")
+    observaciones = models.TextField(blank=True, verbose_name="Observaciones")
+    
+    class Meta:
+        verbose_name = 'Planilla Liquidada'
+        verbose_name_plural = 'Planillas Liquidadas'
+        ordering = ['-fecha_liquidacion']
+    
+    def __str__(self):
+        return f"Planilla {self.proyecto.nombre} - {self.fecha_liquidacion.strftime('%d/%m/%Y')} - Q{self.total_planilla}"

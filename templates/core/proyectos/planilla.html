@@ -326,6 +326,36 @@
         </div>
     </div>
     
+    <!-- Histórico de Pagos -->
+    <div style="background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%); padding: 1.5rem; border-radius: 15px; margin-bottom: 2rem; color: white;">
+        <h5 style="margin-bottom: 1rem; font-weight: 700;">
+            <i class="fas fa-history me-2"></i>Histórico de Pagos a Personal
+        </h5>
+        <div class="row text-center">
+            <div class="col-md-4">
+                <div style="background: rgba(255,255,255,0.2); padding: 1.5rem; border-radius: 10px; border: 1px solid rgba(255,255,255,0.3);">
+                    <i class="fas fa-file-invoice fa-2x mb-2"></i>
+                    <h3 style="margin: 0; font-weight: 700;">{{ planillas_generadas }}</h3>
+                    <small>Planillas Generadas</small>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div style="background: rgba(255,255,255,0.2); padding: 1.5rem; border-radius: 10px; border: 1px solid rgba(255,255,255,0.3);">
+                    <i class="fas fa-check-circle fa-2x mb-2"></i>
+                    <h3 style="margin: 0; font-weight: 700;">{{ total_historico_pagado|currency_gtq }}</h3>
+                    <small>Total Histórico Pagado</small>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div style="background: rgba(255,255,255,0.2); padding: 1.5rem; border-radius: 10px; border: 1px solid rgba(255,255,255,0.3);">
+                    <i class="fas fa-chart-bar fa-2x mb-2"></i>
+                    <h3 style="margin: 0; font-weight: 700;">{{ promedio_por_planilla|currency_gtq }}</h3>
+                    <small>Promedio por Planilla</small>
+                </div>
+            </div>
+        </div>
+    </div>
+    
     <!-- Botones de Acción -->
     <div class="actions-row">
         <a href="{% url 'asignar_colaboradores_proyecto' proyecto.id %}" class="btn-planilla">
@@ -346,8 +376,14 @@
         <a href="{% url 'administrar_anticipos_proyecto' proyecto.id %}" class="btn-planilla" style="background: linear-gradient(135deg, #6f42c1 0%, #5a32a3 100%);">
             <i class="fas fa-cogs me-2"></i>Administrar Anticipos
         </a>
+        <form method="POST" action="{% url 'liquidar_y_generar_planilla' proyecto.id %}" style="display: inline;" onsubmit="return confirm('¿Estás seguro de liquidar todos los anticipos pendientes y generar la planilla?');">
+            {% csrf_token %}
+            <button type="submit" class="btn-planilla" style="background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%); border: none; cursor: pointer;">
+                <i class="fas fa-check-double me-2"></i>Liquidar y Generar Planilla
+            </button>
+        </form>
         <a href="{% url 'planilla_proyecto_pdf' proyecto.id %}" class="btn-planilla" style="background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);">
-            <i class="fas fa-file-pdf me-2"></i>Descargar PDF
+            <i class="fas fa-file-pdf me-2"></i>Solo Descargar PDF
         </a>
         <a href="{% url 'proyectos_list' %}" class="btn-planilla" style="background: linear-gradient(135deg, #6c757d 0%, #545b62 100%);">
             <i class="fas fa-arrow-left me-2"></i>Volver a Proyectos
