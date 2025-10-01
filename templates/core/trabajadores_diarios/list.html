@@ -390,6 +390,33 @@ document.addEventListener('DOMContentLoaded', function() {
     // Luego actualizar totales generales
     actualizarTotalesGenerales();
 });
+
+// Función para enviar días trabajados al finalizar planilla
+document.getElementById('finalizarPlanillaBtn').addEventListener('click', function(e) {
+    e.preventDefault();
+    
+    // Obtener el formulario
+    const form = this.closest('form');
+    
+    // Agregar campos ocultos con los días trabajados
+    const trabajadores = document.querySelectorAll('.dias-trabajados-input');
+    trabajadores.forEach(input => {
+        const trabajadorId = input.getAttribute('data-trabajador-id');
+        const diasTrabajados = input.value || 0;
+        
+        // Crear campo oculto
+        const hiddenInput = document.createElement('input');
+        hiddenInput.type = 'hidden';
+        hiddenInput.name = `dias_trabajador_${trabajadorId}`;
+        hiddenInput.value = diasTrabajados;
+        form.appendChild(hiddenInput);
+        
+        console.log(`🔍 Enviando días trabajados para trabajador ${trabajadorId}: ${diasTrabajados}`);
+    });
+    
+    // Enviar el formulario
+    form.submit();
+});
 </script>
 
 <!-- Modal de Finalizar Planilla -->
@@ -423,9 +450,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
                     <i class="fas fa-times me-1"></i>Cancelar
                 </button>
-                <a href="{% url 'finalizar_planilla_trabajadores' proyecto.id %}" class="btn btn-warning">
-                    <i class="fas fa-check-circle me-1"></i>Finalizar Planilla
-                </a>
+                <form method="post" action="{% url 'finalizar_planilla_trabajadores' proyecto.id %}" style="display: inline;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-warning" id="finalizarPlanillaBtn">
+                        <i class="fas fa-check-circle me-1"></i>Finalizar Planilla
+                    </button>
+                </form>
             </div>
         </div>
     </div>

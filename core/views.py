@@ -6264,43 +6264,30 @@ def trabajadores_diarios_list(request, proyecto_id):
     total_trabajadores = trabajadores.count()
     total_a_pagar = sum(t.total_a_pagar for t in trabajadores)
     
-    # Calcular totales de anticipos específicos de trabajadores diarios
+    # Calcular totales de anticipos específicos de trabajadores diarios (solo aplicados)
     anticipos_trabajadores = AnticipoTrabajadorDiario.objects.filter(
-        trabajador__proyecto=proyecto
+        trabajador__proyecto=proyecto,
+        estado='aplicado'  # Solo anticipos aplicados, no procesados
     )
     total_anticipos = anticipos_trabajadores.aggregate(total=Sum('monto'))['total'] or 0
     total_aplicado = sum(t.total_anticipos_aplicados for t in trabajadores)
     saldo_pendiente = total_a_pagar - total_aplicado
     
-    # Calcular histórico de planillas finalizadas
-    # Obtener carpeta "Trabajadores Diarios" del proyecto
-    try:
-        carpeta_planillas = CarpetaProyecto.objects.get(
-            proyecto=proyecto,
-            nombre='Trabajadores Diarios'
-        )
-        # Contar planillas finalizadas (archivos PDF en esa carpeta)
-        planillas_finalizadas = ArchivoProyecto.objects.filter(
-            carpeta=carpeta_planillas,
-            activo=True,
-            nombre__startswith='planilla_trabajadores_'
-        )
-        total_planillas_finalizadas = planillas_finalizadas.count()
-        
-        # Calcular total histórico aproximado basado en trabajadores inactivos
-        # Todos los trabajadores inactivos fueron parte de planillas finalizadas
-        trabajadores_inactivos = TrabajadorDiario.objects.filter(
-            proyecto=proyecto,
-            activo=False
-        )
-        total_historico_gastos = sum(t.total_dias_trabajados * t.pago_diario for t in trabajadores_inactivos)
-        
-        # Calcular promedio por planilla
-        promedio_por_planilla = total_historico_gastos / total_planillas_finalizadas if total_planillas_finalizadas > 0 else 0
-    except CarpetaProyecto.DoesNotExist:
-        total_planillas_finalizadas = 0
-        total_historico_gastos = 0
-        promedio_por_planilla = 0
+    # Calcular histórico de planillas finalizadas usando PlanillaLiquidada
+    from core.models import PlanillaLiquidada
+    
+    # Obtener planillas liquidadas de trabajadores diarios (con observaciones que contengan "trabajadores diarios")
+    planillas_liquidadas = PlanillaLiquidada.objects.filter(
+        proyecto=proyecto,
+        observaciones__icontains='trabajadores diarios'
+    )
+    
+    total_planillas_finalizadas = planillas_liquidadas.count()
+    total_historico_gastos = planillas_liquidadas.aggregate(total=Sum('total_planilla'))['total'] or 0
+    promedio_por_planilla = (
+        total_historico_gastos / total_planillas_finalizadas 
+        if total_planillas_finalizadas > 0 else 0
+    )
     
     context = {
         'proyecto': proyecto,
@@ -6393,26 +6380,56 @@ def finalizar_planilla_trabajadores(request, proyecto_id):
         # Calcular totales
         total_trabajadores = trabajadores.count()
         total_a_pagar = 0
-        data = [['No.', 'Nombre del Trabajador', 'Pago Diario (Q)', 'Días Trabajados', 'Total a Pagar (Q)']]
+        total_anticipos = 0
+        data = [['No.', 'Nombre del Trabajador', 'Pago Diario (Q)', 'Días Trabajados', 'Total Bruto (Q)', 'Anticipos (Q)', 'Total a Pagar (Q)']]
+        
+        # Obtener días trabajados temporales del POST
+        dias_trabajados_data = {}
+        if request.method == 'POST':
+            for trabajador in trabajadores:
+                dias_key = f'dias_trabajador_{trabajador.id}'
+                dias_trabajados_data[trabajador.id] = int(request.POST.get(dias_key, 0))
         
         for i, trabajador in enumerate(trabajadores, 1):
-            dias_trabajados = sum(registro.dias_trabajados for registro in trabajador.registros_trabajo.all())
-            total_trabajador = float(trabajador.pago_diario) * dias_trabajados
-            total_a_pagar += total_trabajador
+            # Usar días trabajados temporales del POST o de la base de datos
+            if trabajador.id in dias_trabajados_data:
+                dias_trabajados = dias_trabajados_data[trabajador.id]
+            else:
+                dias_trabajados = sum(registro.dias_trabajados for registro in trabajador.registros_trabajo.all())
+            
+            total_bruto = float(trabajador.pago_diario) * dias_trabajados
+            
+            # Calcular anticipos aplicados
+            anticipos_aplicados = sum(anticipo.monto_aplicado for anticipo in trabajador.anticipos.all())
+            total_anticipos += anticipos_aplicados
+            
+            # Calcular total neto (bruto - anticipos)
+            total_neto = total_bruto - anticipos_aplicados
+            total_a_pagar += total_neto
+            
+            # Debug logging
+            print(f"🔍 {trabajador.nombre}:")
+            print(f"   - Días trabajados: {dias_trabajados}")
+            print(f"   - Pago diario: Q{trabajador.pago_diario}")
+            print(f"   - Total bruto: Q{total_bruto:.2f}")
+            print(f"   - Anticipos aplicados: Q{anticipos_aplicados:.2f}")
+            print(f"   - Total neto: Q{total_neto:.2f}")
             
             data.append([
                 str(i),
                 trabajador.nombre,
                 f"Q{trabajador.pago_diario:.2f}",
                 str(dias_trabajados),
-                f"Q{total_trabajador:.2f}"
+                f"Q{total_bruto:.2f}",
+                f"Q{anticipos_aplicados:.2f}",
+                f"Q{total_neto:.2f}"  # Este es el total NETO (bruto - anticipos)
             ])
         
         # Agregar fila de totales
-        data.append(['', '', '', 'TOTAL GENERAL:', f"Q{total_a_pagar:.2f}"])
+        data.append(['', '', '', '', 'TOTAL GENERAL:', f"Q{total_anticipos:.2f}", f"Q{total_a_pagar:.2f}"])
         
         # Crear la tabla
-        table = Table(data, colWidths=[0.5*inch, 2.5*inch, 1.2*inch, 1.2*inch, 1.2*inch])
+        table = Table(data, colWidths=[0.4*inch, 2.0*inch, 0.8*inch, 0.8*inch, 0.8*inch, 0.8*inch, 0.8*inch])
         
         # Estilo de la tabla
         table.setStyle(TableStyle([
@@ -6440,7 +6457,8 @@ def finalizar_planilla_trabajadores(request, proyecto_id):
         
         # Información adicional
         story.append(Paragraph(f"<b>Total de Trabajadores:</b> {total_trabajadores}", normal_style))
-        story.append(Paragraph(f"<b>Total a Pagar:</b> Q{total_a_pagar:.2f}", normal_style))
+        story.append(Paragraph(f"<b>Total de Anticipos:</b> Q{total_anticipos:.2f}", normal_style))
+        story.append(Paragraph(f"<b>Total a Pagar (Neto):</b> Q{total_a_pagar:.2f}", normal_style))
         
         # Construir el PDF
         doc.build(story)
@@ -6452,6 +6470,8 @@ def finalizar_planilla_trabajadores(request, proyecto_id):
         # 2. Crear o obtener carpeta "Trabajadores Diarios" en archivos del proyecto
         from core.models import CarpetaProyecto
         
+        print(f"🔍 Buscando carpeta 'Trabajadores Diarios' para proyecto {proyecto.id}")
+        
         carpeta, created = CarpetaProyecto.objects.get_or_create(
             proyecto=proyecto,
             nombre='Trabajadores Diarios',
@@ -6462,18 +6482,23 @@ def finalizar_planilla_trabajadores(request, proyecto_id):
         )
         
         if created:
-            print(f"✅ Carpeta 'Trabajadores Diarios' creada para proyecto {proyecto.nombre}")
+            print(f"✅ Carpeta 'Trabajadores Diarios' creada para proyecto {proyecto.nombre} (ID: {carpeta.id})")
         else:
-            print(f"✅ Carpeta 'Trabajadores Diarios' ya existe para proyecto {proyecto.nombre}")
+            print(f"✅ Carpeta 'Trabajadores Diarios' ya existe para proyecto {proyecto.nombre} (ID: {carpeta.id})")
         
         # 3. Guardar archivo PDF en los archivos del proyecto
         from core.models import ArchivoProyecto
         
         nombre_archivo = f"planilla_trabajadores_{timezone.now().strftime('%Y%m%d_%H%M%S')}.pdf"
         
+        print(f"🔍 Creando archivo: {nombre_archivo}")
+        print(f"🔍 Tamaño del PDF: {len(pdf_content)} bytes")
+        
         # Crear ContentFile con el contenido PDF
         archivo_pdf = ContentFile(pdf_content)
         archivo_pdf.name = nombre_archivo
+        
+        print(f"🔍 ContentFile creado: {archivo_pdf.name}")
         
         archivo = ArchivoProyecto.objects.create(
             proyecto=proyecto,
@@ -6485,6 +6510,8 @@ def finalizar_planilla_trabajadores(request, proyecto_id):
             activo=True
         )
         
+        print(f"🔍 ArchivoProyecto creado con ID: {archivo.id}")
+        
         print(f"✅ PDF guardado: {nombre_archivo}")
         print(f"✅ Archivo ID: {archivo.id}")
         print(f"✅ Tiene archivo físico: {bool(archivo.archivo)}")
@@ -6493,24 +6520,54 @@ def finalizar_planilla_trabajadores(request, proyecto_id):
             print(f"✅ Ruta: {archivo.archivo.path}")
             print(f"✅ Existe archivo: {os.path.exists(archivo.archivo.path)}")
         
-        # 4. Limpiar lista de trabajadores (marcar como inactivos)
+        # 4. Marcar anticipos de trabajadores diarios como "procesados"
+        anticipos_trabajadores = AnticipoTrabajadorDiario.objects.filter(
+            trabajador__proyecto=proyecto,
+            estado='aplicado'
+        )
+        
+        anticipos_procesados = anticipos_trabajadores.count()
+        anticipos_trabajadores.update(
+            estado='procesado',
+            fecha_liquidacion=timezone.now().date(),
+            liquidado_por=request.user
+        )
+        
+        print(f"✅ {anticipos_procesados} anticipos de trabajadores marcados como procesados")
+        
+        # 5. Crear registro de planilla liquidada de trabajadores diarios
+        from core.models import PlanillaLiquidada
+        
+        planilla_trabajadores = PlanillaLiquidada.objects.create(
+            proyecto=proyecto,
+            total_salarios=Decimal(str(total_a_pagar)),  # Total neto a pagar
+            total_anticipos=Decimal(str(total_anticipos)),
+            total_planilla=Decimal(str(total_a_pagar + total_anticipos)),  # Total bruto
+            cantidad_personal=trabajadores.count(),
+            liquidada_por=request.user,
+            observaciones=f'Planilla de trabajadores diarios - {trabajadores.count()} trabajadores procesados'
+        )
+        
+        print(f"✅ Planilla liquidada creada con ID: {planilla_trabajadores.id}")
+        
+        # 6. Limpiar lista de trabajadores (marcar como inactivos)
         trabajadores_eliminados = trabajadores.count()
         trabajadores.update(activo=False)
         
         print(f"✅ {trabajadores_eliminados} trabajadores marcados como inactivos")
         
-        # 5. Registrar actividad
+        # 7. Registrar actividad
         from core.models import LogActividad
         LogActividad.objects.create(
             usuario=request.user,
             accion='Finalizar Planilla',
             modulo='Trabajadores Diarios',
-            descripcion=f'Planilla de trabajadores finalizada para proyecto {proyecto.nombre}. Archivo guardado: {nombre_archivo}. Trabajadores procesados: {trabajadores_eliminados}',
+            descripcion=f'Planilla de trabajadores finalizada para proyecto {proyecto.nombre}. Archivo guardado: {nombre_archivo}. Trabajadores procesados: {trabajadores_eliminados}. Anticipos procesados: {anticipos_procesados}',
             ip_address=request.META.get('REMOTE_ADDR')
         )
         
-        # 6. Mostrar mensaje de éxito
-        messages.success(request, f'Planilla finalizada exitosamente. Archivo guardado como "{nombre_archivo}". Se procesaron {trabajadores_eliminados} trabajadores.')
+        # 8. Mostrar mensaje de éxito
+        messages.success(request, f'Planilla finalizada exitosamente. Archivo guardado como "{nombre_archivo}". Se procesaron {trabajadores_eliminados} trabajadores y {anticipos_procesados} anticipos.')
         
         return redirect('trabajadores_diarios_list', proyecto_id=proyecto_id)
         
@@ -6785,27 +6842,47 @@ def trabajadores_diarios_pdf(request, proyecto_id):
         # Convertir a Decimal para evitar errores de tipo
         saldo_pendiente = Decimal(str(total_a_pagar)) - Decimal(str(total_aplicado))
         
-        # Crear tabla de trabajadores
-        data = [['No.', 'Nombre del Trabajador', 'Pago Diario (Q)', 'Días Trabajados', 'Total a Pagar (Q)']]
+        # Crear tabla de trabajadores con columnas detalladas
+        data = [['No.', 'Nombre del Trabajador', 'Pago Diario (Q)', 'Días Trabajados', 'Total Bruto (Q)', 'Anticipos (Q)', 'Total a Pagar (Q)']]
+        
+        total_bruto_general = 0
+        total_anticipos_general = 0
+        total_neto_general = 0
         
         for i, trabajador in enumerate(trabajadores, 1):
             # Usar días trabajados temporales
             dias_trabajados = dias_trabajados_data.get(trabajador.id, 0)
-            total_trabajador = float(trabajador.pago_diario) * dias_trabajados
+            total_bruto = float(trabajador.pago_diario) * dias_trabajados
+            
+            # Obtener anticipos aplicados para este trabajador
+            anticipos_trabajador = trabajador.anticipos_trabajador.all()
+            total_anticipos_trabajador = sum(anticipo.monto for anticipo in anticipos_trabajador)
+            
+            # Calcular total neto (bruto - anticipos)
+            total_neto = total_bruto - total_anticipos_trabajador
+            
+            # Acumular totales generales
+            total_bruto_general += total_bruto
+            total_anticipos_general += total_anticipos_trabajador
+            total_neto_general += total_neto
             
             data.append([
                 str(i),
                 trabajador.nombre,
                 f"Q{trabajador.pago_diario:.2f}",
                 str(dias_trabajados),
-                f"Q{total_trabajador:.2f}"
+                f"Q{total_bruto:.2f}",
+                f"Q{total_anticipos_trabajador:.2f}",
+                f"Q{total_neto:.2f}"
             ])
+            
+            print(f"🔍 Trabajador {trabajador.nombre}: {dias_trabajados} días × Q{trabajador.pago_diario} = Q{total_bruto:.2f} - Q{total_anticipos_trabajador:.2f} = Q{total_neto:.2f}")
         
         # Agregar fila de totales
-        data.append(['', '', '', 'TOTAL GENERAL:', f"Q{total_a_pagar:.2f}"])
+        data.append(['', '', '', 'TOTAL GENERAL:', f"Q{total_bruto_general:.2f}", f"Q{total_anticipos_general:.2f}", f"Q{total_neto_general:.2f}"])
         
-        # Crear la tabla
-        table = Table(data, colWidths=[0.5*inch, 2.5*inch, 1.2*inch, 1.2*inch, 1.2*inch])
+        # Crear la tabla con columnas ajustadas para las nuevas columnas
+        table = Table(data, colWidths=[0.4*inch, 2.0*inch, 0.8*inch, 0.8*inch, 1.0*inch, 1.0*inch, 1.0*inch])
         
         # Estilo de la tabla
         table.setStyle(TableStyle([
@@ -6836,10 +6913,9 @@ def trabajadores_diarios_pdf(request, proyecto_id):
         
         anticipos_data = [
             ['Concepto', 'Monto (Q)'],
-            ['Total a Pagar', f"Q{total_a_pagar:.2f}"],
-            ['Anticipos Otorgados', f"Q{total_anticipos:.2f}"],
-            ['Anticipos Aplicados', f"Q{total_aplicado:.2f}"],
-            ['Saldo Pendiente', f"Q{saldo_pendiente:.2f}"]
+            ['Total Bruto', f"Q{total_bruto_general:.2f}"],
+            ['Anticipos Aplicados', f"Q{total_anticipos_general:.2f}"],
+            ['Total a Pagar (Neto)', f"Q{total_neto_general:.2f}"]
         ]
         
         anticipos_table = Table(anticipos_data, colWidths=[3*inch, 1.5*inch])
@@ -6858,7 +6934,9 @@ def trabajadores_diarios_pdf(request, proyecto_id):
         
         # Información adicional
         story.append(Paragraph(f"<b>Total de Trabajadores:</b> {total_trabajadores}", normal_style))
-        story.append(Paragraph(f"<b>Total a Pagar:</b> Q{total_a_pagar:.2f}", normal_style))
+        story.append(Paragraph(f"<b>Total Bruto:</b> Q{total_bruto_general:.2f}", normal_style))
+        story.append(Paragraph(f"<b>Total de Anticipos:</b> Q{total_anticipos_general:.2f}", normal_style))
+        story.append(Paragraph(f"<b>Total a Pagar (Neto):</b> Q{total_neto_general:.2f}", normal_style))
         
     else:
         story.append(Paragraph("No hay trabajadores diarios registrados en este proyecto.", normal_style))
