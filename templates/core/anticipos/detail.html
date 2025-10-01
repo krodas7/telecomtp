@@ -189,29 +189,97 @@
                     </h6>
                 </div>
                 <div class="card-body">
-                    <div class="progress mb-3" style="height: 25px;">
-                        {% widthratio anticipo.monto_aplicado anticipo.monto 100 as porcentaje %}
-                        <div class="progress-bar bg-success" role="progressbar" style="width: {{ porcentaje }}%" 
-                             aria-valuenow="{{ porcentaje }}" aria-valuemin="0" aria-valuemax="100">
-                            {{ porcentaje }}%
+                    <!-- Barra de progreso mejorada -->
+                    <div class="mb-4">
+                        <!-- Debug info -->
+                        <div class="alert alert-info small mb-2">
+                            <strong>Debug:</strong>
+                            Monto: Q{{ anticipo.monto }} |
+                            Aplicado: Q{{ anticipo.monto_aplicado }} |
+                            Total Aplicado: Q{{ anticipo.total_aplicado }} |
+                            Porcentaje: {{ anticipo.porcentaje_aplicado|floatformat:2 }}%
+                        </div>
+                        
+                        <div class="d-flex justify-content-between mb-2">
+                            <span class="text-muted small fw-bold">Progreso de Aplicación</span>
+                            <span class="fw-bold" style="color: #28a745; font-size: 1.1rem;">
+                                {{ anticipo.porcentaje_aplicado|floatformat:1 }}%
+                            </span>
+                        </div>
+                        <div class="progress" style="height: 35px; background-color: #e9ecef; border-radius: 20px; box-shadow: inset 0 2px 4px rgba(0,0,0,0.1); overflow: visible;">
+                            <div class="progress-bar" 
+                                 role="progressbar" 
+                                 style="width: {{ anticipo.porcentaje_aplicado }}%; 
+                                        background: linear-gradient(90deg, #28a745 0%, #34d058 50%, #28a745 100%);
+                                        border-radius: 20px;
+                                        font-weight: 700;
+                                        font-size: 1.1rem;
+                                        color: white;
+                                        display: flex;
+                                        align-items: center;
+                                        justify-content: center;
+                                        box-shadow: 0 4px 12px rgba(40, 167, 69, 0.4);
+                                        transition: width 0.8s ease;
+                                        position: relative;" 
+                                 aria-valuenow="{{ anticipo.porcentaje_aplicado }}" 
+                                 aria-valuemin="0" 
+                                 aria-valuemax="100">
+                                <span style="position: absolute; width: 100%; text-align: center; text-shadow: 0 1px 3px rgba(0,0,0,0.3);">
+                                    {% if anticipo.porcentaje_aplicado > 5 %}
+                                        <i class="fas fa-check-circle me-2"></i>{{ anticipo.porcentaje_aplicado|floatformat:1 }}%
+                                    {% endif %}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="d-flex justify-content-between mt-3">
+                            <div class="text-start">
+                                <small class="text-success fw-bold d-block">
+                                    <i class="fas fa-check-circle"></i> Aplicado
+                                </small>
+                                <span class="text-success fw-bold" style="font-size: 1.2rem;">
+                                    Q{{ anticipo.monto_aplicado|floatformat:2 }}
+                                </span>
+                            </div>
+                            <div class="text-center align-self-center">
+                                <i class="fas fa-arrow-right text-muted"></i>
+                            </div>
+                            <div class="text-end">
+                                <small class="text-primary fw-bold d-block">
+                                    <i class="fas fa-coins"></i> Total
+                                </small>
+                                <span class="text-primary fw-bold" style="font-size: 1.2rem;">
+                                    Q{{ anticipo.monto|floatformat:2 }}
+                                </span>
+                            </div>
                         </div>
                     </div>
+                    
+                    <!-- Tarjetas de montos -->
                     <div class="row text-center">
                         <div class="col-4">
                             <div class="border-end">
-                                <h6 class="text-success">{{ anticipo.total_aplicado|floatformat:2 }}</h6>
-                                <small class="text-muted">Aplicado</small>
+                                <div style="background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%); padding: 1rem; border-radius: 10px;">
+                                    <i class="fas fa-check-circle text-success fa-2x mb-2"></i>
+                                    <h6 class="text-success fw-bold mb-0">Q{{ anticipo.total_aplicado|floatformat:2 }}</h6>
+                                    <small class="text-muted">Aplicado</small>
+                                </div>
                             </div>
                         </div>
                         <div class="col-4">
                             <div class="border-end">
-                                <h6 class="text-warning">{{ anticipo.monto_disponible|floatformat:2 }}</h6>
-                                <small class="text-muted">Disponible</small>
+                                <div style="background: linear-gradient(135deg, #fff3cd 0%, #ffeeba 100%); padding: 1rem; border-radius: 10px;">
+                                    <i class="fas fa-hourglass-half text-warning fa-2x mb-2"></i>
+                                    <h6 class="text-warning fw-bold mb-0">Q{{ anticipo.monto_disponible|floatformat:2 }}</h6>
+                                    <small class="text-muted">Disponible</small>
+                                </div>
                             </div>
                         </div>
                         <div class="col-4">
-                            <h6 class="text-primary">{{ anticipo.monto|floatformat:2 }}</h6>
-                            <small class="text-muted">Total</small>
+                            <div style="background: linear-gradient(135deg, #cfe2ff 0%, #b6d4fe 100%); padding: 1rem; border-radius: 10px;">
+                                <i class="fas fa-coins text-primary fa-2x mb-2"></i>
+                                <h6 class="text-primary fw-bold mb-0">Q{{ anticipo.monto|floatformat:2 }}</h6>
+                                <small class="text-muted">Total</small>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -265,10 +333,6 @@
                         <strong>Teléfono:</strong> {{ anticipo.cliente.telefono|default:"No especificado" }}<br>
                         <strong>Email:</strong> {{ anticipo.cliente.email|default:"No especificado" }}
                     </p>
-                    <a href="{% url 'cliente_detail' anticipo.cliente.id %}" class="btn btn-sm btn-outline-info">
-                        <i class="fas fa-external-link-alt me-1"></i>
-                        Ver Cliente
-                    </a>
                 </div>
             </div>
 
@@ -287,10 +351,6 @@
                         <strong>Estado:</strong> {{ anticipo.proyecto.estado }}<br>
                         <strong>Presupuesto:</strong> {{anticipo.proyecto.presupuesto|currency_gtq}}
                     </p>
-                                            <a href="{% url 'proyecto_dashboard' anticipo.proyecto.id %}" class="btn btn-sm btn-outline-success">
-                        <i class="fas fa-external-link-alt me-1"></i>
-                        Ver Proyecto
-                    </a>
                 </div>
             </div>
         </div>

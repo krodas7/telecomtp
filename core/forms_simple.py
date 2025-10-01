@@ -327,65 +327,84 @@ class ArchivoProyectoForm(forms.ModelForm):
     """Formulario para archivos de proyecto"""
     
     def __init__(self, *args, **kwargs):
-        proyecto = kwargs.pop('proyecto', None)
+        self.proyecto = kwargs.pop('proyecto', None)
         super().__init__(*args, **kwargs)
-        if proyecto:
-            self.fields['proyecto'].initial = proyecto
-            self.fields['proyecto'].widget = forms.HiddenInput()  # Ocultar el campo ya que se asigna automáticamente
-            self.fields['carpeta'].queryset = CarpetaProyecto.objects.filter(proyecto=proyecto, activa=True)
+        if self.proyecto:
+            # Filtrar carpetas del proyecto
+            self.fields['carpeta'].queryset = CarpetaProyecto.objects.filter(
+                proyecto=self.proyecto, 
+                activa=True
+            )
+            self.fields['carpeta'].required = False
     
     def clean_archivo(self):
         """Validar el archivo subido"""
+        import logging
+        logger = logging.getLogger(__name__)
+        
         archivo = self.cleaned_data.get('archivo')
         if archivo:
-            # Extensiones permitidas
+            # Extensiones permitidas (COMPLETA)
             extensiones_permitidas = [
-                '.pdf', '.doc', '.docx', '.xls', '.xlsx', 
-                '.jpg', '.jpeg', '.png', '.gif', '.zip', '.rar',
-                '.txt', '.rtf', '.dwg', '.dxf', '.bmp', '.webp'
+                # Documentos
+                '.pdf', '.doc', '.docx', '.odt', '.txt', '.rtf',
+                # Excel
+                '.xls', '.xlsx', '.xlsm', '.xlsb', '.csv',
+                # Imágenes
+                '.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp', '.svg',
+                # Comprimidos
+                '.zip', '.rar', '.7z', '.tar', '.gz',
+                # CAD
+                '.dwg', '.dxf', '.dwf',
+                # Otros
+                '.ppt', '.pptx', '.xml', '.json'
             ]
             
             # Obtener la extensión del archivo
             nombre_archivo = archivo.name.lower()
+            logger.info(f"📎 Archivo recibido: {nombre_archivo}")
+            logger.info(f"📎 Tamaño: {archivo.size} bytes")
+            
             extension_valida = any(nombre_archivo.endswith(ext) for ext in extensiones_permitidas)
             
             if not extension_valida:
+                logger.error(f"❌ Extensión no válida para: {nombre_archivo}")
                 raise forms.ValidationError(
-                    f'Tipo de archivo no permitido. Extensiones permitidas: {", ".join(extensiones_permitidas)}'
+                    f'Tipo de archivo no permitido: "{nombre_archivo}". Extensiones permitidas: {", ".join(extensiones_permitidas)}'
                 )
             
-            # Validar tamaño del archivo (máximo 50MB)
-            if archivo.size > 50 * 1024 * 1024:  # 50MB
-                raise forms.ValidationError('El archivo es demasiado grande. Tamaño máximo: 50MB')
+            logger.info(f"✅ Extensión válida para: {nombre_archivo}")
+            
+            # Validar tamaño del archivo (máximo 100MB)
+            if archivo.size > 100 * 1024 * 1024:  # 100MB
+                raise forms.ValidationError('El archivo es demasiado grande. Tamaño máximo: 100MB')
+            
+            logger.info(f"✅ Tamaño válido: {archivo.size} bytes")
         
         return archivo
     
     class Meta:
         model = ArchivoProyecto
-        fields = ['proyecto', 'nombre', 'descripcion', 'archivo', 'carpeta', 'tipo', 'activo']
+        fields = ['nombre', 'descripcion', 'archivo', 'carpeta', 'tipo']
         widgets = {
-            'proyecto': forms.HiddenInput(),
             'nombre': forms.TextInput(attrs={
                 'class': 'form-control',
-                'placeholder': 'Nombre del archivo'
+                'placeholder': 'Nombre del archivo (opcional, se usa el nombre del archivo si está vacío)'
             }),
             'descripcion': forms.Textarea(attrs={
                 'class': 'form-control',
                 'rows': 2,
-                'placeholder': 'Descripción del archivo'
+                'placeholder': 'Descripción del archivo (opcional)'
             }),
             'archivo': forms.FileInput(attrs={
                 'class': 'form-control',
-                'accept': '.pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.gif,.zip,.rar'
+                'accept': '.pdf,.doc,.docx,.xls,.xlsx,.xlsm,.xlsb,.csv,.jpg,.jpeg,.png,.gif,.zip,.rar'
             }),
             'carpeta': forms.Select(attrs={
                 'class': 'form-select'
             }),
             'tipo': forms.Select(attrs={
                 'class': 'form-select'
-            }),
-            'activo': forms.CheckboxInput(attrs={
-                'class': 'form-check-input'
             })
         }
 
@@ -394,19 +413,29 @@ class CarpetaProyectoForm(forms.ModelForm):
     """Formulario para carpetas de proyecto"""
     
     def __init__(self, *args, **kwargs):
-        proyecto = kwargs.pop('proyecto', None)
+        import logging
+        logger = logging.getLogger(__name__)
+        
+        self.proyecto = kwargs.pop('proyecto', None)
+        logger.info(f"🔍 CarpetaProyectoForm.__init__ - Proyecto recibido: {self.proyecto}")
+        
         super().__init__(*args, **kwargs)
-        if proyecto:
-            self.fields['proyecto'].initial = proyecto
-            self.fields['proyecto'].widget = forms.HiddenInput()
-            self.fields['carpeta_padre'].queryset = CarpetaProyecto.objects.filter(proyecto=proyecto, activa=True)
+        
+        logger.info(f"🔍 Fields disponibles: {list(self.fields.keys())}")
+        
+        if self.proyecto:
+            # Filtrar carpetas padre del mismo proyecto
+            self.fields['carpeta_padre'].queryset = CarpetaProyecto.objects.filter(
+                proyecto=self.proyecto, 
+                activa=True
+            )
+            self.fields['carpeta_padre'].required = False
+            logger.info(f"✅ Carpeta padre configurada para proyecto {self.proyecto.id}")
     
     class Meta:
         model = CarpetaProyecto
-        fields = ['proyecto', 'nombre', 'descripcion', 'carpeta_padre', 'creada_por', 'activa']
+        fields = ['nombre', 'descripcion', 'carpeta_padre']
         widgets = {
-            'proyecto': forms.HiddenInput(),
-            'creada_por': forms.HiddenInput(),
             'nombre': forms.TextInput(attrs={
                 'class': 'form-control',
                 'placeholder': 'Nombre de la carpeta'
@@ -418,9 +447,6 @@ class CarpetaProyectoForm(forms.ModelForm):
             }),
             'carpeta_padre': forms.Select(attrs={
                 'class': 'form-select'
-            }),
-            'activa': forms.CheckboxInput(attrs={
-                'class': 'form-check-input'
             })
         }
 
@@ -516,35 +542,56 @@ class AnticipoForm(forms.ModelForm):
     class Meta:
         model = Anticipo
         fields = [
-            'cliente', 'proyecto', 'monto', 'tipo', 'estado', 
-            'fecha_recepcion', 'observaciones'
+            'cliente', 'proyecto', 'numero_anticipo', 'monto', 'tipo', 
+            'metodo_pago', 'referencia_pago', 'banco_origen',
+            'fecha_recepcion', 'descripcion', 'observaciones'
         ]
         widgets = {
             'cliente': forms.Select(attrs={
-                'class': 'form-select'
+                'class': 'form-select',
+                'required': True
             }),
             'proyecto': forms.Select(attrs={
-                'class': 'form-select'
+                'class': 'form-select',
+                'required': True
+            }),
+            'numero_anticipo': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Ej: ANT-2025-001'
             }),
             'monto': forms.NumberInput(attrs={
                 'class': 'form-control',
                 'step': '0.01',
-                'min': '0'
+                'min': '0',
+                'placeholder': '0.00'
             }),
             'tipo': forms.Select(attrs={
                 'class': 'form-select'
             }),
-            'estado': forms.Select(attrs={
+            'metodo_pago': forms.Select(attrs={
                 'class': 'form-select'
+            }),
+            'referencia_pago': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Número de cheque, transferencia, etc.'
+            }),
+            'banco_origen': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Banco de origen del pago'
             }),
             'fecha_recepcion': forms.DateInput(attrs={
                 'class': 'form-control',
                 'type': 'date'
             }),
+            'descripcion': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 2,
+                'placeholder': 'Descripción detallada del anticipo'
+            }),
             'observaciones': forms.Textarea(attrs={
                 'class': 'form-control',
                 'rows': 2,
-                'placeholder': 'Observaciones del anticipo'
+                'placeholder': 'Observaciones adicionales'
             })
         }
 
@@ -900,7 +947,7 @@ class AnticipoTrabajadorDiarioForm(forms.ModelForm):
     class Meta:
         model = AnticipoTrabajadorDiario
         fields = [
-            'trabajador', 'monto', 'fecha_anticipo', 'estado', 'observaciones'
+            'trabajador', 'monto', 'fecha_anticipo', 'observaciones'
         ]
         widgets = {
             'trabajador': forms.Select(attrs={
@@ -914,9 +961,6 @@ class AnticipoTrabajadorDiarioForm(forms.ModelForm):
             'fecha_anticipo': forms.DateInput(attrs={
                 'class': 'form-control',
                 'type': 'date'
-            }),
-            'estado': forms.Select(attrs={
-                'class': 'form-select'
             }),
             'observaciones': forms.Textarea(attrs={
                 'class': 'form-control',

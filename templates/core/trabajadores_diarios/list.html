@@ -106,6 +106,44 @@
         </div>
     </div>
 
+    <!-- Histórico de Planillas Finalizadas -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow border-left-success">
+                <div class="card-header py-3 bg-gradient-success text-white">
+                    <h6 class="m-0 font-weight-bold">
+                        <i class="fas fa-history me-2"></i>Histórico de Planillas Finalizadas
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-md-4">
+                            <div class="border rounded p-4 bg-light">
+                                <i class="fas fa-file-pdf fa-2x text-danger mb-2"></i>
+                                <h3 class="text-danger mb-1">{{ total_planillas_finalizadas }}</h3>
+                                <small class="text-muted">Planillas Finalizadas</small>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="border rounded p-4 bg-light">
+                                <i class="fas fa-dollar-sign fa-2x text-success mb-2"></i>
+                                <h3 class="text-success mb-1">Q{{ total_historico_gastos|floatformat:2 }}</h3>
+                                <small class="text-muted">Total Histórico Gastado</small>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="border rounded p-4 bg-light">
+                                <i class="fas fa-chart-line fa-2x text-info mb-2"></i>
+                                <h3 class="text-info mb-1">Q{{ promedio_por_planilla|floatformat:2 }}</h3>
+                                <small class="text-muted">Promedio por Planilla</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Tabla de trabajadores -->
     <div class="card shadow mb-4">
         <div class="card-header py-3">
@@ -144,6 +182,7 @@
                                            value="0"
                                            data-trabajador-id="{{ trabajador.id }}"
                                            data-pago-diario="{{ trabajador.pago_diario }}"
+                                           data-anticipos-aplicados="{{ trabajador.total_anticipos_aplicados }}"
                                            min="0"
                                            placeholder="Días"
                                            style="width: 80px;">
@@ -154,6 +193,11 @@
                                         <span class="total-pagar-display" data-trabajador-id="{{ trabajador.id }}">
                                             Q0.00
                                         </span>
+                                        {% if trabajador.total_anticipos_aplicados > 0 %}
+                                        <small class="text-danger fw-bold">
+                                            <i class="fas fa-minus-circle"></i> Anticipo: -Q{{ trabajador.total_anticipos_aplicados|floatformat:2 }}
+                                        </small>
+                                        {% endif %}
                                     </div>
                                 </td>
                                 <td>
@@ -215,12 +259,46 @@ document.addEventListener('DOMContentLoaded', function() {
             const pagoDiario = parseFloat(this.dataset.pagoDiario);
             const anticiposAplicados = parseFloat(this.dataset.anticiposAplicados) || 0;
             const diasTrabajados = parseInt(this.value) || 0;
-            const totalPagar = diasTrabajados * pagoDiario;
-            const saldoPendiente = totalPagar - anticiposAplicados;
+            const totalBruto = diasTrabajados * pagoDiario;
+            const saldoPendiente = totalBruto - anticiposAplicados;
+            
+            console.log('='.repeat(50));
+            console.log(`🔍 CÁLCULO TRABAJADOR ${trabajadorId}`);
+            console.log(`💰 Pago Diario: Q${pagoDiario}`);
+            console.log(`📅 Días Trabajados: ${diasTrabajados}`);
+            console.log(`💵 Total Bruto: Q${totalBruto}`);
+            console.log(`🔴 Anticipos Aplicados: Q${anticiposAplicados}`);
+            console.log(`✅ SALDO PENDIENTE: Q${saldoPendiente}`);
+            console.log('='.repeat(50));
             
             const totalDisplay = document.querySelector(`.total-pagar-display[data-trabajador-id="${trabajadorId}"]`);
+            console.log(`🔍 Buscando elemento: .total-pagar-display[data-trabajador-id="${trabajadorId}"]`);
+            console.log(`📍 Elemento encontrado:`, totalDisplay);
+            
             if (totalDisplay) {
-                totalDisplay.textContent = `Q${saldoPendiente.toFixed(2)}`;
+                // Limpiar clases previas
+                totalDisplay.classList.remove('text-danger', 'text-success', 'text-warning', 'fw-bold');
+                
+                // Mostrar el saldo pendiente (puede ser negativo si hay anticipo sin días trabajados)
+                if (saldoPendiente < 0) {
+                    const nuevoTexto = `-Q${Math.abs(saldoPendiente).toFixed(2)}`;
+                    console.log(`💥 ACTUALIZANDO A: ${nuevoTexto} (NEGATIVO)`);
+                    totalDisplay.textContent = nuevoTexto;
+                    totalDisplay.classList.add('text-danger', 'fw-bold');
+                } else if (saldoPendiente === 0) {
+                    const nuevoTexto = `Q${saldoPendiente.toFixed(2)}`;
+                    console.log(`💥 ACTUALIZANDO A: ${nuevoTexto} (CERO)`);
+                    totalDisplay.textContent = nuevoTexto;
+                    totalDisplay.classList.add('text-success', 'fw-bold');
+                } else {
+                    const nuevoTexto = `Q${saldoPendiente.toFixed(2)}`;
+                    console.log(`💥 ACTUALIZANDO A: ${nuevoTexto} (POSITIVO)`);
+                    totalDisplay.textContent = nuevoTexto;
+                    totalDisplay.classList.add('text-warning', 'fw-bold');
+                }
+                console.log(`✅ Texto actualizado a: ${totalDisplay.textContent}`);
+            } else {
+                console.error(`❌ NO SE ENCONTRÓ EL ELEMENTO PARA EL TRABAJADOR ${trabajadorId}`);
             }
             
             actualizarTotalesGenerales();
@@ -233,8 +311,9 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     
     function actualizarTotalesGenerales() {
-        let totalGeneral = 0;
+        let totalBruto = 0;
         let totalAnticiposAplicados = 0;
+        let totalSaldoPendiente = 0;
         
         diasInputs.forEach(input => {
             const pagoDiario = parseFloat(input.dataset.pagoDiario);
@@ -243,21 +322,20 @@ document.addEventListener('DOMContentLoaded', function() {
             const totalPagar = diasTrabajados * pagoDiario;
             const saldoPendiente = totalPagar - anticiposAplicados;
             
-            totalGeneral += totalPagar;
+            totalBruto += totalPagar;
             totalAnticiposAplicados += anticiposAplicados;
+            totalSaldoPendiente += saldoPendiente;
         });
         
-        const saldoPendienteTotal = totalGeneral - totalAnticiposAplicados;
-        
         // Actualizar resumen
-        document.getElementById('total-general-pagar').textContent = `Q${totalGeneral.toFixed(2)}`;
+        document.getElementById('total-general-pagar').textContent = `Q${totalBruto.toFixed(2)}`;
         document.getElementById('total-anticipos').textContent = `Q${totalAnticiposAplicados.toFixed(2)}`;
-        document.getElementById('saldo-pendiente').textContent = `Q${saldoPendienteTotal.toFixed(2)}`;
+        document.getElementById('saldo-pendiente').textContent = `Q${totalSaldoPendiente.toFixed(2)}`;
         
-        // Actualizar total en la tabla
+        // Actualizar total en la tabla (mostrar saldo pendiente)
         const totalTabla = document.getElementById('total-general-tabla');
         if (totalTabla) {
-            totalTabla.textContent = `Q${totalGeneral.toFixed(2)}`;
+            totalTabla.textContent = `Q${totalSaldoPendiente.toFixed(2)}`;
         }
     }
     
@@ -283,7 +361,33 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // Inicializar totales
+    // Inicializar totales al cargar la página
+    // Primero, calcular los totales iniciales para cada trabajador
+    diasInputs.forEach(input => {
+        const trabajadorId = input.dataset.trabajadorId;
+        const pagoDiario = parseFloat(input.dataset.pagoDiario);
+        const anticiposAplicados = parseFloat(input.dataset.anticiposAplicados) || 0;
+        const diasTrabajados = parseInt(input.value) || 0;
+        const totalBruto = diasTrabajados * pagoDiario;
+        const saldoPendiente = totalBruto - anticiposAplicados;
+        
+        const totalDisplay = document.querySelector(`.total-pagar-display[data-trabajador-id="${trabajadorId}"]`);
+        if (totalDisplay) {
+            // Mostrar el saldo pendiente (puede ser negativo si hay anticipo sin días trabajados)
+            if (saldoPendiente < 0) {
+                totalDisplay.textContent = `-Q${Math.abs(saldoPendiente).toFixed(2)}`;
+                totalDisplay.classList.add('text-danger', 'fw-bold');
+            } else if (saldoPendiente === 0) {
+                totalDisplay.textContent = `Q${saldoPendiente.toFixed(2)}`;
+                totalDisplay.classList.add('text-success', 'fw-bold');
+            } else {
+                totalDisplay.textContent = `Q${saldoPendiente.toFixed(2)}`;
+                totalDisplay.classList.add('text-warning', 'fw-bold');
+            }
+        }
+    });
+    
+    // Luego actualizar totales generales
     actualizarTotalesGenerales();
 });
 </script>
@@ -349,40 +453,6 @@ function generarPDF() {
     document.getElementById('pdfForm').submit();
 }
 
-document.addEventListener('DOMContentLoaded', function() {
-    // Función para calcular totales
-    function calcularTotales() {
-        let totalGeneral = 0;
-        
-        document.querySelectorAll('.dias-trabajados-input').forEach(function(input) {
-            const trabajadorId = input.dataset.trabajadorId;
-            const pagoDiario = parseFloat(input.dataset.pagoDiario);
-            const diasTrabajados = parseFloat(input.value) || 0;
-            const totalTrabajador = pagoDiario * diasTrabajados;
-            
-            // Actualizar el total del trabajador
-            const totalDisplay = document.querySelector(`.total-pagar-display[data-trabajador-id="${trabajadorId}"]`);
-            if (totalDisplay) {
-                totalDisplay.textContent = `Q${totalTrabajador.toFixed(2)}`;
-            }
-            
-            totalGeneral += totalTrabajador;
-        });
-        
-        // Actualizar total general
-        const totalGeneralDisplay = document.querySelector('.total-general-display');
-        if (totalGeneralDisplay) {
-            totalGeneralDisplay.textContent = `Q${totalGeneral.toFixed(2)}`;
-        }
-    }
-    
-    // Calcular totales al cargar la página
-    calcularTotales();
-    
-    // Recalcular cuando cambien los días trabajados
-    document.querySelectorAll('.dias-trabajados-input').forEach(function(input) {
-        input.addEventListener('input', calcularTotales);
-    });
-});
+// CÓDIGO DUPLICADO ELIMINADO - El cálculo de totales ahora se hace en el script principal arriba
 </script>
 {% endblock %}

@@ -20,7 +20,7 @@ from .models import (
     ItemInventario, CategoriaInventario, AsignacionInventario,
     Rol, PerfilUsuario, Modulo, Permiso, RolPermiso, AnticipoProyecto,
     CarpetaProyecto, ConfiguracionSistema, EventoCalendario,
-    TrabajadorDiario, RegistroTrabajo, AnticipoTrabajadorDiario
+    TrabajadorDiario, RegistroTrabajo, AnticipoTrabajadorDiario, PlanillaLiquidada
 )
 from .forms_simple import (
     ClienteForm, ProyectoForm, ColaboradorForm, FacturaForm, 
@@ -1423,7 +1423,7 @@ def gasto_aprobar(request, gasto_id):
             if proyecto:
                 # Actualizar el presupuesto del proyecto restando el gasto
                 if proyecto.presupuesto:
-                    proyecto.presupuesto -= gasto.monto
+                    proyecto.presupuesto -= Decimal(str(gasto.monto))
                     proyecto.save()
                 
                 # Registrar actividad
@@ -1540,40 +1540,7 @@ def gasto_delete(request, gasto_id):
 
 
 @login_required
-def gasto_aprobar(request, gasto_id):
-    """Aprobar gasto"""
-    gasto = get_object_or_404(Gasto, id=gasto_id)
-    
-    if request.method == 'POST':
-        # Cambiar estado de aprobación
-        if gasto.aprobado:
-            # Si ya está aprobado, desaprobar
-            gasto.aprobado = False
-            gasto.aprobado_por = None
-            accion = 'Desaprobar'
-            mensaje = 'Gasto desaprobado exitosamente'
-        else:
-            # Si no está aprobado, aprobar
-            gasto.aprobado = True
-            gasto.aprobado_por = request.user
-            accion = 'Aprobar'
-            mensaje = 'Gasto aprobado exitosamente'
-        
-        gasto.save()
-        
-        # Registrar actividad
-        LogActividad.objects.create(
-            usuario=request.user,
-            accion=accion,
-            modulo='Gastos',
-            descripcion=f'Gasto {accion.lower()}do: {gasto.descripcion} - Q{gasto.monto}',
-            ip_address=request.META.get('REMOTE_ADDR')
-        )
-        
-        messages.success(request, mensaje)
-        return redirect('gastos_list')
-    
-    return render(request, 'core/gastos/delete.html', {'gasto': gasto})
+# FUNCIÓN DUPLICADA ELIMINADA - Se usa la de la línea 1409
 
 
 # ===== CRUD PAGOS =====
@@ -2412,6 +2379,24 @@ def proyecto_dashboard(request, proyecto_id=None):
     # Gastos recientes del proyecto
     gastos_recientes = gastos_proyecto.order_by('-fecha_gasto')[:5]
     
+    # Calcular histórico de nómina (Personal + Trabajadores Diarios)
+    # 1. Histórico de Personal (usando modelo PlanillaLiquidada)
+    planillas_personal_liquidadas = PlanillaLiquidada.objects.filter(proyecto=proyecto)
+    total_historico_personal = planillas_personal_liquidadas.aggregate(total=Sum('total_planilla'))['total'] or Decimal('0.00')
+    
+    # 2. Histórico de Trabajadores Diarios (trabajadores inactivos)
+    trabajadores_diarios_inactivos = TrabajadorDiario.objects.filter(
+        proyecto=proyecto,
+        activo=False
+    )
+    total_historico_trabajadores_diarios = sum(
+        t.total_dias_trabajados * t.pago_diario 
+        for t in trabajadores_diarios_inactivos
+    )
+    
+    # 3. Total Histórico de Nómina Combinado
+    total_historico_nomina = total_historico_personal + Decimal(str(total_historico_trabajadores_diarios))
+    
     context = {
         'proyecto': proyecto,
         'todos_proyectos': todos_proyectos,
@@ -2436,6 +2421,9 @@ def proyecto_dashboard(request, proyecto_id=None):
         'total_gastos_count': gastos_proyecto.count(),
         'facturas_pagadas_count': facturas_pagadas.count(),
         'total_anticipos_count': anticipos_proyecto.count(),
+        'total_historico_personal': total_historico_personal,
+        'total_historico_trabajadores_diarios': total_historico_trabajadores_diarios,
+        'total_historico_nomina': total_historico_nomina,
     }
     
     return render(request, 'core/proyecto_dashboard.html', context)
@@ -2513,22 +2501,34 @@ def archivo_upload(request, proyecto_id):
     proyecto = get_object_or_404(Proyecto, id=proyecto_id, activo=True)
     
     if request.method == 'POST':
-        logger.info(f"POST request recibido para proyecto {proyecto.id}")
+        logger.info(f"=" * 80)
+        logger.info(f"📤 POST request recibido para subir archivo al proyecto {proyecto.id}")
+        logger.info(f"📤 POST data: {request.POST}")
+        logger.info(f"📤 FILES: {request.FILES}")
+        
         form = ArchivoProyectoForm(request.POST, request.FILES, proyecto=proyecto)
-        logger.info(f"Formulario creado, válido: {form.is_valid()}")
+        logger.info(f"📋 Formulario creado")
+        logger.info(f"📋 Es válido: {form.is_valid()}")
         
         if form.is_valid():
+            logger.info(f"✅ Formulario válido, intentando guardar...")
             try:
                 archivo = form.save(commit=False)
+                archivo.proyecto = proyecto
                 archivo.subido_por = request.user
+                logger.info(f"💾 Guardando archivo: {archivo.nombre}")
+                logger.info(f"💾 Proyecto: {archivo.proyecto}")
+                logger.info(f"💾 Carpeta: {archivo.carpeta}")
+                logger.info(f"💾 Tipo: {archivo.tipo}")
+                
                 archivo.save()
-                logger.info(f"Archivo guardado: {archivo.id} - {archivo.nombre}")
+                logger.info(f"✅ Archivo guardado exitosamente: ID={archivo.id}")
                 
                 # Generar thumbnail automáticamente
                 try:
                     archivo.generar_thumbnail()
                 except Exception as e:
-                    logger.warning(f"Error generando thumbnail: {e}")
+                    logger.warning(f"⚠️ Error generando thumbnail: {e}")
                     pass
                 
                 # Registrar actividad
@@ -2540,14 +2540,21 @@ def archivo_upload(request, proyecto_id):
                     ip_address=request.META.get('REMOTE_ADDR')
                 )
                 
-                messages.success(request, 'Archivo subido exitosamente')
+                messages.success(request, f'✅ Archivo "{archivo.nombre}" subido exitosamente')
                 return redirect('archivos_proyecto_list', proyecto_id=proyecto.id)
             except Exception as e:
-                logger.error(f"Error guardando archivo: {e}")
+                logger.error(f"❌ Error guardando archivo: {e}")
+                logger.error(f"❌ Tipo de error: {type(e)}")
+                import traceback
+                logger.error(f"❌ Traceback: {traceback.format_exc()}")
                 messages.error(request, f'Error al subir archivo: {str(e)}')
         else:
-            logger.error(f"Formulario inválido: {form.errors}")
-            messages.error(request, 'Error en el formulario')
+            logger.error(f"❌ Formulario NO es válido")
+            logger.error(f"❌ Errores del formulario: {form.errors}")
+            logger.error(f"❌ Errores por campo:")
+            for field, errors in form.errors.items():
+                logger.error(f"   - {field}: {errors}")
+            messages.error(request, f'Error en el formulario. Por favor verifica los datos.')
     else:
         form = ArchivoProyectoForm(proyecto=proyecto)
     
@@ -5055,17 +5062,18 @@ def planilla_proyecto(request, proyecto_id):
     # Obtener colaboradores asignados al proyecto
     colaboradores_asignados = proyecto.colaboradores.all().order_by('nombre')
     
-    # Obtener anticipos del proyecto
-    anticipos = AnticipoProyecto.objects.filter(proyecto=proyecto).select_related('colaborador')
+    # Obtener SOLO anticipos pendientes del proyecto (excluir procesados)
+    # Los anticipos "procesados" ya fueron liquidados en planillas anteriores
+    anticipos = AnticipoProyecto.objects.filter(
+        proyecto=proyecto,
+        estado='pendiente'
+    ).select_related('colaborador')
     
-    # Calcular totales y salarios netos
-    total_anticipos = anticipos.filter(estado='pendiente').aggregate(
-        total=Sum('monto')
-    )['total'] or 0
+    # Calcular totales y salarios netos (solo anticipos pendientes)
+    total_anticipos = anticipos.aggregate(total=Sum('monto'))['total'] or 0
     
-    total_liquidado = anticipos.filter(estado='liquidado').aggregate(
-        total=Sum('monto')
-    )['total'] or 0
+    # Los anticipos procesados ya no aparecen aquí
+    total_liquidado = 0
     
     # Calcular salarios netos y totales de la planilla
     total_salarios = 0
@@ -5075,28 +5083,18 @@ def planilla_proyecto(request, proyecto_id):
     for colaborador in colaboradores_asignados:
         salario_colaborador = colaborador.salario or 0
         
-        # Anticipos pendientes (que se descuentan del salario)
+        # Anticipos pendientes ACTUALES (solo los que están pendientes, no los procesados)
         anticipos_pendientes = anticipos.filter(
-            colaborador=colaborador, 
-            estado='pendiente'
+            colaborador=colaborador
         ).aggregate(total=Sum('monto'))['total'] or 0
         
-        # Anticipos liquidados (que ya se pagaron y también se descuentan)
-        anticipos_liquidados = anticipos.filter(
-            colaborador=colaborador, 
-            estado='liquidado'
-        ).aggregate(total=Sum('monto'))['total'] or 0
-        
-        # Salario neto = Salario base - anticipos pendientes - anticipos liquidados
-        salario_neto = salario_colaborador - anticipos_pendientes - anticipos_liquidados
+        # Salario neto = Salario base - anticipos pendientes
+        salario_neto = salario_colaborador - anticipos_pendientes
         
         # Determinar el estado actual del colaborador
         if anticipos_pendientes > 0:
             colaborador.estado_actual = 'pendiente'
             colaborador.estado_display = 'Pendiente'
-        elif anticipos_liquidados > 0:
-            colaborador.estado_actual = 'liquidado'
-            colaborador.estado_display = 'Liquidado'
         else:
             colaborador.estado_actual = 'sin_anticipos'
             colaborador.estado_display = 'Sin Anticipos'
@@ -5104,11 +5102,21 @@ def planilla_proyecto(request, proyecto_id):
         # Agregar campos calculados al colaborador
         colaborador.salario_neto = salario_neto
         colaborador.deuda_anticipos = anticipos_pendientes
-        colaborador.anticipos_liquidados = anticipos_liquidados
+        colaborador.anticipos_liquidados = 0  # Ya no mostramos los liquidados en la planilla actual
         
         total_salarios += salario_colaborador
-        total_anticipos_aplicados += anticipos_pendientes + anticipos_liquidados
+        total_anticipos_aplicados += anticipos_pendientes
         total_salarios_netos += salario_neto
+    
+    # Calcular histórico de pagos usando el nuevo modelo PlanillaLiquidada
+    planillas_liquidadas = PlanillaLiquidada.objects.filter(proyecto=proyecto)
+    total_historico_pagado = planillas_liquidadas.aggregate(total=Sum('total_planilla'))['total'] or Decimal('0.00')
+    planillas_generadas = planillas_liquidadas.count()
+    
+    # Promedio por planilla
+    promedio_por_planilla = total_historico_pagado / planillas_generadas if planillas_generadas > 0 else Decimal('0.00')
+    
+    # NOTA: Los anticipos "procesados" no aparecen en la planilla actual (solo "pendientes")
     
     context = {
         'proyecto': proyecto,
@@ -5120,9 +5128,128 @@ def planilla_proyecto(request, proyecto_id):
         'total_salarios': total_salarios,
         'total_anticipos_aplicados': total_anticipos_aplicados,
         'total_salarios_netos': total_salarios_netos,
+        'total_historico_pagado': total_historico_pagado,
+        'planillas_generadas': planillas_generadas,
+        'promedio_por_planilla': promedio_por_planilla,
     }
     
     return render(request, 'core/proyectos/planilla.html', context)
+
+
+@login_required
+def resetear_historico_nomina(request, proyecto_id):
+    """Resetear el histórico de nómina del proyecto"""
+    proyecto = get_object_or_404(Proyecto, id=proyecto_id)
+    
+    if request.method == 'POST':
+        try:
+            # Contar registros antes de eliminar
+            planillas_personal = PlanillaLiquidada.objects.filter(proyecto=proyecto).count()
+            trabajadores_inactivos = TrabajadorDiario.objects.filter(proyecto=proyecto, activo=False).count()
+            
+            # Eliminar planillas liquidadas del personal
+            PlanillaLiquidada.objects.filter(proyecto=proyecto).delete()
+            
+            # Eliminar trabajadores diarios inactivos
+            TrabajadorDiario.objects.filter(proyecto=proyecto, activo=False).delete()
+            
+            # Registrar actividad
+            LogActividad.objects.create(
+                usuario=request.user,
+                accion='Reset',
+                modulo='Histórico Nómina',
+                descripcion=f'Histórico reseteado - {planillas_personal} planillas + {trabajadores_inactivos} trabajadores eliminados',
+                ip_address=request.META.get('REMOTE_ADDR')
+            )
+            
+            messages.success(
+                request,
+                f'✅ <strong>Histórico de nómina reseteado exitosamente</strong><br>'
+                f'🗑️ {planillas_personal} planilla(s) de personal eliminadas<br>'
+                f'🗑️ {trabajadores_inactivos} trabajador(es) diario(s) eliminados',
+                extra_tags='html'
+            )
+            
+            return redirect('proyecto_dashboard', proyecto_id=proyecto_id)
+            
+        except Exception as e:
+            logger.error(f"Error reseteando histórico de nómina del proyecto {proyecto_id}: {e}")
+            messages.error(request, f'Error al resetear el histórico: {str(e)}')
+            return redirect('proyecto_dashboard', proyecto_id=proyecto_id)
+    
+    return redirect('proyecto_dashboard', proyecto_id=proyecto_id)
+
+
+@login_required
+def liquidar_y_generar_planilla(request, proyecto_id):
+    """Liquidar anticipos pendientes y generar PDF de la planilla"""
+    proyecto = get_object_or_404(Proyecto, id=proyecto_id)
+    
+    if request.method == 'POST':
+        try:
+            # Obtener colaboradores asignados al proyecto
+            colaboradores_asignados = proyecto.colaboradores.all()
+            
+            # Calcular total de salarios
+            total_salarios = sum(c.salario or 0 for c in colaboradores_asignados)
+            
+            # Liquidar todos los anticipos pendientes
+            anticipos_pendientes = AnticipoProyecto.objects.filter(
+                proyecto=proyecto,
+                estado='pendiente'
+            )
+            
+            total_anticipos_liquidados = anticipos_pendientes.aggregate(total=Sum('monto'))['total'] or 0
+            
+            # Marcar anticipos como "procesado" para que no aparezcan en la siguiente planilla
+            # pero mantener el historial
+            anticipos_pendientes.update(
+                estado='procesado',
+                fecha_liquidacion=timezone.now().date(),
+                liquidado_por=request.user
+            )
+            
+            # Total de la planilla = Salarios + Anticipos liquidados
+            total_planilla = Decimal(str(total_salarios)) + Decimal(str(total_anticipos_liquidados))
+            
+            # Crear registro de planilla liquidada
+            planilla = PlanillaLiquidada.objects.create(
+                proyecto=proyecto,
+                total_salarios=Decimal(str(total_salarios)),
+                total_anticipos=Decimal(str(total_anticipos_liquidados)),
+                total_planilla=total_planilla,
+                cantidad_personal=colaboradores_asignados.count(),
+                liquidada_por=request.user
+            )
+            
+            # Guardar registro de la planilla generada en el log de actividad
+            LogActividad.objects.create(
+                usuario=request.user,
+                accion='Liquidar Planilla',
+                modulo='Planilla Personal',
+                descripcion=f'Planilla #{planilla.id} liquidada - Salarios: Q{total_salarios} - Anticipos: Q{total_anticipos_liquidados} - Total: Q{total_planilla}',
+                ip_address=request.META.get('REMOTE_ADDR')
+            )
+            
+            messages.success(
+                request,
+                f'✅ <strong>Planilla liquidada exitosamente</strong><br>'
+                f'💼 Total Salarios: <strong>Q{total_salarios:,.2f}</strong><br>'
+                f'💰 Total Anticipos Liquidados: <strong>Q{total_anticipos_liquidados:,.2f}</strong><br>'
+                f'📋 <strong>TOTAL PLANILLA: Q{total_planilla:,.2f}</strong><br>'
+                f'👥 Personal: <strong>{colaboradores_asignados.count()}</strong>',
+                extra_tags='html'
+            )
+            
+            # Redirigir a generar el PDF
+            return redirect('planilla_proyecto_pdf', proyecto_id=proyecto_id)
+            
+        except Exception as e:
+            logger.error(f"Error liquidando planilla del proyecto {proyecto_id}: {e}")
+            messages.error(request, f'Error al liquidar la planilla: {str(e)}')
+            return redirect('planilla_proyecto', proyecto_id=proyecto_id)
+    
+    return redirect('planilla_proyecto', proyecto_id=proyecto_id)
 
 
 @login_required
@@ -6145,6 +6272,36 @@ def trabajadores_diarios_list(request, proyecto_id):
     total_aplicado = sum(t.total_anticipos_aplicados for t in trabajadores)
     saldo_pendiente = total_a_pagar - total_aplicado
     
+    # Calcular histórico de planillas finalizadas
+    # Obtener carpeta "Trabajadores Diarios" del proyecto
+    try:
+        carpeta_planillas = CarpetaProyecto.objects.get(
+            proyecto=proyecto,
+            nombre='Trabajadores Diarios'
+        )
+        # Contar planillas finalizadas (archivos PDF en esa carpeta)
+        planillas_finalizadas = ArchivoProyecto.objects.filter(
+            carpeta=carpeta_planillas,
+            activo=True,
+            nombre__startswith='planilla_trabajadores_'
+        )
+        total_planillas_finalizadas = planillas_finalizadas.count()
+        
+        # Calcular total histórico aproximado basado en trabajadores inactivos
+        # Todos los trabajadores inactivos fueron parte de planillas finalizadas
+        trabajadores_inactivos = TrabajadorDiario.objects.filter(
+            proyecto=proyecto,
+            activo=False
+        )
+        total_historico_gastos = sum(t.total_dias_trabajados * t.pago_diario for t in trabajadores_inactivos)
+        
+        # Calcular promedio por planilla
+        promedio_por_planilla = total_historico_gastos / total_planillas_finalizadas if total_planillas_finalizadas > 0 else 0
+    except CarpetaProyecto.DoesNotExist:
+        total_planillas_finalizadas = 0
+        total_historico_gastos = 0
+        promedio_por_planilla = 0
+    
     context = {
         'proyecto': proyecto,
         'trabajadores': trabajadores,
@@ -6153,6 +6310,9 @@ def trabajadores_diarios_list(request, proyecto_id):
         'total_anticipos': total_anticipos,
         'total_aplicado': total_aplicado,
         'saldo_pendiente': saldo_pendiente,
+        'total_planillas_finalizadas': total_planillas_finalizadas,
+        'total_historico_gastos': total_historico_gastos,
+        'promedio_por_planilla': promedio_por_planilla,
     }
     
     return render(request, 'core/trabajadores_diarios/list.html', context)
@@ -6620,9 +6780,10 @@ def trabajadores_diarios_pdf(request, proyecto_id):
         anticipos_trabajadores = AnticipoTrabajadorDiario.objects.filter(
             trabajador__proyecto=proyecto
         )
-        total_anticipos = anticipos_trabajadores.aggregate(total=Sum('monto'))['total'] or 0
+        total_anticipos = anticipos_trabajadores.aggregate(total=Sum('monto'))['total'] or Decimal('0')
         total_aplicado = sum(anticipo.monto_aplicado for anticipo in anticipos_trabajadores)
-        saldo_pendiente = total_a_pagar - total_aplicado
+        # Convertir a Decimal para evitar errores de tipo
+        saldo_pendiente = Decimal(str(total_a_pagar)) - Decimal(str(total_aplicado))
         
         # Crear tabla de trabajadores
         data = [['No.', 'Nombre del Trabajador', 'Pago Diario (Q)', 'Días Trabajados', 'Total a Pagar (Q)']]
@@ -6805,14 +6966,53 @@ def anticipo_trabajador_diario_create(request, proyecto_id):
     proyecto = get_object_or_404(Proyecto, id=proyecto_id)
     
     if request.method == 'POST':
+        logger.info(f"📝 POST recibido para crear anticipo de trabajador diario")
+        logger.info(f"📝 Datos POST: {request.POST}")
+        
         form = AnticipoTrabajadorDiarioForm(request.POST, proyecto_id=proyecto_id)
+        logger.info(f"📝 Formulario creado: {form}")
+        
         if form.is_valid():
+            logger.info("✅ Formulario es válido, guardando anticipo...")
             anticipo = form.save(commit=False)
             anticipo.creado_por = request.user
+            # Los anticipos de trabajadores diarios se aplican directamente (no necesitan aprobación)
+            anticipo.estado = 'aplicado'
             anticipo.save()
+            logger.info(f"✅ Anticipo guardado con ID: {anticipo.id}")
             
-            messages.success(request, 'Anticipo creado correctamente.')
+            # Aplicar el anticipo al trabajador (restar del total a pagar)
+            trabajador = anticipo.trabajador
+            # El anticipo se resta del total a pagar (saldo negativo)
+            logger.info(f"💰 Aplicando anticipo de Q{anticipo.monto} al trabajador {trabajador.nombre}")
+            logger.info(f"💰 Total a pagar antes: Q{trabajador.total_a_pagar}")
+            # No modificamos directamente el total_a_pagar, se calcula dinámicamente
+            logger.info(f"✅ Anticipo aplicado exitosamente")
+            
+            # Registrar actividad
+            LogActividad.objects.create(
+                usuario=request.user,
+                accion='Crear',
+                modulo='Anticipos Trabajadores Diarios',
+                descripcion=f'Anticipo creado y aplicado: {anticipo.trabajador.nombre} - Q{anticipo.monto}',
+                ip_address=request.META.get('REMOTE_ADDR')
+            )
+            
+            messages.success(request, 
+                f'✅ <strong>Anticipo creado y aplicado exitosamente</strong><br>'
+                f'👤 Trabajador: <strong>{anticipo.trabajador.nombre}</strong><br>'
+                f'💰 Monto: <strong>Q{anticipo.monto:,.2f}</strong><br>'
+                f'🏗️ Proyecto: <strong>{proyecto.nombre}</strong>',
+                extra_tags='html'
+            )
+            logger.info("✅ Redirigiendo a anticipo_trabajador_diario_list")
             return redirect('anticipo_trabajador_diario_list', proyecto_id=proyecto_id)
+        else:
+            logger.error(f"❌ Formulario no es válido. Errores: {form.errors}")
+            # Agregar los errores del formulario a los mensajes
+            for field, errors in form.errors.items():
+                for error in errors:
+                    messages.error(request, f"{field}: {error}")
     else:
         form = AnticipoTrabajadorDiarioForm(proyecto_id=proyecto_id)
     
