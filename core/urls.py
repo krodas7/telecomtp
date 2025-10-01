@@ -265,4 +265,14 @@ urlpatterns = [
     
     # PWA
     path('offline/', views.offline_page, name='offline_page'),
+    
+    # ==================== PLANILLAS DE TRABAJADORES DIARIOS ====================
+    path('proyectos/<int:proyecto_id>/planillas-trabajadores-diarios/', views.planillas_trabajadores_diarios_list, name='planillas_trabajadores_diarios_list'),
+    path('proyectos/<int:proyecto_id>/planillas-trabajadores-diarios/crear/', views.planilla_trabajadores_diarios_create, name='planilla_trabajadores_diarios_create'),
+    path('proyectos/<int:proyecto_id>/planillas-trabajadores-diarios/<int:planilla_id>/', views.planilla_trabajadores_diarios_detail, name='planilla_trabajadores_diarios_detail'),
+    path('proyectos/<int:proyecto_id>/planillas-trabajadores-diarios/<int:planilla_id>/editar/', views.planilla_trabajadores_diarios_edit, name='planilla_trabajadores_diarios_edit'),
+    path('proyectos/<int:proyecto_id>/planillas-trabajadores-diarios/<int:planilla_id>/eliminar/', views.planilla_trabajadores_diarios_delete, name='planilla_trabajadores_diarios_delete'),
+    path('proyectos/<int:proyecto_id>/planillas-trabajadores-diarios/<int:planilla_id>/finalizar/', views.planilla_trabajadores_diarios_finalizar, name='planilla_trabajadores_diarios_finalizar'),
+    path('proyectos/<int:proyecto_id>/planillas-trabajadores-diarios/<int:planilla_id>/agregar-trabajador/', views.trabajador_diario_add_to_planilla, name='trabajador_diario_add_to_planilla'),
+    path('proyectos/<int:proyecto_id>/planillas-trabajadores-diarios/<int:planilla_id>/remover-trabajador/<int:trabajador_id>/', views.trabajador_diario_remove_from_planilla, name='trabajador_diario_remove_from_planilla'),
 ]

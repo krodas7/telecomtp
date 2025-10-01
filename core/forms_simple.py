@@ -968,3 +968,63 @@ class AnticipoTrabajadorDiarioForm(forms.ModelForm):
                 'placeholder': 'Observaciones del anticipo'
             })
         }
+
+
+class PlanillaTrabajadoresDiariosForm(forms.ModelForm):
+    """Formulario para crear/editar planillas de trabajadores diarios"""
+    
+    class Meta:
+        model = PlanillaTrabajadoresDiarios
+        fields = [
+            'nombre', 'descripcion', 'observaciones'
+        ]
+        widgets = {
+            'nombre': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Ej: Planilla Semana 1, Planilla Enero 2025'
+            }),
+            'descripcion': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 3,
+                'placeholder': 'Descripción de la planilla'
+            }),
+            'observaciones': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 2,
+                'placeholder': 'Observaciones adicionales'
+            })
+        }
+    
+    def __init__(self, *args, **kwargs):
+        self.proyecto = kwargs.pop('proyecto', None)
+        super().__init__(*args, **kwargs)
+    
+    def clean(self):
+        cleaned_data = super().clean()
+        return cleaned_data
+
+
+class TrabajadorDiarioForm(forms.ModelForm):
+    """Formulario para crear/editar trabajadores diarios"""
+    
+    class Meta:
+        model = TrabajadorDiario
+        fields = [
+            'nombre', 'pago_diario'
+        ]
+        widgets = {
+            'nombre': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Nombre completo del trabajador'
+            }),
+            'pago_diario': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'step': '0.01',
+                'min': '0',
+                'placeholder': '0.00'
+            })
+        }
+    
+    def __init__(self, *args, **kwargs):
+        self.planilla = kwargs.pop('planilla', None)
+        super().__init__(*args, **kwargs)

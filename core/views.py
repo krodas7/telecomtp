@@ -1,4 +1,5 @@
 from django.shortcuts import render, redirect, get_object_or_404
+from django.urls import reverse
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import authenticate, login, logout
 from django.contrib import messages
@@ -20,7 +21,7 @@ from .models import (
     ItemInventario, CategoriaInventario, AsignacionInventario,
     Rol, PerfilUsuario, Modulo, Permiso, RolPermiso, AnticipoProyecto,
     CarpetaProyecto, ConfiguracionSistema, EventoCalendario,
-    TrabajadorDiario, RegistroTrabajo, AnticipoTrabajadorDiario, PlanillaLiquidada
+    TrabajadorDiario, RegistroTrabajo, AnticipoTrabajadorDiario, PlanillaLiquidada, PlanillaTrabajadoresDiarios
 )
 from .forms_simple import (
     ClienteForm, ProyectoForm, ColaboradorForm, FacturaForm, 
@@ -29,7 +30,7 @@ from .forms_simple import (
     AnticipoForm, PagoForm, EventoCalendarioForm, PresupuestoForm,
     PartidaPresupuestoForm, CategoriaInventarioForm, ItemInventarioForm,
     AsignacionInventarioForm, TrabajadorDiarioForm, RegistroTrabajoForm,
-    AnticipoTrabajadorDiarioForm
+    AnticipoTrabajadorDiarioForm, PlanillaTrabajadoresDiariosForm
 )
 from django.contrib.auth.models import User
 from django.contrib.auth.forms import UserCreationForm, UserChangeForm
@@ -6256,9 +6257,39 @@ def facturas_reporte_detallado(request):
 
 @login_required
 def trabajadores_diarios_list(request, proyecto_id):
-    """Lista de trabajadores diarios de un proyecto"""
+    """Lista de trabajadores diarios de un proyecto con selector de planilla"""
     proyecto = get_object_or_404(Proyecto, id=proyecto_id)
-    trabajadores = TrabajadorDiario.objects.filter(proyecto=proyecto).order_by('nombre')
+    
+    # Obtener todas las planillas del proyecto
+    planillas = PlanillaTrabajadoresDiarios.objects.filter(proyecto=proyecto).order_by('-fecha_creacion')
+    
+    # Obtener planilla seleccionada (por defecto la primera activa, o la primera si no hay activas)
+    planilla_seleccionada = None
+    planilla_id = request.GET.get('planilla_id')
+    
+    if planilla_id:
+        try:
+            planilla_seleccionada = get_object_or_404(PlanillaTrabajadoresDiarios, id=planilla_id, proyecto=proyecto)
+        except:
+            planilla_seleccionada = None
+    
+    if not planilla_seleccionada and planillas.exists():
+        # Si no hay planilla seleccionada, usar la primera activa o la primera disponible
+        planilla_activa = planillas.filter(estado='activa').first()
+        planilla_seleccionada = planilla_activa if planilla_activa else planillas.first()
+    
+    # Obtener trabajadores de la planilla seleccionada
+    if planilla_seleccionada:
+        trabajadores = TrabajadorDiario.objects.filter(
+            proyecto=proyecto, 
+            planilla=planilla_seleccionada
+        ).order_by('nombre')
+    else:
+        # Si no hay planilla seleccionada, mostrar todos los trabajadores sin planilla
+        trabajadores = TrabajadorDiario.objects.filter(
+            proyecto=proyecto, 
+            planilla__isnull=True
+        ).order_by('nombre')
     
     # Calcular totales
     total_trabajadores = trabajadores.count()
@@ -6291,6 +6322,8 @@ def trabajadores_diarios_list(request, proyecto_id):
     
     context = {
         'proyecto': proyecto,
+        'planillas': planillas,
+        'planilla_seleccionada': planilla_seleccionada,
         'trabajadores': trabajadores,
         'total_trabajadores': total_trabajadores,
         'total_a_pagar': total_a_pagar,
@@ -6584,26 +6617,41 @@ def trabajador_diario_create(request, proyecto_id):
     """Crear trabajador diario"""
     proyecto = get_object_or_404(Proyecto, id=proyecto_id)
     
+    # Obtener planilla seleccionada si existe
+    planilla_seleccionada = None
+    planilla_id = request.GET.get('planilla_id')
+    if planilla_id:
+        try:
+            planilla_seleccionada = get_object_or_404(PlanillaTrabajadoresDiarios, id=planilla_id, proyecto=proyecto)
+        except:
+            planilla_seleccionada = None
+    
     if request.method == 'POST':
-        form = TrabajadorDiarioForm(request.POST)
+        form = TrabajadorDiarioForm(request.POST, planilla=planilla_seleccionada)
         if form.is_valid():
             trabajador = form.save(commit=False)
             trabajador.proyecto = proyecto
+            trabajador.planilla = planilla_seleccionada
             trabajador.creado_por = request.user
             trabajador.save()
             
             messages.success(request, 'Trabajador diario creado correctamente.')
-            return redirect('trabajadores_diarios_list', proyecto_id=proyecto_id)
+            # Redirigir manteniendo la planilla seleccionada
+            redirect_url = f"{reverse('trabajadores_diarios_list', args=[proyecto_id])}"
+            if planilla_seleccionada:
+                redirect_url += f"?planilla_id={planilla_seleccionada.id}"
+            return redirect(redirect_url)
         else:
             # Agregar logging para debug
             print(f"❌ Formulario inválido: {form.errors}")
             messages.error(request, 'Por favor corrige los errores en el formulario.')
     else:
-        form = TrabajadorDiarioForm()
+        form = TrabajadorDiarioForm(planilla=planilla_seleccionada)
     
     return render(request, 'core/trabajadores_diarios/create.html', {
         'form': form,
-        'proyecto': proyecto
+        'proyecto': proyecto,
+        'planilla_seleccionada': planilla_seleccionada
     })
 
 
@@ -7480,3 +7528,219 @@ def cliente_estadisticas(request, cliente_id):
     except Exception as e:
         messages.error(request, f'Error al cargar estadísticas: {str(e)}')
         return redirect('cliente_detail', cliente_id=cliente_id)
+
+
+# ==================== VISTAS PARA PLANILLAS DE TRABAJADORES DIARIOS ====================
+
+@login_required
+def planillas_trabajadores_diarios_list(request, proyecto_id):
+    """Lista de planillas de trabajadores diarios de un proyecto"""
+    proyecto = get_object_or_404(Proyecto, id=proyecto_id)
+    planillas = PlanillaTrabajadoresDiarios.objects.filter(proyecto=proyecto).order_by('-fecha_creacion')
+    
+    context = {
+        'proyecto': proyecto,
+        'planillas': planillas,
+    }
+    
+    return render(request, 'core/planillas_trabajadores_diarios/list.html', context)
+
+
+@login_required
+def planilla_trabajadores_diarios_create(request, proyecto_id):
+    """Crear nueva planilla de trabajadores diarios"""
+    proyecto = get_object_or_404(Proyecto, id=proyecto_id)
+    
+    if request.method == 'POST':
+        form = PlanillaTrabajadoresDiariosForm(request.POST, proyecto=proyecto)
+        if form.is_valid():
+            planilla = form.save(commit=False)
+            planilla.proyecto = proyecto
+            planilla.creada_por = request.user
+            planilla.save()
+            
+            messages.success(request, f'Planilla "{planilla.nombre}" creada exitosamente.')
+            return redirect('planilla_trabajadores_diarios_detail', proyecto_id=proyecto_id, planilla_id=planilla.id)
+    else:
+        form = PlanillaTrabajadoresDiariosForm(proyecto=proyecto)
+    
+    context = {
+        'proyecto': proyecto,
+        'form': form,
+    }
+    
+    return render(request, 'core/planillas_trabajadores_diarios/create.html', context)
+
+
+@login_required
+def planilla_trabajadores_diarios_detail(request, proyecto_id, planilla_id):
+    """Detalle de una planilla de trabajadores diarios"""
+    proyecto = get_object_or_404(Proyecto, id=proyecto_id)
+    planilla = get_object_or_404(PlanillaTrabajadoresDiarios, id=planilla_id, proyecto=proyecto)
+    trabajadores = planilla.trabajadores.all().order_by('nombre')
+    
+    # Calcular totales
+    total_trabajadores = trabajadores.count()
+    total_a_pagar = sum(t.total_a_pagar for t in trabajadores)
+    total_anticipos = sum(t.total_anticipos_aplicados for t in trabajadores)
+    saldo_pendiente = total_a_pagar - total_anticipos
+    
+    context = {
+        'proyecto': proyecto,
+        'planilla': planilla,
+        'trabajadores': trabajadores,
+        'total_trabajadores': total_trabajadores,
+        'total_a_pagar': total_a_pagar,
+        'total_anticipos': total_anticipos,
+        'saldo_pendiente': saldo_pendiente,
+    }
+    
+    return render(request, 'core/planillas_trabajadores_diarios/detail.html', context)
+
+
+@login_required
+def planilla_trabajadores_diarios_edit(request, proyecto_id, planilla_id):
+    """Editar planilla de trabajadores diarios"""
+    proyecto = get_object_or_404(Proyecto, id=proyecto_id)
+    planilla = get_object_or_404(PlanillaTrabajadoresDiarios, id=planilla_id, proyecto=proyecto)
+    
+    if request.method == 'POST':
+        form = PlanillaTrabajadoresDiariosForm(request.POST, instance=planilla, proyecto=proyecto)
+        if form.is_valid():
+            form.save()
+            messages.success(request, f'Planilla "{planilla.nombre}" actualizada exitosamente.')
+            return redirect('planilla_trabajadores_diarios_detail', proyecto_id=proyecto_id, planilla_id=planilla.id)
+    else:
+        form = PlanillaTrabajadoresDiariosForm(instance=planilla, proyecto=proyecto)
+    
+    context = {
+        'proyecto': proyecto,
+        'planilla': planilla,
+        'form': form,
+    }
+    
+    return render(request, 'core/planillas_trabajadores_diarios/edit.html', context)
+
+
+@login_required
+def planilla_trabajadores_diarios_delete(request, proyecto_id, planilla_id):
+    """Eliminar planilla de trabajadores diarios"""
+    proyecto = get_object_or_404(Proyecto, id=proyecto_id)
+    planilla = get_object_or_404(PlanillaTrabajadoresDiarios, id=planilla_id, proyecto=proyecto)
+    
+    if request.method == 'POST':
+        nombre_planilla = planilla.nombre
+        planilla.delete()
+        messages.success(request, f'Planilla "{nombre_planilla}" eliminada exitosamente.')
+        return redirect('planillas_trabajadores_diarios_list', proyecto_id=proyecto_id)
+    
+    context = {
+        'proyecto': proyecto,
+        'planilla': planilla,
+    }
+    
+    return render(request, 'core/planillas_trabajadores_diarios/delete.html', context)
+
+
+@login_required
+def planilla_trabajadores_diarios_finalizar(request, proyecto_id, planilla_id):
+    """Finalizar planilla de trabajadores diarios"""
+    proyecto = get_object_or_404(Proyecto, id=proyecto_id)
+    planilla = get_object_or_404(PlanillaTrabajadoresDiarios, id=planilla_id, proyecto=proyecto)
+    
+    if request.method == 'POST':
+        try:
+            # Marcar planilla como finalizada
+            planilla.estado = 'finalizada'
+            planilla.fecha_finalizacion = timezone.now()
+            planilla.finalizada_por = request.user
+            planilla.save()
+            
+            # Marcar trabajadores como inactivos
+            planilla.trabajadores.update(activo=False)
+            
+            # Marcar anticipos como procesados
+            AnticipoTrabajadorDiario.objects.filter(
+                trabajador__planilla=planilla,
+                estado='aplicado'
+            ).update(
+                estado='procesado',
+                fecha_liquidacion=timezone.now().date(),
+                liquidado_por=request.user
+            )
+            
+            # Crear registro de planilla liquidada
+            PlanillaLiquidada.objects.create(
+                proyecto=proyecto,
+                total_salarios=Decimal(str(planilla.total_a_pagar)),
+                total_anticipos=Decimal(str(planilla.total_anticipos)),
+                total_planilla=Decimal(str(planilla.total_a_pagar + planilla.total_anticipos)),
+                cantidad_personal=planilla.total_trabajadores,
+                liquidada_por=request.user,
+                observaciones=f'Planilla de trabajadores diarios: {planilla.nombre}'
+            )
+            
+            messages.success(request, f'Planilla "{planilla.nombre}" finalizada exitosamente.')
+            return redirect('planillas_trabajadores_diarios_list', proyecto_id=proyecto_id)
+            
+        except Exception as e:
+            print(f"Error al finalizar planilla: {e}")
+            messages.error(request, f'Error al finalizar planilla: {str(e)}')
+    
+    context = {
+        'proyecto': proyecto,
+        'planilla': planilla,
+    }
+    
+    return render(request, 'core/planillas_trabajadores_diarios/finalizar.html', context)
+
+
+@login_required
+def trabajador_diario_add_to_planilla(request, proyecto_id, planilla_id):
+    """Agregar trabajador a una planilla específica"""
+    proyecto = get_object_or_404(Proyecto, id=proyecto_id)
+    planilla = get_object_or_404(PlanillaTrabajadoresDiarios, id=planilla_id, proyecto=proyecto)
+    
+    if request.method == 'POST':
+        form = TrabajadorDiarioForm(request.POST, planilla=planilla)
+        if form.is_valid():
+            trabajador = form.save(commit=False)
+            trabajador.proyecto = proyecto
+            trabajador.planilla = planilla
+            trabajador.creado_por = request.user
+            trabajador.save()
+            
+            messages.success(request, f'Trabajador "{trabajador.nombre}" agregado a la planilla.')
+            return redirect('planilla_trabajadores_diarios_detail', proyecto_id=proyecto_id, planilla_id=planilla_id)
+    else:
+        form = TrabajadorDiarioForm(planilla=planilla)
+    
+    context = {
+        'proyecto': proyecto,
+        'planilla': planilla,
+        'form': form,
+    }
+    
+    return render(request, 'core/planillas_trabajadores_diarios/add_trabajador.html', context)
+
+
+@login_required
+def trabajador_diario_remove_from_planilla(request, proyecto_id, planilla_id, trabajador_id):
+    """Remover trabajador de una planilla"""
+    proyecto = get_object_or_404(Proyecto, id=proyecto_id)
+    planilla = get_object_or_404(PlanillaTrabajadoresDiarios, id=planilla_id, proyecto=proyecto)
+    trabajador = get_object_or_404(TrabajadorDiario, id=trabajador_id, planilla=planilla)
+    
+    if request.method == 'POST':
+        nombre_trabajador = trabajador.nombre
+        trabajador.delete()
+        messages.success(request, f'Trabajador "{nombre_trabajador}" removido de la planilla.')
+        return redirect('planilla_trabajadores_diarios_detail', proyecto_id=proyecto_id, planilla_id=planilla_id)
+    
+    context = {
+        'proyecto': proyecto,
+        'planilla': planilla,
+        'trabajador': trabajador,
+    }
+    
+    return render(request, 'core/planillas_trabajadores_diarios/remove_trabajador.html', context)

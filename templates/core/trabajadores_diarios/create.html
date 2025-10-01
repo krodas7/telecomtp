@@ -20,6 +20,37 @@
         </nav>
     </div>
 
+    <!-- Información de Planilla Seleccionada -->
+    {% if planilla_seleccionada %}
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="alert alert-info">
+                <h6 class="alert-heading">
+                    <i class="fas fa-file-invoice-dollar me-2"></i>Planilla Seleccionada
+                </h6>
+                <p class="mb-1"><strong>{{ planilla_seleccionada.nombre }}</strong></p>
+                <p class="mb-1">
+                    <small class="text-muted">
+                        Período: {{ planilla_seleccionada.fecha_inicio|date:"d/m/Y" }} - {{ planilla_seleccionada.fecha_fin|date:"d/m/Y" }}
+                    </small>
+                </p>
+                <p class="mb-0">
+                    <small class="text-muted">
+                        Estado: 
+                        {% if planilla_seleccionada.estado == 'activa' %}
+                            <span class="badge bg-success">Activa</span>
+                        {% elif planilla_seleccionada.estado == 'finalizada' %}
+                            <span class="badge bg-info">Finalizada</span>
+                        {% elif planilla_seleccionada.estado == 'archivada' %}
+                            <span class="badge bg-secondary">Archivada</span>
+                        {% endif %}
+                    </small>
+                </p>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
     <div class="row">
         <div class="col-lg-8">
             <div class="card shadow">
