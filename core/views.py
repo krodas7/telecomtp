@@ -1633,13 +1633,6 @@ def pago_delete(request, pago_id):
 def categorias_gasto_list(request):
     """Lista de categorías de gasto"""
     categorias = CategoriaGasto.objects.all().order_by('nombre')
-    return render(request, 'core/categorias_gasto/list.html', {'categorias': categorias})
-
-
-@login_required
-def categorias_gasto_list(request):
-    """Lista de categorías de gastos"""
-    categorias = CategoriaGasto.objects.all().order_by('nombre')
     
     # Calcular estadísticas
     categorias_activas = categorias.count()
@@ -1649,7 +1642,9 @@ def categorias_gasto_list(request):
         'categorias_activas': categorias_activas,
     }
     
-    return render(request, 'core/gastos/categorias.html', context)
+    return render(request, 'core/categorias_gasto/list.html', context)
+
+
 
 def categoria_gasto_create(request):
     """Crear categoría de gasto"""
