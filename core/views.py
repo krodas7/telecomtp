@@ -1419,22 +1419,24 @@ def gasto_aprobar(request, gasto_id):
             gasto.aprobado_por = request.user
             gasto.save()
             
-            # Aplicar el gasto al proyecto
+            # Registrar actividad (sin modificar presupuesto)
             proyecto = gasto.proyecto
             if proyecto:
-                # Actualizar el presupuesto del proyecto restando el gasto
-                if proyecto.presupuesto:
-                    proyecto.presupuesto -= Decimal(str(gasto.monto))
-                    proyecto.save()
-                
                 # Registrar actividad
                 LogActividad.objects.create(
                     usuario=request.user,
                     accion='Aprobar',
                     modulo='Gastos',
-                    descripcion=f'Gasto aprobado y aplicado al proyecto {proyecto.nombre}: {gasto.descripcion} - Q{gasto.monto}',
+                    descripcion=f'Gasto aprobado para el proyecto {proyecto.nombre}: {gasto.descripcion} - Q{gasto.monto}',
                     ip_address=request.META.get('REMOTE_ADDR')
                 )
+                
+                # Mostrar información del impacto en el proyecto (sin modificar presupuesto)
+                presupuesto_disponible = proyecto.get_presupuesto_disponible()
+                total_gastos = proyecto.get_total_gastos_aprobados()
+                print(f"✅ Total gastos aprobados del proyecto: Q{total_gastos}")
+                print(f"✅ Presupuesto disponible: Q{presupuesto_disponible}")
+                print(f"✅ Presupuesto del proyecto (sin cambios): Q{proyecto.presupuesto}")
             
             messages.success(request, f'Gasto "{gasto.descripcion}" aprobado y aplicado al proyecto exitosamente')
         
@@ -1458,22 +1460,24 @@ def gasto_desaprobar(request, gasto_id):
         if not gasto.aprobado:
             messages.warning(request, 'Este gasto ya está pendiente')
         else:
-            # Revertir el gasto del proyecto
+            # Registrar actividad (sin modificar presupuesto)
             proyecto = gasto.proyecto
             if proyecto:
-                # Actualizar el presupuesto del proyecto sumando el gasto de vuelta
-                if proyecto.presupuesto is not None:
-                    proyecto.presupuesto += gasto.monto
-                    proyecto.save()
-                
                 # Registrar actividad
                 LogActividad.objects.create(
                     usuario=request.user,
                     accion='Desaprobar',
                     modulo='Gastos',
-                    descripcion=f'Gasto desaprobado y revertido del proyecto {proyecto.nombre}: {gasto.descripcion} - Q{gasto.monto}',
+                    descripcion=f'Gasto desaprobado para el proyecto {proyecto.nombre}: {gasto.descripcion} - Q{gasto.monto}',
                     ip_address=request.META.get('REMOTE_ADDR')
                 )
+                
+                # Mostrar información del impacto en el proyecto (sin modificar presupuesto)
+                presupuesto_disponible = proyecto.get_presupuesto_disponible()
+                total_gastos = proyecto.get_total_gastos_aprobados()
+                print(f"✅ Total gastos aprobados del proyecto: Q{total_gastos}")
+                print(f"✅ Presupuesto disponible: Q{presupuesto_disponible}")
+                print(f"✅ Presupuesto del proyecto (sin cambios): Q{proyecto.presupuesto}")
             
             gasto.aprobado = False
             gasto.aprobado_por = None
@@ -1489,6 +1493,18 @@ def gasto_desaprobar(request, gasto_id):
         logger.error(f'Error desaprobando gasto {gasto_id}: {e}')
         messages.error(request, 'Error al desaprobar el gasto')
         return redirect('gastos_list')
+
+
+@login_required
+def gasto_detail(request, gasto_id):
+    """Ver detalles de un gasto"""
+    gasto = get_object_or_404(Gasto, id=gasto_id)
+    
+    context = {
+        'gasto': gasto,
+    }
+    
+    return render(request, 'core/gastos/detail.html', context)
 
 
 @login_required
@@ -2334,9 +2350,10 @@ def proyecto_dashboard(request, proyecto_id=None):
     # Totales financieros del proyecto
     total_facturado = facturas_proyecto.aggregate(total=Sum('monto_total'))['total'] or Decimal('0.00')
     
-    # Total gastos: suma de todos los gastos del proyecto
-    total_gastos = gastos_proyecto.aggregate(total=Sum('monto'))['total'] or Decimal('0.00')
-    total_gastos_aprobados = gastos_aprobados.aggregate(total=Sum('monto'))['total'] or Decimal('0.00')
+    # Total gastos: usar los métodos del modelo para consistencia
+    total_gastos = proyecto.get_total_gastos_aprobados()  # Solo gastos aprobados
+    total_gastos_aprobados = proyecto.get_total_gastos_aprobados()
+    total_gastos_pendientes = proyecto.get_total_gastos_pendientes()
     
     # Estadísticas de anticipos
     total_anticipos = anticipos_proyecto.aggregate(total=Sum('monto'))['total'] or Decimal('0.00')
@@ -2347,8 +2364,8 @@ def proyecto_dashboard(request, proyecto_id=None):
     anticipos_aplicados_proyecto = anticipos_proyecto.filter(aplicado_al_proyecto=True)
     total_anticipos_aplicados_proyecto = anticipos_aplicados_proyecto.aggregate(total=Sum('monto_aplicado_proyecto'))['total'] or Decimal('0.00')
     
-    # Fondos disponibles: anticipos aplicados al proyecto - gastos del proyecto
-    total_anticipos_disponibles = max(total_anticipos_aplicados_proyecto - Decimal(str(total_gastos)), Decimal('0.00'))
+    # Fondos disponibles: anticipos aplicados al proyecto - gastos aprobados del proyecto
+    total_anticipos_disponibles = max(total_anticipos_aplicados_proyecto - total_gastos, Decimal('0.00'))
     
     # Fondos pendientes: monto disponible de anticipos que aún no se ha aplicado
     total_anticipos_pendientes = total_anticipos_disponibles_base
@@ -2363,8 +2380,8 @@ def proyecto_dashboard(request, proyecto_id=None):
     # Anticipos recientes
     anticipos_recientes = anticipos_proyecto.order_by('-fecha_recepcion')[:5]
     
-    # Rentabilidad del proyecto: Total cobrado REAL - Total gastos
-    rentabilidad_proyecto = total_cobrado - Decimal(str(total_gastos))
+    # Rentabilidad del proyecto: Total cobrado REAL - Total gastos aprobados
+    rentabilidad_proyecto = total_cobrado - total_gastos
     
     # Archivos del proyecto
     archivos_proyecto = ArchivoProyecto.objects.filter(proyecto=proyecto, activo=True)
@@ -2400,6 +2417,7 @@ def proyecto_dashboard(request, proyecto_id=None):
         'total_facturas_pagadas': total_facturas_pagadas,
         'total_gastos': total_gastos,
         'total_gastos_aprobados': total_gastos_aprobados,
+        'total_gastos_pendientes': total_gastos_pendientes,
         'total_anticipos': total_anticipos,
         'total_anticipos_aplicados': total_anticipos_aplicados,
         'total_anticipos_disponibles': total_anticipos_disponibles,

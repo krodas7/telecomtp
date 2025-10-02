@@ -211,6 +211,32 @@ class Proyecto(models.Model):
     
     def __str__(self):
         return f"{self.nombre} - {self.cliente.razon_social}"
+    
+    def get_gastos_aprobados(self):
+        """Obtener gastos aprobados del proyecto"""
+        return self.gasto_set.filter(aprobado=True)
+    
+    def get_total_gastos_aprobados(self):
+        """Calcular total de gastos aprobados"""
+        from django.db.models import Sum
+        total = self.gasto_set.filter(aprobado=True).aggregate(
+            total=Sum('monto')
+        )['total']
+        return Decimal(str(total)) if total else Decimal('0.00')
+    
+    def get_total_gastos_pendientes(self):
+        """Calcular total de gastos pendientes"""
+        from django.db.models import Sum
+        total = self.gasto_set.filter(aprobado=False).aggregate(
+            total=Sum('monto')
+        )['total']
+        return Decimal(str(total)) if total else Decimal('0.00')
+    
+    def get_presupuesto_disponible(self):
+        """Calcular presupuesto disponible (presupuesto - gastos aprobados)"""
+        if self.presupuesto is None:
+            return None
+        return self.presupuesto - self.get_total_gastos_aprobados()
 
 
 class ArchivoAdjunto(models.Model):

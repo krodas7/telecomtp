@@ -1,0 +1,307 @@
+{% extends "base.html" %}
+{% load custom_filters %}
+
+{% block title %}Detalle de Gasto - Sistema de Construcción{% endblock %}
+
+{% block extra_css %}
+<style>
+    .detail-container {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 2rem;
+    }
+    
+    .detail-card {
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+    }
+    
+    .detail-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 2rem;
+        text-align: center;
+    }
+    
+    .detail-title {
+        font-size: 2rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+    }
+    
+    .detail-subtitle {
+        font-size: 1.1rem;
+        opacity: 0.9;
+    }
+    
+    .detail-body {
+        padding: 2rem;
+    }
+    
+    .detail-section {
+        margin-bottom: 2rem;
+    }
+    
+    .detail-section h4 {
+        color: #2c3e50;
+        font-weight: 600;
+        margin-bottom: 1rem;
+        border-bottom: 2px solid #e9ecef;
+        padding-bottom: 0.5rem;
+    }
+    
+    .detail-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.75rem 0;
+        border-bottom: 1px solid #f8f9fa;
+    }
+    
+    .detail-row:last-child {
+        border-bottom: none;
+    }
+    
+    .detail-label {
+        font-weight: 600;
+        color: #6c757d;
+        min-width: 150px;
+    }
+    
+    .detail-value {
+        color: #2c3e50;
+        font-weight: 500;
+    }
+    
+    .detail-monto {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #e74c3c;
+    }
+    
+    .detail-estado {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-weight: 600;
+        font-size: 0.9rem;
+    }
+    
+    .estado-aprobado {
+        background: rgba(40, 167, 69, 0.1);
+        color: #28a745;
+        border: 1px solid rgba(40, 167, 69, 0.2);
+    }
+    
+    .estado-pendiente {
+        background: rgba(255, 193, 7, 0.1);
+        color: #ffc107;
+        border: 1px solid rgba(255, 193, 7, 0.2);
+    }
+    
+    .detail-categoria {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        color: white;
+        font-weight: 600;
+        font-size: 0.9rem;
+    }
+    
+    .detail-actions {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+        margin-top: 2rem;
+        flex-wrap: wrap;
+    }
+    
+    .action-btn {
+        padding: 0.75rem 1.5rem;
+        border: none;
+        border-radius: 8px;
+        font-weight: 600;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+    
+    .action-btn:hover {
+        transform: translateY(-2px);
+        text-decoration: none;
+    }
+    
+    .btn-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+    }
+    
+    .btn-primary:hover {
+        color: white;
+        box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+    }
+    
+    .btn-warning {
+        background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%);
+        color: white;
+    }
+    
+    .btn-warning:hover {
+        color: white;
+        box-shadow: 0 8px 25px rgba(255, 193, 7, 0.4);
+    }
+    
+    .btn-danger {
+        background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+        color: white;
+    }
+    
+    .btn-danger:hover {
+        color: white;
+        box-shadow: 0 8px 25px rgba(220, 53, 69, 0.4);
+    }
+    
+    .btn-secondary {
+        background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
+        color: white;
+    }
+    
+    .btn-secondary:hover {
+        color: white;
+        box-shadow: 0 8px 25px rgba(108, 117, 125, 0.4);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="detail-container">
+    <div class="detail-card">
+        <!-- Header -->
+        <div class="detail-header">
+            <h1 class="detail-title">
+                <i class="fas fa-receipt me-2"></i>Detalle de Gasto
+            </h1>
+            <p class="detail-subtitle">Información completa del gasto</p>
+        </div>
+        
+        <!-- Body -->
+        <div class="detail-body">
+            <!-- Información General -->
+            <div class="detail-section">
+                <h4><i class="fas fa-info-circle me-2"></i>Información General</h4>
+                
+                <div class="detail-row">
+                    <span class="detail-label">Descripción:</span>
+                    <span class="detail-value">{{ gasto.descripcion }}</span>
+                </div>
+                
+                <div class="detail-row">
+                    <span class="detail-label">Monto:</span>
+                    <span class="detail-value detail-monto">Q{{ gasto.monto|floatformat:2 }}</span>
+                </div>
+                
+                <div class="detail-row">
+                    <span class="detail-label">Fecha:</span>
+                    <span class="detail-value">{{ gasto.fecha_gasto|date:"d/m/Y" }}</span>
+                </div>
+                
+                <div class="detail-row">
+                    <span class="detail-label">Estado:</span>
+                    <span class="detail-value">
+                        {% if gasto.aprobado %}
+                            <span class="detail-estado estado-aprobado">
+                                <i class="fas fa-check-circle"></i>Aprobado
+                            </span>
+                        {% else %}
+                            <span class="detail-estado estado-pendiente">
+                                <i class="fas fa-clock"></i>Pendiente
+                            </span>
+                        {% endif %}
+                    </span>
+                </div>
+            </div>
+            
+            <!-- Categoría y Proyecto -->
+            <div class="detail-section">
+                <h4><i class="fas fa-tags me-2"></i>Categoría y Proyecto</h4>
+                
+                <div class="detail-row">
+                    <span class="detail-label">Categoría:</span>
+                    <span class="detail-value">
+                        <span class="detail-categoria" style="background-color: {{ gasto.categoria.color|default:'#667eea' }};">
+                            <i class="{{ gasto.categoria.icono|default:'fas fa-tag' }}"></i>
+                            {{ gasto.categoria.nombre }}
+                        </span>
+                    </span>
+                </div>
+                
+                <div class="detail-row">
+                    <span class="detail-label">Proyecto:</span>
+                    <span class="detail-value">{{ gasto.proyecto.nombre }}</span>
+                </div>
+            </div>
+            
+            <!-- Información Adicional -->
+            {% if gasto.observaciones %}
+            <div class="detail-section">
+                <h4><i class="fas fa-sticky-note me-2"></i>Observaciones</h4>
+                <div class="detail-row">
+                    <span class="detail-value">{{ gasto.observaciones }}</span>
+                </div>
+            </div>
+            {% endif %}
+            
+            <!-- Información del Sistema -->
+            <div class="detail-section">
+                <h4><i class="fas fa-cog me-2"></i>Información del Sistema</h4>
+                
+                <div class="detail-row">
+                    <span class="detail-label">Fecha de creación:</span>
+                    <span class="detail-value">{{ gasto.creado_en|date:"d/m/Y H:i" }}</span>
+                </div>
+                
+                {% if gasto.aprobado_por %}
+                <div class="detail-row">
+                    <span class="detail-label">Aprobado por:</span>
+                    <span class="detail-value">{{ gasto.aprobado_por.get_full_name|default:gasto.aprobado_por.username }}</span>
+                </div>
+                {% endif %}
+            </div>
+            
+            <!-- Acciones -->
+            <div class="detail-actions">
+                <a href="{% url 'gastos_list' %}" class="action-btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i>Volver a la Lista
+                </a>
+                
+                <a href="{% url 'gasto_edit' gasto.id %}" class="action-btn btn-warning">
+                    <i class="fas fa-edit"></i>Editar
+                </a>
+                
+                {% if gasto.aprobado %}
+                    <a href="{% url 'gasto_desaprobar' gasto.id %}" class="action-btn btn-warning">
+                        <i class="fas fa-times-circle"></i>Desaprobar
+                    </a>
+                {% else %}
+                    <a href="{% url 'gasto_aprobar' gasto.id %}" class="action-btn btn-primary">
+                        <i class="fas fa-check-circle"></i>Aprobar
+                    </a>
+                {% endif %}
+                
+                <a href="{% url 'gasto_delete' gasto.id %}" class="action-btn btn-danger" onclick="return confirm('¿Estás seguro de que quieres eliminar este gasto?')">
+                    <i class="fas fa-trash"></i>Eliminar
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -97,6 +97,7 @@ urlpatterns = [
     path('gastos/dashboard/', views.gastos_dashboard, name='gastos_dashboard'),
     path('gastos/', views.gastos_list, name='gastos_list'),
     path('gastos/crear/', views.gasto_create, name='gasto_create'),
+    path('gastos/<int:gasto_id>/', views.gasto_detail, name='gasto_detail'),
     path('gastos/<int:gasto_id>/editar/', views.gasto_edit, name='gasto_edit'),
     path('gastos/<int:gasto_id>/eliminar/', views.gasto_delete, name='gasto_delete'),
     path('gastos/<int:gasto_id>/aprobar/', views.gasto_aprobar, name='gasto_aprobar'),

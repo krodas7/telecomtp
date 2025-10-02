@@ -648,10 +648,10 @@
                                     </td>
                                     <td>
                                         <div class="gasto-acciones">
-                                            <a href="#" class="accion-btn accion-ver" title="Ver detalles">
+                                            <a href="{% url 'gasto_detail' gasto.id %}" class="accion-btn accion-ver" title="Ver detalles">
                                                 <i class="fas fa-eye"></i>
                                             </a>
-                                            <a href="#" class="accion-btn accion-editar" title="Editar">
+                                            <a href="{% url 'gasto_edit' gasto.id %}" class="accion-btn accion-editar" title="Editar">
                                                 <i class="fas fa-edit"></i>
                                             </a>
                                             {% if gasto.aprobado %}
@@ -663,7 +663,7 @@
                                                     <i class="fas fa-check-circle"></i>
                                                 </a>
                                             {% endif %}
-                                            <a href="#" class="accion-btn accion-eliminar" title="Eliminar">
+                                            <a href="{% url 'gasto_delete' gasto.id %}" class="accion-btn accion-eliminar" title="Eliminar" onclick="return confirm('¿Estás seguro de que quieres eliminar este gasto?')">
                                                 <i class="fas fa-trash"></i>
                                             </a>
                                         </div>
@@ -726,6 +726,23 @@
         tableRows.forEach((row, index) => {
             row.style.animationDelay = `${index * 0.1}s`;
             row.style.animation = 'fadeInUp 0.5s ease-out both';
+        });
+        
+        // Debug para botones de acciones
+        const actionButtons = document.querySelectorAll('.accion-btn');
+        actionButtons.forEach(button => {
+            button.addEventListener('click', function(e) {
+                console.log('Botón clickeado:', this.href, this.title);
+                
+                // Si es el botón de desaprobar, mostrar confirmación
+                if (this.title === 'Desaprobar') {
+                    e.preventDefault();
+                    if (confirm('¿Estás seguro de que quieres desaprobar este gasto?')) {
+                        console.log('Redirigiendo a:', this.href);
+                        window.location.href = this.href;
+                    }
+                }
+            });
         });
     });
 </script>
