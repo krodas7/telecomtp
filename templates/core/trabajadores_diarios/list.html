@@ -110,9 +110,91 @@
                     <i class="fas fa-check-circle me-1"></i>Finalizar Planilla
                 </button>
                 {% endif %}
+                {% if trabajadores_liquidados_count > 0 %}
+                <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#reactivarTodosModal">
+                    <i class="fas fa-undo me-1"></i>Reactivar Todos
+                </button>
+                {% endif %}
                 <a href="{% url 'proyecto_dashboard' proyecto.id %}" class="btn btn-secondary">
                     <i class="fas fa-arrow-left me-1"></i>Volver al Proyecto
                 </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Selector de Planilla -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-file-invoice-dollar me-2"></i>Seleccionar Planilla
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-md-6">
+                            <label for="planillaSelector" class="form-label">
+                                <i class="fas fa-list me-1"></i>Planilla Actual:
+                            </label>
+                            <select class="form-select" id="planillaSelector" onchange="cambiarPlanilla()">
+                                <option value="">-- Sin planilla seleccionada --</option>
+                                {% for planilla in planillas %}
+                                    <option value="{{ planilla.id }}" 
+                                            {% if planilla_seleccionada and planilla.id == planilla_seleccionada.id %}selected{% endif %}>
+                                        {{ planilla.nombre }} 
+                                        {% if planilla.estado == 'activa' %}
+                                            <span class="badge bg-success">Activa</span>
+                                        {% elif planilla.estado == 'finalizada' %}
+                                            <span class="badge bg-info">Finalizada</span>
+                                        {% elif planilla.estado == 'archivada' %}
+                                            <span class="badge bg-secondary">Archivada</span>
+                                        {% endif %}
+                                        {% if planilla.fecha_inicio and planilla.fecha_fin %}
+                                            ({{ planilla.fecha_inicio|date:"d/m/Y" }} - {{ planilla.fecha_fin|date:"d/m/Y" }})
+                                        {% else %}
+                                            (Sin período definido)
+                                        {% endif %}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            {% if planilla_seleccionada %}
+                                <div class="alert alert-light border-primary mb-0" style="font-size: 0.85rem;">
+                                    <h6 class="alert-heading text-primary" style="font-size: 0.9rem;">
+                                        <i class="fas fa-folder me-1"></i>Planilla Seleccionada
+                                    </h6>
+                                    <p class="mb-1"><strong>{{ planilla_seleccionada.nombre }}</strong></p>
+                                    <p class="mb-1">
+                                        <small class="text-muted">
+                                            Período: {% if planilla_seleccionada.fecha_inicio and planilla_seleccionada.fecha_fin %}{{ planilla_seleccionada.fecha_inicio|date:"d/m/Y" }} - {{ planilla_seleccionada.fecha_fin|date:"d/m/Y" }}{% else %}Sin período definido{% endif %}
+                                        </small>
+                                    </p>
+                                    <p class="mb-0">
+                                        <small class="text-muted">
+                                            Estado: 
+                                            {% if planilla_seleccionada.estado == 'activa' %}
+                                                <span class="badge bg-success">Activa</span>
+                                            {% elif planilla_seleccionada.estado == 'finalizada' %}
+                                                <span class="badge bg-info">Finalizada</span>
+                                            {% elif planilla_seleccionada.estado == 'archivada' %}
+                                                <span class="badge bg-secondary">Archivada</span>
+                                            {% endif %}
+                                        </small>
+                                    </p>
+                                </div>
+                            {% else %}
+                                <div class="alert alert-warning mb-0">
+                                    <h6 class="alert-heading">
+                                        <i class="fas fa-exclamation-triangle me-1"></i>Sin Planilla Seleccionada
+                                    </h6>
+                                    <p class="mb-0">Se muestran todos los trabajadores sin planilla asignada.</p>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -141,20 +223,20 @@
                     <div class="row">
                         <div class="col-md-6">
                             <h6>Resumen de Pagos</h6>
-                            <div class="alert alert-info">
+                            <div class="alert alert-light border-info" style="font-size: 0.85rem;">
                                 <div class="row">
                                     <div class="col-6">
-                                        <strong>Total a Pagar:</strong><br>
+                                        <strong class="text-primary">Total a Pagar:</strong><br>
                                         <span class="badge bg-primary fs-6" id="total-general-pagar">Q{{ total_a_pagar|floatformat:2 }}</span>
                                     </div>
                                     <div class="col-6">
-                                        <strong>Anticipos Aplicados:</strong><br>
+                                        <strong class="text-warning">Anticipos Aplicados:</strong><br>
                                         <span class="badge bg-warning fs-6" id="total-anticipos">Q{{ total_aplicado|floatformat:2 }}</span>
                                     </div>
                                 </div>
                                 <hr>
                                 <div class="text-center">
-                                    <strong>Saldo Pendiente:</strong><br>
+                                    <strong class="text-success">Saldo Pendiente:</strong><br>
                                     <span class="badge bg-success fs-5" id="saldo-pendiente">Q{{ saldo_pendiente|floatformat:2 }}</span>
                                 </div>
                             </div>
@@ -204,7 +286,7 @@
                             <div class="border rounded p-4 bg-light">
                                 <i class="fas fa-dollar-sign fa-2x text-success mb-2"></i>
                                 <h3 class="text-success mb-1">Q{{ total_historico_gastos|floatformat:2 }}</h3>
-                                <small class="text-muted">Total Histórico Gastado</small>
+                                <small class="text-muted">Total Diarios</small>
                             </div>
                         </div>
                         <div class="col-md-4">
@@ -228,6 +310,13 @@
             </h6>
         </div>
         <div class="card-body">
+            <!-- Mensaje informativo (más discreto) -->
+            <div class="alert alert-light border-info mb-3" style="font-size: 0.9rem;">
+                <i class="fas fa-info-circle me-2 text-info"></i>
+                <strong class="text-info">💡 Información:</strong> Los trabajadores liquidados permanecen visibles para consulta histórica. 
+                Solo los trabajadores <span class="badge bg-success">Activos</span> pueden ser editados o eliminados.
+            </div>
+            
             {% if trabajadores %}
                 <div class="table-responsive">
                     <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
@@ -243,26 +332,40 @@
                         </thead>
                         <tbody>
                             {% for trabajador in trabajadores %}
-                            <tr>
+                            <tr class="{% if not trabajador.activo %}table-secondary{% endif %}">
                                 <td>{{ forloop.counter }}</td>
                                 <td>
-                                    <strong>{{ trabajador.nombre }}</strong>
-                                    {% if not trabajador.activo %}
-                                        <span class="badge bg-danger ms-1">Inactivo</span>
-                                    {% endif %}
+                                    <div class="d-flex align-items-center">
+                                        <strong>{{ trabajador.nombre }}</strong>
+                                        {% if not trabajador.activo %}
+                                            <span class="badge bg-danger ms-2">
+                                                <i class="fas fa-ban me-1"></i>Liquidado
+                                            </span>
+                                        {% else %}
+                                            <span class="badge bg-success ms-2">
+                                                <i class="fas fa-check-circle me-1"></i>Activo
+                                            </span>
+                                        {% endif %}
+                                    </div>
                                 </td>
                                 <td class="text-end">Q{{ trabajador.pago_diario|floatformat:2 }}</td>
                                 <td class="text-center">
-                                    <input type="number" 
-                                           class="form-control form-control-sm dias-trabajados-input" 
-                                           value="0"
-                                           data-trabajador-id="{{ trabajador.id }}"
-                                           data-pago-diario="{{ trabajador.pago_diario }}"
-                                           data-anticipos-aplicados="{{ trabajador.total_anticipos_aplicados }}"
-                                           min="0"
-                                           placeholder="Días"
-                                           style="width: 80px;">
-                                    <small class="text-muted">Temporal</small>
+                                    {% if trabajador.activo %}
+                                        <input type="number" 
+                                               class="form-control form-control-sm dias-trabajados-input" 
+                                               value="0"
+                                               data-trabajador-id="{{ trabajador.id }}"
+                                               data-pago-diario="{{ trabajador.pago_diario }}"
+                                               data-anticipos-aplicados="{{ trabajador.total_anticipos_aplicados }}"
+                                               min="0"
+                                               placeholder="Días"
+                                               style="width: 80px;">
+                                        <small class="text-muted">Temporal</small>
+                                    {% else %}
+                                        <span class="text-muted">
+                                            <i class="fas fa-lock me-1"></i>Liquidado
+                                        </span>
+                                    {% endif %}
                                 </td>
                                 <td class="text-end">
                                     <div class="d-flex flex-column">
@@ -282,14 +385,25 @@
                                            class="btn btn-info btn-sm" title="Ver detalles">
                                             <i class="fas fa-eye"></i>
                                         </a>
-                                        <a href="{% url 'trabajador_diario_edit' proyecto.id trabajador.id %}" 
-                                           class="btn btn-warning btn-sm" title="Editar">
-                                            <i class="fas fa-edit"></i>
-                                        </a>
-                                        <a href="{% url 'trabajador_diario_delete' proyecto.id trabajador.id %}" 
-                                           class="btn btn-danger btn-sm" title="Eliminar">
-                                            <i class="fas fa-trash"></i>
-                                        </a>
+                                        {% if trabajador.activo %}
+                                            <a href="{% url 'trabajador_diario_edit' proyecto.id trabajador.id %}" 
+                                               class="btn btn-warning btn-sm" title="Editar">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            <a href="{% url 'trabajador_diario_delete' proyecto.id trabajador.id %}" 
+                                               class="btn btn-danger btn-sm" title="Eliminar">
+                                                <i class="fas fa-trash"></i>
+                                            </a>
+                                        {% else %}
+                                            <button class="btn btn-success btn-sm" 
+                                                    onclick="reactivarTrabajador({{ trabajador.id }})" 
+                                                    title="Reactivar trabajador">
+                                                <i class="fas fa-undo"></i>
+                                            </button>
+                                            <button class="btn btn-secondary btn-sm" disabled title="Trabajador liquidado">
+                                                <i class="fas fa-lock"></i>
+                                            </button>
+                                        {% endif %}
                                     </div>
                                 </td>
                             </tr>
@@ -314,7 +428,7 @@
                     <i class="fas fa-users fa-3x text-muted mb-3"></i>
                     <h5 class="text-muted">No hay trabajadores diarios registrados</h5>
                     <p class="text-muted">Comienza agregando un nuevo trabajador diario.</p>
-                    <a href="{% url 'trabajador_diario_create' proyecto.id %}" class="btn btn-primary">
+                    <a href="{% url 'trabajador_diario_create' proyecto.id %}{% if planilla_seleccionada %}?planilla_id={{ planilla_seleccionada.id }}{% endif %}" class="btn btn-primary">
                         <i class="fas fa-plus me-1"></i>Agregar Primer Trabajador
                     </a>
                 </div>
@@ -564,6 +678,9 @@ function generarPDF() {
 <!-- Formulario oculto para generar PDF -->
 <form id="pdfForm" method="post" action="{% url 'trabajadores_diarios_pdf' proyecto.id %}" style="display: none;">
     {% csrf_token %}
+    {% if planilla_seleccionada %}
+        <input type="hidden" name="planilla_id" value="{{ planilla_seleccionada.id }}">
+    {% endif %}
     {% for trabajador in trabajadores %}
         <input type="hidden" name="dias_trabajador_{{ trabajador.id }}" id="dias_trabajador_{{ trabajador.id }}" value="0">
     {% endfor %}
@@ -584,5 +701,109 @@ function generarPDF() {
 }
 
 // CÓDIGO DUPLICADO ELIMINADO - El cálculo de totales ahora se hace en el script principal arriba
+
+// Función para cambiar planilla
+function cambiarPlanilla() {
+    const selector = document.getElementById('planillaSelector');
+    const planillaId = selector.value;
+    
+    // Construir la URL con el parámetro de planilla
+    const currentUrl = new URL(window.location);
+    if (planillaId) {
+        currentUrl.searchParams.set('planilla_id', planillaId);
+    } else {
+        currentUrl.searchParams.delete('planilla_id');
+    }
+    
+    // Redirigir a la nueva URL
+    window.location.href = currentUrl.toString();
+}
+
+// Función para reactivar un trabajador
+function reactivarTrabajador(trabajadorId) {
+    if (confirm('¿Estás seguro de que quieres reactivar este trabajador? Podrás volver a editarlo y pagarle.')) {
+        // Crear un formulario temporal para enviar la petición
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = '{% url "reactivar_trabajador_diario" proyecto.id 0 %}'.replace('0', trabajadorId);
+        
+        // Agregar token CSRF
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+        const csrfInput = document.createElement('input');
+        csrfInput.type = 'hidden';
+        csrfInput.name = 'csrfmiddlewaretoken';
+        csrfInput.value = csrfToken;
+        form.appendChild(csrfInput);
+        
+        // Agregar al DOM y enviar
+        document.body.appendChild(form);
+        form.submit();
+    }
+}
+
+// Función para reactivar todos los trabajadores
+function reactivarTodosTrabajadores() {
+    if (confirm('¿Estás seguro de que quieres reactivar TODOS los trabajadores liquidados de esta planilla?')) {
+        // Crear un formulario temporal para enviar la petición
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = '{% url "reactivar_todos_trabajadores_diarios" proyecto.id %}';
+        
+        // Agregar token CSRF
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+        const csrfInput = document.createElement('input');
+        csrfInput.type = 'hidden';
+        csrfInput.name = 'csrfmiddlewaretoken';
+        csrfInput.value = csrfToken;
+        form.appendChild(csrfInput);
+        
+        // Agregar planilla_id si existe
+        const planillaId = new URLSearchParams(window.location.search).get('planilla_id');
+        if (planillaId) {
+            const planillaInput = document.createElement('input');
+            planillaInput.type = 'hidden';
+            planillaInput.name = 'planilla_id';
+            planillaInput.value = planillaId;
+            form.appendChild(planillaInput);
+        }
+        
+        // Agregar al DOM y enviar
+        document.body.appendChild(form);
+        form.submit();
+    }
+}
 </script>
+
+<!-- Modal de Reactivar Todos -->
+<div class="modal fade" id="reactivarTodosModal" tabindex="-1" aria-labelledby="reactivarTodosModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="reactivarTodosModalLabel">
+                    <i class="fas fa-undo text-success me-2"></i>Reactivar Todos los Trabajadores
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    <strong>¿Estás seguro?</strong> Esta acción reactivará todos los trabajadores liquidados de esta planilla.
+                </div>
+                <p>Los trabajadores reactivados podrán ser editados y pagados nuevamente.</p>
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <strong>Nota:</strong> Esta acción no se puede deshacer automáticamente.
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-1"></i>Cancelar
+                </button>
+                <button type="button" class="btn btn-success" onclick="reactivarTodosTrabajadores()">
+                    <i class="fas fa-undo me-1"></i>Reactivar Todos
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}

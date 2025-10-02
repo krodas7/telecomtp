@@ -1,0 +1,446 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Gestión de Usuarios - Sistema Arca{% endblock %}
+
+{% block extra_css %}
+<style>
+    .dashboard-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 15px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+    }
+    
+    .stat-card {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        text-align: center;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        transition: transform 0.3s ease;
+    }
+    
+    .stat-card:hover {
+        transform: translateY(-5px);
+    }
+    
+    .stat-number {
+        font-size: 2.5rem;
+        font-weight: bold;
+        color: #667eea;
+        margin-bottom: 0.5rem;
+    }
+    
+    .stat-label {
+        color: #6c757d;
+        font-size: 0.9rem;
+        font-weight: 600;
+    }
+    
+    .search-section {
+        background: #f8f9fa;
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    
+    .search-input {
+        border-radius: 25px;
+        border: 2px solid #e9ecef;
+        padding: 12px 20px;
+        transition: all 0.3s ease;
+    }
+    
+    .search-input:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+    }
+    
+    .btn-primary-custom {
+        background: linear-gradient(45deg, #667eea, #764ba2);
+        border: none;
+        border-radius: 25px;
+        padding: 12px 24px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-primary-custom:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+    }
+    
+    .btn-secondary-custom {
+        background: #6c757d;
+        border: none;
+        border-radius: 25px;
+        padding: 12px 24px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-secondary-custom:hover {
+        background: #5a6268;
+        transform: translateY(-2px);
+    }
+    
+    .user-table {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        overflow: hidden;
+    }
+    
+    .table-header {
+        background: #f8f9fa;
+        padding: 1rem 1.5rem;
+        border-bottom: 2px solid #e9ecef;
+    }
+    
+    .user-row {
+        padding: 1rem 1.5rem;
+        border-bottom: 1px solid #e9ecef;
+        transition: background-color 0.3s ease;
+    }
+    
+    .user-row:hover {
+        background-color: #f8f9fa;
+    }
+    
+    .user-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: linear-gradient(45deg, #667eea, #764ba2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: bold;
+        font-size: 1.2rem;
+    }
+    
+    .role-badge {
+        padding: 4px 8px;
+        border-radius: 12px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        margin-right: 4px;
+    }
+    
+    .role-admin {
+        background: #dc3545;
+        color: white;
+    }
+    
+    .role-staff {
+        background: #ffc107;
+        color: #212529;
+    }
+    
+    .status-active {
+        background: #28a745;
+        color: white;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+    
+    .status-inactive {
+        background: #dc3545;
+        color: white;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+    
+    .action-btn {
+        background: #ffc107;
+        border: none;
+        border-radius: 6px;
+        padding: 8px 12px;
+        color: #212529;
+        transition: all 0.3s ease;
+    }
+    
+    .action-btn:hover {
+        background: #e0a800;
+        transform: translateY(-1px);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header Principal -->
+    <div class="dashboard-header">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h1 class="h3 mb-2">
+                    <i class="fas fa-users me-3"></i>Gestión de Usuarios
+                </h1>
+                <p class="mb-0 opacity-75">
+                    Administra los usuarios del sistema de construcción
+                </p>
+            </div>
+            <div class="col-md-4 text-end">
+                <div class="d-flex gap-2">
+                    <a href="{% url 'usuario_crear_mejorado' %}" class="btn btn-light">
+                        <i class="fas fa-user-plus me-2"></i>Nuevo Usuario
+                    </a>
+                    <a href="{% url 'usuarios_gestor_permisos' %}" class="btn btn-warning">
+                        <i class="fas fa-key me-2"></i>Gestor de Permisos
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Estadísticas -->
+    <div class="row mb-4">
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="stat-card">
+                <div class="stat-number">{{ total_usuarios }}</div>
+                <div class="stat-label">Total Usuarios</div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="stat-card">
+                <div class="stat-number">{{ usuarios_activos }}</div>
+                <div class="stat-label">Usuarios Activos</div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="stat-card">
+                <div class="stat-number">{{ superusuarios }}</div>
+                <div class="stat-label">Administradores</div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="stat-card">
+                <div class="stat-number">{{ total_roles }}</div>
+                <div class="stat-label">Roles Creados</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Búsqueda y Filtros -->
+    <div class="search-section">
+        <form method="GET" class="row g-3">
+            <div class="col-md-4">
+                <label for="search" class="form-label">
+                    <i class="fas fa-search me-2"></i>Buscar usuarios...
+                </label>
+                <input type="text" 
+                       class="form-control search-input" 
+                       id="search" 
+                       name="search" 
+                       value="{{ search }}"
+                       placeholder="Nombre, email o username...">
+            </div>
+            <div class="col-md-3">
+                <label for="rol" class="form-label">
+                    <i class="fas fa-user-tag me-2"></i>Todos los roles
+                </label>
+                <select class="form-select" id="rol" name="rol">
+                    <option value="">Todos los roles</option>
+                    {% for rol in roles %}
+                        <option value="{{ rol.id }}" {% if rol_filter == rol.id|stringformat:"s" %}selected{% endif %}>
+                            {{ rol.nombre }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label for="estado" class="form-label">
+                    <i class="fas fa-toggle-on me-2"></i>Todos los estados
+                </label>
+                <select class="form-select" id="estado" name="estado">
+                    <option value="">Todos los estados</option>
+                    <option value="activo" {% if estado_filter == 'activo' %}selected{% endif %}>Activos</option>
+                    <option value="inactivo" {% if estado_filter == 'inactivo' %}selected{% endif %}>Inactivos</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">&nbsp;</label>
+                <div class="d-grid">
+                    <button type="submit" class="btn btn-primary-custom">
+                        <i class="fas fa-filter me-2"></i>Filtrar
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- Acciones Rápidas -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <h6 class="card-title">
+                        <i class="fas fa-bolt me-2"></i>Acciones Rápidas
+                    </h6>
+                    <p class="card-text text-muted">Gestiona los usuarios del sistema</p>
+                    <div class="d-flex gap-2">
+                        <a href="{% url 'usuario_crear_mejorado' %}" class="btn btn-primary-custom">
+                            <i class="fas fa-user-plus me-2"></i>Nuevo Usuario
+                        </a>
+                        <a href="{% url 'usuarios_gestor_permisos' %}" class="btn btn-secondary-custom">
+                            <i class="fas fa-key me-2"></i>Gestor de Permisos
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Lista de Usuarios -->
+    <div class="user-table">
+        <div class="table-header">
+            <h6 class="mb-0">
+                <i class="fas fa-list me-2"></i>Lista de Usuarios del Sistema
+            </h6>
+        </div>
+        
+        {% if page_obj %}
+            {% for usuario in page_obj %}
+                <div class="user-row">
+                    <div class="row align-items-center">
+                        <div class="col-md-2">
+                            <div class="d-flex align-items-center">
+                                <div class="user-avatar me-3">
+                                    {{ usuario.first_name|first|default:usuario.username|first|upper }}
+                                </div>
+                                <div>
+                                    <h6 class="mb-1">{{ usuario.username }}</h6>
+                                    <div class="d-flex">
+                                        {% if usuario.is_superuser %}
+                                            <span class="role-badge role-admin">Admin</span>
+                                        {% endif %}
+                                        {% if usuario.is_staff %}
+                                            <span class="role-badge role-staff">Staff</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <strong>{{ usuario.get_full_name|default:"Sin nombre" }}</strong>
+                        </div>
+                        <div class="col-md-2">
+                            <span class="text-muted">{{ usuario.email|default:"Sin email" }}</span>
+                        </div>
+                        <div class="col-md-2">
+                            <span class="text-muted">
+                                {% if usuario.perfilusuario.rol %}
+                                    {{ usuario.perfilusuario.rol.nombre }}
+                                {% else %}
+                                    Sin rol
+                                {% endif %}
+                            </span>
+                        </div>
+                        <div class="col-md-2">
+                            {% if usuario.is_active %}
+                                <span class="status-active">ACTIVO</span>
+                            {% else %}
+                                <span class="status-inactive">INACTIVO</span>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-1">
+                            <span class="text-muted">
+                                <i class="fas fa-clock me-1"></i>
+                                {{ usuario.last_login|date:"d/m/Y H:i"|default:"Nunca" }}
+                            </span>
+                        </div>
+                        <div class="col-md-1">
+                            <a href="{% url 'usuario_editar_mejorado' usuario.id %}" class="action-btn">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        {% else %}
+            <div class="text-center py-5">
+                <i class="fas fa-users fa-4x text-muted mb-3"></i>
+                <h4 class="text-muted">No se encontraron usuarios</h4>
+                <p class="text-muted">Intenta ajustar los filtros de búsqueda</p>
+                <a href="{% url 'usuario_crear_mejorado' %}" class="btn btn-primary-custom">
+                    <i class="fas fa-user-plus me-2"></i>Crear Primer Usuario
+                </a>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Paginación -->
+    {% if page_obj.has_other_pages %}
+        <div class="row mt-4">
+            <div class="col-12">
+                <nav aria-label="Paginación de usuarios">
+                    <ul class="pagination justify-content-center">
+                        {% if page_obj.has_previous %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page=1{% if search %}&search={{ search }}{% endif %}{% if rol_filter %}&rol={{ rol_filter }}{% endif %}{% if estado_filter %}&estado={{ estado_filter }}{% endif %}">
+                                    <i class="fas fa-angle-double-left"></i>
+                                </a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if search %}&search={{ search }}{% endif %}{% if rol_filter %}&rol={{ rol_filter }}{% endif %}{% if estado_filter %}&estado={{ estado_filter }}{% endif %}">
+                                    <i class="fas fa-angle-left"></i>
+                                </a>
+                            </li>
+                        {% endif %}
+                        
+                        {% for num in page_obj.paginator.page_range %}
+                            {% if page_obj.number == num %}
+                                <li class="page-item active">
+                                    <span class="page-link">{{ num }}</span>
+                                </li>
+                            {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ num }}{% if search %}&search={{ search }}{% endif %}{% if rol_filter %}&rol={{ rol_filter }}{% endif %}{% if estado_filter %}&estado={{ estado_filter }}{% endif %}">{{ num }}</a>
+                                </li>
+                            {% endif %}
+                        {% endfor %}
+                        
+                        {% if page_obj.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if search %}&search={{ search }}{% endif %}{% if rol_filter %}&rol={{ rol_filter }}{% endif %}{% if estado_filter %}&estado={{ estado_filter }}{% endif %}">
+                                    <i class="fas fa-angle-right"></i>
+                                </a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if search %}&search={{ search }}{% endif %}{% if rol_filter %}&rol={{ rol_filter }}{% endif %}{% if estado_filter %}&estado={{ estado_filter }}{% endif %}">
+                                    <i class="fas fa-angle-double-right"></i>
+                                </a>
+                            </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Animaciones al cargar
+    document.addEventListener('DOMContentLoaded', function() {
+        const cards = document.querySelectorAll('.stat-card, .user-row');
+        cards.forEach((card, index) => {
+            card.style.opacity = '0';
+            card.style.transform = 'translateY(20px)';
+            setTimeout(() => {
+                card.style.transition = 'all 0.5s ease';
+                card.style.opacity = '1';
+                card.style.transform = 'translateY(0)';
+            }, index * 100);
+        });
+    });
+</script>
+{% endblock %}

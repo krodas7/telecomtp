@@ -37,7 +37,7 @@ if not DEBUG:
     # En producción, incluir tanto www como no-www
     DEFAULT_HOSTS = 'construccionesarca.net,www.construccionesarca.net'
 
-ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', DEFAULT_HOSTS).split(',')
+ALLOWED_HOSTS = ['159.203.106.69', 'localhost', '127.0.0.1']
 
 # Configuración para redirección de www
 USE_WWW_REDIRECT = os.environ.get('USE_WWW_REDIRECT', 'False').lower() == 'true'

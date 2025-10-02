@@ -796,7 +796,7 @@ class ItemInventarioForm(forms.ModelForm):
         model = ItemInventario
         fields = [
             'categoria', 'nombre', 'descripcion', 'codigo', 
-            'unidad_medida', 'precio_unitario', 'stock_minimo', 
+            'unidad_medida', 'precio_unitario', 'stock_actual', 'stock_minimo', 
             'proveedor', 'fecha_ultima_compra', 'activo'
         ]
         widgets = {
@@ -884,9 +884,12 @@ class TrabajadorDiarioForm(forms.ModelForm):
     class Meta:
         model = TrabajadorDiario
         fields = [
-            'nombre', 'pago_diario', 'activo'
+            'planilla', 'nombre', 'pago_diario', 'activo'
         ]
         widgets = {
+            'planilla': forms.Select(attrs={
+                'class': 'form-control'
+            }),
             'nombre': forms.TextInput(attrs={
                 'class': 'form-control',
                 'placeholder': 'Nombre del trabajador'
@@ -900,6 +903,20 @@ class TrabajadorDiarioForm(forms.ModelForm):
                 'class': 'form-check-input'
             })
         }
+    
+    def __init__(self, *args, **kwargs):
+        self.planilla = kwargs.pop('planilla', None)
+        proyecto = kwargs.pop('proyecto', None)
+        super().__init__(*args, **kwargs)
+        
+        # Cargar planillas del proyecto
+        if proyecto:
+            self.fields['planilla'].queryset = PlanillaTrabajadoresDiarios.objects.filter(proyecto=proyecto)
+            self.fields['planilla'].empty_label = "Selecciona una planilla"
+        
+        # Si se pasa una planilla específica, seleccionarla
+        if self.planilla:
+            self.fields['planilla'].initial = self.planilla
 
 
 class RegistroTrabajoForm(forms.ModelForm):
@@ -1002,29 +1019,3 @@ class PlanillaTrabajadoresDiariosForm(forms.ModelForm):
     def clean(self):
         cleaned_data = super().clean()
         return cleaned_data
-
-
-class TrabajadorDiarioForm(forms.ModelForm):
-    """Formulario para crear/editar trabajadores diarios"""
-    
-    class Meta:
-        model = TrabajadorDiario
-        fields = [
-            'nombre', 'pago_diario'
-        ]
-        widgets = {
-            'nombre': forms.TextInput(attrs={
-                'class': 'form-control',
-                'placeholder': 'Nombre completo del trabajador'
-            }),
-            'pago_diario': forms.NumberInput(attrs={
-                'class': 'form-control',
-                'step': '0.01',
-                'min': '0',
-                'placeholder': '0.00'
-            })
-        }
-    
-    def __init__(self, *args, **kwargs):
-        self.planilla = kwargs.pop('planilla', None)
-        super().__init__(*args, **kwargs)

@@ -1,237 +1,117 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Eliminar Planilla - {{ planilla.nombre }}{% endblock %}
+{% block title %}Eliminar {{ planilla.nombre }}{% endblock %}
 
 {% block content %}
 <div class="container-fluid">
     <!-- Header -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="d-flex justify-content-between align-items-center">
-                <div>
-                    <h1 class="h3 mb-0 text-gray-800">
-                        <i class="fas fa-trash-alt text-danger me-2"></i>
-                        Eliminar Planilla
-                    </h1>
-                    <p class="text-muted mb-0">{{ planilla.nombre }} - {{ proyecto.nombre }}</p>
-                </div>
-                <div class="btn-group" role="group">
-                    <a href="{% url 'planilla_trabajadores_diarios_detail' proyecto.id planilla.id %}" class="btn btn-info">
-                        <i class="fas fa-eye me-1"></i>Ver Detalles
-                    </a>
-                    <a href="{% url 'planillas_trabajadores_diarios_list' proyecto.id %}" class="btn btn-secondary">
-                        <i class="fas fa-arrow-left me-1"></i>Volver a Planillas
-                    </a>
-                </div>
-            </div>
-        </div>
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">
+            <i class="fas fa-trash me-2"></i>Eliminar Planilla: {{ planilla.nombre }}
+        </h1>
+        <a href="{% url 'planilla_trabajadores_diarios_detail' proyecto.id planilla.id %}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left me-1"></i>Volver al Detalle
+        </a>
     </div>
 
-    <!-- Advertencia de Eliminación -->
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'proyectos_list' %}">Proyectos</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'proyecto_dashboard' proyecto.id %}">{{ proyecto.nombre }}</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'planillas_trabajadores_diarios_list' proyecto.id %}">Planillas</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'planilla_trabajadores_diarios_detail' proyecto.id planilla.id %}">{{ planilla.nombre }}</a></li>
+            <li class="breadcrumb-item active">Eliminar</li>
+        </ol>
+    </nav>
+
+    <!-- Warning Card -->
     <div class="row">
         <div class="col-lg-8">
-            <div class="card shadow border-danger">
-                <div class="card-header bg-danger text-white py-3">
-                    <h6 class="m-0 font-weight-bold">
-                        <i class="fas fa-exclamation-triangle me-2"></i>Confirmación de Eliminación
+            <div class="card shadow border-left-danger">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-danger">
+                        <i class="fas fa-exclamation-triangle me-2"></i>Confirmar Eliminación
                     </h6>
                 </div>
                 <div class="card-body">
-                    <div class="alert alert-danger">
-                        <h5 class="alert-heading">
-                            <i class="fas fa-exclamation-triangle me-2"></i>¡ADVERTENCIA!
-                        </h5>
+                    <div class="alert alert-danger" role="alert">
+                        <h4 class="alert-heading">
+                            <i class="fas fa-exclamation-triangle me-2"></i>¡Atención!
+                        </h4>
+                        <p>Estás a punto de eliminar la planilla <strong>"{{ planilla.nombre }}"</strong>.</p>
+                        <hr>
                         <p class="mb-0">
-                            Estás a punto de eliminar permanentemente la planilla <strong>"{{ planilla.nombre }}"</strong>. 
-                            Esta acción no se puede deshacer.
+                            <strong>Esta acción no se puede deshacer.</strong> Se eliminarán todos los datos asociados a esta planilla, incluyendo:
                         </p>
-                    </div>
-
-                    <div class="row mb-4">
-                        <div class="col-md-6">
-                            <h6 class="text-primary">Información de la Planilla:</h6>
-                            <ul class="list-unstyled">
-                                <li><strong>Nombre:</strong> {{ planilla.nombre }}</li>
-                                <li><strong>Período:</strong> {{ planilla.fecha_inicio|date:"d/m/Y" }} - {{ planilla.fecha_fin|date:"d/m/Y" }}</li>
-                                <li><strong>Estado:</strong> 
-                                    {% if planilla.estado == 'activa' %}
-                                        <span class="badge bg-success">Activa</span>
-                                    {% elif planilla.estado == 'finalizada' %}
-                                        <span class="badge bg-info">Finalizada</span>
-                                    {% elif planilla.estado == 'archivada' %}
-                                        <span class="badge bg-secondary">Archivada</span>
-                                    {% endif %}
-                                </li>
-                                <li><strong>Creada:</strong> {{ planilla.fecha_creacion|date:"d/m/Y H:i" }}</li>
-                                <li><strong>Por:</strong> {{ planilla.creada_por.get_full_name|default:planilla.creada_por.username }}</li>
-                            </ul>
-                        </div>
-                        <div class="col-md-6">
-                            <h6 class="text-primary">Estadísticas:</h6>
-                            <ul class="list-unstyled">
-                                <li><strong>Trabajadores:</strong> {{ planilla.total_trabajadores }}</li>
-                                <li><strong>Total a Pagar:</strong> Q{{ planilla.total_a_pagar|floatformat:2 }}</li>
-                                <li><strong>Anticipos:</strong> Q{{ planilla.total_anticipos|floatformat:2 }}</li>
-                                <li><strong>Saldo Pendiente:</strong> Q{{ planilla.saldo_pendiente|floatformat:2 }}</li>
-                            </ul>
-                        </div>
-                    </div>
-
-                    {% if planilla.descripcion %}
-                    <div class="mb-4">
-                        <h6 class="text-primary">Descripción:</h6>
-                        <p class="text-muted">{{ planilla.descripcion }}</p>
-                    </div>
-                    {% endif %}
-
-                    {% if planilla.observaciones %}
-                    <div class="mb-4">
-                        <h6 class="text-primary">Observaciones:</h6>
-                        <p class="text-muted">{{ planilla.observaciones }}</p>
-                    </div>
-                    {% endif %}
-
-                    <div class="alert alert-warning">
-                        <h6 class="alert-heading">
-                            <i class="fas fa-info-circle me-2"></i>¿Qué se eliminará?
-                        </h6>
-                        <ul class="mb-0">
-                            <li>La planilla y toda su información</li>
-                            <li>Todos los trabajadores asociados a esta planilla</li>
-                            <li>Todos los anticipos de los trabajadores de esta planilla</li>
-                            <li>Todos los registros de trabajo de esta planilla</li>
+                        <ul class="mt-3">
+                            <li>Todos los trabajadores asignados a esta planilla</li>
+                            <li>Los registros de trabajo asociados</li>
+                            <li>Los anticipos aplicados a los trabajadores</li>
+                            <li>Toda la información de la planilla</li>
                         </ul>
                     </div>
 
-                    <form method="post" id="deleteForm">
+                    <form method="post">
                         {% csrf_token %}
-                        <div class="mb-3">
-                            <label for="confirmText" class="form-label">
-                                <i class="fas fa-keyboard me-1"></i>Escribe <strong>ELIMINAR</strong> para confirmar:
-                            </label>
-                            <input type="text" class="form-control" id="confirmText" name="confirm_text" 
-                                   placeholder="Escribe ELIMINAR aquí" required>
-                        </div>
-                        
-                        <div class="d-flex justify-content-between">
-                            <a href="{% url 'planilla_trabajadores_diarios_detail' proyecto.id planilla.id %}" class="btn btn-secondary">
-                                <i class="fas fa-times me-1"></i>Cancelar
-                            </a>
-                            <button type="submit" class="btn btn-danger" id="deleteBtn" disabled>
-                                <i class="fas fa-trash-alt me-1"></i>Eliminar Planilla
-                            </button>
+                        <div class="row">
+                            <div class="col-12">
+                                <button type="submit" class="btn btn-danger">
+                                    <i class="fas fa-trash me-1"></i>Sí, Eliminar Planilla
+                                </button>
+                                <a href="{% url 'planilla_trabajadores_diarios_detail' proyecto.id planilla.id %}" class="btn btn-secondary">
+                                    <i class="fas fa-times me-1"></i>Cancelar
+                                </a>
+                            </div>
                         </div>
                     </form>
                 </div>
             </div>
         </div>
 
-        <!-- Panel de Advertencia -->
+        <!-- Info Card -->
         <div class="col-lg-4">
-            <div class="card shadow border-warning">
-                <div class="card-header bg-warning text-dark py-3">
-                    <h6 class="m-0 font-weight-bold">
-                        <i class="fas fa-exclamation-triangle me-2"></i>Consideraciones Importantes
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-info">
+                        <i class="fas fa-info-circle me-2"></i>Información de la Planilla
                     </h6>
                 </div>
                 <div class="card-body">
-                    <div class="mb-3">
-                        <h6 class="text-warning">
-                            <i class="fas fa-database me-1"></i>Impacto en la Base de Datos
-                        </h6>
-                        <p class="small text-muted">
-                            Esta eliminación afectará permanentemente los datos almacenados en la base de datos.
-                        </p>
-                    </div>
-
-                    <div class="mb-3">
-                        <h6 class="text-warning">
-                            <i class="fas fa-chart-line me-1"></i>Impacto en Reportes
-                        </h6>
-                        <p class="small text-muted">
-                            Los reportes y estadísticas que incluyan esta planilla se verán afectados.
-                        </p>
-                    </div>
-
-                    <div class="mb-3">
-                        <h6 class="text-warning">
-                            <i class="fas fa-users me-1"></i>Trabajadores
-                        </h6>
-                        <p class="small text-muted">
-                            Todos los trabajadores de esta planilla serán eliminados permanentemente.
-                        </p>
-                    </div>
-
-                    <div class="alert alert-info small">
-                        <i class="fas fa-lightbulb me-1"></i>
-                        <strong>Recomendación:</strong> Si no estás seguro, considera cambiar el estado a "Archivada" en lugar de eliminar.
-                    </div>
+                    <h6 class="text-primary">Nombre:</h6>
+                    <p class="mb-3">{{ planilla.nombre }}</p>
+                    
+                    {% if planilla.descripcion %}
+                        <h6 class="text-primary">Descripción:</h6>
+                        <p class="mb-3">{{ planilla.descripcion }}</p>
+                    {% endif %}
+                    
+                    <h6 class="text-primary">Estado:</h6>
+                    <p class="mb-3">
+                        {% if planilla.estado == 'activa' %}
+                            <span class="badge bg-success">Activa</span>
+                        {% elif planilla.estado == 'finalizada' %}
+                            <span class="badge bg-info">Finalizada</span>
+                        {% elif planilla.estado == 'archivada' %}
+                            <span class="badge bg-secondary">Archivada</span>
+                        {% endif %}
+                    </p>
+                    
+                    <h6 class="text-primary">Trabajadores:</h6>
+                    <p class="mb-3">{{ planilla.total_trabajadores }}</p>
+                    
+                    <h6 class="text-primary">Total a pagar:</h6>
+                    <p class="mb-3">Q{{ planilla.total_a_pagar|floatformat:2 }}</p>
+                    
+                    <h6 class="text-primary">Creada por:</h6>
+                    <p class="mb-3">{{ planilla.creada_por.get_full_name|default:planilla.creada_por.username }}</p>
+                    
+                    <h6 class="text-primary">Fecha de creación:</h6>
+                    <p class="mb-3">{{ planilla.fecha_creacion|date:"d/m/Y H:i" }}</p>
                 </div>
             </div>
         </div>
     </div>
 </div>
-
-<!-- Toast Notifications -->
-<div class="toast-container position-fixed bottom-0 end-0 p-3">
-    {% if messages %}
-        {% for message in messages %}
-            <div class="toast show" role="alert" aria-live="assertive" aria-atomic="true">
-                <div class="toast-header">
-                    <i class="fas fa-{% if message.tags == 'success' %}check-circle text-success{% elif message.tags == 'error' %}exclamation-circle text-danger{% else %}info-circle text-info{% endif %} me-2"></i>
-                    <strong class="me-auto">Sistema ARCA</strong>
-                    <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
-                </div>
-                <div class="toast-body">
-                    {{ message }}
-                </div>
-            </div>
-        {% endfor %}
-    {% endif %}
-</div>
-
-<script>
-// Auto-dismiss toasts
-document.addEventListener('DOMContentLoaded', function() {
-    const toasts = document.querySelectorAll('.toast');
-    toasts.forEach(toast => {
-        setTimeout(() => {
-            const bsToast = new bootstrap.Toast(toast);
-            bsToast.hide();
-        }, 5000);
-    });
-
-    // Validación del campo de confirmación
-    const confirmText = document.getElementById('confirmText');
-    const deleteBtn = document.getElementById('deleteBtn');
-    
-    confirmText.addEventListener('input', function() {
-        if (this.value.trim().toUpperCase() === 'ELIMINAR') {
-            deleteBtn.disabled = false;
-            deleteBtn.classList.remove('btn-danger');
-            deleteBtn.classList.add('btn-danger');
-        } else {
-            deleteBtn.disabled = true;
-        }
-    });
-    
-    // Limpiar el campo al cargar la página
-    confirmText.value = '';
-    
-    // Confirmación adicional antes de enviar
-    document.getElementById('deleteForm').addEventListener('submit', function(e) {
-        if (confirmText.value.trim().toUpperCase() !== 'ELIMINAR') {
-            e.preventDefault();
-            alert('Debes escribir "ELIMINAR" para confirmar la eliminación.');
-            return false;
-        }
-        
-        if (!confirm('¿Estás completamente seguro de que quieres eliminar esta planilla? Esta acción no se puede deshacer.')) {
-            e.preventDefault();
-            return false;
-        }
-    });
-});
-</script>
 {% endblock %}
