@@ -6756,15 +6756,20 @@ def finalizar_planilla_trabajadores(request, proyecto_id):
         from core.models import PlanillaLiquidada
         planilla_liquidada = PlanillaLiquidada.objects.create(
             proyecto=proyecto,
-            total_salarios=Decimal(str(total_a_pagar)),
-            total_anticipos=Decimal('0.00'),  # Los trabajadores diarios no tienen anticipos en este contexto
-            total_planilla=Decimal(str(total_a_pagar)),
+            total_salarios=Decimal(str(total_neto_general)),
+            total_anticipos=Decimal(str(total_anticipos_general)),
+            total_planilla=Decimal(str(total_neto_general)),
             cantidad_personal=trabajadores.count(),
             liquidada_por=request.user,
-            observaciones=f'Planilla de trabajadores diarios finalizada - Total: Q{total_a_pagar:.2f}'
+            observaciones=f'Planilla de trabajadores diarios finalizada - Total: Q{total_neto_general:.2f}'
         )
         
-        print(f"✅ Planilla liquidada creada: ID {planilla_liquidada.id}, Total: Q{total_a_pagar:.2f}")
+        print(f"✅ Planilla liquidada creada: ID {planilla_liquidada.id}, Total: Q{total_neto_general:.2f}")
+        
+        # 4.5. Actualizar total histórico del proyecto
+        proyecto.total_diarios = (proyecto.total_diarios or Decimal('0.00')) + Decimal(str(total_neto_general))
+        proyecto.save()
+        print(f"✅ Total diarios actualizado: Q{proyecto.total_diarios}")
         
         # 5. Limpiar lista de trabajadores (marcar como inactivos)
         trabajadores_eliminados = trabajadores.count()
