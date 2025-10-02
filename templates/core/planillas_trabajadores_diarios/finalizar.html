@@ -1,0 +1,195 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Finalizar {{ planilla.nombre }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">
+            <i class="fas fa-check me-2"></i>Finalizar Planilla: {{ planilla.nombre }}
+        </h1>
+        <a href="{% url 'planilla_trabajadores_diarios_detail' proyecto.id planilla.id %}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left me-1"></i>Volver al Detalle
+        </a>
+    </div>
+
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'proyectos_list' %}">Proyectos</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'proyecto_dashboard' proyecto.id %}">{{ proyecto.nombre }}</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'planillas_trabajadores_diarios_list' proyecto.id %}">Planillas</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'planilla_trabajadores_diarios_detail' proyecto.id planilla.id %}">{{ planilla.nombre }}</a></li>
+            <li class="breadcrumb-item active">Finalizar</li>
+        </ol>
+    </nav>
+
+    <!-- Info Cards -->
+    <div class="row mb-4">
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-primary shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                Trabajadores
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                {{ planilla.total_trabajadores }}
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-users fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-success shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                Total a Pagar
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                Q{{ planilla.total_a_pagar|floatformat:2 }}
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-dollar-sign fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-info shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                Anticipos
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                Q{{ planilla.total_anticipos|floatformat:2 }}
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-hand-holding-usd fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-warning shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                Saldo Pendiente
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                Q{{ planilla.saldo_pendiente|floatformat:2 }}
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-calculator fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Finalization Form -->
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-check-circle me-2"></i>Finalizar Planilla
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info" role="alert">
+                        <h4 class="alert-heading">
+                            <i class="fas fa-info-circle me-2"></i>¿Qué sucede al finalizar?
+                        </h4>
+                        <p>Al finalizar esta planilla se realizarán las siguientes acciones:</p>
+                        <ul class="mb-0">
+                            <li>Se marcará la planilla como <strong>finalizada</strong></li>
+                            <li>Se marcarán todos los trabajadores como <strong>inactivos</strong></li>
+                            <li>Se marcarán todos los anticipos como <strong>procesados</strong></li>
+                            <li>Se generará un <strong>PDF de la planilla</strong> y se guardará en archivos</li>
+                            <li>Se creará un <strong>registro de planilla liquidada</strong></li>
+                        </ul>
+                    </div>
+
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <div class="row">
+                            <div class="col-12">
+                                <button type="submit" class="btn btn-success btn-lg">
+                                    <i class="fas fa-check me-1"></i>Finalizar Planilla
+                                </button>
+                                <a href="{% url 'planilla_trabajadores_diarios_detail' proyecto.id planilla.id %}" class="btn btn-secondary btn-lg">
+                                    <i class="fas fa-times me-1"></i>Cancelar
+                                </a>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Info Card -->
+        <div class="col-lg-4">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-info">
+                        <i class="fas fa-info-circle me-2"></i>Información de la Planilla
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <h6 class="text-primary">Nombre:</h6>
+                    <p class="mb-3">{{ planilla.nombre }}</p>
+                    
+                    {% if planilla.descripcion %}
+                        <h6 class="text-primary">Descripción:</h6>
+                        <p class="mb-3">{{ planilla.descripcion }}</p>
+                    {% endif %}
+                    
+                    <h6 class="text-primary">Período:</h6>
+                    <p class="mb-3">
+                        {% if planilla.fecha_inicio and planilla.fecha_fin %}
+                            {{ planilla.fecha_inicio|date:"d/m/Y" }} - {{ planilla.fecha_fin|date:"d/m/Y" }}
+                        {% else %}
+                            <span class="text-muted">Sin período definido</span>
+                        {% endif %}
+                    </p>
+                    
+                    <h6 class="text-primary">Creada por:</h6>
+                    <p class="mb-3">{{ planilla.creada_por.get_full_name|default:planilla.creada_por.username }}</p>
+                    
+                    <h6 class="text-primary">Fecha de creación:</h6>
+                    <p class="mb-3">{{ planilla.fecha_creacion|date:"d/m/Y H:i" }}</p>
+                    
+                    {% if planilla.observaciones %}
+                        <h6 class="text-primary">Observaciones:</h6>
+                        <p class="mb-3">{{ planilla.observaciones }}</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

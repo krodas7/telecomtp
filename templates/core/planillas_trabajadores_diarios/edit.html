@@ -1,0 +1,145 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Editar {{ planilla.nombre }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">
+            <i class="fas fa-edit me-2"></i>Editar Planilla: {{ planilla.nombre }}
+        </h1>
+        <a href="{% url 'planilla_trabajadores_diarios_detail' proyecto.id planilla.id %}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left me-1"></i>Volver al Detalle
+        </a>
+    </div>
+
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'proyectos_list' %}">Proyectos</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'proyecto_dashboard' proyecto.id %}">{{ proyecto.nombre }}</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'planillas_trabajadores_diarios_list' proyecto.id %}">Planillas</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'planilla_trabajadores_diarios_detail' proyecto.id planilla.id %}">{{ planilla.nombre }}</a></li>
+            <li class="breadcrumb-item active">Editar</li>
+        </ol>
+    </nav>
+
+    <!-- Form -->
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-file-invoice-dollar me-2"></i>Información de la Planilla
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <div class="row">
+                            <div class="col-md-12 mb-3">
+                                <label for="{{ form.nombre.id_for_label }}" class="form-label">
+                                    <i class="fas fa-tag me-1"></i>{{ form.nombre.label }}
+                                </label>
+                                {{ form.nombre }}
+                                {% if form.nombre.errors %}
+                                    <div class="text-danger">
+                                        {% for error in form.nombre.errors %}
+                                            <small>{{ error }}</small>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                                <div class="form-text">{{ form.nombre.help_text }}</div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-12 mb-3">
+                                <label for="{{ form.descripcion.id_for_label }}" class="form-label">
+                                    <i class="fas fa-align-left me-1"></i>{{ form.descripcion.label }}
+                                </label>
+                                {{ form.descripcion }}
+                                {% if form.descripcion.errors %}
+                                    <div class="text-danger">
+                                        {% for error in form.descripcion.errors %}
+                                            <small>{{ error }}</small>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-12 mb-3">
+                                <label for="{{ form.observaciones.id_for_label }}" class="form-label">
+                                    <i class="fas fa-sticky-note me-1"></i>{{ form.observaciones.label }}
+                                </label>
+                                {{ form.observaciones }}
+                                {% if form.observaciones.errors %}
+                                    <div class="text-danger">
+                                        {% for error in form.observaciones.errors %}
+                                            <small>{{ error }}</small>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-12">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-save me-1"></i>Guardar Cambios
+                                </button>
+                                <a href="{% url 'planilla_trabajadores_diarios_detail' proyecto.id planilla.id %}" class="btn btn-secondary">
+                                    <i class="fas fa-times me-1"></i>Cancelar
+                                </a>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Info Card -->
+        <div class="col-lg-4">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-info">
+                        <i class="fas fa-info-circle me-2"></i>Información
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <h6 class="text-primary">Proyecto:</h6>
+                    <p class="mb-3">{{ proyecto.nombre }}</p>
+                    
+                    <h6 class="text-primary">Estado actual:</h6>
+                    <p class="mb-3">
+                        {% if planilla.estado == 'activa' %}
+                            <span class="badge bg-success">Activa</span>
+                        {% elif planilla.estado == 'finalizada' %}
+                            <span class="badge bg-info">Finalizada</span>
+                        {% elif planilla.estado == 'archivada' %}
+                            <span class="badge bg-secondary">Archivada</span>
+                        {% endif %}
+                    </p>
+                    
+                    <h6 class="text-primary">Trabajadores:</h6>
+                    <p class="mb-3">{{ planilla.total_trabajadores }}</p>
+                    
+                    <h6 class="text-primary">Total a pagar:</h6>
+                    <p class="mb-3">Q{{ planilla.total_a_pagar|floatformat:2 }}</p>
+                    
+                    <h6 class="text-primary">Creada por:</h6>
+                    <p class="mb-3">{{ planilla.creada_por.get_full_name|default:planilla.creada_por.username }}</p>
+                    
+                    <h6 class="text-primary">Fecha de creación:</h6>
+                    <p class="mb-3">{{ planilla.fecha_creacion|date:"d/m/Y H:i" }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

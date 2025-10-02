@@ -649,10 +649,17 @@
                     <i class="fas fa-folder-plus"></i>
                     Nueva Carpeta
                 </a>
-                <a href="{% url 'archivo_upload' proyecto.id %}" class="btn-subir-archivo">
+                {% if carpeta_filtrada %}
+                <a href="{% url 'archivo_upload_carpeta' carpeta_filtrada.id %}" class="btn-subir-archivo" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
                     <i class="fas fa-upload"></i>
                     Subir Archivo
                 </a>
+                {% else %}
+                <a href="{% url 'archivo_upload' proyecto.id %}" class="btn-subir-archivo" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                    <i class="fas fa-upload"></i>
+                    Subir Archivo
+                </a>
+                {% endif %}
                 <a href="{% url 'proyecto_dashboard' proyecto.id %}" class="btn-volver">
                     <i class="fas fa-arrow-left"></i>
                     Volver al Dashboard
@@ -660,6 +667,14 @@
             </div>
         </div>
     </div>
+
+    <!-- Mensaje informativo -->
+    {% if carpeta_filtrada %}
+    <div class="alert alert-success mb-4">
+        <i class="fas fa-folder me-2"></i>
+        <strong>📁 Carpeta seleccionada:</strong> {{ carpeta_filtrada.nombre }}
+    </div>
+    {% endif %}
 
     <!-- Carpetas -->
     {% if subcarpetas %}

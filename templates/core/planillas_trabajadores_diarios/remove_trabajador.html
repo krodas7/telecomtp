@@ -1,0 +1,109 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Remover {{ trabajador.nombre }} de {{ planilla.nombre }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">
+            <i class="fas fa-user-minus me-2"></i>Remover {{ trabajador.nombre }}
+        </h1>
+        <a href="{% url 'planilla_trabajadores_diarios_detail' proyecto.id planilla.id %}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left me-1"></i>Volver al Detalle
+        </a>
+    </div>
+
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'proyectos_list' %}">Proyectos</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'proyecto_dashboard' proyecto.id %}">{{ proyecto.nombre }}</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'planillas_trabajadores_diarios_list' proyecto.id %}">Planillas</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'planilla_trabajadores_diarios_detail' proyecto.id planilla.id %}">{{ planilla.nombre }}</a></li>
+            <li class="breadcrumb-item active">Remover Trabajador</li>
+        </ol>
+    </nav>
+
+    <!-- Warning Card -->
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card shadow border-left-warning">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-warning">
+                        <i class="fas fa-exclamation-triangle me-2"></i>Confirmar Remoción
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-warning" role="alert">
+                        <h4 class="alert-heading">
+                            <i class="fas fa-exclamation-triangle me-2"></i>¡Atención!
+                        </h4>
+                        <p>Estás a punto de remover al trabajador <strong>"{{ trabajador.nombre }}"</strong> de la planilla <strong>"{{ planilla.nombre }}"</strong>.</p>
+                        <hr>
+                        <p class="mb-0">
+                            <strong>Esta acción eliminará permanentemente:</strong>
+                        </p>
+                        <ul class="mt-3">
+                            <li>El trabajador de esta planilla</li>
+                            <li>Los registros de trabajo asociados</li>
+                            <li>Los anticipos aplicados a este trabajador</li>
+                        </ul>
+                    </div>
+
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="row">
+                            <div class="col-12">
+                                <button type="submit" class="btn btn-warning">
+                                    <i class="fas fa-user-minus me-1"></i>Sí, Remover Trabajador
+                                </button>
+                                <a href="{% url 'planilla_trabajadores_diarios_detail' proyecto.id planilla.id %}" class="btn btn-secondary">
+                                    <i class="fas fa-times me-1"></i>Cancelar
+                                </a>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Info Card -->
+        <div class="col-lg-4">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-info">
+                        <i class="fas fa-info-circle me-2"></i>Información del Trabajador
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <h6 class="text-primary">Nombre:</h6>
+                    <p class="mb-3">{{ trabajador.nombre }}</p>
+                    
+                    <h6 class="text-primary">Pago diario:</h6>
+                    <p class="mb-3">Q{{ trabajador.pago_diario|floatformat:2 }}</p>
+                    
+                    <h6 class="text-primary">Días trabajados:</h6>
+                    <p class="mb-3">{{ trabajador.dias_trabajados|default:"0" }}</p>
+                    
+                    <h6 class="text-primary">Total bruto:</h6>
+                    <p class="mb-3">Q{{ trabajador.total_bruto|floatformat:2 }}</p>
+                    
+                    <h6 class="text-primary">Anticipos:</h6>
+                    <p class="mb-3">Q{{ trabajador.total_anticipos_aplicados|floatformat:2 }}</p>
+                    
+                    <h6 class="text-primary">Total a pagar:</h6>
+                    <p class="mb-3"><strong>Q{{ trabajador.total_a_pagar|floatformat:2 }}</strong></p>
+                    
+                    <h6 class="text-primary">Planilla:</h6>
+                    <p class="mb-3">{{ planilla.nombre }}</p>
+                    
+                    <h6 class="text-primary">Proyecto:</h6>
+                    <p class="mb-3">{{ proyecto.nombre }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,125 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Planillas de Trabajadores Diarios{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">
+            <i class="fas fa-file-invoice-dollar me-2"></i>Planillas de Trabajadores Diarios
+        </h1>
+        <a href="{% url 'planilla_trabajadores_diarios_create' proyecto.id %}" class="btn btn-primary">
+            <i class="fas fa-plus me-1"></i>Nueva Planilla
+        </a>
+    </div>
+
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{% url 'proyectos_list' %}">Proyectos</a></li>
+                <li class="breadcrumb-item"><a href="{% url 'proyecto_dashboard' proyecto.id %}">{{ proyecto.nombre }}</a></li>
+                <li class="breadcrumb-item active">Planillas de Trabajadores Diarios</li>
+        </ol>
+    </nav>
+
+    <!-- Planillas List -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-list me-2"></i>Lista de Planillas
+                    </h6>
+                </div>
+                <div class="card-body">
+                    {% if planillas %}
+                        <div class="table-responsive">
+                            <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
+                                <thead>
+                                    <tr>
+                                        <th>Nombre</th>
+                                        <th>Período</th>
+                                        <th>Estado</th>
+                                        <th>Trabajadores</th>
+                                        <th>Total a Pagar</th>
+                                        <th>Fecha Creación</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for planilla in planillas %}
+                                    <tr>
+                                        <td>
+                                            <strong>{{ planilla.nombre }}</strong>
+                                            {% if planilla.descripcion %}
+                                                <br><small class="text-muted">{{ planilla.descripcion }}</small>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if planilla.fecha_inicio and planilla.fecha_fin %}
+                                                {{ planilla.fecha_inicio|date:"d/m/Y" }} - {{ planilla.fecha_fin|date:"d/m/Y" }}
+                                            {% else %}
+                                                <span class="text-muted">Sin período definido</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if planilla.estado == 'activa' %}
+                                                <span class="badge bg-success">Activa</span>
+                                            {% elif planilla.estado == 'finalizada' %}
+                                                <span class="badge bg-info">Finalizada</span>
+                                            {% elif planilla.estado == 'archivada' %}
+                                                <span class="badge bg-secondary">Archivada</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-primary">{{ planilla.total_trabajadores }}</span>
+                                        </td>
+                                        <td>
+                                            <strong>Q{{ planilla.total_a_pagar|floatformat:2 }}</strong>
+                                        </td>
+                                        <td>{{ planilla.fecha_creacion|date:"d/m/Y H:i" }}</td>
+                                        <td>
+                                            <div class="btn-group" role="group">
+                                                <a href="{% url 'planilla_trabajadores_diarios_detail' proyecto.id planilla.id %}" 
+                                                   class="btn btn-sm btn-info" title="Ver detalles">
+                                                    <i class="fas fa-eye"></i>
+                                                </a>
+                                                <a href="{% url 'planilla_trabajadores_diarios_edit' proyecto.id planilla.id %}" 
+                                                   class="btn btn-sm btn-warning" title="Editar">
+                                                    <i class="fas fa-edit"></i>
+                                                </a>
+                                                {% if planilla.estado == 'activa' %}
+                                                    <a href="{% url 'planilla_trabajadores_diarios_finalizar' proyecto.id planilla.id %}" 
+                                                       class="btn btn-sm btn-success" title="Finalizar">
+                                                        <i class="fas fa-check"></i>
+                                                    </a>
+                                                {% endif %}
+                                                <a href="{% url 'planilla_trabajadores_diarios_delete' proyecto.id planilla.id %}" 
+                                                   class="btn btn-sm btn-danger" title="Eliminar">
+                                                    <i class="fas fa-trash"></i>
+                                                </a>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-file-invoice-dollar fa-3x text-muted mb-3"></i>
+                            <h5 class="text-muted">No hay planillas creadas</h5>
+                            <p class="text-muted">Crea tu primera planilla para comenzar a gestionar trabajadores diarios.</p>
+                            <a href="{% url 'planilla_trabajadores_diarios_create' proyecto.id %}" class="btn btn-primary">
+                                <i class="fas fa-plus me-1"></i>Crear Primera Planilla
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

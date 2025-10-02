@@ -31,7 +31,7 @@ urlpatterns = [
     path('proyecto/<int:proyecto_id>/planilla/pdf/', views.planilla_proyecto_pdf, name='planilla_proyecto_pdf'),
     path('proyecto/<int:proyecto_id>/historico-nomina/reset/', views.resetear_historico_nomina, name='resetear_historico_nomina'),
     path('proyectos/<int:proyecto_id>/administrar-anticipos/', views.administrar_anticipos_proyecto, name='administrar_anticipos_proyecto'),
-    # path('anticipos/<int:anticipo_id>/editar/', views.editar_anticipo, name='editar_anticipo'),  # DUPLICADA - comentada
+    path('anticipos/<int:anticipo_id>/editar/', views.editar_anticipo, name='editar_anticipo'),
     path('anticipos/<int:anticipo_id>/eliminar/', views.eliminar_anticipo, name='eliminar_anticipo'),
     path('anticipos/<int:anticipo_id>/cambiar-estado/', views.cambiar_estado_anticipo, name='cambiar_estado_anticipo'),
     path('proyectos/<int:proyecto_id>/anticipo-masivo/', views.crear_anticipo_masivo, name='crear_anticipo_masivo'),
@@ -43,11 +43,23 @@ urlpatterns = [
     path('proyectos/<int:proyecto_id>/trabajadores-diarios/', views.trabajadores_diarios_list, name='trabajadores_diarios_list'),
     path('proyectos/<int:proyecto_id>/trabajadores-diarios/crear/', views.trabajador_diario_create, name='trabajador_diario_create'),
     path('proyectos/<int:proyecto_id>/trabajadores-diarios/finalizar/', views.finalizar_planilla_trabajadores, name='finalizar_planilla_trabajadores'),
+    path('proyectos/<int:proyecto_id>/trabajadores-diarios/reactivar-todos/', views.reactivar_todos_trabajadores_diarios, name='reactivar_todos_trabajadores_diarios'),
     path('proyectos/<int:proyecto_id>/trabajadores-diarios/<int:trabajador_id>/', views.trabajador_diario_detail, name='trabajador_diario_detail'),
     path('proyectos/<int:proyecto_id>/trabajadores-diarios/<int:trabajador_id>/editar/', views.trabajador_diario_edit, name='trabajador_diario_edit'),
     path('proyectos/<int:proyecto_id>/trabajadores-diarios/<int:trabajador_id>/eliminar/', views.trabajador_diario_delete, name='trabajador_diario_delete'),
+    path('proyectos/<int:proyecto_id>/trabajadores-diarios/<int:trabajador_id>/reactivar/', views.reactivar_trabajador_diario, name='reactivar_trabajador_diario'),
     path('proyectos/<int:proyecto_id>/trabajadores-diarios/<int:trabajador_id>/registro/crear/', views.registro_trabajo_create, name='registro_trabajo_create'),
     path('proyectos/<int:proyecto_id>/trabajadores-diarios/<int:trabajador_id>/registro/<int:registro_id>/editar/', views.registro_trabajo_edit, name='registro_trabajo_edit'),
+    
+    # ==================== PLANILLAS DE TRABAJADORES DIARIOS ====================
+    path('proyectos/<int:proyecto_id>/planillas-trabajadores-diarios/', views.planillas_trabajadores_diarios_list, name='planillas_trabajadores_diarios_list'),
+    path('proyectos/<int:proyecto_id>/planillas-trabajadores-diarios/crear/', views.planilla_trabajadores_diarios_create, name='planilla_trabajadores_diarios_create'),
+    path('proyectos/<int:proyecto_id>/planillas-trabajadores-diarios/<int:planilla_id>/', views.planilla_trabajadores_diarios_detail, name='planilla_trabajadores_diarios_detail'),
+    path('proyectos/<int:proyecto_id>/planillas-trabajadores-diarios/<int:planilla_id>/editar/', views.planilla_trabajadores_diarios_edit, name='planilla_trabajadores_diarios_edit'),
+    path('proyectos/<int:proyecto_id>/planillas-trabajadores-diarios/<int:planilla_id>/eliminar/', views.planilla_trabajadores_diarios_delete, name='planilla_trabajadores_diarios_delete'),
+    path('proyectos/<int:proyecto_id>/planillas-trabajadores-diarios/<int:planilla_id>/finalizar/', views.planilla_trabajadores_diarios_finalizar, name='planilla_trabajadores_diarios_finalizar'),
+    path('proyectos/<int:proyecto_id>/planillas-trabajadores-diarios/<int:planilla_id>/agregar-trabajador/', views.trabajador_diario_add_to_planilla, name='trabajador_diario_add_to_planilla'),
+    path('proyectos/<int:proyecto_id>/planillas-trabajadores-diarios/<int:planilla_id>/remover-trabajador/<int:trabajador_id>/', views.trabajador_diario_remove_from_planilla, name='trabajador_diario_remove_from_planilla'),
     path('proyectos/<int:proyecto_id>/trabajadores-diarios/<int:trabajador_id>/registro/<int:registro_id>/eliminar/', views.registro_trabajo_delete, name='registro_trabajo_delete'),
     path('proyectos/<int:proyecto_id>/trabajadores-diarios/<int:trabajador_id>/actualizar-dias/', views.actualizar_dias_trabajados, name='actualizar_dias_trabajados'),
     path('proyectos/<int:proyecto_id>/trabajadores-diarios/pdf/', views.trabajadores_diarios_pdf, name='trabajadores_diarios_pdf'),
@@ -112,6 +124,13 @@ urlpatterns = [
     path('usuarios/crear/', views.usuario_crear, name='usuario_crear'),
     path('usuarios/<int:usuario_id>/editar/', views.usuario_editar, name='usuario_editar'),
     
+    # Usuarios Mejorados - URLs principales
+    path('usuarios/dashboard/', views_usuarios_mejoradas.usuarios_dashboard, name='usuarios_dashboard'),
+    path('usuarios/lista-mejorada/', views_usuarios_mejoradas.usuarios_lista_mejorada, name='usuarios_lista_mejorada'),
+    path('usuarios/crear-mejorado/', views_usuarios_mejoradas.usuario_crear_mejorado, name='usuario_crear_mejorado'),
+    path('usuarios/<int:usuario_id>/editar-mejorado/', views_usuarios_mejoradas.usuario_editar_mejorado, name='usuario_editar_mejorado'),
+    path('usuarios/gestor-permisos/', views_usuarios_mejoradas.usuarios_gestor_permisos, name='usuarios_gestor_permisos'),
+    
     # Sistema
     path('sistema/', views.sistema_view, name='sistema'),
     path('sistema/configurar/', views.sistema_configurar, name='sistema_configurar'),
@@ -147,6 +166,7 @@ urlpatterns = [
     path('archivos/', views.archivos_proyectos_list, name='archivos_proyectos_list'),
     path('archivos/proyecto/<int:proyecto_id>/', views.archivos_proyecto_list, name='archivos_proyecto_list'),
     path('archivos/proyecto/<int:proyecto_id>/subir/', views.archivo_upload, name='archivo_upload'),
+    path('archivos/carpeta/<int:carpeta_id>/subir/', views.archivo_upload_carpeta, name='archivo_upload_carpeta'),
     path('archivos/<int:archivo_id>/descargar/', views.archivo_download, name='archivo_download'),
     path('archivos/<int:archivo_id>/eliminar/', views.archivo_delete, name='archivo_delete'),
     path('archivos/<int:archivo_id>/preview/', views.archivo_preview, name='archivo_preview'),
@@ -222,12 +242,7 @@ urlpatterns = [
     path('roles/resumen/', views.roles_resumen, name='roles_resumen'),
     path('roles/<int:rol_id>/permisos/', views.rol_permisos, name='rol_permisos'),
     
-    # URLs Mejoradas para Gestión de Usuarios y Roles
-    path('usuarios-mejorados/', views_usuarios_mejoradas.usuarios_lista_mejorada, name='usuarios_lista_mejorada'),
-    path('usuarios-mejorados/crear/', views_usuarios_mejoradas.usuario_crear_mejorado, name='usuario_crear_mejorado'),
-    path('usuarios-mejorados/<int:usuario_id>/editar/', views_usuarios_mejoradas.usuario_editar_mejorado, name='usuario_editar_mejorado'),
-    path('usuarios-mejorados/dashboard/', views_usuarios_mejoradas.usuarios_dashboard, name='usuarios_dashboard'),
-    path('usuarios-mejorados/gestor-permisos/', views_usuarios_mejoradas.usuarios_gestor_permisos, name='usuarios_gestor_permisos'),
+    # URLs Mejoradas para Gestión de Usuarios y Roles (duplicadas - eliminadas)
     
     path('roles-mejorados/', views_usuarios_mejoradas.roles_lista_mejorada, name='roles_lista_mejorada'),
     path('roles-mejorados/crear/', views_usuarios_mejoradas.rol_crear_mejorado, name='rol_crear_mejorado'),

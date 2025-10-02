@@ -1,0 +1,232 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ planilla.nombre }} - Detalle de Planilla{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">
+            <i class="fas fa-file-invoice-dollar me-2"></i>{{ planilla.nombre }}
+        </h1>
+        <div class="btn-group">
+            <a href="{% url 'planilla_trabajadores_diarios_edit' proyecto.id planilla.id %}" class="btn btn-warning">
+                <i class="fas fa-edit me-1"></i>Editar
+            </a>
+            {% if planilla.estado == 'activa' %}
+                <a href="{% url 'planilla_trabajadores_diarios_finalizar' proyecto.id planilla.id %}" class="btn btn-success">
+                    <i class="fas fa-check me-1"></i>Finalizar
+                </a>
+            {% endif %}
+            <a href="{% url 'planillas_trabajadores_diarios_list' proyecto.id %}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left me-1"></i>Volver
+            </a>
+        </div>
+    </div>
+
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'proyectos_list' %}">Proyectos</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'proyecto_dashboard' proyecto.id %}">{{ proyecto.nombre }}</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'planillas_trabajadores_diarios_list' proyecto.id %}">Planillas</a></li>
+            <li class="breadcrumb-item active">{{ planilla.nombre }}</li>
+        </ol>
+    </nav>
+
+    <!-- Info Cards -->
+    <div class="row mb-4">
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-primary shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                Estado
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                {% if planilla.estado == 'activa' %}
+                                    <span class="badge bg-success">Activa</span>
+                                {% elif planilla.estado == 'finalizada' %}
+                                    <span class="badge bg-info">Finalizada</span>
+                                {% elif planilla.estado == 'archivada' %}
+                                    <span class="badge bg-secondary">Archivada</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-info-circle fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-success shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                Trabajadores
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                {{ total_trabajadores }}
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-users fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-info shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                Total a Pagar
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                Q{{ total_a_pagar|floatformat:2 }}
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-dollar-sign fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-warning shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                Anticipos
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                Q{{ total_anticipos|floatformat:2 }}
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-hand-holding-usd fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Planilla Details -->
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-list me-2"></i>Trabajadores en la Planilla
+                    </h6>
+                </div>
+                <div class="card-body">
+                    {% if trabajadores %}
+                        <div class="table-responsive">
+                            <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
+                                <thead>
+                                    <tr>
+                                        <th>Nombre</th>
+                                        <th>Pago Diario</th>
+                                        <th>Días Trabajados</th>
+                                        <th>Total Bruto</th>
+                                        <th>Anticipos</th>
+                                        <th>Total a Pagar</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for trabajador in trabajadores %}
+                                    <tr>
+                                        <td><strong>{{ trabajador.nombre }}</strong></td>
+                                        <td>Q{{ trabajador.pago_diario|floatformat:2 }}</td>
+                                        <td>{{ trabajador.dias_trabajados|default:"0" }}</td>
+                                        <td>Q{{ trabajador.total_bruto|floatformat:2 }}</td>
+                                        <td>Q{{ trabajador.total_anticipos_aplicados|floatformat:2 }}</td>
+                                        <td><strong>Q{{ trabajador.total_a_pagar|floatformat:2 }}</strong></td>
+                                        <td>
+                                            <div class="btn-group" role="group">
+                                                <a href="{% url 'trabajador_diario_edit' proyecto.id trabajador.id %}" 
+                                                   class="btn btn-sm btn-warning" title="Editar">
+                                                    <i class="fas fa-edit"></i>
+                                                </a>
+                                                <a href="{% url 'trabajador_diario_remove_from_planilla' proyecto.id planilla.id trabajador.id %}" 
+                                                   class="btn btn-sm btn-danger" title="Remover">
+                                                    <i class="fas fa-user-minus"></i>
+                                                </a>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-users fa-3x text-muted mb-3"></i>
+                            <h5 class="text-muted">No hay trabajadores en esta planilla</h5>
+                            <p class="text-muted">Agrega trabajadores para comenzar a gestionar la planilla.</p>
+                            <a href="{% url 'trabajador_diario_add_to_planilla' proyecto.id planilla.id %}" class="btn btn-primary">
+                                <i class="fas fa-user-plus me-1"></i>Agregar Trabajador
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Info Card -->
+        <div class="col-lg-4">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-info">
+                        <i class="fas fa-info-circle me-2"></i>Información de la Planilla
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <h6 class="text-primary">Nombre:</h6>
+                    <p class="mb-3">{{ planilla.nombre }}</p>
+                    
+                    {% if planilla.descripcion %}
+                        <h6 class="text-primary">Descripción:</h6>
+                        <p class="mb-3">{{ planilla.descripcion }}</p>
+                    {% endif %}
+                    
+                    <h6 class="text-primary">Período:</h6>
+                    <p class="mb-3">
+                        {% if planilla.fecha_inicio and planilla.fecha_fin %}
+                            {{ planilla.fecha_inicio|date:"d/m/Y" }} - {{ planilla.fecha_fin|date:"d/m/Y" }}
+                        {% else %}
+                            <span class="text-muted">Sin período definido</span>
+                        {% endif %}
+                    </p>
+                    
+                    <h6 class="text-primary">Creada por:</h6>
+                    <p class="mb-3">{{ planilla.creada_por.get_full_name|default:planilla.creada_por.username }}</p>
+                    
+                    <h6 class="text-primary">Fecha de creación:</h6>
+                    <p class="mb-3">{{ planilla.fecha_creacion|date:"d/m/Y H:i" }}</p>
+                    
+                    {% if planilla.observaciones %}
+                        <h6 class="text-primary">Observaciones:</h6>
+                        <p class="mb-3">{{ planilla.observaciones }}</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

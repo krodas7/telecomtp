@@ -3,149 +3,313 @@
 
 {% block title %}Crear Item de Inventario - Sistema de Construcción{% endblock %}
 
+{% block extra_css %}
+<style>
+    .form-container {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 20px;
+        padding: 2rem;
+        box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        margin-bottom: 2rem;
+    }
+    
+    .form-header {
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+    
+    .form-header h1 {
+        color: white;
+        font-weight: 700;
+        font-size: 2.5rem;
+        margin-bottom: 0.5rem;
+        text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    }
+    
+    .form-header p {
+        color: rgba(255,255,255,0.9);
+        font-size: 1.1rem;
+        margin-bottom: 0;
+    }
+    
+    .form-card {
+        background: white;
+        border-radius: 15px;
+        padding: 2rem;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        border: none;
+    }
+    
+    .form-group-enhanced {
+        margin-bottom: 1.5rem;
+    }
+    
+    .form-label-enhanced {
+        font-weight: 600;
+        color: #2c3e50;
+        margin-bottom: 0.5rem;
+        display: flex;
+        align-items: center;
+        font-size: 0.95rem;
+    }
+    
+    .form-label-enhanced i {
+        color: #667eea;
+        margin-right: 0.5rem;
+        width: 16px;
+    }
+    
+    .form-control-enhanced {
+        border: 2px solid #e9ecef;
+        border-radius: 10px;
+        padding: 0.75rem 1rem;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+        background: #f8f9fa;
+    }
+    
+    .form-control-enhanced:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+        background: white;
+        transform: translateY(-1px);
+    }
+    
+    .form-select-enhanced {
+        border: 2px solid #e9ecef;
+        border-radius: 10px;
+        padding: 0.75rem 1rem;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+        background: #f8f9fa;
+    }
+    
+    .form-select-enhanced:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+        background: white;
+    }
+    
+    .form-text-enhanced {
+        color: #6c757d;
+        font-size: 0.85rem;
+        margin-top: 0.5rem;
+        font-style: italic;
+    }
+    
+    .btn-enhanced {
+        border-radius: 10px;
+        padding: 0.75rem 2rem;
+        font-weight: 600;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+        border: none;
+    }
+    
+    .btn-primary-enhanced {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+    }
+    
+    .btn-primary-enhanced:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+        color: white;
+    }
+    
+    .btn-secondary-enhanced {
+        background: #6c757d;
+        color: white;
+    }
+    
+    .btn-secondary-enhanced:hover {
+        background: #5a6268;
+        transform: translateY(-2px);
+        color: white;
+    }
+    
+    .info-card {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        border: none;
+        border-radius: 15px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+    }
+    
+    .info-card .card-title {
+        color: #2c3e50;
+        font-weight: 600;
+    }
+    
+    .info-card ul li {
+        color: #495057;
+        margin-bottom: 0.5rem;
+    }
+    
+    .form-check-enhanced {
+        background: #f8f9fa;
+        padding: 1rem;
+        border-radius: 10px;
+        border: 2px solid #e9ecef;
+    }
+    
+    .form-check-input-enhanced:checked {
+        background-color: #667eea;
+        border-color: #667eea;
+    }
+    
+    .invalid-feedback-enhanced {
+        color: #dc3545;
+        font-size: 0.875rem;
+        margin-top: 0.25rem;
+        font-weight: 500;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="container-fluid">
     <div class="row justify-content-center">
         <div class="col-lg-10">
-            <!-- Header -->
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <div>
-                    <h1 class="h3 mb-0">
-                        <i class="fas fa-plus me-2"></i>Nuevo Item de Inventario
+            <!-- Header con gradiente -->
+            <div class="form-container">
+                <div class="form-header">
+                    <h1>
+                        <i class="fas fa-plus-circle me-3"></i>Nuevo Item de Inventario
                     </h1>
-                    <p class="text-muted">Agrega herramientas, maquinaria o equipos al sistema</p>
+                    <p>Agrega herramientas, maquinaria o equipos al sistema de manera profesional</p>
                 </div>
-                <a href="{% url 'item_list' %}" class="btn btn-outline-secondary">
-                    <i class="fas fa-arrow-left me-2"></i>Volver
-                </a>
+                
+                <div class="text-center">
+                    <a href="{% url 'item_list' %}" class="btn btn-secondary-enhanced">
+                        <i class="fas fa-arrow-left me-2"></i>Volver al Inventario
+                    </a>
+                </div>
             </div>
 
             <!-- Formulario -->
-            <div class="card shadow-sm">
-                <div class="card-body">
-                    <form method="post" novalidate>
-                        {% csrf_token %}
+            <div class="form-card">
+                <form method="post" novalidate>
+                    {% csrf_token %}
+                    
+                    <div class="row">
+                        <div class="col-md-6 form-group-enhanced">
+                            <label for="{{ form.nombre.id_for_label }}" class="form-label-enhanced">
+                                <i class="fas fa-box"></i>Nombre del Item *
+                            </label>
+                            {{ form.nombre|add_class:"form-control-enhanced" }}
+                            {% if form.nombre.errors %}
+                                <div class="invalid-feedback-enhanced">
+                                    {% for error in form.nombre.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <div class="form-text-enhanced">
+                                Nombre descriptivo del item (ej: Martillo de 2kg, Excavadora JCB, etc.)
+                            </div>
+                        </div>
                         
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label for="{{ form.nombre.id_for_label }}" class="form-label">
-                                    <i class="fas fa-box me-1"></i>Nombre del Item *
-                                </label>
-                                {{ form.nombre }}
-                                {% if form.nombre.errors %}
-                                    <div class="invalid-feedback d-block">
-                                        {% for error in form.nombre.errors %}
-                                            {{ error }}
-                                        {% endfor %}
-                                    </div>
-                                {% endif %}
-                                <div class="form-text">
-                                    Nombre descriptivo del item (ej: Martillo de 2kg, Excavadora JCB, etc.)
+                        <div class="col-md-6 form-group-enhanced">
+                            <label for="{{ form.codigo.id_for_label }}" class="form-label-enhanced">
+                                <i class="fas fa-barcode"></i>Código Único *
+                            </label>
+                            {{ form.codigo|add_class:"form-control-enhanced" }}
+                            {% if form.codigo.errors %}
+                                <div class="invalid-feedback-enhanced">
+                                    {% for error in form.codigo.errors %}
+                                        {{ error }}
+                                    {% endfor %}
                                 </div>
-                            </div>
-                            
-                            <div class="col-md-6 mb-3">
-                                <label for="{{ form.codigo.id_for_label }}" class="form-label">
-                                    <i class="fas fa-barcode me-1"></i>Código Único *
-                                </label>
-                                {{ form.codigo }}
-                                {% if form.codigo.errors %}
-                                    <div class="invalid-feedback d-block">
-                                        {% for error in form.codigo.errors %}
-                                            {{ error }}
-                                        {% endfor %}
-                                    </div>
-                                {% endif %}
-                                <div class="form-text">
-                                    Código único para identificar el item (ej: MART-001, EXC-001)
-                                </div>
+                            {% endif %}
+                            <div class="form-text-enhanced">
+                                Código único para identificar el item (ej: MART-001, EXC-001)
                             </div>
                         </div>
+                    </div>
 
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label for="{{ form.categoria.id_for_label }}" class="form-label">
-                                    <i class="fas fa-tags me-1"></i>Categoría *
-                                </label>
-                                {{ form.categoria }}
-                                {% if form.categoria.errors %}
-                                    <div class="invalid-feedback d-block">
-                                        {% for error in form.categoria.errors %}
-                                            {{ error }}
-                                        {% endfor %}
-                                    </div>
-                                {% endif %}
-                                <div class="form-text">
-                                    Selecciona la categoría apropiada para el item
+                    <div class="row">
+                        <div class="col-md-6 form-group-enhanced">
+                            <label for="{{ form.categoria.id_for_label }}" class="form-label-enhanced">
+                                <i class="fas fa-tags"></i>Categoría *
+                            </label>
+                            {{ form.categoria|add_class:"form-select-enhanced" }}
+                            {% if form.categoria.errors %}
+                                <div class="invalid-feedback-enhanced">
+                                    {% for error in form.categoria.errors %}
+                                        {{ error }}
+                                    {% endfor %}
                                 </div>
-                            </div>
-                            
-                            <div class="col-md-6 mb-3">
-                                <label for="{{ form.stock_actual.id_for_label }}" class="form-label">
-                                    <i class="fas fa-boxes me-1"></i>Stock Actual *
-                                </label>
-                                {{ form.stock_actual }}
-                                {% if form.stock_actual.errors %}
-                                    <div class="invalid-feedback d-block">
-                                        {% for error in form.stock_actual.errors %}
-                                            {{ error }}
-                                        {% endfor %}
-                                    </div>
-                                {% endif %}
-                                <div class="form-text">
-                                    Cantidad actual en inventario
-                                </div>
+                            {% endif %}
+                            <div class="form-text-enhanced">
+                                Selecciona la categoría apropiada para el item
                             </div>
                         </div>
+                        
+                        <div class="col-md-6 form-group-enhanced">
+                            <label for="{{ form.stock_actual.id_for_label }}" class="form-label-enhanced">
+                                <i class="fas fa-boxes"></i>Stock Actual *
+                            </label>
+                            {{ form.stock_actual|add_class:"form-control-enhanced" }}
+                            {% if form.stock_actual.errors %}
+                                <div class="invalid-feedback-enhanced">
+                                    {% for error in form.stock_actual.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <div class="form-text-enhanced">
+                                Cantidad actual en inventario
+                            </div>
+                        </div>
+                    </div>
 
-                        <div class="row">
-                            <div class="col-md-12 mb-3">
-                                <label for="{{ form.descripcion.id_for_label }}" class="form-label">
-                                    <i class="fas fa-align-left me-1"></i>Descripción
+                    <div class="row">
+                        <div class="col-md-12 form-group-enhanced">
+                            <label for="{{ form.descripcion.id_for_label }}" class="form-label-enhanced">
+                                <i class="fas fa-align-left"></i>Descripción
+                            </label>
+                            {{ form.descripcion|add_class:"form-control-enhanced" }}
+                            {% if form.descripcion.errors %}
+                                <div class="invalid-feedback-enhanced">
+                                    {% for error in form.descripcion.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <div class="form-text-enhanced">
+                                Descripción detallada del item, características, especificaciones
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-12 form-group-enhanced">
+                            <div class="form-check-enhanced">
+                                {{ form.activo|add_class:"form-check-input-enhanced" }}
+                                <label class="form-check-label" for="{{ form.activo.id_for_label }}">
+                                    <i class="fas fa-check-circle me-2"></i><strong>Item Activo</strong>
                                 </label>
-                                {{ form.descripcion }}
-                                {% if form.descripcion.errors %}
-                                    <div class="invalid-feedback d-block">
-                                        {% for error in form.descripcion.errors %}
-                                            {{ error }}
-                                        {% endfor %}
-                                    </div>
-                                {% endif %}
-                                <div class="form-text">
-                                    Descripción detallada del item, características, especificaciones
+                                <div class="form-text-enhanced">
+                                    Marca esta opción si el item está disponible para uso
                                 </div>
                             </div>
                         </div>
+                    </div>
 
-                        <div class="row">
-                            <div class="col-md-12 mb-3">
-                                <div class="form-check">
-                                    {{ form.activo }}
-                                    <label class="form-check-label" for="{{ form.activo.id_for_label }}">
-                                        <i class="fas fa-check-circle me-1"></i>Item Activo
-                                    </label>
-                                    <div class="form-text">
-                                        Marca esta opción si el item está disponible para uso
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Botones de acción -->
-                        <div class="d-flex justify-content-between pt-3">
-                            <a href="{% url 'item_list' %}" class="btn btn-outline-secondary">
-                                <i class="fas fa-times me-2"></i>Cancelar
-                            </a>
-                            <button type="submit" class="btn btn-primary">
-                                <i class="fas fa-save me-2"></i>Crear Item
-                            </button>
-                        </div>
-                    </form>
-                </div>
+                    <!-- Botones de acción -->
+                    <div class="d-flex justify-content-between pt-4 mt-4" style="border-top: 2px solid #e9ecef;">
+                        <a href="{% url 'item_list' %}" class="btn btn-secondary-enhanced">
+                            <i class="fas fa-times me-2"></i>Cancelar
+                        </a>
+                        <button type="submit" class="btn btn-primary-enhanced">
+                            <i class="fas fa-save me-2"></i>Crear Item
+                        </button>
+                    </div>
+                </form>
             </div>
 
             <!-- Información adicional -->
-            <div class="card mt-4 bg-light">
+            <div class="info-card mt-4">
                 <div class="card-body">
                     <h6 class="card-title">
                         <i class="fas fa-info-circle me-2"></i>Información sobre Items de Inventario

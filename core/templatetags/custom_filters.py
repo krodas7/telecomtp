@@ -100,3 +100,10 @@ def js_float(value):
         return float(value)
     except (ValueError, TypeError):
         return 0.0
+
+@register.filter
+def add_class(field, css_class):
+    """Agrega una clase CSS a un campo de formulario"""
+    if hasattr(field, 'field') and hasattr(field.field, 'widget'):
+        field.field.widget.attrs['class'] = field.field.widget.attrs.get('class', '') + ' ' + css_class
+    return field

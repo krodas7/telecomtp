@@ -1,8 +1,9 @@
 from django.shortcuts import render, redirect, get_object_or_404
+from django.urls import reverse
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import authenticate, login, logout
 from django.contrib import messages
-from django.db import models
+from django.db import models, IntegrityError
 from django.db.models import Sum, Count, Q, F, Avg
 from django.db.models.functions import Extract
 from django.utils import timezone
@@ -20,7 +21,7 @@ from .models import (
     ItemInventario, CategoriaInventario, AsignacionInventario,
     Rol, PerfilUsuario, Modulo, Permiso, RolPermiso, AnticipoProyecto,
     CarpetaProyecto, ConfiguracionSistema, EventoCalendario,
-    TrabajadorDiario, RegistroTrabajo, AnticipoTrabajadorDiario, PlanillaLiquidada
+    TrabajadorDiario, RegistroTrabajo, AnticipoTrabajadorDiario, PlanillaLiquidada, PlanillaTrabajadoresDiarios
 )
 from .forms_simple import (
     ClienteForm, ProyectoForm, ColaboradorForm, FacturaForm, 
@@ -29,7 +30,7 @@ from .forms_simple import (
     AnticipoForm, PagoForm, EventoCalendarioForm, PresupuestoForm,
     PartidaPresupuestoForm, CategoriaInventarioForm, ItemInventarioForm,
     AsignacionInventarioForm, TrabajadorDiarioForm, RegistroTrabajoForm,
-    AnticipoTrabajadorDiarioForm
+    AnticipoTrabajadorDiarioForm, PlanillaTrabajadoresDiariosForm
 )
 from django.contrib.auth.models import User
 from django.contrib.auth.forms import UserCreationForm, UserChangeForm
@@ -38,7 +39,7 @@ from django.http import JsonResponse, HttpResponse
 from .services import NotificacionService, DashboardService, ProyectoService
 from .query_utils import QueryOptimizer, DashboardQueries
 from .decorators import api_view, secure_view, cache_view
-from reportlab.lib.pagesizes import letter, A4
+from reportlab.lib.pagesizes import letter, A4, landscape
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, PageBreak
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.units import inch
@@ -2380,22 +2381,21 @@ def proyecto_dashboard(request, proyecto_id=None):
     gastos_recientes = gastos_proyecto.order_by('-fecha_gasto')[:5]
     
     # Calcular histórico de nómina (Personal + Trabajadores Diarios)
-    # 1. Histórico de Personal (usando modelo PlanillaLiquidada)
-    planillas_personal_liquidadas = PlanillaLiquidada.objects.filter(proyecto=proyecto)
+    # 1. Histórico de Personal (planillas regulares - sin observaciones de trabajadores diarios)
+    planillas_personal_liquidadas = PlanillaLiquidada.objects.filter(
+        proyecto=proyecto
+    ).exclude(observaciones__icontains='trabajadores diarios')
     total_historico_personal = planillas_personal_liquidadas.aggregate(total=Sum('total_planilla'))['total'] or Decimal('0.00')
     
-    # 2. Histórico de Trabajadores Diarios (trabajadores inactivos)
-    trabajadores_diarios_inactivos = TrabajadorDiario.objects.filter(
+    # 2. Histórico de Trabajadores Diarios (planillas de trabajadores diarios)
+    planillas_trabajadores_diarios = PlanillaLiquidada.objects.filter(
         proyecto=proyecto,
-        activo=False
+        observaciones__icontains='trabajadores diarios'
     )
-    total_historico_trabajadores_diarios = sum(
-        t.total_dias_trabajados * t.pago_diario 
-        for t in trabajadores_diarios_inactivos
-    )
+    total_historico_trabajadores_diarios = planillas_trabajadores_diarios.aggregate(total=Sum('total_planilla'))['total'] or Decimal('0.00')
     
     # 3. Total Histórico de Nómina Combinado
-    total_historico_nomina = total_historico_personal + Decimal(str(total_historico_trabajadores_diarios))
+    total_historico_nomina = total_historico_personal + total_historico_trabajadores_diarios
     
     context = {
         'proyecto': proyecto,
@@ -2484,6 +2484,7 @@ def archivos_proyecto_list(request, proyecto_id):
     context = {
         'proyecto': proyecto,
         'carpeta_actual': carpeta_actual,
+        'carpeta_filtrada': carpeta_actual,  # Para el template
         'archivos': archivos,
         'subcarpetas': subcarpetas,
         'todas_carpetas': todas_carpetas,
@@ -2500,6 +2501,19 @@ def archivo_upload(request, proyecto_id):
     """Subir nuevo archivo a un proyecto"""
     proyecto = get_object_or_404(Proyecto, id=proyecto_id, activo=True)
     
+    # Obtener carpeta_id de la URL si existe
+    carpeta_id = request.GET.get('carpeta')
+    carpeta_seleccionada = None
+    logger.info(f"🔍 DEBUG carpeta_id: {carpeta_id}")
+    logger.info(f"🔍 DEBUG URL completa: {request.get_full_path()}")
+    if carpeta_id:
+        try:
+            carpeta_seleccionada = CarpetaProyecto.objects.get(id=carpeta_id, proyecto=proyecto, activa=True)
+            logger.info(f"✅ Carpeta encontrada: {carpeta_seleccionada.nombre}")
+        except CarpetaProyecto.DoesNotExist:
+            logger.warning(f"⚠️ Carpeta {carpeta_id} no encontrada")
+            pass
+    
     if request.method == 'POST':
         logger.info(f"=" * 80)
         logger.info(f"📤 POST request recibido para subir archivo al proyecto {proyecto.id}")
@@ -2509,6 +2523,7 @@ def archivo_upload(request, proyecto_id):
         form = ArchivoProyectoForm(request.POST, request.FILES, proyecto=proyecto)
         logger.info(f"📋 Formulario creado")
         logger.info(f"📋 Es válido: {form.is_valid()}")
+        logger.info(f"📋 Datos del formulario: {form.cleaned_data if form.is_valid() else form.errors}")
         
         if form.is_valid():
             logger.info(f"✅ Formulario válido, intentando guardar...")
@@ -2516,6 +2531,17 @@ def archivo_upload(request, proyecto_id):
                 archivo = form.save(commit=False)
                 archivo.proyecto = proyecto
                 archivo.subido_por = request.user
+                
+                # PRIORIDAD: Si se especificó carpeta en la URL, usar esa
+                if carpeta_seleccionada:
+                    archivo.carpeta = carpeta_seleccionada
+                    logger.info(f"📁 Asignando carpeta desde URL: {carpeta_seleccionada.nombre}")
+                # Si no hay carpeta en URL pero el formulario tiene una, usar esa
+                elif form.cleaned_data.get('carpeta'):
+                    archivo.carpeta = form.cleaned_data['carpeta']
+                    logger.info(f"📁 Asignando carpeta desde formulario: {archivo.carpeta.nombre}")
+                else:
+                    logger.warning(f"⚠️ No hay carpeta seleccionada, archivo se guardará sin carpeta")
                 logger.info(f"💾 Guardando archivo: {archivo.nombre}")
                 logger.info(f"💾 Proyecto: {archivo.proyecto}")
                 logger.info(f"💾 Carpeta: {archivo.carpeta}")
@@ -2557,10 +2583,91 @@ def archivo_upload(request, proyecto_id):
             messages.error(request, f'Error en el formulario. Por favor verifica los datos.')
     else:
         form = ArchivoProyectoForm(proyecto=proyecto)
+        # Pre-seleccionar la carpeta si se especificó en la URL
+        if carpeta_seleccionada:
+            form.fields['carpeta'].initial = carpeta_seleccionada
     
     context = {
         'form': form,
         'proyecto': proyecto,
+        'carpeta_seleccionada': carpeta_seleccionada,
+    }
+    
+    return render(request, 'core/archivos/upload.html', context)
+
+
+@login_required
+def archivo_upload_carpeta(request, carpeta_id):
+    """Subir nuevo archivo directamente a una carpeta específica"""
+    carpeta = get_object_or_404(CarpetaProyecto, id=carpeta_id, activa=True)
+    proyecto = carpeta.proyecto
+    
+    logger.info(f"🔍 DEBUG Subiendo archivo a carpeta: {carpeta.nombre} (ID: {carpeta.id})")
+    
+    if request.method == 'POST':
+        logger.info(f"=" * 80)
+        logger.info(f"📤 POST request recibido para subir archivo a carpeta {carpeta.id}")
+        logger.info(f"📤 POST data: {request.POST}")
+        logger.info(f"📤 FILES: {request.FILES}")
+        
+        form = ArchivoProyectoForm(request.POST, request.FILES, proyecto=proyecto)
+        logger.info(f"📋 Formulario creado")
+        logger.info(f"📋 Es válido: {form.is_valid()}")
+        logger.info(f"📋 Datos del formulario: {form.cleaned_data if form.is_valid() else form.errors}")
+        
+        if form.is_valid():
+            logger.info(f"✅ Formulario válido, intentando guardar...")
+            try:
+                archivo = form.save(commit=False)
+                archivo.proyecto = proyecto
+                archivo.subido_por = request.user
+                archivo.carpeta = carpeta  # FORZAR carpeta específica
+                logger.info(f"📁 FORZANDO carpeta: {carpeta.nombre}")
+                
+                archivo.save()
+                logger.info(f"✅ Archivo guardado exitosamente: ID={archivo.id}")
+                
+                # Generar thumbnail automáticamente
+                try:
+                    archivo.generar_thumbnail()
+                except Exception as e:
+                    logger.warning(f"⚠️ Error generando thumbnail: {e}")
+                    pass
+                
+                # Registrar actividad
+                LogActividad.objects.create(
+                    usuario=request.user,
+                    accion='Subir Archivo',
+                    modulo='Archivos',
+                    descripcion=f'Archivo subido: {archivo.nombre} a la carpeta {carpeta.nombre} del proyecto {proyecto.nombre}',
+                    ip_address=request.META.get('REMOTE_ADDR')
+                )
+                
+                messages.success(request, f'✅ Archivo "{archivo.nombre}" subido exitosamente a la carpeta "{carpeta.nombre}"')
+                return redirect('carpeta_detail', carpeta_id=carpeta.id)
+            except Exception as e:
+                logger.error(f"❌ Error guardando archivo: {e}")
+                logger.error(f"❌ Tipo de error: {type(e)}")
+                import traceback
+                logger.error(f"❌ Traceback: {traceback.format_exc()}")
+                messages.error(request, f'Error al subir archivo: {str(e)}')
+        else:
+            logger.error(f"❌ Formulario NO es válido")
+            logger.error(f"❌ Errores del formulario: {form.errors}")
+            logger.error(f"❌ Errores por campo:")
+            for field, errors in form.errors.items():
+                logger.error(f"   - {field}: {errors}")
+            messages.error(request, f'Error en el formulario. Por favor verifica los datos.')
+    else:
+        form = ArchivoProyectoForm(proyecto=proyecto)
+        # Pre-seleccionar la carpeta específica
+        form.fields['carpeta'].initial = carpeta
+    
+    context = {
+        'form': form,
+        'proyecto': proyecto,
+        'carpeta': carpeta,
+        'carpeta_seleccionada': carpeta,
     }
     
     return render(request, 'core/archivos/upload.html', context)
@@ -5062,18 +5169,15 @@ def planilla_proyecto(request, proyecto_id):
     # Obtener colaboradores asignados al proyecto
     colaboradores_asignados = proyecto.colaboradores.all().order_by('nombre')
     
-    # Obtener SOLO anticipos pendientes del proyecto (excluir procesados)
-    # Los anticipos "procesados" ya fueron liquidados en planillas anteriores
+    # Obtener anticipos del proyecto (pendientes y liquidados)
     anticipos = AnticipoProyecto.objects.filter(
-        proyecto=proyecto,
-        estado='pendiente'
+        proyecto=proyecto
     ).select_related('colaborador')
     
-    # Calcular totales y salarios netos (solo anticipos pendientes)
-    total_anticipos = anticipos.aggregate(total=Sum('monto'))['total'] or 0
-    
-    # Los anticipos procesados ya no aparecen aquí
-    total_liquidado = 0
+    # Calcular totales de anticipos
+    total_anticipos_pendientes = anticipos.filter(estado='pendiente').aggregate(total=Sum('monto'))['total'] or 0
+    total_anticipos_liquidados = anticipos.filter(estado='liquidado').aggregate(total=Sum('monto'))['total'] or 0
+    total_anticipos = total_anticipos_pendientes + total_anticipos_liquidados
     
     # Calcular salarios netos y totales de la planilla
     total_salarios = 0
@@ -5083,18 +5187,22 @@ def planilla_proyecto(request, proyecto_id):
     for colaborador in colaboradores_asignados:
         salario_colaborador = colaborador.salario or 0
         
-        # Anticipos pendientes ACTUALES (solo los que están pendientes, no los procesados)
-        anticipos_pendientes = anticipos.filter(
-            colaborador=colaborador
-        ).aggregate(total=Sum('monto'))['total'] or 0
+        # Calcular anticipos del colaborador
+        anticipos_colaborador = anticipos.filter(colaborador=colaborador)
+        anticipos_pendientes = anticipos_colaborador.filter(estado='pendiente').aggregate(total=Sum('monto'))['total'] or 0
+        anticipos_liquidados = anticipos_colaborador.filter(estado='liquidado').aggregate(total=Sum('monto'))['total'] or 0
+        total_anticipos_colaborador = anticipos_pendientes + anticipos_liquidados
         
-        # Salario neto = Salario base - anticipos pendientes
-        salario_neto = salario_colaborador - anticipos_pendientes
+        # Salario neto = Salario base - total de anticipos
+        salario_neto = salario_colaborador - total_anticipos_colaborador
         
         # Determinar el estado actual del colaborador
         if anticipos_pendientes > 0:
             colaborador.estado_actual = 'pendiente'
             colaborador.estado_display = 'Pendiente'
+        elif anticipos_liquidados > 0:
+            colaborador.estado_actual = 'liquidado'
+            colaborador.estado_display = 'Liquidado'
         else:
             colaborador.estado_actual = 'sin_anticipos'
             colaborador.estado_display = 'Sin Anticipos'
@@ -5102,10 +5210,10 @@ def planilla_proyecto(request, proyecto_id):
         # Agregar campos calculados al colaborador
         colaborador.salario_neto = salario_neto
         colaborador.deuda_anticipos = anticipos_pendientes
-        colaborador.anticipos_liquidados = 0  # Ya no mostramos los liquidados en la planilla actual
+        colaborador.anticipos_liquidados = anticipos_liquidados
         
         total_salarios += salario_colaborador
-        total_anticipos_aplicados += anticipos_pendientes
+        total_anticipos_aplicados += total_anticipos_colaborador
         total_salarios_netos += salario_neto
     
     # Calcular histórico de pagos usando el nuevo modelo PlanillaLiquidada
@@ -5116,15 +5224,15 @@ def planilla_proyecto(request, proyecto_id):
     # Promedio por planilla
     promedio_por_planilla = total_historico_pagado / planillas_generadas if planillas_generadas > 0 else Decimal('0.00')
     
-    # NOTA: Los anticipos "procesados" no aparecen en la planilla actual (solo "pendientes")
+    # NOTA: Los anticipos se eliminan al liquidar la planilla, por lo que cada planilla empieza limpia
     
     context = {
         'proyecto': proyecto,
         'colaboradores_asignados': colaboradores_asignados,
         'anticipos': anticipos,
         'total_anticipos': total_anticipos,
-        'total_liquidado': total_liquidado,
-        'saldo_pendiente': total_anticipos,  # Solo anticipos pendientes
+        'total_liquidado': total_anticipos_liquidados,
+        'saldo_pendiente': total_anticipos_pendientes,
         'total_salarios': total_salarios,
         'total_anticipos_aplicados': total_anticipos_aplicados,
         'total_salarios_netos': total_salarios_netos,
@@ -5193,24 +5301,19 @@ def liquidar_y_generar_planilla(request, proyecto_id):
             # Calcular total de salarios
             total_salarios = sum(c.salario or 0 for c in colaboradores_asignados)
             
-            # Liquidar todos los anticipos pendientes
-            anticipos_pendientes = AnticipoProyecto.objects.filter(
-                proyecto=proyecto,
-                estado='pendiente'
-            )
+            # Liquidar TODOS los anticipos (pendientes y liquidados)
+            anticipos_a_liquidar = AnticipoProyecto.objects.filter(
+                proyecto=proyecto
+            ).exclude(estado='procesado')
             
-            total_anticipos_liquidados = anticipos_pendientes.aggregate(total=Sum('monto'))['total'] or 0
+            total_anticipos_liquidados = anticipos_a_liquidar.aggregate(total=Sum('monto'))['total'] or 0
             
-            # Marcar anticipos como "procesado" para que no aparezcan en la siguiente planilla
-            # pero mantener el historial
-            anticipos_pendientes.update(
-                estado='procesado',
-                fecha_liquidacion=timezone.now().date(),
-                liquidado_por=request.user
-            )
+            # ELIMINAR todos los anticipos después de liquidar la planilla
+            # Los anticipos ya fueron descontados del salario, no deben persistir
+            anticipos_a_liquidar.delete()
             
-            # Total de la planilla = Salarios + Anticipos liquidados
-            total_planilla = Decimal(str(total_salarios)) + Decimal(str(total_anticipos_liquidados))
+            # Total de la planilla = Salarios - Anticipos liquidados (salario neto)
+            total_planilla = Decimal(str(total_salarios)) - Decimal(str(total_anticipos_liquidados))
             
             # Crear registro de planilla liquidada
             planilla = PlanillaLiquidada.objects.create(
@@ -5235,8 +5338,8 @@ def liquidar_y_generar_planilla(request, proyecto_id):
                 request,
                 f'✅ <strong>Planilla liquidada exitosamente</strong><br>'
                 f'💼 Total Salarios: <strong>Q{total_salarios:,.2f}</strong><br>'
-                f'💰 Total Anticipos Liquidados: <strong>Q{total_anticipos_liquidados:,.2f}</strong><br>'
-                f'📋 <strong>TOTAL PLANILLA: Q{total_planilla:,.2f}</strong><br>'
+                f'💰 Anticipos Descontados: <strong>Q{total_anticipos_liquidados:,.2f}</strong><br>'
+                f'📋 <strong>TOTAL A PAGAR: Q{total_planilla:,.2f}</strong><br>'
                 f'👥 Personal: <strong>{colaboradores_asignados.count()}</strong>',
                 extra_tags='html'
             )
@@ -5276,9 +5379,9 @@ def planilla_proyecto_pdf(request, proyecto_id):
     total_anticipos_aplicados = total_anticipos + total_liquidado
     total_salarios_netos = total_salarios - total_anticipos_aplicados
     
-    # Crear el PDF
+    # Crear el PDF en orientación horizontal
     buffer = BytesIO()
-    doc = SimpleDocTemplate(buffer, pagesize=A4)
+    doc = SimpleDocTemplate(buffer, pagesize=landscape(A4))
     elements = []
     
     # Estilos
@@ -5305,16 +5408,12 @@ def planilla_proyecto_pdf(request, proyecto_id):
     elements.append(Paragraph(f"PLANILLA DE PERSONAL", title_style))
     elements.append(Paragraph(f"Proyecto: {proyecto.nombre}", subtitle_style))
     
-    # Información del proyecto
+    # Información del proyecto (solo cliente)
     info_proyecto = [
         ['Cliente:', proyecto.cliente.razon_social if proyecto.cliente else 'N/A'],
-        ['Fecha Inicio:', proyecto.fecha_inicio.strftime('%d/%m/%Y') if proyecto.fecha_inicio else 'N/A'],
-        ['Fecha Fin:', proyecto.fecha_fin.strftime('%d/%m/%Y') if proyecto.fecha_fin else 'N/A'],
-        ['Estado:', proyecto.get_estado_display()],
-        ['Presupuesto:', f"Q{proyecto.presupuesto:,.2f}" if proyecto.presupuesto else 'N/A'],
     ]
     
-    info_table = Table(info_proyecto, colWidths=[2*inch, 4*inch])
+    info_table = Table(info_proyecto, colWidths=[1.5*inch, 6*inch])
     info_table.setStyle(TableStyle([
         ('BACKGROUND', (0, 0), (0, -1), colors.lightgrey),
         ('TEXTCOLOR', (0, 0), (0, -1), colors.black),
@@ -5329,13 +5428,29 @@ def planilla_proyecto_pdf(request, proyecto_id):
     elements.append(info_table)
     elements.append(Spacer(1, 20))
     
+    # Fecha y hora de generación (hora local de Guatemala)
+    from datetime import datetime
+    import pytz
+    
+    # Obtener zona horaria de Guatemala
+    guatemala_tz = pytz.timezone('America/Guatemala')
+    fecha_generacion = datetime.now(guatemala_tz).strftime('%d/%m/%Y %H:%M')
+    elements.append(Paragraph(f"<b>Reporte generado el:</b> {fecha_generacion}", styles['Normal']))
+    elements.append(Spacer(1, 20))
+    
     # Tabla de colaboradores
     if colaboradores_asignados:
-        # Encabezados de la tabla
-        headers = ['Colaborador', 'Salario Base', 'Anticipos', 'Salario Neto', 'Estado']
+        # Encabezados de la tabla con columnas mejoradas
+        headers = ['No.', 'Colaborador', 'Salario Base', 'Anticipos Pendientes', 'Anticipos Liquidados', 'Total Anticipos', 'Salario Neto', 'Estado']
         data = [headers]
         
-        for colaborador in colaboradores_asignados:
+        total_salarios_base = 0
+        total_anticipos_pendientes = 0
+        total_anticipos_liquidados = 0
+        total_anticipos_general = 0
+        total_salarios_netos = 0
+        
+        for i, colaborador in enumerate(colaboradores_asignados, 1):
             salario_base = colaborador.salario or 0
             
             # Calcular anticipos del colaborador
@@ -5359,26 +5474,67 @@ def planilla_proyecto_pdf(request, proyecto_id):
                 estado = 'Sin Anticipos'
             
             data.append([
+                str(i),
                 colaborador.nombre,
                 f"Q{salario_base:,.2f}",
+                f"Q{anticipos_pendientes:,.2f}",
+                f"Q{anticipos_liquidados:,.2f}",
                 f"Q{total_anticipos_colaborador:,.2f}",
                 f"Q{salario_neto:,.2f}",
                 estado
             ])
+            
+            # Acumular totales
+            total_salarios_base += salario_base
+            total_anticipos_pendientes += anticipos_pendientes
+            total_anticipos_liquidados += anticipos_liquidados
+            total_anticipos_general += total_anticipos_colaborador
+            total_salarios_netos += salario_neto
         
-        # Crear tabla
-        table = Table(data, colWidths=[2*inch, 1.5*inch, 1.5*inch, 1.5*inch, 1.5*inch])
+        # Agregar fila de totales
+        data.append([
+            '', 'TOTAL GENERAL:', 
+            f"Q{total_salarios_base:,.2f}", 
+            f"Q{total_anticipos_pendientes:,.2f}", 
+            f"Q{total_anticipos_liquidados:,.2f}", 
+            f"Q{total_anticipos_general:,.2f}", 
+            f"Q{total_salarios_netos:,.2f}", 
+            ''
+        ])
+        
+        # Crear tabla con columnas ajustadas para orientación horizontal (11.7 pulgadas total)
+        # Margenes: 1 pulgada cada lado = 9.7 pulgadas disponibles
+        table = Table(data, colWidths=[0.6*inch, 2.2*inch, 1.1*inch, 1.1*inch, 1.1*inch, 1.1*inch, 1.1*inch, 1.0*inch])
         table.setStyle(TableStyle([
+            # Encabezados
             ('BACKGROUND', (0, 0), (-1, 0), colors.darkblue),
             ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
             ('ALIGN', (0, 0), (-1, 0), 'CENTER'),
             ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-            ('FONTSIZE', (0, 0), (-1, 0), 10),
-            ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
-            ('BACKGROUND', (0, 1), (-1, -1), colors.white),
-            ('GRID', (0, 0), (-1, -1), 1, colors.black),
-            ('ALIGN', (2, 1), (-1, -1), 'RIGHT'),  # Alinear números a la derecha
+            ('FONTSIZE', (0, 0), (-1, 0), 8),
+            ('BOTTOMPADDING', (0, 0), (-1, 0), 8),
+            ('TOPPADDING', (0, 0), (-1, 0), 8),
+            ('LEFTPADDING', (0, 0), (-1, 0), 4),
+            ('RIGHTPADDING', (0, 0), (-1, 0), 4),
+            
+            # Fila de totales
+            ('BACKGROUND', (0, -1), (-1, -1), colors.lightgrey),
+            ('TEXTCOLOR', (0, -1), (-1, -1), colors.black),
+            ('ALIGN', (0, -1), (-1, -1), 'CENTER'),
+            ('FONTNAME', (0, -1), (-1, -1), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, -1), (-1, -1), 8),
+            
+            # Datos
+            ('BACKGROUND', (0, 1), (-1, -2), colors.white),
+            ('FONTSIZE', (0, 1), (-1, -2), 7),
+            ('ALIGN', (2, 1), (-1, -2), 'RIGHT'),  # Alinear números a la derecha
             ('ALIGN', (0, 1), (1, 1), 'LEFT'),     # Alinear texto a la izquierda
+            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+            ('LEFTPADDING', (0, 1), (-1, -2), 4),
+            ('RIGHTPADDING', (0, 1), (-1, -2), 4),
+            
+            # Bordes
+            ('GRID', (0, 0), (-1, -1), 1, colors.black),
         ]))
         
         elements.append(table)
@@ -5387,13 +5543,14 @@ def planilla_proyecto_pdf(request, proyecto_id):
     # Resumen financiero
     resumen_data = [
         ['CONCEPTO', 'MONTO'],
-        ['Total Salarios Base', f"Q{total_salarios:,.2f}"],
-        ['Total Anticipos', f"Q{total_anticipos_aplicados:,.2f}"],
+        ['Total Salarios Base', f"Q{total_salarios_base:,.2f}"],
+        ['Total Anticipos Pendientes', f"Q{total_anticipos_pendientes:,.2f}"],
+        ['Total Anticipos Liquidados', f"Q{total_anticipos_liquidados:,.2f}"],
+        ['Total Anticipos General', f"Q{total_anticipos_general:,.2f}"],
         ['Total Salarios Netos', f"Q{total_salarios_netos:,.2f}"],
-        ['Saldo Pendiente', f"Q{total_anticipos:,.2f}"],
     ]
     
-    resumen_table = Table(resumen_data, colWidths=[3*inch, 2*inch])
+    resumen_table = Table(resumen_data, colWidths=[4*inch, 2*inch])
     resumen_table.setStyle(TableStyle([
         ('BACKGROUND', (0, 0), (0, -1), colors.lightblue),
         ('TEXTCOLOR', (0, 0), (0, -1), colors.black),
@@ -6258,11 +6415,38 @@ def facturas_reporte_detallado(request):
 def trabajadores_diarios_list(request, proyecto_id):
     """Lista de trabajadores diarios de un proyecto"""
     proyecto = get_object_or_404(Proyecto, id=proyecto_id)
-    trabajadores = TrabajadorDiario.objects.filter(proyecto=proyecto).order_by('nombre')
+    
+    # Obtener planillas del proyecto
+    planillas = PlanillaTrabajadoresDiarios.objects.filter(proyecto=proyecto).order_by('-fecha_creacion')
+    
+    # Obtener planilla seleccionada
+    planilla_id = request.GET.get('planilla_id')
+    planilla_seleccionada = None
+    if planilla_id:
+        try:
+            planilla_seleccionada = PlanillaTrabajadoresDiarios.objects.get(id=planilla_id, proyecto=proyecto)
+        except PlanillaTrabajadoresDiarios.DoesNotExist:
+            pass
+    
+    # Si no hay planilla seleccionada, usar la primera activa o la primera disponible
+    if not planilla_seleccionada:
+        planilla_seleccionada = planillas.filter(estado='activa').first()
+        if not planilla_seleccionada:
+            planilla_seleccionada = planillas.first()
+    
+    # Filtrar trabajadores por planilla seleccionada (TODOS: activos e inactivos)
+    if planilla_seleccionada:
+        trabajadores = TrabajadorDiario.objects.filter(proyecto=proyecto, planilla=planilla_seleccionada).order_by('nombre')
+    else:
+        # Mostrar trabajadores sin planilla asignada (solo activos)
+        trabajadores = TrabajadorDiario.objects.filter(proyecto=proyecto, planilla__isnull=True, activo=True).order_by('nombre')
     
     # Calcular totales
     total_trabajadores = trabajadores.count()
     total_a_pagar = sum(t.total_a_pagar for t in trabajadores)
+    
+    # Contar trabajadores liquidados
+    trabajadores_liquidados_count = trabajadores.filter(activo=False).count()
     
     # Calcular totales de anticipos específicos de trabajadores diarios
     anticipos_trabajadores = AnticipoTrabajadorDiario.objects.filter(
@@ -6272,39 +6456,21 @@ def trabajadores_diarios_list(request, proyecto_id):
     total_aplicado = sum(t.total_anticipos_aplicados for t in trabajadores)
     saldo_pendiente = total_a_pagar - total_aplicado
     
-    # Calcular histórico de planillas finalizadas
-    # Obtener carpeta "Trabajadores Diarios" del proyecto
-    try:
-        carpeta_planillas = CarpetaProyecto.objects.get(
-            proyecto=proyecto,
-            nombre='Trabajadores Diarios'
-        )
-        # Contar planillas finalizadas (archivos PDF en esa carpeta)
-        planillas_finalizadas = ArchivoProyecto.objects.filter(
-            carpeta=carpeta_planillas,
-            activo=True,
-            nombre__startswith='planilla_trabajadores_'
-        )
-        total_planillas_finalizadas = planillas_finalizadas.count()
-        
-        # Calcular total histórico aproximado basado en trabajadores inactivos
-        # Todos los trabajadores inactivos fueron parte de planillas finalizadas
-        trabajadores_inactivos = TrabajadorDiario.objects.filter(
-            proyecto=proyecto,
-            activo=False
-        )
-        total_historico_gastos = sum(t.total_dias_trabajados * t.pago_diario for t in trabajadores_inactivos)
-        
-        # Calcular promedio por planilla
-        promedio_por_planilla = total_historico_gastos / total_planillas_finalizadas if total_planillas_finalizadas > 0 else 0
-    except CarpetaProyecto.DoesNotExist:
-        total_planillas_finalizadas = 0
-        total_historico_gastos = 0
-        promedio_por_planilla = 0
+    # Calcular histórico de planillas finalizadas usando PlanillaLiquidada
+    # Solo planillas de trabajadores diarios (con observaciones que contengan 'trabajadores diarios')
+    planillas_liquidadas = PlanillaLiquidada.objects.filter(
+        proyecto=proyecto,
+        observaciones__icontains='trabajadores diarios'
+    )
+    total_planillas_finalizadas = planillas_liquidadas.count()
+    total_historico_gastos = planillas_liquidadas.aggregate(total=Sum('total_planilla'))['total'] or Decimal('0.00')
+    promedio_por_planilla = total_historico_gastos / total_planillas_finalizadas if total_planillas_finalizadas > 0 else Decimal('0.00')
     
     context = {
         'proyecto': proyecto,
         'trabajadores': trabajadores,
+        'planillas': planillas,
+        'planilla_seleccionada': planilla_seleccionada,
         'total_trabajadores': total_trabajadores,
         'total_a_pagar': total_a_pagar,
         'total_anticipos': total_anticipos,
@@ -6313,10 +6479,83 @@ def trabajadores_diarios_list(request, proyecto_id):
         'total_planillas_finalizadas': total_planillas_finalizadas,
         'total_historico_gastos': total_historico_gastos,
         'promedio_por_planilla': promedio_por_planilla,
+        'trabajadores_liquidados_count': trabajadores_liquidados_count,
     }
     
     return render(request, 'core/trabajadores_diarios/list.html', context)
 
+
+@login_required
+def reactivar_trabajador_diario(request, proyecto_id, trabajador_id):
+    """Reactivar un trabajador diario liquidado"""
+    proyecto = get_object_or_404(Proyecto, id=proyecto_id)
+    trabajador = get_object_or_404(TrabajadorDiario, id=trabajador_id, proyecto=proyecto)
+    
+    if request.method == 'POST':
+        try:
+            # Reactivar el trabajador
+            trabajador.activo = True
+            trabajador.save()
+            
+            # Registrar actividad
+            LogActividad.objects.create(
+                usuario=request.user,
+                accion='Reactivar Trabajador Diario',
+                modulo='Trabajadores Diarios',
+                descripcion=f'Trabajador {trabajador.nombre} reactivado en el proyecto {proyecto.nombre}',
+                ip_address=request.META.get('REMOTE_ADDR')
+            )
+            
+            messages.success(request, f'✅ Trabajador "{trabajador.nombre}" reactivado exitosamente. Ahora puedes editarlo y pagarle nuevamente.')
+            
+        except Exception as e:
+            messages.error(request, f'❌ Error al reactivar trabajador: {str(e)}')
+    
+    # Redirigir de vuelta a la lista con la planilla seleccionada
+    planilla_id = request.GET.get('planilla_id')
+    if planilla_id:
+        return redirect(f'{reverse("trabajadores_diarios_list", args=[proyecto_id])}?planilla_id={planilla_id}')
+    else:
+        return redirect('trabajadores_diarios_list', proyecto_id=proyecto_id)
+
+@login_required
+def reactivar_todos_trabajadores_diarios(request, proyecto_id):
+    """Reactivar todos los trabajadores diarios liquidados de una planilla"""
+    proyecto = get_object_or_404(Proyecto, id=proyecto_id)
+    
+    if request.method == 'POST':
+        try:
+            # Obtener planilla seleccionada
+            planilla_id = request.POST.get('planilla_id')
+            if planilla_id:
+                planilla = get_object_or_404(PlanillaTrabajadoresDiarios, id=planilla_id, proyecto=proyecto)
+                trabajadores = TrabajadorDiario.objects.filter(proyecto=proyecto, planilla=planilla, activo=False)
+            else:
+                trabajadores = TrabajadorDiario.objects.filter(proyecto=proyecto, activo=False)
+            
+            # Reactivar todos los trabajadores liquidados
+            trabajadores_reactivados = trabajadores.update(activo=True)
+            
+            # Registrar actividad
+            LogActividad.objects.create(
+                usuario=request.user,
+                accion='Reactivar Todos los Trabajadores Diarios',
+                modulo='Trabajadores Diarios',
+                descripcion=f'{trabajadores_reactivados} trabajadores reactivados en el proyecto {proyecto.nombre}',
+                ip_address=request.META.get('REMOTE_ADDR')
+            )
+            
+            messages.success(request, f'✅ {trabajadores_reactivados} trabajadores reactivados exitosamente. Ahora puedes editarlos y pagarles nuevamente.')
+            
+        except Exception as e:
+            messages.error(request, f'❌ Error al reactivar trabajadores: {str(e)}')
+    
+    # Redirigir de vuelta a la lista con la planilla seleccionada
+    planilla_id = request.POST.get('planilla_id') or request.GET.get('planilla_id')
+    if planilla_id:
+        return redirect(f'{reverse("trabajadores_diarios_list", args=[proyecto_id])}?planilla_id={planilla_id}')
+    else:
+        return redirect('trabajadores_diarios_list', proyecto_id=proyecto_id)
 
 @login_required
 def finalizar_planilla_trabajadores(request, proyecto_id):
@@ -6334,7 +6573,7 @@ def finalizar_planilla_trabajadores(request, proyecto_id):
         from django.core.files.base import ContentFile
         from django.utils import timezone
         from io import BytesIO
-        from reportlab.lib.pagesizes import A4
+        from reportlab.lib.pagesizes import A4, landscape
         from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
         from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
         from reportlab.lib import colors
@@ -6345,8 +6584,8 @@ def finalizar_planilla_trabajadores(request, proyecto_id):
         # Crear el buffer para el PDF
         buffer = BytesIO()
         
-        # Crear el documento PDF
-        doc = SimpleDocTemplate(buffer, pagesize=A4, rightMargin=72, leftMargin=72, topMargin=72, bottomMargin=18)
+        # Crear el documento PDF en orientación horizontal
+        doc = SimpleDocTemplate(buffer, pagesize=landscape(A4), rightMargin=72, leftMargin=72, topMargin=72, bottomMargin=18)
         
         # Obtener estilos
         styles = getSampleStyleSheet()
@@ -6390,29 +6629,52 @@ def finalizar_planilla_trabajadores(request, proyecto_id):
         story.append(Paragraph(f"<b>Fecha de Generación:</b> {timezone.now().strftime('%d/%m/%Y %H:%M')}", normal_style))
         story.append(Spacer(1, 20))
         
-        # Calcular totales
+        # Calcular totales con anticipos
         total_trabajadores = trabajadores.count()
-        total_a_pagar = 0
-        data = [['No.', 'Nombre del Trabajador', 'Pago Diario (Q)', 'Días Trabajados', 'Total a Pagar (Q)']]
+        total_bruto_general = 0
+        total_anticipos_general = 0
+        total_neto_general = 0
+        
+        # Crear tabla con columnas de anticipos
+        data = [['No.', 'Nombre del Trabajador', 'Pago Diario', 'Días Trabajados', 'Total Bruto', 'Anticipos', 'Total Neto']]
         
         for i, trabajador in enumerate(trabajadores, 1):
             dias_trabajados = sum(registro.dias_trabajados for registro in trabajador.registros_trabajo.all())
-            total_trabajador = float(trabajador.pago_diario) * dias_trabajados
-            total_a_pagar += total_trabajador
+            if dias_trabajados == 0:
+                dias_trabajados = 1  # Valor por defecto si no hay registros
+            
+            total_bruto = float(trabajador.pago_diario) * dias_trabajados
+            
+            # Calcular anticipos del trabajador
+            from core.models import AnticipoTrabajadorDiario
+            anticipos_trabajador = AnticipoTrabajadorDiario.objects.filter(
+                trabajador=trabajador,
+                estado='aplicado'
+            )
+            total_anticipos_trabajador = sum(anticipo.monto_aplicado for anticipo in anticipos_trabajador)
+            
+            # Total neto = Total bruto - Anticipos
+            total_neto = total_bruto - float(total_anticipos_trabajador)
+            
+            total_bruto_general += total_bruto
+            total_anticipos_general += float(total_anticipos_trabajador)
+            total_neto_general += total_neto
             
             data.append([
                 str(i),
                 trabajador.nombre,
                 f"Q{trabajador.pago_diario:.2f}",
                 str(dias_trabajados),
-                f"Q{total_trabajador:.2f}"
+                f"Q{total_bruto:.2f}",
+                f"Q{total_anticipos_trabajador:.2f}",
+                f"Q{total_neto:.2f}"
             ])
         
         # Agregar fila de totales
-        data.append(['', '', '', 'TOTAL GENERAL:', f"Q{total_a_pagar:.2f}"])
+        data.append(['', '', '', 'TOTAL GENERAL:', f"Q{total_bruto_general:.2f}", f"Q{total_anticipos_general:.2f}", f"Q{total_neto_general:.2f}"])
         
-        # Crear la tabla
-        table = Table(data, colWidths=[0.5*inch, 2.5*inch, 1.2*inch, 1.2*inch, 1.2*inch])
+        # Crear la tabla con columnas adicionales (7 columnas total)
+        table = Table(data, colWidths=[0.6*inch, 2.5*inch, 1.2*inch, 1.2*inch, 1.4*inch, 1.4*inch, 1.4*inch])
         
         # Estilo de la tabla
         table.setStyle(TableStyle([
@@ -6440,7 +6702,9 @@ def finalizar_planilla_trabajadores(request, proyecto_id):
         
         # Información adicional
         story.append(Paragraph(f"<b>Total de Trabajadores:</b> {total_trabajadores}", normal_style))
-        story.append(Paragraph(f"<b>Total a Pagar:</b> Q{total_a_pagar:.2f}", normal_style))
+        story.append(Paragraph(f"<b>Total Bruto a Pagar:</b> Q{total_bruto_general:.2f}", normal_style))
+        story.append(Paragraph(f"<b>Total Anticipos Aplicados:</b> Q{total_anticipos_general:.2f}", normal_style))
+        story.append(Paragraph(f"<b>Total Neto a Pagar:</b> Q{total_neto_general:.2f}", normal_style))
         
         # Construir el PDF
         doc.build(story)
@@ -6493,13 +6757,27 @@ def finalizar_planilla_trabajadores(request, proyecto_id):
             print(f"✅ Ruta: {archivo.archivo.path}")
             print(f"✅ Existe archivo: {os.path.exists(archivo.archivo.path)}")
         
-        # 4. Limpiar lista de trabajadores (marcar como inactivos)
+        # 4. Crear registro de planilla liquidada
+        from core.models import PlanillaLiquidada
+        planilla_liquidada = PlanillaLiquidada.objects.create(
+            proyecto=proyecto,
+            total_salarios=Decimal(str(total_a_pagar)),
+            total_anticipos=Decimal('0.00'),  # Los trabajadores diarios no tienen anticipos en este contexto
+            total_planilla=Decimal(str(total_a_pagar)),
+            cantidad_personal=trabajadores.count(),
+            liquidada_por=request.user,
+            observaciones=f'Planilla de trabajadores diarios finalizada - Total: Q{total_a_pagar:.2f}'
+        )
+        
+        print(f"✅ Planilla liquidada creada: ID {planilla_liquidada.id}, Total: Q{total_a_pagar:.2f}")
+        
+        # 5. Limpiar lista de trabajadores (marcar como inactivos)
         trabajadores_eliminados = trabajadores.count()
         trabajadores.update(activo=False)
         
         print(f"✅ {trabajadores_eliminados} trabajadores marcados como inactivos")
         
-        # 5. Registrar actividad
+        # 6. Registrar actividad
         from core.models import LogActividad
         LogActividad.objects.create(
             usuario=request.user,
@@ -6509,7 +6787,7 @@ def finalizar_planilla_trabajadores(request, proyecto_id):
             ip_address=request.META.get('REMOTE_ADDR')
         )
         
-        # 6. Mostrar mensaje de éxito
+        # 7. Mostrar mensaje de éxito
         messages.success(request, f'Planilla finalizada exitosamente. Archivo guardado como "{nombre_archivo}". Se procesaron {trabajadores_eliminados} trabajadores.')
         
         return redirect('trabajadores_diarios_list', proyecto_id=proyecto_id)
@@ -6527,22 +6805,50 @@ def trabajador_diario_create(request, proyecto_id):
     """Crear trabajador diario"""
     proyecto = get_object_or_404(Proyecto, id=proyecto_id)
     
+    # Obtener planilla_id de la URL si existe
+    planilla_id = request.GET.get('planilla_id')
+    planilla_seleccionada = None
+    if planilla_id:
+        try:
+            planilla_seleccionada = PlanillaTrabajadoresDiarios.objects.get(id=planilla_id, proyecto=proyecto)
+        except PlanillaTrabajadoresDiarios.DoesNotExist:
+            pass
+    
     if request.method == 'POST':
-        form = TrabajadorDiarioForm(request.POST)
+        print(f"🔍 DEBUG: planilla_id={planilla_id}, planilla_seleccionada={planilla_seleccionada}")
+        form = TrabajadorDiarioForm(request.POST, planilla=planilla_seleccionada, proyecto=proyecto)
+        print(f"🔍 DEBUG: form.is_valid()={form.is_valid()}, form.errors={form.errors}")
         if form.is_valid():
-            trabajador = form.save(commit=False)
-            trabajador.proyecto = proyecto
-            trabajador.creado_por = request.user
-            trabajador.save()
-            
-            messages.success(request, 'Trabajador diario creado correctamente.')
-            return redirect('trabajadores_diarios_list', proyecto_id=proyecto_id)
+            try:
+                trabajador = form.save(commit=False)
+                trabajador.proyecto = proyecto
+                trabajador.planilla = planilla_seleccionada
+                trabajador.creado_por = request.user
+                trabajador.save()
+                
+                messages.success(request, 'Trabajador diario creado correctamente.')
+                # Redirigir con planilla_id si existe
+                if planilla_id:
+                    return redirect(f'{reverse("trabajadores_diarios_list", args=[proyecto_id])}?planilla_id={planilla_id}')
+                else:
+                    return redirect('trabajadores_diarios_list', proyecto_id=proyecto_id)
+            except IntegrityError as e:
+                if 'UNIQUE constraint failed: core_trabajadordiario.planilla_id, core_trabajadordiario.nombre' in str(e):
+                    messages.error(
+                        request, 
+                        f'❌ <strong>Error:</strong> Ya existe un trabajador con el nombre "<strong>{form.cleaned_data.get("nombre", "")}</strong>" en esta planilla.<br>'
+                        f'💡 <strong>Sugerencia:</strong> Usa un nombre diferente o edita el trabajador existente.',
+                        extra_tags='html'
+                    )
+                else:
+                    messages.error(request, f'Error al crear el trabajador: {str(e)}')
+                # No redirigir, mostrar el formulario con el error
         else:
             # Agregar logging para debug
             print(f"❌ Formulario inválido: {form.errors}")
             messages.error(request, 'Por favor corrige los errores en el formulario.')
     else:
-        form = TrabajadorDiarioForm()
+        form = TrabajadorDiarioForm(planilla=planilla_seleccionada, proyecto=proyecto)
     
     return render(request, 'core/trabajadores_diarios/create.html', {
         'form': form,
@@ -6555,7 +6861,7 @@ def trabajador_diario_detail(request, proyecto_id, trabajador_id):
     """Detalle de trabajador diario"""
     proyecto = get_object_or_404(Proyecto, id=proyecto_id)
     trabajador = get_object_or_404(TrabajadorDiario, id=trabajador_id, proyecto=proyecto)
-    registros = trabajador.registros.all().order_by('-fecha_inicio')
+    registros = trabajador.registros_trabajo.all().order_by('-fecha_inicio')
     
     return render(request, 'core/trabajadores_diarios/detail.html', {
         'proyecto': proyecto,
@@ -6705,8 +7011,25 @@ def actualizar_dias_trabajados(request, proyecto_id, trabajador_id):
 @login_required
 def trabajadores_diarios_pdf(request, proyecto_id):
     """Generar PDF de la planilla de trabajadores diarios"""
+    print("🚀 INICIANDO GENERACIÓN DE PDF - VERSIÓN ACTUALIZADA")
     proyecto = get_object_or_404(Proyecto, id=proyecto_id)
-    trabajadores = TrabajadorDiario.objects.filter(proyecto=proyecto, activo=True).order_by('nombre')
+    
+    # Obtener planilla seleccionada
+    planilla_id = request.POST.get('planilla_id')
+    planilla_seleccionada = None
+    if planilla_id:
+        try:
+            planilla_seleccionada = PlanillaTrabajadoresDiarios.objects.get(id=planilla_id, proyecto=proyecto)
+        except PlanillaTrabajadoresDiarios.DoesNotExist:
+            pass
+    
+    # Filtrar trabajadores por planilla seleccionada
+    if planilla_seleccionada:
+        # Incluir tanto trabajadores activos como inactivos de la planilla seleccionada
+        trabajadores = TrabajadorDiario.objects.filter(proyecto=proyecto, planilla=planilla_seleccionada).order_by('nombre')
+    else:
+        # Mostrar trabajadores sin planilla asignada (solo activos)
+        trabajadores = TrabajadorDiario.objects.filter(proyecto=proyecto, planilla__isnull=True, activo=True).order_by('nombre')
     
     # Obtener días trabajados temporales del POST o usar datos de la base de datos
     dias_trabajados_data = {}
@@ -6722,8 +7045,8 @@ def trabajadores_diarios_pdf(request, proyecto_id):
     # Crear el buffer para el PDF
     buffer = BytesIO()
     
-    # Crear el documento PDF
-    doc = SimpleDocTemplate(buffer, pagesize=A4, rightMargin=72, leftMargin=72, topMargin=72, bottomMargin=18)
+    # Crear el documento PDF en orientación horizontal
+    doc = SimpleDocTemplate(buffer, pagesize=landscape(A4), rightMargin=72, leftMargin=72, topMargin=72, bottomMargin=18)
     
     # Obtener estilos
     styles = getSampleStyleSheet()
@@ -6758,13 +7081,24 @@ def trabajadores_diarios_pdf(request, proyecto_id):
     story = []
     
     # Título principal
-    story.append(Paragraph("PLANILLA DE TRABAJADORES DIARIOS", title_style))
+    if planilla_seleccionada:
+        story.append(Paragraph(f"PLANILLA DE TRABAJADORES DIARIOS - {planilla_seleccionada.nombre.upper()}", title_style))
+    else:
+        story.append(Paragraph("PLANILLA DE TRABAJADORES DIARIOS", title_style))
     story.append(Spacer(1, 12))
     
     # Información del proyecto
     story.append(Paragraph(f"<b>Proyecto:</b> {proyecto.nombre}", normal_style))
     story.append(Paragraph(f"<b>Cliente:</b> {proyecto.cliente.razon_social}", normal_style))
-    story.append(Paragraph(f"<b>Fecha de Generación:</b> {timezone.now().strftime('%d/%m/%Y %H:%M')}", normal_style))
+    if planilla_seleccionada:
+        story.append(Paragraph(f"<b>Planilla:</b> {planilla_seleccionada.nombre}", normal_style))
+        if planilla_seleccionada.fecha_inicio and planilla_seleccionada.fecha_fin:
+            story.append(Paragraph(f"<b>Período:</b> {planilla_seleccionada.fecha_inicio.strftime('%d/%m/%Y')} - {planilla_seleccionada.fecha_fin.strftime('%d/%m/%Y')}", normal_style))
+    # Obtener fecha local de Guatemala
+    import pytz
+    guatemala_tz = pytz.timezone('America/Guatemala')
+    fecha_generacion = timezone.now().astimezone(guatemala_tz)
+    story.append(Paragraph(f"<b>Fecha de Generación:</b> {fecha_generacion.strftime('%d/%m/%Y %H:%M')} (Guatemala)", normal_style))
     story.append(Spacer(1, 20))
     
     if trabajadores.exists():
@@ -6785,27 +7119,55 @@ def trabajadores_diarios_pdf(request, proyecto_id):
         # Convertir a Decimal para evitar errores de tipo
         saldo_pendiente = Decimal(str(total_a_pagar)) - Decimal(str(total_aplicado))
         
-        # Crear tabla de trabajadores
-        data = [['No.', 'Nombre del Trabajador', 'Pago Diario (Q)', 'Días Trabajados', 'Total a Pagar (Q)']]
+        # Crear tabla de trabajadores con columnas de anticipos
+        data = [['No.', 'Nombre del Trabajador', 'Pago Diario', 'Días Trabajados', 'Total Bruto', 'Anticipos', 'Total Neto']]
+        
+        total_bruto_general = 0
+        total_anticipos_general = 0
+        total_neto_general = 0
         
         for i, trabajador in enumerate(trabajadores, 1):
             # Usar días trabajados temporales
             dias_trabajados = dias_trabajados_data.get(trabajador.id, 0)
-            total_trabajador = float(trabajador.pago_diario) * dias_trabajados
+            total_bruto = float(trabajador.pago_diario) * dias_trabajados
+            
+            # Calcular anticipos del trabajador
+            anticipos_trabajador = AnticipoTrabajadorDiario.objects.filter(
+                trabajador=trabajador,
+                estado='aplicado'
+            )
+            total_anticipos_trabajador = sum(anticipo.monto_aplicado for anticipo in anticipos_trabajador)
+            
+            # Debug: Imprimir información del trabajador y sus anticipos
+            print(f"🔍 DEBUG PDF - Trabajador: {trabajador.nombre} (ID: {trabajador.id})")
+            print(f"🔍 DEBUG PDF - Anticipos encontrados: {anticipos_trabajador.count()}")
+            for anticipo in anticipos_trabajador:
+                print(f"🔍 DEBUG PDF - Anticipo ID: {anticipo.id}, Monto: {anticipo.monto}, Aplicado: {anticipo.monto_aplicado}, Estado: {anticipo.estado}")
+            print(f"🔍 DEBUG PDF - Total anticipos trabajador: {total_anticipos_trabajador}")
+            
+            # Total neto = Total bruto - Anticipos
+            total_neto = total_bruto - float(total_anticipos_trabajador)
             
             data.append([
                 str(i),
                 trabajador.nombre,
                 f"Q{trabajador.pago_diario:.2f}",
                 str(dias_trabajados),
-                f"Q{total_trabajador:.2f}"
+                f"Q{total_bruto:.2f}",
+                f"Q{total_anticipos_trabajador:.2f}",
+                f"Q{total_neto:.2f}"
             ])
+            
+            total_bruto_general += total_bruto
+            total_anticipos_general += float(total_anticipos_trabajador)
+            total_neto_general += total_neto
         
         # Agregar fila de totales
-        data.append(['', '', '', 'TOTAL GENERAL:', f"Q{total_a_pagar:.2f}"])
+        data.append(['', '', '', 'TOTAL GENERAL:', f"Q{total_bruto_general:.2f}", f"Q{total_anticipos_general:.2f}", f"Q{total_neto_general:.2f}"])
         
-        # Crear la tabla
-        table = Table(data, colWidths=[0.5*inch, 2.5*inch, 1.2*inch, 1.2*inch, 1.2*inch])
+        # Crear la tabla con columnas adicionales (7 columnas total)
+        # Ancho total: 11.7" - 2" (márgenes) = 9.7" disponibles
+        table = Table(data, colWidths=[0.6*inch, 2.5*inch, 1.2*inch, 1.2*inch, 1.4*inch, 1.4*inch, 1.4*inch])
         
         # Estilo de la tabla
         table.setStyle(TableStyle([
@@ -6814,14 +7176,17 @@ def trabajadores_diarios_pdf(request, proyecto_id):
             ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
             ('ALIGN', (0, 0), (-1, 0), 'CENTER'),
             ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-            ('FONTSIZE', (0, 0), (-1, 0), 10),
+            ('FONTSIZE', (0, 0), (-1, 0), 8),
             
             # Fila de totales
             ('BACKGROUND', (0, -1), (-1, -1), colors.lightgrey),
             ('TEXTCOLOR', (0, -1), (-1, -1), colors.black),
             ('ALIGN', (0, -1), (-1, -1), 'CENTER'),
             ('FONTNAME', (0, -1), (-1, -1), 'Helvetica-Bold'),
-            ('FONTSIZE', (0, -1), (-1, -1), 10),
+            ('FONTSIZE', (0, -1), (-1, -1), 8),
+            
+            # Datos
+            ('FONTSIZE', (0, 1), (-1, -2), 7),
             
             # Bordes
             ('GRID', (0, 0), (-1, -1), 1, colors.black),
@@ -6836,10 +7201,9 @@ def trabajadores_diarios_pdf(request, proyecto_id):
         
         anticipos_data = [
             ['Concepto', 'Monto (Q)'],
-            ['Total a Pagar', f"Q{total_a_pagar:.2f}"],
-            ['Anticipos Otorgados', f"Q{total_anticipos:.2f}"],
-            ['Anticipos Aplicados', f"Q{total_aplicado:.2f}"],
-            ['Saldo Pendiente', f"Q{saldo_pendiente:.2f}"]
+            ['Total Bruto a Pagar', f"Q{total_bruto_general:.2f}"],
+            ['Total Anticipos Aplicados', f"Q{total_anticipos_general:.2f}"],
+            ['Total Neto a Pagar', f"Q{total_neto_general:.2f}"]
         ]
         
         anticipos_table = Table(anticipos_data, colWidths=[3*inch, 1.5*inch])
@@ -6856,9 +7220,47 @@ def trabajadores_diarios_pdf(request, proyecto_id):
         story.append(anticipos_table)
         story.append(Spacer(1, 20))
         
+        # RESUMEN DE ANTICIPOS
+        story.append(Paragraph("RESUMEN DE ANTICIPOS", title_style))
+        story.append(Spacer(1, 12))
+        
+        # Crear tabla de resumen de anticipos
+        resumen_data = [
+            ['Concepto', 'Monto (Q)'],
+            ['Total Bruto a Pagar', f"Q{total_bruto_general:.2f}"],
+            ['Total Anticipos Aplicados', f"Q{total_anticipos_general:.2f}"],
+            ['Total Neto a Pagar', f"Q{total_neto_general:.2f}"]
+        ]
+        
+        resumen_table = Table(resumen_data, colWidths=[4*inch, 2*inch])
+        resumen_table.setStyle(TableStyle([
+            # Encabezados
+            ('BACKGROUND', (0, 0), (-1, 0), colors.darkgreen),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+            ('ALIGN', (0, 0), (-1, 0), 'CENTER'),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, 0), 10),
+            
+            # Datos
+            ('BACKGROUND', (0, 1), (-1, -1), colors.white),
+            ('TEXTCOLOR', (0, 1), (-1, -1), colors.black),
+            ('ALIGN', (0, 1), (0, -1), 'LEFT'),
+            ('ALIGN', (1, 1), (1, -1), 'RIGHT'),
+            ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
+            ('FONTSIZE', (0, 1), (-1, -1), 9),
+            ('GRID', (0, 0), (-1, -1), 1, colors.black),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
+            ('TOPPADDING', (0, 0), (-1, -1), 8),
+        ]))
+        
+        story.append(resumen_table)
+        story.append(Spacer(1, 20))
+        
         # Información adicional
         story.append(Paragraph(f"<b>Total de Trabajadores:</b> {total_trabajadores}", normal_style))
-        story.append(Paragraph(f"<b>Total a Pagar:</b> Q{total_a_pagar:.2f}", normal_style))
+        story.append(Paragraph(f"<b>Total Bruto a Pagar:</b> Q{total_bruto_general:.2f}", normal_style))
+        story.append(Paragraph(f"<b>Total Anticipos Aplicados:</b> Q{total_anticipos_general:.2f}", normal_style))
+        story.append(Paragraph(f"<b>Total Neto a Pagar:</b> Q{total_neto_general:.2f}", normal_style))
         
     else:
         story.append(Paragraph("No hay trabajadores diarios registrados en este proyecto.", normal_style))
@@ -6886,7 +7288,10 @@ def trabajadores_diarios_pdf(request, proyecto_id):
         )
         
         # Crear archivo PDF
-        nombre_archivo = f"planilla_trabajadores_{timezone.now().strftime('%Y%m%d_%H%M%S')}.pdf"
+        if planilla_seleccionada:
+            nombre_archivo = f"planilla_{planilla_seleccionada.nombre}_{timezone.now().strftime('%Y%m%d_%H%M%S')}.pdf"
+        else:
+            nombre_archivo = f"planilla_trabajadores_{timezone.now().strftime('%Y%m%d_%H%M%S')}.pdf"
         
         # Crear ContentFile con el contenido PDF
         archivo_pdf = ContentFile(pdf_content)
@@ -6916,7 +7321,11 @@ def trabajadores_diarios_pdf(request, proyecto_id):
     
     # Crear la respuesta HTTP
     response = HttpResponse(content_type='application/pdf')
-    response['Content-Disposition'] = f'attachment; filename="planilla_trabajadores_diarios_{proyecto.nombre}_{timezone.now().strftime("%Y%m%d")}.pdf"'
+    if planilla_seleccionada:
+        filename = f"planilla_{planilla_seleccionada.nombre}_{proyecto.nombre}_{timezone.now().strftime('%Y%m%d')}.pdf"
+    else:
+        filename = f"planilla_trabajadores_diarios_{proyecto.nombre}_{timezone.now().strftime('%Y%m%d')}.pdf"
+    response['Content-Disposition'] = f'attachment; filename="{filename}"'
     response.write(pdf_content)
     
     # Registrar actividad
@@ -7401,3 +7810,219 @@ def cliente_estadisticas(request, cliente_id):
     except Exception as e:
         messages.error(request, f'Error al cargar estadísticas: {str(e)}')
         return redirect('cliente_detail', cliente_id=cliente_id)
+
+
+# ==================== VISTAS DEL SISTEMA DE PLANILLAS MÚLTIPLES ====================
+
+@login_required
+def planillas_trabajadores_diarios_list(request, proyecto_id):
+    """Lista de planillas de trabajadores diarios de un proyecto"""
+    proyecto = get_object_or_404(Proyecto, id=proyecto_id)
+    planillas = PlanillaTrabajadoresDiarios.objects.filter(proyecto=proyecto).order_by('-fecha_creacion')
+    
+    context = {
+        'proyecto': proyecto,
+        'planillas': planillas,
+    }
+    
+    return render(request, 'core/planillas_trabajadores_diarios/list.html', context)
+
+
+@login_required
+def planilla_trabajadores_diarios_create(request, proyecto_id):
+    """Crear nueva planilla de trabajadores diarios"""
+    proyecto = get_object_or_404(Proyecto, id=proyecto_id)
+    
+    if request.method == 'POST':
+        form = PlanillaTrabajadoresDiariosForm(request.POST, proyecto=proyecto)
+        if form.is_valid():
+            planilla = form.save(commit=False)
+            planilla.proyecto = proyecto
+            planilla.creada_por = request.user
+            planilla.save()
+            
+            messages.success(request, f'Planilla "{planilla.nombre}" creada exitosamente.')
+            return redirect('planilla_trabajadores_diarios_detail', proyecto_id=proyecto_id, planilla_id=planilla.id)
+    else:
+        form = PlanillaTrabajadoresDiariosForm(proyecto=proyecto)
+    
+    context = {
+        'proyecto': proyecto,
+        'form': form,
+    }
+    
+    return render(request, 'core/planillas_trabajadores_diarios/create.html', context)
+
+
+@login_required
+def planilla_trabajadores_diarios_detail(request, proyecto_id, planilla_id):
+    """Detalle de una planilla de trabajadores diarios"""
+    proyecto = get_object_or_404(Proyecto, id=proyecto_id)
+    planilla = get_object_or_404(PlanillaTrabajadoresDiarios, id=planilla_id, proyecto=proyecto)
+    trabajadores = planilla.trabajadores.all().order_by('nombre')
+    
+    # Calcular totales
+    total_trabajadores = trabajadores.count()
+    total_a_pagar = sum(t.total_a_pagar for t in trabajadores)
+    total_anticipos = sum(t.total_anticipos_aplicados for t in trabajadores)
+    saldo_pendiente = total_a_pagar - total_anticipos
+    
+    context = {
+        'proyecto': proyecto,
+        'planilla': planilla,
+        'trabajadores': trabajadores,
+        'total_trabajadores': total_trabajadores,
+        'total_a_pagar': total_a_pagar,
+        'total_anticipos': total_anticipos,
+        'saldo_pendiente': saldo_pendiente,
+    }
+    
+    return render(request, 'core/planillas_trabajadores_diarios/detail.html', context)
+
+
+@login_required
+def planilla_trabajadores_diarios_edit(request, proyecto_id, planilla_id):
+    """Editar planilla de trabajadores diarios"""
+    proyecto = get_object_or_404(Proyecto, id=proyecto_id)
+    planilla = get_object_or_404(PlanillaTrabajadoresDiarios, id=planilla_id, proyecto=proyecto)
+    
+    if request.method == 'POST':
+        form = PlanillaTrabajadoresDiariosForm(request.POST, instance=planilla, proyecto=proyecto)
+        if form.is_valid():
+            form.save()
+            messages.success(request, f'Planilla "{planilla.nombre}" actualizada exitosamente.')
+            return redirect('planilla_trabajadores_diarios_detail', proyecto_id=proyecto_id, planilla_id=planilla.id)
+    else:
+        form = PlanillaTrabajadoresDiariosForm(instance=planilla, proyecto=proyecto)
+    
+    context = {
+        'proyecto': proyecto,
+        'planilla': planilla,
+        'form': form,
+    }
+    
+    return render(request, 'core/planillas_trabajadores_diarios/edit.html', context)
+
+
+@login_required
+def planilla_trabajadores_diarios_delete(request, proyecto_id, planilla_id):
+    """Eliminar planilla de trabajadores diarios"""
+    proyecto = get_object_or_404(Proyecto, id=proyecto_id)
+    planilla = get_object_or_404(PlanillaTrabajadoresDiarios, id=planilla_id, proyecto=proyecto)
+    
+    if request.method == 'POST':
+        nombre_planilla = planilla.nombre
+        planilla.delete()
+        messages.success(request, f'Planilla "{nombre_planilla}" eliminada exitosamente.')
+        return redirect('planillas_trabajadores_diarios_list', proyecto_id=proyecto_id)
+    
+    context = {
+        'proyecto': proyecto,
+        'planilla': planilla,
+    }
+    
+    return render(request, 'core/planillas_trabajadores_diarios/delete.html', context)
+
+
+@login_required
+def planilla_trabajadores_diarios_finalizar(request, proyecto_id, planilla_id):
+    """Finalizar planilla de trabajadores diarios"""
+    proyecto = get_object_or_404(Proyecto, id=proyecto_id)
+    planilla = get_object_or_404(PlanillaTrabajadoresDiarios, id=planilla_id, proyecto=proyecto)
+    
+    if request.method == 'POST':
+        try:
+            # Marcar planilla como finalizada
+            planilla.estado = 'finalizada'
+            planilla.fecha_finalizacion = timezone.now()
+            planilla.finalizada_por = request.user
+            planilla.save()
+            
+            # Marcar trabajadores como inactivos
+            planilla.trabajadores.update(activo=False)
+            
+            # Marcar anticipos como procesados
+            AnticipoTrabajadorDiario.objects.filter(
+                trabajador__planilla=planilla,
+                estado='aplicado'
+            ).update(
+                estado='procesado',
+                fecha_liquidacion=timezone.now().date(),
+                liquidado_por=request.user
+            )
+            
+            # Crear registro de planilla liquidada
+            PlanillaLiquidada.objects.create(
+                proyecto=proyecto,
+                total_salarios=Decimal(str(planilla.total_a_pagar)),
+                total_anticipos=Decimal(str(planilla.total_anticipos)),
+                total_planilla=Decimal(str(planilla.total_a_pagar + planilla.total_anticipos)),
+                cantidad_personal=planilla.total_trabajadores,
+                liquidada_por=request.user,
+                observaciones=f'Planilla de trabajadores diarios: {planilla.nombre}'
+            )
+            
+            messages.success(request, f'Planilla "{planilla.nombre}" finalizada exitosamente.')
+            return redirect('planillas_trabajadores_diarios_list', proyecto_id=proyecto_id)
+            
+        except Exception as e:
+            print(f"Error al finalizar planilla: {e}")
+            messages.error(request, f'Error al finalizar planilla: {str(e)}')
+    
+    context = {
+        'proyecto': proyecto,
+        'planilla': planilla,
+    }
+    
+    return render(request, 'core/planillas_trabajadores_diarios/finalizar.html', context)
+
+
+@login_required
+def trabajador_diario_add_to_planilla(request, proyecto_id, planilla_id):
+    """Agregar trabajador a una planilla específica"""
+    proyecto = get_object_or_404(Proyecto, id=proyecto_id)
+    planilla = get_object_or_404(PlanillaTrabajadoresDiarios, id=planilla_id, proyecto=proyecto)
+    
+    if request.method == 'POST':
+        form = TrabajadorDiarioForm(request.POST, planilla=planilla)
+        if form.is_valid():
+            trabajador = form.save(commit=False)
+            trabajador.proyecto = proyecto
+            trabajador.planilla = planilla
+            trabajador.creado_por = request.user
+            trabajador.save()
+            
+            messages.success(request, f'Trabajador "{trabajador.nombre}" agregado a la planilla.')
+            return redirect('planilla_trabajadores_diarios_detail', proyecto_id=proyecto_id, planilla_id=planilla_id)
+    else:
+        form = TrabajadorDiarioForm(planilla=planilla)
+    
+    context = {
+        'proyecto': proyecto,
+        'planilla': planilla,
+        'form': form,
+    }
+    
+    return render(request, 'core/planillas_trabajadores_diarios/add_trabajador.html', context)
+
+
+@login_required
+def trabajador_diario_remove_from_planilla(request, proyecto_id, planilla_id, trabajador_id):
+    """Remover trabajador de una planilla"""
+    proyecto = get_object_or_404(Proyecto, id=proyecto_id)
+    planilla = get_object_or_404(PlanillaTrabajadoresDiarios, id=planilla_id, proyecto=proyecto)
+    trabajador = get_object_or_404(TrabajadorDiario, id=trabajador_id, planilla=planilla)
+    
+    if request.method == 'POST':
+        nombre_trabajador = trabajador.nombre
+        trabajador.delete()
+        messages.success(request, f'Trabajador "{nombre_trabajador}" removido de la planilla.')
+        return redirect('planilla_trabajadores_diarios_detail', proyecto_id=proyecto_id, planilla_id=planilla_id)
+    
+    context = {
+        'proyecto': proyecto,
+        'planilla': planilla,
+        'trabajador': trabajador,
+    }
+    
+    return render(request, 'core/planillas_trabajadores_diarios/remove_trabajador.html', context)
