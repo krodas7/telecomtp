@@ -3346,6 +3346,55 @@ def sistema_reset_app(request):
     return render(request, 'core/sistema/reset_app.html')
  
 # ===== VISTA DE RENTABILIDAD =====
+def calcular_rentabilidad_proyecto(proyecto, fecha_inicio_dt, fecha_fin_dt):
+    """Función auxiliar para calcular rentabilidad de un proyecto usando la misma lógica que el dashboard"""
+    from decimal import Decimal
+    
+    # Facturas pagadas del proyecto
+    facturas_pagadas = Factura.objects.filter(
+        proyecto=proyecto,
+        estado='pagada',
+        fecha_emision__range=[fecha_inicio_dt, fecha_fin_dt]
+    )
+    total_facturas_pagadas = facturas_pagadas.aggregate(total=Sum('monto_total'))['total'] or Decimal('0.00')
+    
+    # Anticipos aplicados a facturas del proyecto
+    anticipos_aplicados = Anticipo.objects.filter(
+        proyecto=proyecto,
+        monto_aplicado__gt=0,
+        fecha_aplicacion__range=[fecha_inicio_dt, fecha_fin_dt]
+    )
+    total_anticipos_aplicados = anticipos_aplicados.aggregate(total=Sum('monto_aplicado'))['total'] or Decimal('0.00')
+    
+    # Anticipos aplicados al proyecto
+    anticipos_proyecto = Anticipo.objects.filter(
+        proyecto=proyecto,
+        aplicado_al_proyecto=True,
+        fecha_aplicacion__range=[fecha_inicio_dt, fecha_fin_dt]
+    )
+    total_anticipos_aplicados_proyecto = anticipos_proyecto.aggregate(total=Sum('monto_aplicado_proyecto'))['total'] or Decimal('0.00')
+    
+    # Total de ingresos (misma lógica que dashboard)
+    ingresos_proyecto = total_facturas_pagadas + total_anticipos_aplicados + total_anticipos_aplicados_proyecto
+    
+    # Gastos del proyecto (solo del período filtrado)
+    gastos_proyecto_raw = Gasto.objects.filter(
+        proyecto=proyecto,
+        fecha_gasto__range=[fecha_inicio_dt, fecha_fin_dt],
+        aprobado=True
+    ).aggregate(total=Sum('monto'))['total'] or 0
+    gastos_proyecto = Decimal(str(gastos_proyecto_raw))
+    
+    rentabilidad_proyecto = ingresos_proyecto - gastos_proyecto
+    margen_proyecto = (rentabilidad_proyecto / ingresos_proyecto * 100) if ingresos_proyecto > 0 else Decimal('0.00')
+    
+    return {
+        'ingresos': ingresos_proyecto,
+        'gastos': gastos_proyecto,
+        'rentabilidad': rentabilidad_proyecto,
+        'margen': margen_proyecto
+    }
+
 @login_required
 def rentabilidad_view(request):
     """Vista de rentabilidad y análisis financiero"""
@@ -3371,11 +3420,30 @@ def rentabilidad_view(request):
         fecha_inicio_dt = timezone.make_aware(datetime.strptime(fecha_inicio, '%Y-%m-%d'))
         fecha_fin_dt = timezone.make_aware(datetime.strptime(fecha_fin, '%Y-%m-%d'))
     
-            # Calcular ingresos (SOLO lo cobrado, no lo facturado)
-        ingresos = Factura.objects.filter(
+            # Calcular ingresos (usando la misma lógica que el dashboard)
+        # Facturas pagadas
+        facturas_pagadas = Factura.objects.filter(
             fecha_emision__range=[fecha_inicio_dt, fecha_fin_dt],
-            estado='pagada'  # Solo facturas pagadas
-        ).aggregate(total=Sum('monto_total'))['total'] or Decimal('0.00')
+            estado='pagada'
+        )
+        total_facturas_pagadas = facturas_pagadas.aggregate(total=Sum('monto_total'))['total'] or Decimal('0.00')
+        
+        # Anticipos aplicados a facturas
+        anticipos_aplicados = Anticipo.objects.filter(
+            monto_aplicado__gt=0,
+            fecha_aplicacion__range=[fecha_inicio_dt, fecha_fin_dt]
+        )
+        total_anticipos_aplicados = anticipos_aplicados.aggregate(total=Sum('monto_aplicado'))['total'] or Decimal('0.00')
+        
+        # Anticipos aplicados al proyecto
+        anticipos_proyecto = Anticipo.objects.filter(
+            aplicado_al_proyecto=True,
+            fecha_aplicacion__range=[fecha_inicio_dt, fecha_fin_dt]
+        )
+        total_anticipos_aplicados_proyecto = anticipos_proyecto.aggregate(total=Sum('monto_aplicado_proyecto'))['total'] or Decimal('0.00')
+        
+        # Total de ingresos
+        ingresos = total_facturas_pagadas + total_anticipos_aplicados + total_anticipos_aplicados_proyecto
         
         # Calcular totales de facturación e ingresos
         total_facturado = Factura.objects.filter(
@@ -3407,23 +3475,12 @@ def rentabilidad_view(request):
         proyectos = Proyecto.objects.filter(activo=True)
         
         for proyecto in proyectos:
-            # Ingresos del proyecto (usando facturas con pagos realizados)
-            ingresos_proyecto = Factura.objects.filter(
-                proyecto=proyecto,
-                fecha_emision__range=[fecha_inicio_dt, fecha_fin_dt],
-                monto_pagado__gt=0
-            ).aggregate(total=Sum('monto_pagado'))['total'] or Decimal('0.00')
-            
-            # Gastos del proyecto
-            gastos_proyecto_raw = Gasto.objects.filter(
-                proyecto=proyecto,
-                fecha_gasto__range=[fecha_inicio_dt, fecha_fin_dt],
-                aprobado=True
-            ).aggregate(total=Sum('monto'))['total'] or 0
-            gastos_proyecto = Decimal(str(gastos_proyecto_raw))
-            
-            rentabilidad_proyecto = ingresos_proyecto - gastos_proyecto
-            margen_proyecto = (rentabilidad_proyecto / ingresos_proyecto * 100) if ingresos_proyecto > 0 else Decimal('0.00')
+            # Usar la función auxiliar para calcular rentabilidad
+            rentabilidad_data = calcular_rentabilidad_proyecto(proyecto, fecha_inicio_dt, fecha_fin_dt)
+            ingresos_proyecto = rentabilidad_data['ingresos']
+            gastos_proyecto = rentabilidad_data['gastos']
+            rentabilidad_proyecto = rentabilidad_data['rentabilidad']
+            margen_proyecto = rentabilidad_data['margen']
             
             proyectos_rentabilidad.append({
                 'proyecto': proyecto,
