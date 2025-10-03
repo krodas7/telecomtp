@@ -3422,6 +3422,12 @@ def rentabilidad_view(request):
             if fecha_inicio and fecha_fin:
                 fecha_inicio_dt = timezone.make_aware(datetime.strptime(fecha_inicio, '%Y-%m-%d'))
                 fecha_fin_dt = timezone.make_aware(datetime.strptime(fecha_fin, '%Y-%m-%d'))
+        else:
+            # Cuando periodo es 'todos', forzar fechas a None
+            fecha_inicio = None
+            fecha_fin = None
+            fecha_inicio_dt = None
+            fecha_fin_dt = None
     
         # Calcular ingresos (usando la misma lógica que el dashboard)
         # Construir filtros de fecha dinámicamente
