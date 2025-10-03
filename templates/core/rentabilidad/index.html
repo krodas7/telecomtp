@@ -29,7 +29,7 @@
         <form method="get" class="row g-3">
             <div class="col-md-3">
                 <label for="periodo" class="form-label">Período</label>
-                <select name="periodo" id="periodo" class="form-select" onchange="limpiarFechasSiTodos()">
+                <select name="periodo" id="periodo" class="form-select">
                     <option value="todos" {% if periodo == 'todos' %}selected{% endif %}>Todos los Datos</option>
                     <option value="mes" {% if periodo == 'mes' %}selected{% endif %}>Último Mes</option>
                     <option value="trimestre" {% if periodo == 'trimestre' %}selected{% endif %}>Último Trimestre</option>
@@ -380,19 +380,95 @@ function imprimirReporte() {
     window.print();
 }
 
-function limpiarFechasSiTodos() {
-    const periodo = document.getElementById('periodo').value;
-    const fechaInicio = document.getElementById('fecha_inicio');
-    const fechaFin = document.getElementById('fecha_fin');
+// Sistema de filtros mejorado para rentabilidad
+document.addEventListener('DOMContentLoaded', function() {
+    const periodoSelect = document.getElementById('periodo');
+    const fechaInicioInput = document.getElementById('fecha_inicio');
+    const fechaFinInput = document.getElementById('fecha_fin');
+    const filtrarBtn = document.querySelector('button[type="submit"]');
+    const resetBtn = document.querySelector('a[href*="rentabilidad"]');
     
-    if (periodo === 'todos') {
-        // Limpiar campos de fecha
-        fechaInicio.value = '';
-        fechaFin.value = '';
+    if (!periodoSelect || !fechaInicioInput || !fechaFinInput) {
+        console.warn('Elementos del formulario de rentabilidad no encontrados');
+        return;
     }
     
-    // Enviar formulario
-    document.querySelector('form').submit();
-}
+    // Función para limpiar fechas
+    function limpiarFechas() {
+        fechaInicioInput.value = '';
+        fechaFinInput.value = '';
+    }
+    
+    // Función para aplicar filtros automáticos
+    function aplicarFiltrosAutomaticos() {
+        const periodo = periodoSelect.value;
+        const hoy = new Date();
+        
+        if (periodo === 'todos') {
+            limpiarFechas();
+        } else if (periodo === 'mes') {
+            const hace30Dias = new Date(hoy);
+            hace30Dias.setDate(hoy.getDate() - 30);
+            fechaInicioInput.value = hace30Dias.toISOString().split('T')[0];
+            fechaFinInput.value = hoy.toISOString().split('T')[0];
+        } else if (periodo === 'trimestre') {
+            const hace90Dias = new Date(hoy);
+            hace90Dias.setDate(hoy.getDate() - 90);
+            fechaInicioInput.value = hace90Dias.toISOString().split('T')[0];
+            fechaFinInput.value = hoy.toISOString().split('T')[0];
+        } else if (periodo === 'año') {
+            const hace365Dias = new Date(hoy);
+            hace365Dias.setDate(hoy.getDate() - 365);
+            fechaInicioInput.value = hace365Dias.toISOString().split('T')[0];
+            fechaFinInput.value = hoy.toISOString().split('T')[0];
+        }
+        // Para 'personalizado', no hacer nada, dejar que el usuario ingrese las fechas
+    }
+    
+    // Event listener para cambio de período
+    periodoSelect.addEventListener('change', function() {
+        try {
+            aplicarFiltrosAutomaticos();
+        } catch (error) {
+            console.error('Error aplicando filtros automáticos:', error);
+        }
+    });
+    
+    // Event listener para botón filtrar
+    if (filtrarBtn) {
+        filtrarBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            try {
+                // Asegurar que las fechas estén limpias si es 'todos'
+                if (periodoSelect.value === 'todos') {
+                    limpiarFechas();
+                }
+                document.querySelector('form').submit();
+            } catch (error) {
+                console.error('Error enviando formulario:', error);
+                // Fallback: enviar formulario normalmente
+                document.querySelector('form').submit();
+            }
+        });
+    }
+    
+    // Event listener para botón reset
+    if (resetBtn) {
+        resetBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            try {
+                // Limpiar formulario y redirigir
+                limpiarFechas();
+                periodoSelect.value = 'todos';
+                window.location.href = "{% url 'rentabilidad' %}";
+            } catch (error) {
+                console.error('Error en reset:', error);
+                window.location.href = "{% url 'rentabilidad' %}";
+            }
+        });
+    }
+    
+    console.log('Sistema de filtros de rentabilidad inicializado correctamente');
+});
 </script>
 {% endblock %}
