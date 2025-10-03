@@ -29,7 +29,7 @@
         <form method="get" class="row g-3">
             <div class="col-md-3">
                 <label for="periodo" class="form-label">Período</label>
-                <select name="periodo" id="periodo" class="form-select" onchange="this.form.submit()">
+                <select name="periodo" id="periodo" class="form-select" onchange="limpiarFechasSiTodos()">
                     <option value="todos" {% if periodo == 'todos' %}selected{% endif %}>Todos los Datos</option>
                     <option value="mes" {% if periodo == 'mes' %}selected{% endif %}>Último Mes</option>
                     <option value="trimestre" {% if periodo == 'trimestre' %}selected{% endif %}>Último Trimestre</option>
@@ -39,11 +39,11 @@
             </div>
             <div class="col-md-3">
                 <label for="fecha_inicio" class="form-label">Fecha Inicio</label>
-                <input type="date" name="fecha_inicio" id="fecha_inicio" class="form-control" value="{{ fecha_inicio }}">
+                <input type="date" name="fecha_inicio" id="fecha_inicio" class="form-control" value="{% if periodo != 'todos' %}{{ fecha_inicio }}{% endif %}">
             </div>
             <div class="col-md-3">
                 <label for="fecha_fin" class="form-label">Fecha Fin</label>
-                <input type="date" name="fecha_fin" id="fecha_fin" class="form-control" value="{{ fecha_fin }}">
+                <input type="date" name="fecha_fin" id="fecha_fin" class="form-control" value="{% if periodo != 'todos' %}{{ fecha_fin }}{% endif %}">
             </div>
             <div class="col-md-3 d-flex align-items-end">
                 <button type="submit" class="btn btn-primary me-2">
@@ -378,6 +378,21 @@ function exportarExcel() {
 
 function imprimirReporte() {
     window.print();
+}
+
+function limpiarFechasSiTodos() {
+    const periodo = document.getElementById('periodo').value;
+    const fechaInicio = document.getElementById('fecha_inicio');
+    const fechaFin = document.getElementById('fecha_fin');
+    
+    if (periodo === 'todos') {
+        // Limpiar campos de fecha
+        fechaInicio.value = '';
+        fechaFin.value = '';
+    }
+    
+    // Enviar formulario
+    document.querySelector('form').submit();
 }
 </script>
 {% endblock %}
