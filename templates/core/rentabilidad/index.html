@@ -30,6 +30,7 @@
             <div class="col-md-3">
                 <label for="periodo" class="form-label">Período</label>
                 <select name="periodo" id="periodo" class="form-select" onchange="this.form.submit()">
+                    <option value="todos" {% if periodo == 'todos' %}selected{% endif %}>Todos los Datos</option>
                     <option value="mes" {% if periodo == 'mes' %}selected{% endif %}>Último Mes</option>
                     <option value="trimestre" {% if periodo == 'trimestre' %}selected{% endif %}>Último Trimestre</option>
                     <option value="año" {% if periodo == 'año' %}selected{% endif %}>Último Año</option>

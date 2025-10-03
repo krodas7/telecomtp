@@ -2569,7 +2569,7 @@ def archivo_upload(request, proyecto_id):
                 except Exception as e:
                     logger.warning(f"⚠️ Error generando thumbnail: {e}")
                     pass
-                
+            
                 # Registrar actividad
                 LogActividad.objects.create(
                     usuario=request.user,
@@ -2771,7 +2771,7 @@ def archivo_delete(request, archivo_id):
                 descripcion=f'Archivo eliminado: {archivo.nombre} del proyecto {archivo.proyecto.nombre}',
                 ip_address=request.META.get('REMOTE_ADDR')
             )
-            
+        
             # Obtener el ID del proyecto antes de eliminar
             proyecto_id = archivo.proyecto.id
             
@@ -3346,43 +3346,40 @@ def sistema_reset_app(request):
     return render(request, 'core/sistema/reset_app.html')
  
 # ===== VISTA DE RENTABILIDAD =====
-def calcular_rentabilidad_proyecto(proyecto, fecha_inicio_dt, fecha_fin_dt):
+def calcular_rentabilidad_proyecto(proyecto, fecha_inicio_dt=None, fecha_fin_dt=None):
     """Función auxiliar para calcular rentabilidad de un proyecto usando la misma lógica que el dashboard"""
     from decimal import Decimal
     
+    # Construir filtros de fecha dinámicamente
+    facturas_filter = {'proyecto': proyecto, 'estado': 'pagada'}
+    anticipos_filter = {'proyecto': proyecto, 'monto_aplicado__gt': 0}
+    anticipos_proyecto_filter = {'proyecto': proyecto, 'aplicado_al_proyecto': True}
+    gastos_filter = {'proyecto': proyecto, 'aprobado': True}
+    
+    # Aplicar filtros de fecha solo si se proporcionan
+    if fecha_inicio_dt and fecha_fin_dt:
+        facturas_filter['fecha_emision__range'] = [fecha_inicio_dt, fecha_fin_dt]
+        anticipos_filter['fecha_aplicacion__range'] = [fecha_inicio_dt, fecha_fin_dt]
+        anticipos_proyecto_filter['fecha_aplicacion__range'] = [fecha_inicio_dt, fecha_fin_dt]
+        gastos_filter['fecha_gasto__range'] = [fecha_inicio_dt, fecha_fin_dt]
+    
     # Facturas pagadas del proyecto
-    facturas_pagadas = Factura.objects.filter(
-        proyecto=proyecto,
-        estado='pagada',
-        fecha_emision__range=[fecha_inicio_dt, fecha_fin_dt]
-    )
+    facturas_pagadas = Factura.objects.filter(**facturas_filter)
     total_facturas_pagadas = facturas_pagadas.aggregate(total=Sum('monto_total'))['total'] or Decimal('0.00')
     
     # Anticipos aplicados a facturas del proyecto
-    anticipos_aplicados = Anticipo.objects.filter(
-        proyecto=proyecto,
-        monto_aplicado__gt=0,
-        fecha_aplicacion__range=[fecha_inicio_dt, fecha_fin_dt]
-    )
+    anticipos_aplicados = Anticipo.objects.filter(**anticipos_filter)
     total_anticipos_aplicados = anticipos_aplicados.aggregate(total=Sum('monto_aplicado'))['total'] or Decimal('0.00')
     
     # Anticipos aplicados al proyecto
-    anticipos_proyecto = Anticipo.objects.filter(
-        proyecto=proyecto,
-        aplicado_al_proyecto=True,
-        fecha_aplicacion__range=[fecha_inicio_dt, fecha_fin_dt]
-    )
+    anticipos_proyecto = Anticipo.objects.filter(**anticipos_proyecto_filter)
     total_anticipos_aplicados_proyecto = anticipos_proyecto.aggregate(total=Sum('monto_aplicado_proyecto'))['total'] or Decimal('0.00')
     
     # Total de ingresos (misma lógica que dashboard)
     ingresos_proyecto = total_facturas_pagadas + total_anticipos_aplicados + total_anticipos_aplicados_proyecto
     
-    # Gastos del proyecto (solo del período filtrado)
-    gastos_proyecto_raw = Gasto.objects.filter(
-        proyecto=proyecto,
-        fecha_gasto__range=[fecha_inicio_dt, fecha_fin_dt],
-        aprobado=True
-    ).aggregate(total=Sum('monto'))['total'] or 0
+    # Gastos del proyecto
+    gastos_proyecto_raw = Gasto.objects.filter(**gastos_filter).aggregate(total=Sum('monto'))['total'] or 0
     gastos_proyecto = Decimal(str(gastos_proyecto_raw))
     
     rentabilidad_proyecto = ingresos_proyecto - gastos_proyecto
@@ -3400,64 +3397,76 @@ def rentabilidad_view(request):
     """Vista de rentabilidad y análisis financiero"""
     try:
         # Obtener parámetros de filtro
-        periodo = request.GET.get('periodo', 'mes')  # mes, trimestre, año
+        periodo = request.GET.get('periodo', 'todos')  # todos, mes, trimestre, año
         fecha_inicio = request.GET.get('fecha_inicio')
         fecha_fin = request.GET.get('fecha_fin')
         
-        # Fechas por defecto
-        hoy = timezone.now()
-        if periodo == 'mes':
-            fecha_inicio = fecha_inicio or (hoy - timedelta(days=30)).strftime('%Y-%m-%d')
-            fecha_fin = fecha_fin or hoy.strftime('%Y-%m-%d')
-        elif periodo == 'trimestre':
-            fecha_inicio = fecha_inicio or (hoy - timedelta(days=90)).strftime('%Y-%m-%d')
-            fecha_fin = fecha_fin or hoy.strftime('%Y-%m-%d')
-        elif periodo == 'año':
-            fecha_inicio = fecha_inicio or (hoy - timedelta(days=365)).strftime('%Y-%m-%d')
-            fecha_fin = fecha_fin or hoy.strftime('%Y-%m-%d')
+        # Inicializar fechas como None (sin filtro)
+        fecha_inicio_dt = None
+        fecha_fin_dt = None
         
-        # Convertir fechas a datetime
-        fecha_inicio_dt = timezone.make_aware(datetime.strptime(fecha_inicio, '%Y-%m-%d'))
-        fecha_fin_dt = timezone.make_aware(datetime.strptime(fecha_fin, '%Y-%m-%d'))
+        # Solo aplicar filtros de fecha si se especifican
+        if periodo != 'todos' and (fecha_inicio or fecha_fin):
+            hoy = timezone.now()
+            if periodo == 'mes':
+                fecha_inicio = fecha_inicio or (hoy - timedelta(days=30)).strftime('%Y-%m-%d')
+                fecha_fin = fecha_fin or hoy.strftime('%Y-%m-%d')
+            elif periodo == 'trimestre':
+                fecha_inicio = fecha_inicio or (hoy - timedelta(days=90)).strftime('%Y-%m-%d')
+                fecha_fin = fecha_fin or hoy.strftime('%Y-%m-%d')
+            elif periodo == 'año':
+                fecha_inicio = fecha_inicio or (hoy - timedelta(days=365)).strftime('%Y-%m-%d')
+                fecha_fin = fecha_fin or hoy.strftime('%Y-%m-%d')
+            
+            # Convertir fechas a datetime solo si se especificaron
+            if fecha_inicio and fecha_fin:
+                fecha_inicio_dt = timezone.make_aware(datetime.strptime(fecha_inicio, '%Y-%m-%d'))
+                fecha_fin_dt = timezone.make_aware(datetime.strptime(fecha_fin, '%Y-%m-%d'))
     
-            # Calcular ingresos (usando la misma lógica que el dashboard)
+        # Calcular ingresos (usando la misma lógica que el dashboard)
+        # Construir filtros de fecha dinámicamente
+        facturas_filter = {'estado': 'pagada'}
+        anticipos_filter = {'monto_aplicado__gt': 0}
+        anticipos_proyecto_filter = {'aplicado_al_proyecto': True}
+        
+        # Aplicar filtros de fecha solo si se proporcionan
+        if fecha_inicio_dt and fecha_fin_dt:
+            facturas_filter['fecha_emision__range'] = [fecha_inicio_dt, fecha_fin_dt]
+            anticipos_filter['fecha_aplicacion__range'] = [fecha_inicio_dt, fecha_fin_dt]
+            anticipos_proyecto_filter['fecha_aplicacion__range'] = [fecha_inicio_dt, fecha_fin_dt]
+        
         # Facturas pagadas
-        facturas_pagadas = Factura.objects.filter(
-            fecha_emision__range=[fecha_inicio_dt, fecha_fin_dt],
-            estado='pagada'
-        )
+        facturas_pagadas = Factura.objects.filter(**facturas_filter)
         total_facturas_pagadas = facturas_pagadas.aggregate(total=Sum('monto_total'))['total'] or Decimal('0.00')
         
         # Anticipos aplicados a facturas
-        anticipos_aplicados = Anticipo.objects.filter(
-            monto_aplicado__gt=0,
-            fecha_aplicacion__range=[fecha_inicio_dt, fecha_fin_dt]
-        )
+        anticipos_aplicados = Anticipo.objects.filter(**anticipos_filter)
         total_anticipos_aplicados = anticipos_aplicados.aggregate(total=Sum('monto_aplicado'))['total'] or Decimal('0.00')
         
         # Anticipos aplicados al proyecto
-        anticipos_proyecto = Anticipo.objects.filter(
-            aplicado_al_proyecto=True,
-            fecha_aplicacion__range=[fecha_inicio_dt, fecha_fin_dt]
-        )
+        anticipos_proyecto = Anticipo.objects.filter(**anticipos_proyecto_filter)
         total_anticipos_aplicados_proyecto = anticipos_proyecto.aggregate(total=Sum('monto_aplicado_proyecto'))['total'] or Decimal('0.00')
         
         # Total de ingresos
         ingresos = total_facturas_pagadas + total_anticipos_aplicados + total_anticipos_aplicados_proyecto
         
         # Calcular totales de facturación e ingresos
-        total_facturado = Factura.objects.filter(
-            fecha_emision__range=[fecha_inicio_dt, fecha_fin_dt]
-        ).aggregate(total=Sum('monto_total'))['total'] or Decimal('0.00')
+        facturado_filter = {}
+        if fecha_inicio_dt and fecha_fin_dt:
+            facturado_filter['fecha_emision__range'] = [fecha_inicio_dt, fecha_fin_dt]
+        
+        total_facturado = Factura.objects.filter(**facturado_filter).aggregate(total=Sum('monto_total'))['total'] or Decimal('0.00')
         
         # Log información de rentabilidad
-        logger.debug(f"Período: {fecha_inicio} a {fecha_fin}, Facturado: Q{total_facturado}, Cobrado: Q{ingresos}")
+        periodo_info = f"{fecha_inicio} a {fecha_fin}" if fecha_inicio and fecha_fin else "Todos los datos"
+        logger.debug(f"Período: {periodo_info}, Facturado: Q{total_facturado}, Cobrado: Q{ingresos}")
         
         # Calcular gastos
-        gastos_raw = Gasto.objects.filter(
-            fecha_gasto__range=[fecha_inicio_dt, fecha_fin_dt],
-            aprobado=True
-        ).aggregate(total=Sum('monto'))['total'] or 0
+        gastos_filter = {'aprobado': True}
+        if fecha_inicio_dt and fecha_fin_dt:
+            gastos_filter['fecha_gasto__range'] = [fecha_inicio_dt, fecha_fin_dt]
+        
+        gastos_raw = Gasto.objects.filter(**gastos_filter).aggregate(total=Sum('monto'))['total'] or 0
         gastos = Decimal(str(gastos_raw))
         
         # Gastos fijos (por ahora 0)
@@ -4074,7 +4083,8 @@ def admin_ejecutar_verificaciones(request):
     
     if request.method == 'POST':
         try:
-            SistemaNotificacionesAutomaticas.ejecutar_verificaciones_diarias()
+            # TODO: Implementar SistemaNotificacionesAutomaticas
+            # SistemaNotificacionesAutomaticas.ejecutar_verificaciones_diarias()
             messages.success(request, 'Verificaciones automáticas ejecutadas correctamente')
         except Exception as e:
             messages.error(request, f'Error ejecutando verificaciones: {str(e)}')
@@ -4347,9 +4357,14 @@ def rentabilidad_exportar_excel(request):
         
         # Crear archivo Excel
         from django.http import HttpResponse
-        import openpyxl
-        from openpyxl.styles import Font, Alignment, PatternFill
         from io import BytesIO
+        
+        try:
+            import openpyxl
+            from openpyxl.styles import Font, Alignment, PatternFill
+        except ImportError:
+            messages.error(request, 'El módulo openpyxl no está instalado. Instálalo con: pip install openpyxl')
+            return redirect('rentabilidad')
         
         buffer = BytesIO()
         workbook = openpyxl.Workbook()
@@ -5662,7 +5677,7 @@ def planilla_proyecto_pdf(request, proyecto_id):
                 f"Q{salario_neto:,.2f}",
                 estado
             ])
-            
+        
             # Acumular totales
             total_salarios_base += salario_base
             total_anticipos_pendientes += anticipos_pendientes
