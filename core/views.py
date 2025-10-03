@@ -3405,8 +3405,8 @@ def rentabilidad_view(request):
         fecha_inicio_dt = None
         fecha_fin_dt = None
         
-        # Solo aplicar filtros de fecha si se especifican
-        if periodo != 'todos' and (fecha_inicio or fecha_fin):
+        # Solo aplicar filtros de fecha si NO es 'todos'
+        if periodo != 'todos':
             hoy = timezone.now()
             if periodo == 'mes':
                 fecha_inicio = fecha_inicio or (hoy - timedelta(days=30)).strftime('%Y-%m-%d')
