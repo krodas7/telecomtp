@@ -3096,6 +3096,80 @@ def sistema_ver_respaldos(request):
         return redirect('sistema_configurar')
 
 
+@login_required
+def sistema_restaurar_respaldo(request, filename):
+    """Restaurar respaldo de la base de datos"""
+    if not request.user.is_superuser:
+        messages.error(request, 'No tienes permisos para acceder a esta sección')
+        return redirect('dashboard')
+    
+    try:
+        from django.core.management import call_command
+        import os
+        from datetime import datetime
+        
+        # Verificar que el archivo existe
+        backup_dir = os.path.join(settings.MEDIA_ROOT, 'respaldos')
+        backup_path = os.path.join(backup_dir, filename)
+        
+        if not os.path.exists(backup_path):
+            messages.error(request, f'❌ Archivo de respaldo no encontrado: {filename}')
+            return redirect('sistema_ver_respaldos')
+        
+        # Verificar que es un archivo de respaldo válido
+        if not filename.endswith('.json') or not filename.startswith('respaldo_sistema_'):
+            messages.error(request, '❌ Archivo de respaldo inválido')
+            return redirect('sistema_ver_respaldos')
+        
+        # Crear respaldo de seguridad antes de restaurar
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        safety_backup = f'respaldo_seguridad_{timestamp}.json'
+        safety_path = os.path.join(backup_dir, safety_backup)
+        
+        # Crear respaldo de seguridad
+        call_command('dumpdata', output=safety_path, indent=2)
+        
+        # Limpiar base de datos actual (solo datos, no estructura)
+        from django.db import connection
+        with connection.cursor() as cursor:
+            # Obtener todas las tablas de la app core
+            cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name LIKE 'core_%'")
+            tables = [row[0] for row in cursor.fetchall()]
+            
+            # Deshabilitar foreign key checks temporalmente
+            cursor.execute("PRAGMA foreign_keys = OFF")
+            
+            # Limpiar tablas (excepto migrations)
+            for table in tables:
+                if table != 'core_migrations':
+                    cursor.execute(f"DELETE FROM {table}")
+            
+            # Rehabilitar foreign key checks
+            cursor.execute("PRAGMA foreign_keys = ON")
+        
+        # Restaurar desde el respaldo
+        call_command('loaddata', backup_path)
+        
+        # Registrar actividad
+        LogActividad.objects.create(
+            usuario=request.user,
+            accion='Restaurar',
+            modulo='Sistema',
+            descripcion=f'Respaldo restaurado: {filename} (Respaldo de seguridad: {safety_backup})',
+            ip_address=request.META.get('REMOTE_ADDR')
+        )
+        
+        messages.success(request, f'✅ Respaldo restaurado exitosamente: {filename}')
+        messages.info(request, f'ℹ️ Se creó un respaldo de seguridad: {safety_backup}')
+        
+    except Exception as e:
+        logger.error(f'Error al restaurar respaldo: {e}')
+        messages.error(request, f'❌ Error al restaurar respaldo: {str(e)}')
+        messages.error(request, '⚠️ Si hay problemas, puedes restaurar desde el respaldo de seguridad')
+    
+    return redirect('sistema_ver_respaldos')
+
+
 def offline_view(request):
     """Vista para modo offline"""
     return render(request, 'core/offline.html')
@@ -4294,34 +4368,24 @@ def inventario_dashboard(request):
         # Estadísticas generales
         total_items = ItemInventario.objects.count()
         total_categorias = CategoriaInventario.objects.count()
+        total_asignaciones = AsignacionInventario.objects.count()
         items_bajo_stock = ItemInventario.objects.filter(stock_actual__lte=F('stock_minimo')).count()
-        valor_total_inventario = ItemInventario.objects.aggregate(
-            total=Sum('stock_actual')
-        )['total'] or 0
         
-        # Items más utilizados
-        items_mas_asignados = ItemInventario.objects.annotate(
-            total_asignaciones=Count('asignaciones')
-        ).order_by('-total_asignaciones')[:5]
+        # Items recientes (últimos 5)
+        items_recientes = ItemInventario.objects.select_related('categoria').order_by('-id')[:5]
         
         # Categorías con más items
         categorias_con_items = CategoriaInventario.objects.annotate(
-            total_items=Count('iteminventario')
-        ).order_by('-total_items')
-        
-        # Asignaciones recientes
-        asignaciones_recientes = AsignacionInventario.objects.select_related(
-            'item', 'proyecto', 'asignado_por'
-        ).order_by('-fecha_asignacion')[:10]
+            items_count=Count('iteminventario')
+        ).filter(items_count__gt=0).order_by('-items_count')[:5]
         
         context = {
             'total_items': total_items,
             'total_categorias': total_categorias,
+            'total_asignaciones': total_asignaciones,
             'items_bajo_stock': items_bajo_stock,
-            'valor_total_inventario': valor_total_inventario,
-            'items_mas_asignados': items_mas_asignados,
+            'items_recientes': items_recientes,
             'categorias_con_items': categorias_con_items,
-            'asignaciones_recientes': asignaciones_recientes,
         }
         
         return render(request, 'core/inventario/dashboard.html', context)
@@ -4329,7 +4393,7 @@ def inventario_dashboard(request):
     except Exception as e:
         logger.error(f'Error en inventario_dashboard: {e}')
         messages.error(request, 'Error al cargar el dashboard de inventario')
-        return redirect('inventario_list')
+        return redirect('item_list')
 
 # Vistas para Categorías
 @login_required
@@ -4393,48 +4457,52 @@ def categoria_delete(request, pk):
 @login_required
 def item_list(request):
     """Lista de items del inventario"""
-    items = ItemInventario.objects.select_related('categoria').all().order_by('nombre')
+    from django.core.paginator import Paginator
+    
+    items = ItemInventario.objects.select_related('categoria').all()
     
     # Filtros
-    categoria_id = request.GET.get('categoria')
-    if categoria_id:
-        items = items.filter(categoria_id=categoria_id)
+    search = request.GET.get('search', '')
+    categoria_filter = request.GET.get('categoria', '')
+    stock_filter = request.GET.get('stock', '')
     
-    # Búsqueda
-    query = request.GET.get('q')
-    if query:
+    # Aplicar filtros
+    if search:
         items = items.filter(
-            Q(nombre__icontains=query) | 
-            Q(codigo__icontains=query) | 
-            Q(descripcion__icontains=query)
+            Q(nombre__icontains=search) | 
+            Q(codigo__icontains=search) | 
+            Q(descripcion__icontains=search)
         )
     
+    if categoria_filter:
+        items = items.filter(categoria_id=categoria_filter)
+    
+    if stock_filter == 'bajo':
+        items = items.filter(stock_actual__lte=F('stock_minimo'))
+    elif stock_filter == 'ok':
+        items = items.filter(stock_actual__gt=F('stock_minimo'))
+    
     # Ordenamiento
-    orden = request.GET.get('orden', 'nombre')
-    if orden == 'stock':
-        items = items.order_by('stock_actual')
-    elif orden == 'categoria':
-        items = items.order_by('categoria__nombre')
+    items = items.order_by('nombre')
     
-    # Estadísticas para el dashboard
-    total_items = ItemInventario.objects.count()
-    items_activos = ItemInventario.objects.filter(activo=True).count()
-    categorias_count = CategoriaInventario.objects.count()
+    # Paginación
+    paginator = Paginator(items, 10)  # 10 items por página
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
     
-    categorias = CategoriaInventario.objects.all()
+    # Obtener categorías para el filtro
+    categorias = CategoriaInventario.objects.all().order_by('nombre')
     
     context = {
-        'items': items,
+        'items': page_obj,
+        'page_obj': page_obj,
         'categorias': categorias,
-        'categoria_seleccionada': categoria_id,
-        'query': query,
-        'orden': orden,
-        'total_items': total_items,
-        'items_activos': items_activos,
-        'categorias_count': categorias_count
+        'search': search,
+        'categoria_filter': categoria_filter,
+        'stock_filter': stock_filter,
     }
     
-    return render(request, 'core/inventario/item/list.html', context)
+    return render(request, 'core/inventario/items/list.html', context)
 
 @login_required
 def item_create(request):
@@ -4445,12 +4513,22 @@ def item_create(request):
             item = form.save(commit=False)
             item.stock_disponible = item.stock_actual
             item.save()
-            messages.success(request, 'Item creado exitosamente')
+            messages.success(request, '✅ Item creado exitosamente')
             return redirect('item_list')
+        else:
+            messages.error(request, '❌ Por favor corrige los errores en el formulario')
     else:
         form = ItemInventarioForm()
     
-    return render(request, 'core/inventario/item/create.html', {'form': form})
+    context = {
+        'form': form,
+        'form_title': 'Crear Nuevo Item',
+        'form_description': 'Completa la información para agregar un nuevo item al inventario',
+        'form_icon': 'plus',
+        'submit_text': 'Crear Item'
+    }
+    
+    return render(request, 'core/inventario/items/form.html', context)
 
 @login_required
 def item_detail(request, pk):
@@ -4481,25 +4559,56 @@ def item_edit(request, pk):
                 diferencia = item.stock_actual - old_stock
                 item.stock_disponible += diferencia
             item.save()
-            messages.success(request, 'Item actualizado exitosamente')
+            messages.success(request, '✅ Item actualizado exitosamente')
             return redirect('item_list')
+        else:
+            messages.error(request, '❌ Por favor corrige los errores en el formulario')
     else:
         form = ItemInventarioForm(instance=item)
     
-    return render(request, 'core/inventario/item/edit.html', {
-        'form': form, 'item': item
-    })
+    context = {
+        'form': form,
+        'item': item,
+        'form_title': f'Editar Item: {item.nombre}',
+        'form_description': 'Modifica la información del item seleccionado',
+        'form_icon': 'edit',
+        'submit_text': 'Actualizar Item'
+    }
+    
+    return render(request, 'core/inventario/items/form.html', context)
 
 @login_required
 def item_delete(request, pk):
     """Eliminar item"""
     item = get_object_or_404(ItemInventario, pk=pk)
-    if request.method == 'POST':
-        item.delete()
-        messages.success(request, 'Item eliminado exitosamente')
-        return redirect('item_list')
     
-    return render(request, 'core/inventario/item/delete.html', {'item': item})
+    if request.method == 'POST':
+        confirm = request.POST.get('confirm')
+        if confirm == 'true':
+            # Verificar si hay asignaciones activas
+            asignaciones_activas = AsignacionInventario.objects.filter(
+                item=item, 
+                fecha_devolucion__isnull=True
+            ).count()
+            
+            if asignaciones_activas > 0:
+                messages.error(request, f'❌ No se puede eliminar el item porque tiene {asignaciones_activas} asignación(es) activa(s). Debe devolver todas las asignaciones primero.')
+                return redirect('item_detail', pk=pk)
+            
+            # Eliminar el item
+            item.delete()
+            messages.success(request, '✅ Item eliminado exitosamente')
+            return redirect('item_list')
+        else:
+            messages.error(request, '❌ Confirmación requerida para eliminar el item')
+    
+    # Contar asignaciones para mostrar en el template
+    asignaciones_count = AsignacionInventario.objects.filter(item=item).count()
+    
+    return render(request, 'core/inventario/items/delete.html', {
+        'item': item,
+        'asignaciones_count': asignaciones_count
+    })
 
 # Vistas para Asignaciones
 @login_required

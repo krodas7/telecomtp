@@ -1,0 +1,401 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Items de Inventario - Sistema Arca{% endblock %}
+
+{% block extra_css %}
+<style>
+    .items-hero {
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        color: white;
+        padding: 3rem 2rem;
+        border-radius: 20px;
+        margin-bottom: 2rem;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .items-hero::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="white" opacity="0.1"/><circle cx="75" cy="75" r="1" fill="white" opacity="0.1"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+        opacity: 0.3;
+    }
+    
+    .items-hero-content {
+        position: relative;
+        z-index: 2;
+    }
+    
+    .items-table {
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        overflow: hidden;
+    }
+    
+    .table-header {
+        background: #f8f9fa;
+        padding: 1.5rem;
+        border-bottom: 2px solid #e9ecef;
+    }
+    
+    .item-card {
+        background: white;
+        border-radius: 10px;
+        padding: 1.5rem;
+        margin-bottom: 1rem;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        transition: all 0.3s ease;
+        border-left: 4px solid #28a745;
+    }
+    
+    .item-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+    }
+    
+    .item-name {
+        font-weight: 600;
+        color: #495057;
+        font-size: 1.1rem;
+        margin-bottom: 0.5rem;
+    }
+    
+    .item-code {
+        color: #6c757d;
+        font-size: 0.9rem;
+        font-family: monospace;
+    }
+    
+    .item-description {
+        color: #6c757d;
+        font-size: 0.9rem;
+        margin: 0.5rem 0;
+    }
+    
+    .stock-info {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin: 1rem 0;
+    }
+    
+    .stock-current {
+        font-size: 1.2rem;
+        font-weight: 600;
+    }
+    
+    .stock-ok {
+        color: #28a745;
+    }
+    
+    .stock-low {
+        color: #dc3545;
+    }
+    
+    .stock-warning {
+        color: #ffc107;
+    }
+    
+    .category-badge {
+        background: #667eea;
+        color: white;
+        padding: 0.25rem 0.75rem;
+        border-radius: 15px;
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+    
+    .action-buttons {
+        display: flex;
+        gap: 0.5rem;
+        margin-top: 1rem;
+    }
+    
+    .btn-action {
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        text-decoration: none;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-view {
+        background: #17a2b8;
+        color: white;
+    }
+    
+    .btn-edit {
+        background: #ffc107;
+        color: #212529;
+    }
+    
+    .btn-delete {
+        background: #dc3545;
+        color: white;
+    }
+    
+    .btn-action:hover {
+        transform: translateY(-1px);
+        text-decoration: none;
+        color: white;
+    }
+    
+    .btn-edit:hover {
+        color: #212529;
+    }
+    
+    .search-section {
+        background: #f8f9fa;
+        border-radius: 15px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+    }
+    
+    .search-input {
+        border-radius: 25px;
+        border: 2px solid #e9ecef;
+        padding: 12px 20px;
+        transition: all 0.3s ease;
+    }
+    
+    .search-input:focus {
+        border-color: #28a745;
+        box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.25);
+    }
+    
+    .filter-select {
+        border-radius: 25px;
+        border: 2px solid #e9ecef;
+        padding: 12px 20px;
+        transition: all 0.3s ease;
+    }
+    
+    .filter-select:focus {
+        border-color: #28a745;
+        box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.25);
+    }
+    
+    .btn-primary-custom {
+        background: linear-gradient(45deg, #28a745, #20c997);
+        border: none;
+        border-radius: 25px;
+        padding: 12px 24px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-primary-custom:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(40, 167, 69, 0.4);
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 4rem 2rem;
+    }
+    
+    .empty-state i {
+        font-size: 4rem;
+        color: #6c757d;
+        margin-bottom: 1rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="items-hero">
+        <div class="items-hero-content">
+            <h2><i class="fas fa-boxes me-3"></i>Items de Inventario</h2>
+            <p class="mb-0">Gestiona todos los items de tu inventario</p>
+        </div>
+    </div>
+
+    <!-- Búsqueda y Filtros -->
+    <div class="search-section">
+        <form method="GET" class="row g-3">
+            <div class="col-md-4">
+                <label for="search" class="form-label">
+                    <i class="fas fa-search me-2"></i>Buscar items...
+                </label>
+                <input type="text" 
+                       class="form-control search-input" 
+                       id="search" 
+                       name="search" 
+                       value="{{ search }}"
+                       placeholder="Nombre, código o descripción...">
+            </div>
+            <div class="col-md-3">
+                <label for="categoria" class="form-label">
+                    <i class="fas fa-tag me-2"></i>Categoría
+                </label>
+                <select class="form-select filter-select" id="categoria" name="categoria">
+                    <option value="">Todas las categorías</option>
+                    {% for categoria in categorias %}
+                        <option value="{{ categoria.id }}" {% if categoria_filter == categoria.id|stringformat:"s" %}selected{% endif %}>
+                            {{ categoria.nombre }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label for="stock" class="form-label">
+                    <i class="fas fa-warehouse me-2"></i>Estado de Stock
+                </label>
+                <select class="form-select filter-select" id="stock" name="stock">
+                    <option value="">Todos</option>
+                    <option value="bajo" {% if stock_filter == 'bajo' %}selected{% endif %}>Stock Bajo</option>
+                    <option value="ok" {% if stock_filter == 'ok' %}selected{% endif %}>Stock Normal</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">&nbsp;</label>
+                <div class="d-grid">
+                    <button type="submit" class="btn btn-primary-custom">
+                        <i class="fas fa-filter me-2"></i>Filtrar
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- Acciones -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h5 class="mb-0">
+                <i class="fas fa-list me-2"></i>Items Encontrados: {{ items.count }}
+            </h5>
+        </div>
+        <div>
+            <a href="{% url 'item_create' %}" class="btn btn-primary-custom">
+                <i class="fas fa-plus me-2"></i>Nuevo Item
+            </a>
+        </div>
+    </div>
+
+    <!-- Lista de Items -->
+    <div class="items-table">
+        {% if items %}
+            <div class="p-4">
+                {% for item in items %}
+                <div class="item-card">
+                    <div class="row align-items-center">
+                        <div class="col-md-3">
+                            <div class="item-name">{{ item.nombre }}</div>
+                            <div class="item-code">Código: {{ item.codigo|default:"Sin código" }}</div>
+                            {% if item.descripcion %}
+                                <div class="item-description">{{ item.descripcion|truncatechars:100 }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-2">
+                            <span class="category-badge">{{ item.categoria.nombre }}</span>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="stock-info">
+                                <div>
+                                    <strong>Stock Actual:</strong>
+                                    <span class="stock-current {% if item.stock_actual <= item.stock_minimo %}stock-low{% elif item.stock_actual <= item.stock_minimo|add:5 %}stock-warning{% else %}stock-ok{% endif %}">
+                                        {{ item.stock_actual }}
+                                    </span>
+                                </div>
+                                {% if item.stock_minimo %}
+                                    <div>
+                                        <small class="text-muted">Mín: {{ item.stock_minimo }}</small>
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <div>
+                                <strong>Disponible:</strong>
+                                <span class="stock-current stock-ok">{{ item.stock_disponible }}</span>
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="action-buttons">
+                                <a href="{% url 'item_detail' item.pk %}" class="btn-action btn-view">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                <a href="{% url 'item_edit' item.pk %}" class="btn-action btn-edit">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <a href="{% url 'item_delete' item.pk %}" class="btn-action btn-delete">
+                                    <i class="fas fa-trash"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="empty-state">
+                <i class="fas fa-boxes"></i>
+                <h4 class="text-muted">No se encontraron items</h4>
+                <p class="text-muted">Intenta ajustar los filtros de búsqueda o crea tu primer item</p>
+                <a href="{% url 'item_create' %}" class="btn btn-primary-custom">
+                    <i class="fas fa-plus me-2"></i>Crear Primer Item
+                </a>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Paginación -->
+    {% if page_obj.has_other_pages %}
+        <div class="row mt-4">
+            <div class="col-12">
+                <nav aria-label="Paginación de items">
+                    <ul class="pagination justify-content-center">
+                        {% if page_obj.has_previous %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page=1{% if search %}&search={{ search }}{% endif %}{% if categoria_filter %}&categoria={{ categoria_filter }}{% endif %}{% if stock_filter %}&stock={{ stock_filter }}{% endif %}">
+                                    <i class="fas fa-angle-double-left"></i>
+                                </a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if search %}&search={{ search }}{% endif %}{% if categoria_filter %}&categoria={{ categoria_filter }}{% endif %}{% if stock_filter %}&stock={{ stock_filter }}{% endif %}">
+                                    <i class="fas fa-angle-left"></i>
+                                </a>
+                            </li>
+                        {% endif %}
+                        
+                        {% for num in page_obj.paginator.page_range %}
+                            {% if page_obj.number == num %}
+                                <li class="page-item active">
+                                    <span class="page-link">{{ num }}</span>
+                                </li>
+                            {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ num }}{% if search %}&search={{ search }}{% endif %}{% if categoria_filter %}&categoria={{ categoria_filter }}{% endif %}{% if stock_filter %}&stock={{ stock_filter }}{% endif %}">{{ num }}</a>
+                                </li>
+                            {% endif %}
+                        {% endfor %}
+                        
+                        {% if page_obj.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if search %}&search={{ search }}{% endif %}{% if categoria_filter %}&categoria={{ categoria_filter }}{% endif %}{% if stock_filter %}&stock={{ stock_filter }}{% endif %}">
+                                    <i class="fas fa-angle-right"></i>
+                                </a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if search %}&search={{ search }}{% endif %}{% if categoria_filter %}&categoria={{ categoria_filter }}{% endif %}{% if stock_filter %}&stock={{ stock_filter }}{% endif %}">
+                                    <i class="fas fa-angle-double-right"></i>
+                                </a>
+                            </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

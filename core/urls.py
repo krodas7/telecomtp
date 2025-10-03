@@ -131,6 +131,7 @@ urlpatterns = [
     path('usuarios/crear-mejorado/', views_usuarios_mejoradas.usuario_crear_mejorado, name='usuario_crear_mejorado'),
     path('usuarios/<int:usuario_id>/editar-mejorado/', views_usuarios_mejoradas.usuario_editar_mejorado, name='usuario_editar_mejorado'),
     path('usuarios/gestor-permisos/', views_usuarios_mejoradas.usuarios_gestor_permisos, name='usuarios_gestor_permisos'),
+    path('usuarios/gestor-permisos-intuitivo/', views_usuarios_mejoradas.usuarios_gestor_permisos_intuitivo, name='usuarios_gestor_permisos_intuitivo'),
     
     # Sistema
     path('sistema/', views.sistema_view, name='sistema'),
@@ -139,6 +140,7 @@ urlpatterns = [
     path('sistema/reset-app/', views.sistema_reset_app, name='sistema_reset_app'),
     path('sistema/crear-respaldo/', views.sistema_crear_respaldo, name='sistema_crear_respaldo'),
     path('sistema/ver-respaldos/', views.sistema_ver_respaldos, name='sistema_ver_respaldos'),
+    path('sistema/restaurar-respaldo/<str:filename>/', views.sistema_restaurar_respaldo, name='sistema_restaurar_respaldo'),
     path('sistema/limpiar-logs/', views.sistema_limpiar_logs, name='sistema_limpiar_logs'),
     path('sistema/exportar-config/', views.sistema_exportar_config, name='sistema_exportar_config'),
     

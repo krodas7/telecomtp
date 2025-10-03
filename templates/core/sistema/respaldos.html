@@ -133,8 +133,15 @@ function descargarRespaldo(nombre) {
 }
 
 function restaurarRespaldo(nombre) {
-    if (confirm(`¿Estás seguro de que quieres restaurar el respaldo "${nombre}"?\n\n⚠️ ADVERTENCIA: Esto sobrescribirá todos los datos actuales del sistema.`)) {
-        alert('⚠️ Función de restauración automática en desarrollo.\n\nPara restaurar manualmente:\n1. Detén el servidor\n2. Ejecuta: python manage.py loaddata media/respaldos/' + nombre + '\n3. Reinicia el servidor');
+    if (confirm(`¿Estás seguro de que quieres restaurar el respaldo "${nombre}"?\n\n⚠️ ADVERTENCIA: Esto sobrescribirá todos los datos actuales del sistema.\n\n✅ Se creará un respaldo de seguridad automáticamente.`)) {
+        // Mostrar loading
+        const btn = event.target;
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Restaurando...';
+        btn.disabled = true;
+        
+        // Redirigir a la función de restaurar
+        window.location.href = `{% url 'sistema_restaurar_respaldo' 'PLACEHOLDER' %}`.replace('PLACEHOLDER', nombre);
     }
 }
 

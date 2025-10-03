@@ -1,0 +1,374 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Eliminar Item - Sistema Arca{% endblock %}
+
+{% block extra_css %}
+<style>
+    .delete-hero {
+        background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+        color: white;
+        padding: 3rem 2rem;
+        border-radius: 20px;
+        margin-bottom: 2rem;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .delete-hero::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="white" opacity="0.1"/><circle cx="75" cy="75" r="1" fill="white" opacity="0.1"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+        opacity: 0.3;
+    }
+    
+    .delete-hero-content {
+        position: relative;
+        z-index: 2;
+    }
+    
+    .delete-container {
+        background: white;
+        border-radius: 20px;
+        padding: 3rem;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        margin-bottom: 2rem;
+    }
+    
+    .warning-section {
+        background: #fff3cd;
+        border: 2px solid #ffeaa7;
+        border-radius: 15px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+    }
+    
+    .warning-icon {
+        font-size: 3rem;
+        color: #856404;
+        margin-bottom: 1rem;
+    }
+    
+    .warning-title {
+        color: #856404;
+        font-weight: 600;
+        font-size: 1.5rem;
+        margin-bottom: 1rem;
+    }
+    
+    .warning-text {
+        color: #856404;
+        font-size: 1.1rem;
+        line-height: 1.6;
+    }
+    
+    .item-info {
+        background: #f8f9fa;
+        border-radius: 15px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+    }
+    
+    .item-header {
+        display: flex;
+        align-items: center;
+        margin-bottom: 1.5rem;
+    }
+    
+    .item-icon {
+        font-size: 2rem;
+        color: #6c757d;
+        margin-right: 1rem;
+    }
+    
+    .item-details {
+        flex: 1;
+    }
+    
+    .item-name {
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: #495057;
+        margin-bottom: 0.5rem;
+    }
+    
+    .item-category {
+        color: #6c757d;
+        font-size: 1.1rem;
+    }
+    
+    .item-stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin-top: 1.5rem;
+    }
+    
+    .stat-item {
+        background: white;
+        padding: 1rem;
+        border-radius: 10px;
+        text-align: center;
+        border: 2px solid #e9ecef;
+    }
+    
+    .stat-value {
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: #dc3545;
+        margin-bottom: 0.25rem;
+    }
+    
+    .stat-label {
+        color: #6c757d;
+        font-size: 0.9rem;
+    }
+    
+    .confirmation-section {
+        background: #f8f9fa;
+        border-radius: 15px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+    }
+    
+    .confirmation-title {
+        color: #495057;
+        font-weight: 600;
+        font-size: 1.2rem;
+        margin-bottom: 1rem;
+    }
+    
+    .confirmation-text {
+        color: #6c757d;
+        margin-bottom: 1.5rem;
+        line-height: 1.6;
+    }
+    
+    .confirmation-input {
+        border-radius: 10px;
+        border: 2px solid #e9ecef;
+        padding: 12px 16px;
+        font-size: 1.1rem;
+        transition: all 0.3s ease;
+        width: 100%;
+    }
+    
+    .confirmation-input:focus {
+        border-color: #dc3545;
+        box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
+    }
+    
+    .action-buttons {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+    }
+    
+    .btn-action {
+        padding: 12px 30px;
+        border-radius: 25px;
+        font-weight: 600;
+        font-size: 1.1rem;
+        text-decoration: none;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        border: none;
+        cursor: pointer;
+    }
+    
+    .btn-danger-custom {
+        background: linear-gradient(45deg, #dc3545, #c82333);
+        color: white;
+    }
+    
+    .btn-secondary-custom {
+        background: #6c757d;
+        color: white;
+    }
+    
+    .btn-action:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        text-decoration: none;
+        color: white;
+    }
+    
+    .btn-action:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        transform: none;
+    }
+    
+    .consequences-list {
+        background: #f8d7da;
+        border: 2px solid #f5c6cb;
+        border-radius: 10px;
+        padding: 1.5rem;
+        margin-top: 1rem;
+    }
+    
+    .consequences-list h6 {
+        color: #721c24;
+        font-weight: 600;
+        margin-bottom: 1rem;
+    }
+    
+    .consequences-list ul {
+        margin: 0;
+        padding-left: 1.5rem;
+    }
+    
+    .consequences-list li {
+        color: #721c24;
+        margin-bottom: 0.5rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="delete-hero">
+        <div class="delete-hero-content">
+            <h2><i class="fas fa-trash me-3"></i>Eliminar Item</h2>
+            <p class="mb-0">Esta acción no se puede deshacer</p>
+        </div>
+    </div>
+
+    <!-- Contenedor Principal -->
+    <div class="delete-container">
+        <!-- Advertencia -->
+        <div class="warning-section">
+            <div class="text-center">
+                <div class="warning-icon">
+                    <i class="fas fa-exclamation-triangle"></i>
+                </div>
+                <div class="warning-title">¡ADVERTENCIA!</div>
+                <div class="warning-text">
+                    Estás a punto de eliminar permanentemente este item del inventario. 
+                    Esta acción no se puede deshacer y afectará todos los registros relacionados.
+                </div>
+            </div>
+        </div>
+
+        <!-- Información del Item -->
+        <div class="item-info">
+            <div class="item-header">
+                <div class="item-icon">
+                    <i class="fas fa-box"></i>
+                </div>
+                <div class="item-details">
+                    <div class="item-name">{{ item.nombre }}</div>
+                    <div class="item-category">{{ item.categoria.nombre }}</div>
+                </div>
+            </div>
+            
+            <div class="item-stats">
+                <div class="stat-item">
+                    <div class="stat-value">{{ item.stock_actual }}</div>
+                    <div class="stat-label">Stock Actual</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value">{{ item.stock_disponible }}</div>
+                    <div class="stat-label">Stock Disponible</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value">{{ asignaciones_count }}</div>
+                    <div class="stat-label">Asignaciones</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value">
+                        {% if item.precio_unitario %}
+                            Q{{ item.precio_unitario|floatformat:2 }}
+                        {% else %}
+                            N/A
+                        {% endif %}
+                    </div>
+                    <div class="stat-label">Precio Unitario</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Consecuencias -->
+        <div class="consequences-list">
+            <h6><i class="fas fa-exclamation-circle me-2"></i>Consecuencias de esta acción:</h6>
+            <ul>
+                <li>El item será eliminado permanentemente del inventario</li>
+                <li>Todas las asignaciones relacionadas serán eliminadas</li>
+                <li>Se perderá el historial de movimientos del item</li>
+                <li>Los reportes que incluyan este item mostrarán datos inconsistentes</li>
+                <li>Esta acción no se puede deshacer</li>
+            </ul>
+        </div>
+
+        <!-- Confirmación -->
+        <div class="confirmation-section">
+            <div class="confirmation-title">
+                <i class="fas fa-shield-alt me-2"></i>Confirmación de Eliminación
+            </div>
+            <div class="confirmation-text">
+                Para confirmar la eliminación, escribe <strong>"ELIMINAR"</strong> en el campo de abajo:
+            </div>
+            <form method="post" id="deleteForm">
+                {% csrf_token %}
+                <input type="text" 
+                       class="confirmation-input" 
+                       id="confirmationInput" 
+                       placeholder="Escribe ELIMINAR para confirmar"
+                       required>
+                <input type="hidden" name="confirm" value="true">
+            </form>
+        </div>
+
+        <!-- Botones de Acción -->
+        <div class="action-buttons">
+            <a href="{% url 'item_detail' item.pk %}" class="btn-action btn-secondary-custom">
+                <i class="fas fa-arrow-left"></i>Cancelar
+            </a>
+            <button type="submit" 
+                    form="deleteForm" 
+                    class="btn-action btn-danger-custom" 
+                    id="deleteButton" 
+                    disabled>
+                <i class="fas fa-trash"></i>Eliminar Permanentemente
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const confirmationInput = document.getElementById('confirmationInput');
+    const deleteButton = document.getElementById('deleteButton');
+    
+    confirmationInput.addEventListener('input', function() {
+        if (this.value === 'ELIMINAR') {
+            deleteButton.disabled = false;
+            deleteButton.style.background = 'linear-gradient(45deg, #dc3545, #c82333)';
+        } else {
+            deleteButton.disabled = true;
+            deleteButton.style.background = '#6c757d';
+        }
+    });
+    
+    deleteButton.addEventListener('click', function(e) {
+        if (confirmationInput.value !== 'ELIMINAR') {
+            e.preventDefault();
+            alert('Por favor escribe "ELIMINAR" para confirmar la eliminación');
+            return;
+        }
+        
+        if (!confirm('¿Estás completamente seguro de que quieres eliminar este item? Esta acción no se puede deshacer.')) {
+            e.preventDefault();
+        }
+    });
+});
+</script>
+{% endblock %}

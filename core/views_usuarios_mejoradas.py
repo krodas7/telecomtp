@@ -492,6 +492,25 @@ def usuarios_gestor_permisos(request):
 
 
 @login_required
+def usuarios_gestor_permisos_intuitivo(request):
+    """Gestor de permisos intuitivo y visual"""
+    if not request.user.is_superuser:
+        messages.error(request, 'No tienes permisos para acceder a esta sección')
+        return redirect('dashboard')
+    
+    # Obtener todos los roles y módulos
+    roles = Rol.objects.all().order_by('nombre')
+    modulos = Modulo.objects.filter(activo=True).order_by('nombre')
+    
+    context = {
+        'roles': roles,
+        'modulos': modulos,
+    }
+    
+    return render(request, 'core/usuarios/gestor_permisos_intuitivo.html', context)
+
+
+@login_required
 def permisos_actualizar_masivo(request):
     """Actualizar permisos de forma masiva"""
     if not request.user.is_superuser:

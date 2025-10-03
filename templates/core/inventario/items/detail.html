@@ -1,0 +1,450 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ item.nombre }} - Sistema Arca{% endblock %}
+
+{% block extra_css %}
+<style>
+    .detail-hero {
+        background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+        color: white;
+        padding: 3rem 2rem;
+        border-radius: 20px;
+        margin-bottom: 2rem;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .detail-hero::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="white" opacity="0.1"/><circle cx="75" cy="75" r="1" fill="white" opacity="0.1"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+        opacity: 0.3;
+    }
+    
+    .detail-hero-content {
+        position: relative;
+        z-index: 2;
+    }
+    
+    .info-card {
+        background: white;
+        border-radius: 15px;
+        padding: 2rem;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        margin-bottom: 2rem;
+    }
+    
+    .info-section {
+        margin-bottom: 2rem;
+        padding: 1.5rem;
+        background: #f8f9fa;
+        border-radius: 10px;
+        border-left: 4px solid #17a2b8;
+    }
+    
+    .info-section h6 {
+        color: #17a2b8;
+        font-weight: 600;
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+    }
+    
+    .info-section h6 i {
+        margin-right: 0.5rem;
+        font-size: 1.2rem;
+    }
+    
+    .info-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.75rem 0;
+        border-bottom: 1px solid #e9ecef;
+    }
+    
+    .info-row:last-child {
+        border-bottom: none;
+    }
+    
+    .info-label {
+        font-weight: 600;
+        color: #495057;
+        flex: 1;
+    }
+    
+    .info-value {
+        color: #6c757d;
+        flex: 2;
+        text-align: right;
+    }
+    
+    .stock-badge {
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-weight: 600;
+        font-size: 0.9rem;
+    }
+    
+    .stock-ok {
+        background: #d4edda;
+        color: #155724;
+    }
+    
+    .stock-low {
+        background: #f8d7da;
+        color: #721c24;
+    }
+    
+    .stock-warning {
+        background: #fff3cd;
+        color: #856404;
+    }
+    
+    .category-badge {
+        background: #667eea;
+        color: white;
+        padding: 0.25rem 0.75rem;
+        border-radius: 15px;
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+    
+    .action-buttons {
+        display: flex;
+        gap: 1rem;
+        margin-top: 2rem;
+    }
+    
+    .btn-action {
+        padding: 0.75rem 1.5rem;
+        border-radius: 25px;
+        font-weight: 600;
+        text-decoration: none;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .btn-primary-custom {
+        background: linear-gradient(45deg, #17a2b8, #138496);
+        color: white;
+    }
+    
+    .btn-warning-custom {
+        background: linear-gradient(45deg, #ffc107, #e0a800);
+        color: #212529;
+    }
+    
+    .btn-danger-custom {
+        background: linear-gradient(45deg, #dc3545, #c82333);
+        color: white;
+    }
+    
+    .btn-secondary-custom {
+        background: #6c757d;
+        color: white;
+    }
+    
+    .btn-action:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        text-decoration: none;
+        color: white;
+    }
+    
+    .btn-warning-custom:hover {
+        color: #212529;
+    }
+    
+    .asignaciones-table {
+        background: white;
+        border-radius: 15px;
+        overflow: hidden;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+    }
+    
+    .table-header {
+        background: #f8f9fa;
+        padding: 1.5rem;
+        border-bottom: 2px solid #e9ecef;
+    }
+    
+    .asignacion-item {
+        padding: 1.5rem;
+        border-bottom: 1px solid #e9ecef;
+        transition: background-color 0.3s ease;
+    }
+    
+    .asignacion-item:hover {
+        background: #f8f9fa;
+    }
+    
+    .asignacion-item:last-child {
+        border-bottom: none;
+    }
+    
+    .asignacion-header {
+        display: flex;
+        justify-content: between;
+        align-items: center;
+        margin-bottom: 0.5rem;
+    }
+    
+    .asignacion-proyecto {
+        font-weight: 600;
+        color: #495057;
+        font-size: 1.1rem;
+    }
+    
+    .asignacion-fecha {
+        color: #6c757d;
+        font-size: 0.9rem;
+    }
+    
+    .asignacion-details {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 0.5rem;
+    }
+    
+    .asignacion-cantidad {
+        font-weight: 600;
+        color: #17a2b8;
+    }
+    
+    .asignacion-estado {
+        padding: 0.25rem 0.75rem;
+        border-radius: 15px;
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+    
+    .estado-activa {
+        background: #d4edda;
+        color: #155724;
+    }
+    
+    .estado-devuelta {
+        background: #f8d7da;
+        color: #721c24;
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 3rem 2rem;
+        color: #6c757d;
+    }
+    
+    .empty-state i {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="detail-hero">
+        <div class="detail-hero-content">
+            <h2><i class="fas fa-box me-3"></i>{{ item.nombre }}</h2>
+            <p class="mb-0">{{ item.descripcion|default:"Sin descripción" }}</p>
+        </div>
+    </div>
+
+    <!-- Información del Item -->
+    <div class="info-card">
+        <div class="row">
+            <div class="col-lg-6">
+                <!-- Información Básica -->
+                <div class="info-section">
+                    <h6><i class="fas fa-info-circle"></i>Información Básica</h6>
+                    <div class="info-row">
+                        <span class="info-label">Código:</span>
+                        <span class="info-value">{{ item.codigo|default:"Sin código" }}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Categoría:</span>
+                        <span class="info-value">
+                            <span class="category-badge">{{ item.categoria.nombre }}</span>
+                        </span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Unidad de Medida:</span>
+                        <span class="info-value">{{ item.unidad_medida|default:"No especificada" }}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Estado:</span>
+                        <span class="info-value">
+                            {% if item.activo %}
+                                <span class="badge bg-success">Activo</span>
+                            {% else %}
+                                <span class="badge bg-secondary">Inactivo</span>
+                            {% endif %}
+                        </span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-6">
+                <!-- Control de Stock -->
+                <div class="info-section">
+                    <h6><i class="fas fa-warehouse"></i>Control de Stock</h6>
+                    <div class="info-row">
+                        <span class="info-label">Stock Actual:</span>
+                        <span class="info-value">
+                            <span class="stock-badge {% if item.stock_actual <= item.stock_minimo %}stock-low{% elif item.stock_actual <= item.stock_minimo|add:5 %}stock-warning{% else %}stock-ok{% endif %}">
+                                {{ item.stock_actual }} {{ item.unidad_medida|default:"" }}
+                            </span>
+                        </span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Stock Disponible:</span>
+                        <span class="info-value">
+                            <span class="stock-badge stock-ok">
+                                {{ item.stock_disponible }} {{ item.unidad_medida|default:"" }}
+                            </span>
+                        </span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Stock Mínimo:</span>
+                        <span class="info-value">{{ item.stock_minimo|default:"No establecido" }} {{ item.unidad_medida|default:"" }}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Stock Asignado:</span>
+                        <span class="info-value">{{ item.stock_actual|sub:item.stock_disponible }} {{ item.unidad_medida|default:"" }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="row">
+            <div class="col-lg-6">
+                <!-- Información Comercial -->
+                <div class="info-section">
+                    <h6><i class="fas fa-dollar-sign"></i>Información Comercial</h6>
+                    <div class="info-row">
+                        <span class="info-label">Precio Unitario:</span>
+                        <span class="info-value">
+                            {% if item.precio_unitario %}
+                                Q{{ item.precio_unitario|floatformat:2 }}
+                            {% else %}
+                                No establecido
+                            {% endif %}
+                        </span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Proveedor:</span>
+                        <span class="info-value">{{ item.proveedor|default:"No especificado" }}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Última Compra:</span>
+                        <span class="info-value">
+                            {% if item.fecha_ultima_compra %}
+                                {{ item.fecha_ultima_compra|date:"d/m/Y" }}
+                            {% else %}
+                                No registrada
+                            {% endif %}
+                        </span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-6">
+                <!-- Fechas del Sistema -->
+                <div class="info-section">
+                    <h6><i class="fas fa-clock"></i>Fechas del Sistema</h6>
+                    <div class="info-row">
+                        <span class="info-label">Creado:</span>
+                        <span class="info-value">{{ item.fecha_creacion|date:"d/m/Y H:i" }}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Última Modificación:</span>
+                        <span class="info-value">{{ item.fecha_modificacion|date:"d/m/Y H:i" }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Asignaciones del Item -->
+    <div class="asignaciones-table">
+        <div class="table-header">
+            <h5 class="mb-0"><i class="fas fa-hand-holding me-2"></i>Asignaciones del Item</h5>
+        </div>
+        
+        {% if asignaciones %}
+            {% for asignacion in asignaciones %}
+            <div class="asignacion-item">
+                <div class="asignacion-header">
+                    <div>
+                        <div class="asignacion-proyecto">{{ asignacion.proyecto.nombre }}</div>
+                        <div class="asignacion-fecha">
+                            Asignado el {{ asignacion.fecha_asignacion|date:"d/m/Y H:i" }} por {{ asignacion.asignado_por.get_full_name|default:asignacion.asignado_por.username }}
+                        </div>
+                    </div>
+                    <div>
+                        <span class="asignacion-estado {% if asignacion.fecha_devolucion %}estado-devuelta{% else %}estado-activa{% endif %}">
+                            {% if asignacion.fecha_devolucion %}
+                                Devuelta
+                            {% else %}
+                                Activa
+                            {% endif %}
+                        </span>
+                    </div>
+                </div>
+                <div class="asignacion-details">
+                    <div>
+                        <strong>Cantidad:</strong> {{ asignacion.cantidad }} {{ item.unidad_medida|default:"" }}
+                    </div>
+                    <div>
+                        <strong>Observaciones:</strong> {{ asignacion.observaciones|default:"Sin observaciones" }}
+                    </div>
+                </div>
+                {% if asignacion.fecha_devolucion %}
+                    <div class="asignacion-details">
+                        <div>
+                            <strong>Devuelto el:</strong> {{ asignacion.fecha_devolucion|date:"d/m/Y H:i" }}
+                        </div>
+                        <div>
+                            <strong>Devuelto por:</strong> {{ asignacion.devuelto_por.get_full_name|default:asignacion.devuelto_por.username }}
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="empty-state">
+                <i class="fas fa-hand-holding"></i>
+                <h5>No hay asignaciones</h5>
+                <p>Este item no ha sido asignado a ningún proyecto</p>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Botones de Acción -->
+    <div class="action-buttons">
+        <a href="{% url 'item_list' %}" class="btn-action btn-secondary-custom">
+            <i class="fas fa-arrow-left"></i>Volver a la Lista
+        </a>
+        <a href="{% url 'item_edit' item.pk %}" class="btn-action btn-warning-custom">
+            <i class="fas fa-edit"></i>Editar Item
+        </a>
+        <a href="{% url 'asignacion_create' %}?item={{ item.pk }}" class="btn-action btn-primary-custom">
+            <i class="fas fa-hand-holding"></i>Asignar Item
+        </a>
+        <a href="{% url 'item_delete' item.pk %}" class="btn-action btn-danger-custom">
+            <i class="fas fa-trash"></i>Eliminar Item
+        </a>
+    </div>
+</div>
+{% endblock %}

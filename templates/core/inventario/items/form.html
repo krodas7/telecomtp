@@ -1,0 +1,397 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ form_title }} - Sistema Arca{% endblock %}
+
+{% block extra_css %}
+<style>
+    .form-hero {
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        color: white;
+        padding: 3rem 2rem;
+        border-radius: 20px;
+        margin-bottom: 2rem;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .form-hero::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="white" opacity="0.1"/><circle cx="75" cy="75" r="1" fill="white" opacity="0.1"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+        opacity: 0.3;
+    }
+    
+    .form-hero-content {
+        position: relative;
+        z-index: 2;
+    }
+    
+    .form-container {
+        background: white;
+        border-radius: 20px;
+        padding: 3rem;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        margin-bottom: 2rem;
+    }
+    
+    .form-section {
+        margin-bottom: 2rem;
+        padding: 2rem;
+        background: #f8f9fa;
+        border-radius: 15px;
+        border-left: 4px solid #28a745;
+    }
+    
+    .form-section h6 {
+        color: #28a745;
+        font-weight: 600;
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+    }
+    
+    .form-section h6 i {
+        margin-right: 0.5rem;
+        font-size: 1.2rem;
+    }
+    
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+    
+    .form-label {
+        font-weight: 600;
+        color: #495057;
+        margin-bottom: 0.5rem;
+    }
+    
+    .form-control {
+        border-radius: 10px;
+        border: 2px solid #e9ecef;
+        padding: 12px 16px;
+        transition: all 0.3s ease;
+    }
+    
+    .form-control:focus {
+        border-color: #28a745;
+        box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.25);
+    }
+    
+    .form-select {
+        border-radius: 10px;
+        border: 2px solid #e9ecef;
+        padding: 12px 16px;
+        transition: all 0.3s ease;
+    }
+    
+    .form-select:focus {
+        border-color: #28a745;
+        box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.25);
+    }
+    
+    .btn-primary-custom {
+        background: linear-gradient(45deg, #28a745, #20c997);
+        border: none;
+        border-radius: 25px;
+        padding: 12px 30px;
+        font-weight: 600;
+        font-size: 1.1rem;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-primary-custom:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(40, 167, 69, 0.4);
+    }
+    
+    .btn-secondary-custom {
+        background: #6c757d;
+        border: none;
+        border-radius: 25px;
+        padding: 12px 30px;
+        font-weight: 600;
+        font-size: 1.1rem;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-secondary-custom:hover {
+        background: #5a6268;
+        transform: translateY(-2px);
+    }
+    
+    .help-text {
+        font-size: 0.8rem;
+        color: #6c757d;
+        margin-top: 0.25rem;
+    }
+    
+    .required {
+        color: #dc3545;
+    }
+    
+    .form-check-input:checked {
+        background-color: #28a745;
+        border-color: #28a745;
+    }
+    
+    .form-check-input:focus {
+        border-color: #28a745;
+        box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.25);
+    }
+    
+    .alert {
+        border-radius: 10px;
+        border: none;
+        padding: 1rem 1.5rem;
+    }
+    
+    .alert-danger {
+        background: #f8d7da;
+        color: #721c24;
+    }
+    
+    .alert-success {
+        background: #d4edda;
+        color: #155724;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="form-hero">
+        <div class="form-hero-content">
+            <h2><i class="fas fa-{{ form_icon }} me-3"></i>{{ form_title }}</h2>
+            <p class="mb-0">{{ form_description }}</p>
+        </div>
+    </div>
+
+    <!-- Formulario -->
+    <div class="form-container">
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            
+            <!-- Información Básica -->
+            <div class="form-section">
+                <h6><i class="fas fa-info-circle"></i>Información Básica</h6>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="{{ form.nombre.id_for_label }}" class="form-label">
+                                Nombre del Item <span class="required">*</span>
+                            </label>
+                            {{ form.nombre }}
+                            {% if form.nombre.help_text %}
+                                <div class="help-text">{{ form.nombre.help_text }}</div>
+                            {% endif %}
+                            {% if form.nombre.errors %}
+                                <div class="text-danger">{{ form.nombre.errors }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="{{ form.codigo.id_for_label }}" class="form-label">
+                                Código del Item
+                            </label>
+                            {{ form.codigo }}
+                            {% if form.codigo.help_text %}
+                                <div class="help-text">{{ form.codigo.help_text }}</div>
+                            {% endif %}
+                            {% if form.codigo.errors %}
+                                <div class="text-danger">{{ form.codigo.errors }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="{{ form.descripcion.id_for_label }}" class="form-label">
+                        Descripción
+                    </label>
+                    {{ form.descripcion }}
+                    {% if form.descripcion.help_text %}
+                        <div class="help-text">{{ form.descripcion.help_text }}</div>
+                    {% endif %}
+                    {% if form.descripcion.errors %}
+                        <div class="text-danger">{{ form.descripcion.errors }}</div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Categoría y Clasificación -->
+            <div class="form-section">
+                <h6><i class="fas fa-tags"></i>Categoría y Clasificación</h6>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="{{ form.categoria.id_for_label }}" class="form-label">
+                                Categoría <span class="required">*</span>
+                            </label>
+                            {{ form.categoria }}
+                            {% if form.categoria.help_text %}
+                                <div class="help-text">{{ form.categoria.help_text }}</div>
+                            {% endif %}
+                            {% if form.categoria.errors %}
+                                <div class="text-danger">{{ form.categoria.errors }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="{{ form.unidad_medida.id_for_label }}" class="form-label">
+                                Unidad de Medida
+                            </label>
+                            {{ form.unidad_medida }}
+                            {% if form.unidad_medida.help_text %}
+                                <div class="help-text">{{ form.unidad_medida.help_text }}</div>
+                            {% endif %}
+                            {% if form.unidad_medida.errors %}
+                                <div class="text-danger">{{ form.unidad_medida.errors }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Control de Stock -->
+            <div class="form-section">
+                <h6><i class="fas fa-warehouse"></i>Control de Stock</h6>
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label for="{{ form.stock_actual.id_for_label }}" class="form-label">
+                                Stock Actual <span class="required">*</span>
+                            </label>
+                            {{ form.stock_actual }}
+                            {% if form.stock_actual.help_text %}
+                                <div class="help-text">{{ form.stock_actual.help_text }}</div>
+                            {% endif %}
+                            {% if form.stock_actual.errors %}
+                                <div class="text-danger">{{ form.stock_actual.errors }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label for="{{ form.stock_disponible.id_for_label }}" class="form-label">
+                                Stock Disponible
+                            </label>
+                            {{ form.stock_disponible }}
+                            {% if form.stock_disponible.help_text %}
+                                <div class="help-text">{{ form.stock_disponible.help_text }}</div>
+                            {% endif %}
+                            {% if form.stock_disponible.errors %}
+                                <div class="text-danger">{{ form.stock_disponible.errors }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label for="{{ form.stock_minimo.id_for_label }}" class="form-label">
+                                Stock Mínimo
+                            </label>
+                            {{ form.stock_minimo }}
+                            {% if form.stock_minimo.help_text %}
+                                <div class="help-text">{{ form.stock_minimo.help_text }}</div>
+                            {% endif %}
+                            {% if form.stock_minimo.errors %}
+                                <div class="text-danger">{{ form.stock_minimo.errors }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Información Comercial -->
+            <div class="form-section">
+                <h6><i class="fas fa-dollar-sign"></i>Información Comercial</h6>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="{{ form.precio_unitario.id_for_label }}" class="form-label">
+                                Precio Unitario
+                            </label>
+                            {{ form.precio_unitario }}
+                            {% if form.precio_unitario.help_text %}
+                                <div class="help-text">{{ form.precio_unitario.help_text }}</div>
+                            {% endif %}
+                            {% if form.precio_unitario.errors %}
+                                <div class="text-danger">{{ form.precio_unitario.errors }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="{{ form.proveedor.id_for_label }}" class="form-label">
+                                Proveedor
+                            </label>
+                            {{ form.proveedor }}
+                            {% if form.proveedor.help_text %}
+                                <div class="help-text">{{ form.proveedor.help_text }}</div>
+                            {% endif %}
+                            {% if form.proveedor.errors %}
+                                <div class="text-danger">{{ form.proveedor.errors }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="{{ form.fecha_ultima_compra.id_for_label }}" class="form-label">
+                        Fecha de Última Compra
+                    </label>
+                    {{ form.fecha_ultima_compra }}
+                    {% if form.fecha_ultima_compra.help_text %}
+                        <div class="help-text">{{ form.fecha_ultima_compra.help_text }}</div>
+                    {% endif %}
+                    {% if form.fecha_ultima_compra.errors %}
+                        <div class="text-danger">{{ form.fecha_ultima_compra.errors }}</div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Estado -->
+            <div class="form-section">
+                <h6><i class="fas fa-toggle-on"></i>Estado</h6>
+                <div class="form-check">
+                    {{ form.activo }}
+                    <label class="form-check-label" for="{{ form.activo.id_for_label }}">
+                        Item Activo
+                    </label>
+                    {% if form.activo.help_text %}
+                        <div class="help-text">{{ form.activo.help_text }}</div>
+                    {% endif %}
+                    {% if form.activo.errors %}
+                        <div class="text-danger">{{ form.activo.errors }}</div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Botones de Acción -->
+            <div class="d-flex justify-content-between">
+                <a href="{% url 'item_list' %}" class="btn btn-secondary-custom">
+                    <i class="fas fa-arrow-left me-2"></i>Cancelar
+                </a>
+                <button type="submit" class="btn btn-primary-custom">
+                    <i class="fas fa-save me-2"></i>{{ submit_text }}
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

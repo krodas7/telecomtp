@@ -516,7 +516,8 @@ function showSuccessNotification(message) {
 }
 
 function restaurarRespaldo() {
-    alert('⚠️ Función de restauración de respaldo en desarrollo.\n\nPor ahora, puedes restaurar manualmente usando:\npython manage.py loaddata respaldo_sistema_YYYYMMDD_HHMMSS.json');
+    // Redirigir a la página de respaldos donde se puede seleccionar cuál restaurar
+    window.location.href = "{% url 'sistema_ver_respaldos' %}";
 }
 </script>
 
