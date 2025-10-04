@@ -43,6 +43,12 @@ ALLOWED_HOSTS = ['159.203.106.69', 'localhost', '127.0.0.1']
 USE_WWW_REDIRECT = os.environ.get('USE_WWW_REDIRECT', 'False').lower() == 'true'
 WWW_REDIRECT_TO_NON_WWW = os.environ.get('WWW_REDIRECT_TO_NON_WWW', 'True').lower() == 'true'
 
+# Configuración de límites de subida de archivos
+FILE_UPLOAD_MAX_MEMORY_SIZE = 50 * 1024 * 1024  # 50 MB
+DATA_UPLOAD_MAX_MEMORY_SIZE = 50 * 1024 * 1024  # 50 MB
+DATA_UPLOAD_MAX_NUMBER_FIELDS = 10000  # 10,000 campos
+FILE_UPLOAD_PERMISSIONS = 0o644
+
 
 # Application definition
 
