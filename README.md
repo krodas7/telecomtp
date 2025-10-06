@@ -1,4 +1,4 @@
-# 🏗️ Sistema ARCA Construcción
+# 🏗️ Sistema TelecomTP
 
 Sistema integral de gestión para empresas de construcción desarrollado en Django.
 
@@ -25,8 +25,8 @@ Sistema integral de gestión para empresas de construcción desarrollado en Djan
 ### Desarrollo Local
 ```bash
 # Clonar repositorio
-git clone https://github.com/krodas7/arca-sistema.git
-cd arca-sistema
+git clone https://github.com/krodas7/telecomtp.git
+cd telecomtp
 
 # Crear entorno virtual
 python -m venv venv
@@ -63,7 +63,7 @@ chmod +x deploy_digitalocean_final.sh
 ## 📁 Estructura del Proyecto
 
 ```
-arca-sistema/
+telecomtp/
 ├── core/                    # Aplicación principal
 │   ├── models.py           # Modelos de datos
 │   ├── views.py            # Vistas y lógica de negocio
@@ -179,7 +179,7 @@ Este proyecto está bajo la Licencia MIT - ver el archivo [LICENSE](LICENSE) par
 
 Para soporte técnico o consultas:
 - 📧 Email: kevinsierra45@gmail.com
-- 🐛 Issues: [GitHub Issues](https://github.com/krodas7/arca-sistema/issues)
+- 🐛 Issues: [GitHub Issues](https://github.com/krodas7/telecomtp/issues)
 
 ---
 
