@@ -2,10 +2,10 @@
 
 /* Logo image styles */
 .logo-image {
-    height: 20px;
+    height: 32px;
     width: auto;
     object-fit: contain;
-    margin-right: 6px;
+    margin-right: 8px;
     border-radius: 3px;
     vertical-align: middle;
 }
