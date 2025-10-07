@@ -15,16 +15,18 @@
     display: flex;
     align-items: center;
     flex-wrap: nowrap;
-    padding: 8px 12px;
+    padding: 12px 16px;
     max-width: 100%;
+    min-width: 250px;
     overflow: hidden;
 }
 
 .sidebar-logo .logo-text {
     flex: 1;
-    min-width: 0;
-    font-size: 0.75rem;
-    line-height: 1.1;
+    min-width: 180px;
+    font-size: 0.8rem;
+    line-height: 1.2;
+    white-space: nowrap;
 }
 
 .sidebar-logo .logo-text .logo-line-1 {
@@ -54,6 +56,8 @@ body {
     top: 0;
     height: 100vh;
     width: 280px;
+    min-width: 280px;
+    max-width: 320px;
     z-index: 1000;
     overflow-y: auto;
     overflow-x: hidden;
@@ -245,6 +249,7 @@ body {
     text-decoration: none;
     transition: all 0.3s ease;
     border-left: 3px solid transparent;
+    min-width: 250px;
 }
 
 .nav-link:hover {
@@ -268,8 +273,9 @@ body {
 .nav-link span {
     flex: 1;
     white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    overflow: visible;
+    text-overflow: unset;
+    min-width: 120px;
 }
 
 /* Submenu positioning */
