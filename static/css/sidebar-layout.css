@@ -1,5 +1,47 @@
 /* Sidebar Layout for Sistema de Construcción */
 
+/* Logo image styles */
+.logo-image {
+    height: 20px;
+    width: auto;
+    object-fit: contain;
+    margin-right: 6px;
+    border-radius: 3px;
+    vertical-align: middle;
+}
+
+/* Sidebar logo container */
+.sidebar-logo {
+    display: flex;
+    align-items: center;
+    flex-wrap: nowrap;
+    padding: 8px 12px;
+    max-width: 100%;
+    overflow: hidden;
+}
+
+.sidebar-logo .logo-text {
+    flex: 1;
+    min-width: 0;
+    font-size: 0.75rem;
+    line-height: 1.1;
+}
+
+.sidebar-logo .logo-text .logo-line-1 {
+    font-size: 0.6rem;
+    font-weight: 600;
+}
+
+.sidebar-logo .logo-text .logo-line-2 {
+    font-size: 0.7rem;
+    font-weight: 700;
+}
+
+.sidebar-logo .logo-text .logo-line-3 {
+    font-size: 0.6rem;
+    font-weight: 600;
+}
+
 /* Main layout structure */
 body {
     overflow-x: hidden;

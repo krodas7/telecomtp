@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load static %}
 {% load custom_filters %}
 
 {% block title %}Login - Gestión de Proyectos{% endblock %}
@@ -10,9 +11,11 @@
             <div class="col-md-6 col-lg-4">
                 <div class="card shadow-lg border-0 login-card">
                     <div class="card-header text-center py-4" style="background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%); color: white; border-radius: 12px 12px 0 0;">
+                        <div class="mb-3">
+                            <img src="{% static 'images/ISOTIPO-TELECOM-small.png' %}" alt="TelecomTP Isotipo" style="height: 80px; width: auto; margin-bottom: 15px;">
+                        </div>
                         <h3 class="mb-0">
-                            <i class="fas fa-building" style="color: #fbbf24; margin-right: 8px;"></i>
-                            Gestión de Proyectos
+                            Sistema TelecomTP
                         </h3>
                         <p class="text-white mb-0" style="opacity: 0.9;">Inicia sesión para continuar</p>
                     </div>
@@ -40,7 +43,7 @@
                         <small class="text-muted" style="color: #1e3a8a !important;">
                             <i class="fas fa-info-circle me-1" style="color: #fbbf24;"></i>
                             Software desarrollado por: SELITEC. <br>
-                            PROPIEDAD DE: Construcciones Arca S.A.
+                            PROPIEDAD DE: TelecomTP
                         </small>
                     </div>
                 </div>

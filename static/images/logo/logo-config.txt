@@ -1,0 +1,44 @@
+# Configuración del Logo TelecomTP
+# ================================
+
+## Archivo del Logo:
+- Nombre: LOGO-TELECOM.png
+- Ubicación: /static/images/LOGO-TELECOM.png
+- URL de acceso: http://localhost:8008/static/images/LOGO-TELECOM.png
+
+## Cómo usar en las plantillas Django:
+```html
+<!-- Logo principal -->
+<img src="{% static 'images/LOGO-TELECOM.png' %}" alt="TelecomTP Logo" class="logo">
+
+<!-- Logo con tamaño específico -->
+<img src="{% static 'images/LOGO-TELECOM.png' %}" alt="TelecomTP Logo" width="200" height="60">
+
+<!-- Logo responsive -->
+<img src="{% static 'images/LOGO-TELECOM.png' %}" alt="TelecomTP Logo" class="img-fluid">
+```
+
+## CSS para el logo:
+```css
+.logo {
+    max-height: 60px;
+    width: auto;
+    object-fit: contain;
+}
+
+.logo-small {
+    max-height: 40px;
+    width: auto;
+}
+
+.logo-large {
+    max-height: 100px;
+    width: auto;
+}
+```
+
+## Información del archivo:
+- Tamaño: 27KB
+- Formato: PNG
+- Estado: ✅ Disponible y funcionando
+- Última modificación: 2025-10-06 23:55:01
