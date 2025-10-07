@@ -2,7 +2,7 @@
 {% load static %}
 {% load custom_filters %}
 
-{% block title %}Login - Gestión de Proyectos{% endblock %}
+{% block title %}Login - Sistema TelecomTP{% endblock %}
 
 {% block content %}
 <div class="min-vh-100 d-flex align-items-center justify-content-center login-background">
@@ -20,6 +20,15 @@
                         <p class="text-white mb-0" style="opacity: 0.9;">Inicia sesión para continuar</p>
                     </div>
                     <div class="card-body p-4">
+                        {% if messages %}
+                            {% for message in messages %}
+                                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                                    {{ message }}
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                </div>
+                            {% endfor %}
+                        {% endif %}
+                        
                         <form method="post">
                             {% csrf_token %}
                             <div class="mb-3">
