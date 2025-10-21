@@ -205,7 +205,7 @@
                     </span>
                 </p>
                 {% if factura.monto_total %}
-                    <p><strong>Monto Total:</strong> {{factura.monto_total|currency_gtq}}</p>
+                    <p><strong>Monto Total:</strong> ${{factura.monto_total|floatformat:2}}</p>
                 {% endif %}
                 {% if factura.fecha_emision %}
                     <p><strong>Fecha de Emisión:</strong> {{ factura.fecha_emision|date:"d/m/Y" }}</p>
@@ -243,4 +243,74 @@
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Página de editar factura cargada');
+    
+    const montoSubtotalInput = document.getElementById('id_monto_subtotal');
+    const montoIvaInput = document.getElementById('id_monto_iva');
+    const montoTotalInput = document.getElementById('id_monto_total');
+    
+    console.log('Campos encontrados:', {
+        subtotal: montoSubtotalInput,
+        iva: montoIvaInput,
+        total: montoTotalInput
+    });
+    
+    // Función para calcular automáticamente ITBMS y Total
+    function calcularTodoEdit() {
+        console.log('🔄 Función calcularTodoEdit ejecutada');
+        
+        if (!montoSubtotalInput || !montoIvaInput || !montoTotalInput) {
+            console.log('❌ No se encontraron todos los campos necesarios');
+            return;
+        }
+        
+        const subtotal = parseFloat(montoSubtotalInput.value) || 0;
+        const porcentajeItbms = parseFloat(document.getElementById('id_porcentaje_itbms').value) || 0;
+        console.log('💰 Subtotal ingresado:', subtotal);
+        console.log('📊 Porcentaje ITBMS seleccionado:', porcentajeItbms + '%');
+        
+        if (subtotal > 0) {
+            // Calcular ITBMS según el porcentaje seleccionado
+            const itbms = subtotal * (porcentajeItbms / 100);
+            console.log('🧾 ITBMS calculado (' + porcentajeItbms + '%):', itbms);
+            
+            // Calcular total (subtotal + ITBMS)
+            const total = subtotal + itbms;
+            console.log('💵 Total calculado:', total);
+            
+            // Actualizar campos
+            montoIvaInput.value = itbms.toFixed(2);
+            montoTotalInput.value = total.toFixed(2);
+            
+            console.log('✅ Campos actualizados - ITBMS:', itbms.toFixed(2), 'Total:', total.toFixed(2));
+        } else {
+            // Limpiar campos si no hay subtotal
+            montoIvaInput.value = '0.00';
+            montoTotalInput.value = '0.00';
+            console.log('🧹 Campos limpiados (sin subtotal)');
+        }
+    }
+    
+    // Agregar event listeners
+    if (montoSubtotalInput) {
+        montoSubtotalInput.addEventListener('input', calcularTodoEdit);
+        montoSubtotalInput.addEventListener('change', calcularTodoEdit);
+        montoSubtotalInput.addEventListener('keyup', calcularTodoEdit);
+        console.log('✅ Event listeners agregados al campo subtotal');
+    }
+    
+    // Ejecutar cálculo inicial
+    calcularTodoEdit();
+    
+    // Hacer función disponible globalmente
+    window.calcularTodoEdit = calcularTodoEdit;
+    
+    console.log('✅ JavaScript de edición cargado correctamente');
+});
+</script>
 {% endblock %}

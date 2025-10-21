@@ -142,7 +142,7 @@
                     <p class="text-muted">{{ anticipo.trabajador.nombre }}</p>
                     
                     <h6><strong>Monto:</strong></h6>
-                    <p class="text-muted">Q{{ anticipo.monto|floatformat:2 }}</p>
+                    <p class="text-muted">${{ anticipo.monto|floatformat:2 }}</p>
                     
                     <h6><strong>Fecha:</strong></h6>
                     <p class="text-muted">{{ anticipo.fecha_anticipo|date:"d/m/Y" }}</p>
@@ -161,10 +161,10 @@
                     <hr>
                     
                     <h6><strong>Monto Aplicado:</strong></h6>
-                    <p class="text-muted">Q{{ anticipo.monto_aplicado|floatformat:2 }}</p>
+                    <p class="text-muted">${{ anticipo.monto_aplicado|floatformat:2 }}</p>
                     
                     <h6><strong>Saldo Pendiente:</strong></h6>
-                    <p class="text-muted">Q{{ anticipo.saldo_pendiente|floatformat:2 }}</p>
+                    <p class="text-muted">${{ anticipo.saldo_pendiente|floatformat:2 }}</p>
                 </div>
             </div>
         </div>

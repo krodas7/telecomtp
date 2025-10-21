@@ -130,7 +130,7 @@
                     <p class="mb-3">{{ planilla.total_trabajadores }}</p>
                     
                     <h6 class="text-primary">Total a pagar:</h6>
-                    <p class="mb-3">Q{{ planilla.total_a_pagar|floatformat:2 }}</p>
+                    <p class="mb-3">${{ planilla.total_a_pagar|floatformat:2 }}</p>
                     
                     <h6 class="text-primary">Creada por:</h6>
                     <p class="mb-3">{{ planilla.creada_por.get_full_name|default:planilla.creada_por.username }}</p>

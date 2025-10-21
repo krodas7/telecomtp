@@ -92,7 +92,7 @@
                                 Total a Pagar
                             </div>
                             <div class="h5 mb-0 font-weight-bold text-gray-800">
-                                Q{{ total_a_pagar|floatformat:2 }}
+                                ${{ total_a_pagar|floatformat:2 }}
                             </div>
                         </div>
                         <div class="col-auto">
@@ -112,7 +112,7 @@
                                 Anticipos
                             </div>
                             <div class="h5 mb-0 font-weight-bold text-gray-800">
-                                Q{{ total_anticipos|floatformat:2 }}
+                                ${{ total_anticipos|floatformat:2 }}
                             </div>
                         </div>
                         <div class="col-auto">
@@ -152,11 +152,11 @@
                                     {% for trabajador in trabajadores %}
                                     <tr>
                                         <td><strong>{{ trabajador.nombre }}</strong></td>
-                                        <td>Q{{ trabajador.pago_diario|floatformat:2 }}</td>
+                                        <td>${{ trabajador.pago_diario|floatformat:2 }}</td>
                                         <td>{{ trabajador.dias_trabajados|default:"0" }}</td>
-                                        <td>Q{{ trabajador.total_bruto|floatformat:2 }}</td>
-                                        <td>Q{{ trabajador.total_anticipos_aplicados|floatformat:2 }}</td>
-                                        <td><strong>Q{{ trabajador.total_a_pagar|floatformat:2 }}</strong></td>
+                                        <td>${{ trabajador.total_bruto|floatformat:2 }}</td>
+                                        <td>${{ trabajador.total_anticipos_aplicados|floatformat:2 }}</td>
+                                        <td><strong>${{ trabajador.total_a_pagar|floatformat:2 }}</strong></td>
                                         <td>
                                             <div class="btn-group" role="group">
                                                 <a href="{% url 'trabajador_diario_edit' proyecto.id trabajador.id %}" 

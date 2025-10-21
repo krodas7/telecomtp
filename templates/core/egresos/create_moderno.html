@@ -1,0 +1,844 @@
+{% extends "base.html" %}
+{% load custom_filters %}
+
+{% block title %}Crear Egreso - Sistema de Construcción{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* ============================================================================
+       FORMULARIO MODERNO DE CREAR GASTO - Sistema ARCA Construcción
+       Diseño profesional con glassmorphism y animaciones
+       ============================================================================ */
+    
+    .page-container {
+        min-height: 100vh;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        padding: 2rem 0;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .page-container::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="50" cy="50" r="1" fill="white" opacity="0.1"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+        opacity: 0.3;
+    }
+    
+    .form-wrapper {
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 0 1rem;
+        position: relative;
+        z-index: 2;
+    }
+    
+    .form-header {
+        text-align: center;
+        margin-bottom: 3rem;
+        animation: fadeInDown 0.8s ease-out;
+    }
+    
+    .form-title {
+        font-size: 2.5rem;
+        font-weight: 800;
+        color: white;
+        margin-bottom: 1rem;
+        text-shadow: 0 4px 8px rgba(0,0,0,0.3);
+    }
+    
+    .form-subtitle {
+        font-size: 1.2rem;
+        color: rgba(255,255,255,0.9);
+        margin-bottom: 0;
+        font-weight: 300;
+    }
+    
+    .form-card {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(20px);
+        border-radius: 24px;
+        padding: 3rem;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        animation: fadeInUp 0.8s ease-out 0.2s both;
+    }
+    
+    .form-section {
+        margin-bottom: 2.5rem;
+        padding: 2rem;
+        background: rgba(255, 255, 255, 0.5);
+        border-radius: 16px;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        transition: all 0.3s ease;
+    }
+    
+    .form-section:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+    }
+    
+    .section-header {
+        display: flex;
+        align-items: center;
+        margin-bottom: 1.5rem;
+        padding-bottom: 1rem;
+        border-bottom: 2px solid rgba(102, 126, 234, 0.1);
+    }
+    
+    .section-icon {
+        width: 50px;
+        height: 50px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 1rem;
+        color: white;
+        font-size: 1.2rem;
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+    }
+    
+    .section-title {
+        font-size: 1.4rem;
+        font-weight: 700;
+        color: #2c3e50;
+        margin: 0;
+    }
+    
+    .form-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 1.5rem;
+    }
+    
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+    
+    .form-group.full-width {
+        grid-column: 1 / -1;
+    }
+    
+    .form-label {
+        display: flex;
+        align-items: center;
+        font-weight: 600;
+        color: #2c3e50;
+        margin-bottom: 0.5rem;
+        font-size: 0.95rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .form-label i {
+        margin-right: 0.5rem;
+        color: #667eea;
+        font-size: 1rem;
+    }
+    
+    .required {
+        color: #e74c3c;
+        margin-left: 0.25rem;
+    }
+    
+    .form-control, .form-select {
+        width: 100%;
+        padding: 1rem 1.25rem;
+        border: 2px solid #e9ecef;
+        border-radius: 12px;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+        background: rgba(255, 255, 255, 0.8);
+        backdrop-filter: blur(10px);
+    }
+    
+    .form-control:focus, .form-select:focus {
+        outline: none;
+        border-color: #667eea;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        background: white;
+        transform: translateY(-2px);
+    }
+    
+    .form-control.is-valid {
+        border-color: #28a745;
+        background: rgba(40, 167, 69, 0.05);
+    }
+    
+    .form-control.is-invalid {
+        border-color: #e74c3c;
+        background: rgba(231, 76, 60, 0.05);
+    }
+    
+    .form-textarea {
+        min-height: 120px;
+        resize: vertical;
+    }
+    
+    .form-check {
+        display: flex;
+        align-items: center;
+        padding: 1rem;
+        background: rgba(102, 126, 234, 0.05);
+        border-radius: 12px;
+        border: 2px solid rgba(102, 126, 234, 0.1);
+        transition: all 0.3s ease;
+    }
+    
+    .form-check:hover {
+        background: rgba(102, 126, 234, 0.1);
+        border-color: rgba(102, 126, 234, 0.2);
+    }
+    
+    .form-check-input {
+        width: 1.5rem;
+        height: 1.5rem;
+        margin-right: 1rem;
+        border: 2px solid #e9ecef;
+        border-radius: 6px;
+        background: white;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .form-check-input:checked {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-color: #667eea;
+    }
+    
+    .form-check-label {
+        font-weight: 600;
+        color: #2c3e50;
+        cursor: pointer;
+        margin: 0;
+    }
+    
+    .help-text {
+        font-size: 0.85rem;
+        color: #6c757d;
+        margin-top: 0.5rem;
+        font-style: italic;
+        display: flex;
+        align-items: center;
+    }
+    
+    .help-text i {
+        margin-right: 0.25rem;
+        color: #667eea;
+    }
+    
+    .invalid-feedback {
+        display: block;
+        color: #e74c3c;
+        font-size: 0.85rem;
+        margin-top: 0.25rem;
+        font-weight: 500;
+    }
+    
+    .valid-feedback {
+        display: block;
+        color: #28a745;
+        font-size: 0.85rem;
+        margin-top: 0.25rem;
+        font-weight: 500;
+    }
+    
+    .btn-group {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+        margin-top: 3rem;
+        flex-wrap: wrap;
+    }
+    
+    .btn {
+        padding: 1rem 2rem;
+        border-radius: 12px;
+        font-weight: 600;
+        font-size: 1rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        transition: all 0.3s ease;
+        border: none;
+        cursor: pointer;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .btn::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+        transition: left 0.5s;
+    }
+    
+    .btn:hover::before {
+        left: 100%;
+    }
+    
+    .btn-success {
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        color: white;
+        box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
+    }
+    
+    .btn-success:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 25px rgba(40, 167, 69, 0.4);
+        color: white;
+    }
+    
+    .btn-secondary {
+        background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
+        color: white;
+        box-shadow: 0 4px 15px rgba(108, 117, 125, 0.3);
+    }
+    
+    .btn-secondary:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 25px rgba(108, 117, 125, 0.4);
+        color: white;
+    }
+    
+    .alert {
+        padding: 1.25rem 1.5rem;
+        border-radius: 12px;
+        margin-bottom: 1.5rem;
+        border: none;
+        font-weight: 500;
+        animation: slideInDown 0.5s ease-out;
+    }
+    
+    .alert-danger {
+        background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
+        color: #721c24;
+        border-left: 4px solid #e74c3c;
+    }
+    
+    .alert-success {
+        background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+        color: #155724;
+        border-left: 4px solid #28a745;
+    }
+    
+    .alert-info {
+        background: linear-gradient(135deg, #d1ecf1 0%, #bee5eb 100%);
+        color: #0c5460;
+        border-left: 4px solid #17a2b8;
+    }
+    
+    .floating-elements {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        pointer-events: none;
+        z-index: 1;
+    }
+    
+    .floating-element {
+        position: absolute;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 50%;
+        animation: float 6s ease-in-out infinite;
+    }
+    
+    .floating-element:nth-child(1) {
+        width: 80px;
+        height: 80px;
+        top: 20%;
+        left: 10%;
+        animation-delay: 0s;
+    }
+    
+    .floating-element:nth-child(2) {
+        width: 120px;
+        height: 120px;
+        top: 60%;
+        right: 10%;
+        animation-delay: 2s;
+    }
+    
+    .floating-element:nth-child(3) {
+        width: 60px;
+        height: 60px;
+        bottom: 20%;
+        left: 20%;
+        animation-delay: 4s;
+    }
+    
+    /* Animaciones */
+    @keyframes fadeInDown {
+        from {
+            opacity: 0;
+            transform: translateY(-30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    @keyframes slideInDown {
+        from {
+            opacity: 0;
+            transform: translateY(-20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    @keyframes float {
+        0%, 100% {
+            transform: translateY(0px) rotate(0deg);
+        }
+        50% {
+            transform: translateY(-20px) rotate(180deg);
+        }
+    }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+        .form-wrapper {
+            padding: 0 0.5rem;
+        }
+        
+        .form-card {
+            padding: 2rem 1.5rem;
+        }
+        
+        .form-title {
+            font-size: 2rem;
+        }
+        
+        .form-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .btn-group {
+            flex-direction: column;
+        }
+        
+        .btn {
+            width: 100%;
+        }
+    }
+    
+    @media (max-width: 480px) {
+        .form-card {
+            padding: 1.5rem 1rem;
+        }
+        
+        .form-section {
+            padding: 1.5rem 1rem;
+        }
+        
+        .section-icon {
+            width: 40px;
+            height: 40px;
+            font-size: 1rem;
+        }
+        
+        .section-title {
+            font-size: 1.2rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-container">
+    <!-- Elementos flotantes decorativos -->
+    <div class="floating-elements">
+        <div class="floating-element"></div>
+        <div class="floating-element"></div>
+        <div class="floating-element"></div>
+    </div>
+    
+    <div class="form-wrapper">
+        <!-- Header del formulario -->
+        <div class="form-header">
+            <h1 class="form-title">
+                <i class="fas fa-plus-circle me-2"></i>Crear Nuevo Egreso
+            </h1>
+            <p class="form-subtitle">Registra un nuevo egreso en el sistema de construcción</p>
+        </div>
+        
+        <!-- Tarjeta del formulario -->
+        <div class="form-card">
+            <form method="post" id="egresoForm" novalidate>
+                {% csrf_token %}
+                
+                <!-- Mostrar errores del formulario -->
+                {% if form.non_field_errors %}
+                    <div class="alert alert-danger">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        {{ form.non_field_errors }}
+                    </div>
+                {% endif %}
+                
+                <!-- Información Básica -->
+                <div class="form-section">
+                    <div class="section-header">
+                        <div class="section-icon">
+                            <i class="fas fa-info-circle"></i>
+                        </div>
+                        <h3 class="section-title">Información Básica</h3>
+                    </div>
+                    
+                    <div class="form-grid">
+                        <div class="form-group full-width">
+                            <label for="{{ form.descripcion.id_for_label }}" class="form-label">
+                                <i class="fas fa-tag"></i>
+                                Descripción del Egreso
+                                <span class="required">*</span>
+                            </label>
+                            {{ form.descripcion }}
+                            {% if form.descripcion.errors %}
+                                <div class="invalid-feedback">
+                                    {{ form.descripcion.errors.0 }}
+                                </div>
+                            {% endif %}
+                            <div class="help-text">
+                                <i class="fas fa-lightbulb"></i>
+                                Describe detalladamente el egreso realizado
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="{{ form.monto.id_for_label }}" class="form-label">
+                                <i class="fas fa-dollar-sign"></i>
+                                Monto del Egreso
+                                <span class="required">*</span>
+                            </label>
+                            {{ form.monto }}
+                            {% if form.monto.errors %}
+                                <div class="invalid-feedback">
+                                    {{ form.monto.errors.0 }}
+                                </div>
+                            {% endif %}
+                            <div class="help-text">
+                                <i class="fas fa-info-circle"></i>
+                                Ingresa el monto en quetzales
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="{{ form.categoria.id_for_label }}" class="form-label">
+                                <i class="fas fa-tags"></i>
+                                Categoría del Egreso
+                                <span class="required">*</span>
+                            </label>
+                            {{ form.categoria }}
+                            {% if form.categoria.errors %}
+                                <div class="invalid-feedback">
+                                    {{ form.categoria.errors.0 }}
+                                </div>
+                            {% endif %}
+                            <div class="help-text">
+                                <i class="fas fa-list"></i>
+                                Selecciona la categoría del egreso
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Información del Proyecto -->
+                <div class="form-section">
+                    <div class="section-header">
+                        <div class="section-icon">
+                            <i class="fas fa-project-diagram"></i>
+                        </div>
+                        <h3 class="section-title">Información del Proyecto</h3>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="{{ form.proyecto.id_for_label }}" class="form-label">
+                            <i class="fas fa-building"></i>
+                            Proyecto Asociado
+                            <span class="required">*</span>
+                        </label>
+                        {{ form.proyecto }}
+                        {% if form.proyecto.errors %}
+                            <div class="invalid-feedback">
+                                {{ form.proyecto.errors.0 }}
+                            </div>
+                        {% endif %}
+                        <div class="help-text">
+                            <i class="fas fa-hand-point-right"></i>
+                            Selecciona el proyecto al que pertenece este egreso
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Fechas y Estado -->
+                <div class="form-section">
+                    <div class="section-header">
+                        <div class="section-icon">
+                            <i class="fas fa-calendar-alt"></i>
+                        </div>
+                        <h3 class="section-title">Fechas y Estado</h3>
+                    </div>
+                    
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="{{ form.fecha_gasto.id_for_label }}" class="form-label">
+                                <i class="fas fa-calendar"></i>
+                                Fecha del Egreso
+                                <span class="required">*</span>
+                            </label>
+                            {{ form.fecha_gasto }}
+                            {% if form.fecha_gasto.errors %}
+                                <div class="invalid-feedback">
+                                    {{ form.fecha_gasto.errors.0 }}
+                                </div>
+                            {% endif %}
+                            <div class="help-text">
+                                <i class="fas fa-calendar-check"></i>
+                                Fecha en que se realizó el egreso
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                                <div class="invalid-feedback">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <div class="form-check">
+                            {{ form.aprobado }}
+                            <label for="{{ form.aprobado.id_for_label }}" class="form-check-label">
+                                <i class="fas fa-check-circle me-1"></i>
+                                Egreso Aprobado
+                            </label>
+                        </div>
+                        <div class="help-text">
+                            <i class="fas fa-info-circle"></i>
+                            Marca esta casilla si el egreso ya está aprobado
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Información Adicional -->
+                <div class="form-section">
+                    <div class="section-header">
+                        <div class="section-icon">
+                            <i class="fas fa-file-alt"></i>
+                        </div>
+                        <h3 class="section-title">Información Adicional</h3>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="{{ form.observaciones.id_for_label }}" class="form-label">
+                            <i class="fas fa-comment-alt"></i>
+                            Observaciones
+                        </label>
+                        {{ form.observaciones }}
+                        {% if form.observaciones.errors %}
+                            <div class="invalid-feedback">
+                                {{ form.observaciones.errors.0 }}
+                            </div>
+                        {% endif %}
+                        <div class="help-text">
+                            <i class="fas fa-edit"></i>
+                            Información adicional sobre el egreso (opcional)
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="{{ form.comprobante.id_for_label }}" class="form-label">
+                            <i class="fas fa-file-upload"></i>
+                            Comprobante
+                        </label>
+                        {{ form.comprobante }}
+                        {% if form.comprobante.errors %}
+                            <div class="invalid-feedback">
+                                {{ form.comprobante.errors.0 }}
+                            </div>
+                        {% endif %}
+                        <div class="help-text">
+                            <i class="fas fa-file-pdf"></i>
+                            Sube un comprobante del egreso (PDF, JPG, PNG)
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Botones de Acción -->
+                <div class="btn-group">
+                    <button type="submit" class="btn btn-success">
+                        <i class="fas fa-save me-2"></i>Guardar Egreso
+                    </button>
+                    <a href="{% url 'egresos_dashboard' %}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left me-2"></i>Cancelar
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('Iniciando formulario moderno de egresos...');
+        
+        // Aplicar clases de Bootstrap a los campos del formulario
+        const formFields = document.querySelectorAll('input, textarea, select');
+        formFields.forEach(field => {
+            if (field.type === 'checkbox') {
+                field.classList.add('form-check-input');
+            } else if (field.type === 'file') {
+                field.classList.add('form-control');
+            } else {
+                field.classList.add('form-control');
+            }
+        });
+        
+        // Validación en tiempo real
+        const form = document.getElementById('egresoForm');
+        const inputs = form.querySelectorAll('.form-control, .form-select');
+        
+        inputs.forEach(input => {
+            input.addEventListener('blur', function() {
+                validateField(this);
+            });
+            
+            input.addEventListener('input', function() {
+                if (this.classList.contains('is-invalid')) {
+                    validateField(this);
+                }
+            });
+        });
+        
+        // Validación del formulario al enviar
+        form.addEventListener('submit', function(e) {
+            let isValid = true;
+            
+            inputs.forEach(input => {
+                if (!validateField(input)) {
+                    isValid = false;
+                }
+            });
+            
+            if (!isValid) {
+                e.preventDefault();
+                showAlert('Por favor, corrige los errores en el formulario', 'danger');
+            }
+        });
+        
+        function validateField(field) {
+            const value = field.value.trim();
+            const isRequired = field.hasAttribute('required');
+            let isValid = true;
+            
+            // Limpiar clases anteriores
+            field.classList.remove('is-valid', 'is-invalid');
+            
+            // Validar campo requerido
+            if (isRequired && !value) {
+                field.classList.add('is-invalid');
+                isValid = false;
+            } else if (value) {
+                // Validaciones específicas
+                if (field.type === 'email' && !isValidEmail(value)) {
+                    field.classList.add('is-invalid');
+                    isValid = false;
+                } else if (field.type === 'number' && isNaN(value)) {
+                    field.classList.add('is-invalid');
+                    isValid = false;
+                } else {
+                    field.classList.add('is-valid');
+                }
+            }
+            
+            return isValid;
+        }
+        
+        function isValidEmail(email) {
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            return emailRegex.test(email);
+        }
+        
+        function showAlert(message, type) {
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type}`;
+            alertDiv.innerHTML = `
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                ${message}
+            `;
+            
+            const formCard = document.querySelector('.form-card');
+            formCard.insertBefore(alertDiv, formCard.firstChild);
+            
+            setTimeout(() => {
+                alertDiv.remove();
+            }, 5000);
+        }
+        
+        // Formatear campo de monto
+        const montoField = document.getElementById('id_monto');
+        if (montoField) {
+            montoField.addEventListener('input', function() {
+                // Permitir solo números y un punto decimal
+                let value = this.value.replace(/[^0-9.]/g, '');
+                
+                // Evitar múltiples puntos decimales
+                const parts = value.split('.');
+                if (parts.length > 2) {
+                    value = parts[0] + '.' + parts.slice(1).join('');
+                }
+                
+                // Limitar a 2 decimales
+                if (parts.length === 2 && parts[1].length > 2) {
+                    value = parts[0] + '.' + parts[1].substring(0, 2);
+                }
+                
+                this.value = value;
+            });
+            
+            // Validar monto al perder el foco
+            montoField.addEventListener('blur', function() {
+                let value = parseFloat(this.value);
+                if (!isNaN(value) && value >= 0) {
+                    // Formatear con 2 decimales si no los tiene
+                    this.value = value.toFixed(2);
+                }
+            });
+        }
+        
+        // Animación de entrada para los elementos
+        const sections = document.querySelectorAll('.form-section');
+        sections.forEach((section, index) => {
+            section.style.animationDelay = `${index * 0.1}s`;
+        });
+        
+        console.log('Formulario moderno de egresos inicializado correctamente');
+    });
+</script>
+{% endblock %}

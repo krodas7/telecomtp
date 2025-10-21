@@ -16,70 +16,6 @@
         overflow: hidden;
     }
     
-    .create-hero::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="white" opacity="0.1"/><circle cx="75" cy="75" r="1" fill="white" opacity="0.1"/><circle cx="50" cy="10" r="0.5" fill="white" opacity="0.1"/><circle cx="10" cy="60" r="0.5" fill="white" opacity="0.1"/><circle cx="90" cy="40" r="0.5" fill="white" opacity="0.1"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
-        opacity: 0.3;
-    }
-    
-    .create-hero-content {
-        position: relative;
-        z-index: 2;
-    }
-    
-    .create-hero-title {
-        font-size: 2.5rem;
-        font-weight: 700;
-        margin-bottom: 1rem;
-        text-shadow: 0 2px 4px rgba(0,0,0,0.3);
-    }
-    
-    .create-hero-subtitle {
-        font-size: 1.2rem;
-        opacity: 0.9;
-        margin-bottom: 2rem;
-    }
-    
-    .create-steps {
-        display: flex;
-        justify-content: center;
-        gap: 2rem;
-        flex-wrap: wrap;
-        margin-top: 2rem;
-    }
-    
-    .create-step {
-        background: rgba(255, 255, 255, 0.1);
-        backdrop-filter: blur(10px);
-        padding: 1rem 1.5rem;
-        border-radius: 15px;
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        text-align: center;
-        transition: all 0.3s ease;
-    }
-    
-    .create-step.active {
-        background: rgba(255, 255, 255, 0.2);
-        transform: scale(1.05);
-    }
-    
-    .create-step-icon {
-        font-size: 1.5rem;
-        margin-bottom: 0.5rem;
-        opacity: 0.9;
-    }
-    
-    .create-step-label {
-        font-size: 0.9rem;
-        opacity: 0.8;
-        font-weight: 600;
-    }
-    
     .form-container {
         background: white;
         border-radius: 20px;
@@ -98,35 +34,7 @@
         left: 0;
         right: 0;
         height: 4px;
-        background: linear-gradient(90deg, var(--azul-acero) 0%, var(--amarillo-ocre) 100%);
-    }
-    
-    .form-header {
-        display: flex;
-        align-items: center;
-        gap: 1rem;
-        margin-bottom: 2rem;
-        padding-bottom: 1.5rem;
-        border-bottom: 2px solid var(--blanco-humo);
-    }
-    
-    .form-header-icon {
-        background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
-        color: white;
-        width: 50px;
-        height: 50px;
-        border-radius: 12px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 1.5rem;
-    }
-    
-    .form-header-title {
-        font-size: 1.5rem;
-        font-weight: 700;
-        color: var(--azul-acero);
-        margin: 0;
+        background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
     }
     
     .form-group {
@@ -136,7 +44,7 @@
     
     .form-label {
         font-weight: 600;
-        color: var(--azul-acero);
+        color: #2c3e50;
         margin-bottom: 0.8rem;
         display: flex;
         align-items: center;
@@ -144,7 +52,7 @@
     }
     
     .form-label i {
-        color: var(--amarillo-ocre);
+        color: #667eea;
         font-size: 1.1rem;
     }
     
@@ -160,69 +68,15 @@
     }
     
     .form-control:focus, .form-select:focus {
-        border-color: #3498db !important;
-        box-shadow: 0 0 0 0.2rem rgba(52, 152, 219, 0.25) !important;
+        border-color: #667eea !important;
+        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25) !important;
         outline: none !important;
-    }
-    
-    .form-control:hover, .form-select:hover {
-        border-color: #5dade2 !important;
-    }
-    
-    /* Asegurar que los campos tengan bordes visibles por defecto */
-    input[type="text"], 
-    input[type="number"], 
-    input[type="date"], 
-    input[type="email"], 
-    input[type="password"],
-    textarea,
-    select {
-        border: 2px solid #e0e0e0 !important;
-        border-radius: 12px !important;
-        padding: 1rem 1.2rem !important;
-        font-size: 1rem !important;
-        transition: all 0.3s ease !important;
-        background: white !important;
-        width: 100% !important;
-        box-sizing: border-box !important;
-    }
-    
-    input[type="text"]:focus, 
-    input[type="number"]:focus, 
-    input[type="date"]:focus, 
-    input[type="email"]:focus, 
-    input[type="password"]:focus,
-    textarea:focus,
-    select:focus {
-        border-color: #3498db !important;
-        box-shadow: 0 0 0 0.2rem rgba(52, 152, 219, 0.25) !important;
-        outline: none !important;
-    }
-    
-    input[type="text"]:hover, 
-    input[type="number"]:hover, 
-    input[type="date"]:hover, 
-    input[type="email"]:hover, 
-    input[type="password"]:hover,
-    textarea:hover,
-    select:hover {
-        border-color: #5dade2 !important;
     }
     
     .form-row {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
         gap: 1.5rem;
-    }
-    
-    .form-actions {
-        display: flex;
-        gap: 1rem;
-        justify-content: flex-end;
-        margin-top: 2rem;
-        padding-top: 2rem;
-        border-top: 2px solid var(--blanco-humo);
-        flex-wrap: wrap;
     }
     
     .btn {
@@ -239,39 +93,31 @@
         cursor: pointer;
     }
     
-    .btn:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
-        text-decoration: none;
-    }
-    
-    .btn-cancel {
-        background: var(--blanco-humo);
-        color: var(--gris-concreto);
-        border: 2px solid var(--blanco-humo);
-    }
-    
-    .btn-cancel:hover {
-        background: var(--gris-concreto);
-        color: white;
-        border-color: var(--gris-concreto);
-    }
-    
-    .btn-save {
-        background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+    .btn-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         color: white;
     }
     
-    .btn-save:hover {
-        background: linear-gradient(135deg, #c0392b 0%, #a93226 100%);
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+    }
+    
+    .btn-secondary {
+        background: #6c757d;
+        color: white;
+    }
+    
+    .btn-secondary:hover {
+        background: #5a6268;
+        transform: translateY(-2px);
     }
     
     .info-sidebar {
-        background: white;
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
         border-radius: 20px;
         padding: 2rem;
-        box-shadow: 0 4px 20px rgba(44, 62, 80, 0.08);
-        height: fit-content;
+        border: none;
         position: sticky;
         top: 2rem;
     }
@@ -280,26 +126,27 @@
         display: flex;
         align-items: center;
         gap: 1rem;
-        margin-bottom: 1.5rem;
+        margin-bottom: 2rem;
         padding-bottom: 1rem;
-        border-bottom: 2px solid var(--blanco-humo);
+        border-bottom: 2px solid #dee2e6;
     }
     
-    .info-header-icon {
-        background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+    .info-icon {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         color: white;
-        width: 40px;
-        height: 40px;
-        border-radius: 10px;
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
         display: flex;
         align-items: center;
         justify-content: center;
+        font-size: 1.5rem;
     }
     
     .info-header-title {
-        font-size: 1.2rem;
+        font-size: 1.5rem;
         font-weight: 700;
-        color: var(--azul-acero);
+        color: #2c3e50;
         margin: 0;
     }
     
@@ -308,168 +155,74 @@
         justify-content: space-between;
         align-items: center;
         padding: 1rem 0;
-        border-bottom: 1px solid var(--blanco-humo);
-    }
-    
-    .info-item:last-child {
-        border-bottom: none;
+        border-bottom: 1px solid #e9ecef;
     }
     
     .info-label {
         font-weight: 600;
-        color: var(--azul-acero);
+        color: #495057;
     }
     
     .info-value {
-        color: var(--gris-concreto);
-        text-align: right;
+        font-weight: 700;
+        color: #667eea;
     }
     
     .info-alert {
-        background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%);
-        color: white;
-        border-radius: 12px;
-        padding: 1.5rem;
-        margin-top: 1.5rem;
-        text-align: center;
+        background: #fff3cd;
+        border: 1px solid #ffeaa7;
+        border-radius: 10px;
+        padding: 1rem;
+        margin-top: 2rem;
     }
     
     .info-alert i {
-        font-size: 2rem;
-        margin-bottom: 1rem;
-        display: block;
+        color: #856404;
+        margin-right: 0.5rem;
     }
     
     .info-alert h6 {
+        color: #856404;
+        font-weight: 600;
         margin-bottom: 0.5rem;
-        font-weight: 700;
     }
     
     .info-alert p {
+        color: #856404;
         margin: 0;
-        opacity: 0.9;
         font-size: 0.9rem;
     }
     
-    .form-validation {
-        margin-top: 0.5rem;
-        font-size: 0.85rem;
+    .required {
+        color: #dc3545;
     }
     
-    .form-validation.error {
-        color: #e74c3c;
+    .text-danger {
+        color: #dc3545 !important;
     }
     
-    .form-validation.success {
-        color: #27ae60;
+    .small {
+        font-size: 0.875rem;
     }
     
-    .total-preview {
-        background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%);
-        color: white;
-        border-radius: 15px;
-        padding: 1.5rem;
-        margin-top: 1rem;
-        text-align: center;
-        display: none;
-    }
-    
-    .total-preview.show {
-        display: block;
-        animation: slideIn 0.5s ease;
-    }
-    
-    .total-preview h5 {
-        margin-bottom: 0.5rem;
-        font-weight: 700;
-    }
-    
-    .total-preview .amount {
-        font-size: 2rem;
-        font-weight: 800;
-    }
-    
-    @keyframes slideIn {
-        from {
-            opacity: 0;
-            transform: translateY(-20px);
-        }
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
-    
-    @media (max-width: 768px) {
-        .create-hero {
-            padding: 2rem 1rem;
-        }
-        
-        .create-hero-title {
-            font-size: 2rem;
-        }
-        
-        .create-steps {
-            flex-direction: column;
-            align-items: center;
-        }
-        
-        .form-container {
-            padding: 1.5rem;
-        }
-        
-        .form-row {
-            grid-template-columns: 1fr;
-        }
-        
-        .form-actions {
-            flex-direction: column;
-            align-items: stretch;
-        }
-        
-        .btn {
-            justify-content: center;
-        }
-        
-        .info-sidebar {
-            position: static;
-            margin-top: 2rem;
-        }
+    .mt-1 {
+        margin-top: 0.25rem;
     }
 </style>
 {% endblock %}
 
 {% block content %}
-<!-- Hero Section -->
+<div class="container-fluid py-4">
+    <!-- Header -->
 <div class="create-hero">
     <div class="create-hero-content">
         <h1 class="create-hero-title">
-            <i class="fas fa-plus me-2"></i>Nueva Factura
+                <i class="fas fa-file-invoice"></i>
+                Nueva Factura
         </h1>
         <p class="create-hero-subtitle">
-            Crea una nueva factura para tu proyecto de construcción
-        </p>
-        
-        <div class="create-steps">
-            <div class="create-step active">
-                <div class="create-step-icon">
-                    <i class="fas fa-info-circle"></i>
-                </div>
-                <div class="create-step-label">Información</div>
-            </div>
-            <div class="create-step">
-                <div class="create-step-icon">
-                    <i class="fas fa-calculator"></i>
-                </div>
-                <div class="create-step-label">Cálculos</div>
-            </div>
-            <div class="create-step">
-                <div class="create-step-icon">
-                    <i class="fas fa-check-circle"></i>
-                </div>
-                <div class="create-step-label">Confirmación</div>
-            </div>
-        </div>
+                Crear una nueva factura para el proyecto
+            </p>
     </div>
 </div>
 
@@ -477,161 +230,216 @@
     <!-- Formulario Principal -->
     <div class="col-lg-8">
         <div class="form-container">
-            <div class="form-header">
-                <div class="form-header-icon">
-                    <i class="fas fa-file-invoice"></i>
-                </div>
-                <h3 class="form-header-title">Información de la Factura</h3>
-            </div>
-            
-            <form method="post" id="createForm">
+                <form method="post" id="createForm" enctype="multipart/form-data">
                 {% csrf_token %}
                 
                 <!-- Número de Factura y Cliente -->
                 <div class="form-row">
                     <div class="form-group">
-                        <label for="numero_factura" class="form-label">
-                            <i class="fas fa-hashtag"></i>Número de Factura *
+                            <label for="{{ form.numero_factura.id_for_label }}" class="form-label">
+                                <i class="fas fa-hashtag"></i>
+                                Número de Factura <span class="required">*</span>
                         </label>
-                        <input type="text" class="form-control" id="numero_factura" name="numero_factura" required placeholder="FAC-001">
-                        <div class="form-validation" id="numeroFacturaValidation"></div>
+                            {{ form.numero_factura }}
+                            {% if form.numero_factura.errors %}
+                                <div class="text-danger small mt-1">
+                                    {% for error in form.numero_factura.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
                     </div>
                     
                     <div class="form-group">
-                        <label for="cliente" class="form-label">
-                            <i class="fas fa-users"></i>Cliente *
+                            <label for="{{ form.cliente.id_for_label }}" class="form-label">
+                                <i class="fas fa-users"></i>
+                                Cliente <span class="required">*</span>
                         </label>
-                        <select class="form-select" id="cliente" name="cliente" required>
-                            <option value="">Seleccionar cliente...</option>
-                            {% for cliente in clientes %}
-                                <option value="{{ cliente.id }}">{{ cliente.razon_social }}</option>
+                            {{ form.cliente }}
+                            {% if form.cliente.errors %}
+                                <div class="text-danger small mt-1">
+                                    {% for error in form.cliente.errors %}
+                                        {{ error }}
                             {% endfor %}
-                        </select>
-                        <div class="form-validation" id="clienteValidation"></div>
-                    </div>
+                                </div>
+                            {% endif %}
+                        </div>
                 </div>
 
-                <!-- Proyecto y Total -->
+                    <!-- Proyecto y Tipo -->
                 <div class="form-row">
                     <div class="form-group">
-                        <label for="proyecto" class="form-label">
-                            <i class="fas fa-project-diagram"></i>Proyecto *
+                            <label for="{{ form.proyecto.id_for_label }}" class="form-label">
+                                <i class="fas fa-project-diagram"></i>
+                                Proyecto <span class="required">*</span>
                         </label>
-                        <select class="form-select" id="proyecto" name="proyecto" required>
-                            <option value="">Seleccionar proyecto...</option>
-                            {% for proyecto in proyectos %}
-                                <option value="{{ proyecto.id }}">{{ proyecto.nombre }}</option>
+                            {{ form.proyecto }}
+                            {% if form.proyecto.errors %}
+                                <div class="text-danger small mt-1">
+                                    {% for error in form.proyecto.errors %}
+                                        {{ error }}
                             {% endfor %}
-                        </select>
-                        <div class="form-validation" id="proyectoValidation"></div>
+                                </div>
+                            {% endif %}
                     </div>
                     
                     <div class="form-group">
-                        <label for="monto_subtotal" class="form-label">
-                            <i class="fas fa-dollar-sign"></i>Subtotal (Q) *
+                            <label for="{{ form.tipo.id_for_label }}" class="form-label">
+                                <i class="fas fa-tag"></i>
+                                Tipo de Factura
                         </label>
-                        <input type="number" class="form-control" id="monto_subtotal" name="monto_subtotal" step="0.01" min="0" required placeholder="0.00">
-                        <div class="form-validation" id="montoSubtotalValidation"></div>
-                    </div>
+                            {{ form.tipo }}
+                            {% if form.tipo.errors %}
+                                <div class="text-danger small mt-1">
+                                    {% for error in form.tipo.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
                 </div>
 
-                <!-- IVA y Total -->
-                <div class="form-row">
+                    <!-- Estado -->
                     <div class="form-group">
-                        <label for="monto_iva" class="form-label">
-                            <i class="fas fa-percentage"></i>IVA (Q)
+                        <label for="{{ form.estado.id_for_label }}" class="form-label">
+                            <i class="fas fa-check-circle"></i>
+                            Estado <span class="required">*</span>
                         </label>
-                        <input type="number" class="form-control" id="monto_iva" name="monto_iva" step="0.01" min="0" value="0.00" placeholder="0.00">
-                        <div class="form-validation" id="montoIvaValidation"></div>
+                        {{ form.estado }}
+                        {% if form.estado.errors %}
+                            <div class="text-danger small mt-1">
+                                {% for error in form.estado.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
                     </div>
                     
+                    <!-- Fechas -->
+                    <div class="form-row">
                     <div class="form-group">
-                        <label for="monto_total" class="form-label">
-                            <i class="fas fa-calculator"></i>Total (Q) *
+                            <label for="{{ form.fecha_emision.id_for_label }}" class="form-label">
+                                <i class="fas fa-calendar"></i>
+                                Fecha de Emisión <span class="required">*</span>
                         </label>
-                        <input type="number" class="form-control" id="monto_total" name="monto_total" step="0.01" min="0" required placeholder="0.00" readonly>
-                        <div class="form-validation" id="montoTotalValidation"></div>
+                            {{ form.fecha_emision }}
+                            {% if form.fecha_emision.errors %}
+                                <div class="text-danger small mt-1">
+                                    {% for error in form.fecha_emision.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
                         
-                        <!-- Vista previa del total -->
-                        <div class="total-preview" id="totalPreview">
-                            <h5>Total de la Factura</h5>
-                            <div class="amount">Q <span id="totalAmount">0.00</span></div>
+                        <div class="form-group">
+                            <label for="{{ form.fecha_vencimiento.id_for_label }}" class="form-label">
+                                <i class="fas fa-clock"></i>
+                                Fecha de Vencimiento <span class="required">*</span>
+                            </label>
+                            {{ form.fecha_vencimiento }}
+                            {% if form.fecha_vencimiento.errors %}
+                                <div class="text-danger small mt-1">
+                                    {% for error in form.fecha_vencimiento.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                    </div>
+                </div>
+
+                    <!-- Montos -->
+                <div class="form-row">
+                    <div class="form-group">
+                            <label for="{{ form.monto_subtotal.id_for_label }}" class="form-label">
+                                <i class="fas fa-dollar-sign"></i>
+                                Subtotal ($) <span class="required">*</span>
+                        </label>
+                            {{ form.monto_subtotal }}
+                            {% if form.monto_subtotal.errors %}
+                                <div class="text-danger small mt-1">
+                                    {% for error in form.monto_subtotal.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                    </div>
+                    
+                    <div class="form-group">
+                            <label for="{{ form.porcentaje_itbms.id_for_label }}" class="form-label">
+                                <i class="fas fa-percentage"></i>
+                                Porcentaje de ITBMS
+                        </label>
+                            {{ form.porcentaje_itbms }}
+                            {% if form.porcentaje_itbms.errors %}
+                                <div class="text-danger small mt-1">
+                                    {% for error in form.porcentaje_itbms.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
                         </div>
                     </div>
+
+                    <!-- ITBMS y Total -->
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="{{ form.monto_iva.id_for_label }}" class="form-label">
+                                <i class="fas fa-calculator"></i>
+                                Monto ITBMS
+                            </label>
+                            {{ form.monto_iva }}
+                            {% if form.monto_iva.errors %}
+                                <div class="text-danger small mt-1">
+                                    {% for error in form.monto_iva.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
                 </div>
 
-                <!-- Fechas -->
-                <div class="form-row">
                     <div class="form-group">
-                        <label for="fecha_emision" class="form-label">
-                            <i class="fas fa-calendar"></i>Fecha de Emisión *
+                            <label for="{{ form.monto_total.id_for_label }}" class="form-label">
+                                <i class="fas fa-calculator"></i>
+                                Total ($) <span class="required">*</span>
                         </label>
-                        <input type="date" class="form-control" id="fecha_emision" name="fecha_emision" 
-                               value="{{ form.fecha_emision.value|default:'' }}" required>
-                        <div class="form-validation" id="fechaEmisionValidation"></div>
+                            {{ form.monto_total }}
+                            {% if form.monto_total.errors %}
+                                <div class="text-danger small mt-1">
+                                    {% for error in form.monto_total.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
                     </div>
                     
+                    <!-- Descripción -->
                     <div class="form-group">
-                        <label for="fecha_vencimiento" class="form-label">
-                            <i class="fas fa-clock"></i>Fecha de Vencimiento *
+                        <label for="{{ form.descripcion_servicios.id_for_label }}" class="form-label">
+                            <i class="fas fa-file-alt"></i>
+                            Descripción de Servicios
                         </label>
-                        <input type="date" class="form-control" id="fecha_vencimiento" name="fecha_vencimiento" 
-                               value="{{ form.fecha_vencimiento.value|default:'' }}" required>
-                        <div class="form-validation" id="fechaVencimientoValidation"></div>
-                    </div>
+                        {{ form.descripcion_servicios }}
+                        {% if form.descripcion_servicios.errors %}
+                            <div class="text-danger small mt-1">
+                                {% for error in form.descripcion_servicios.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
                 </div>
 
-                <!-- Tipo y Estado -->
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="tipo" class="form-label">
-                            <i class="fas fa-tag"></i>Tipo de Factura *
-                        </label>
-                        <select class="form-select" id="tipo" name="tipo" required>
-                            <option value="">Seleccionar tipo...</option>
-                            <option value="progreso">Factura por Progreso de Obra</option>
-                            <option value="final">Factura Final</option>
-                            <option value="adicional">Factura por Trabajos Adicionales</option>
-                            <option value="retencion">Factura por Retención</option>
-                            <option value="otros">Otros</option>
-                        </select>
-                        <div class="form-validation" id="tipoValidation"></div>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="estado" class="form-label">
-                            <i class="fas fa-check-circle"></i>Estado *
-                        </label>
-                        <select class="form-select" id="estado" name="estado" required>
-                            <option value="">Seleccionar estado...</option>
-                            <option value="borrador">Borrador</option>
-                            <option value="emitida" selected>Emitida</option>
-                            <option value="enviada">Enviada al Cliente</option>
-                            <option value="pagada">Pagada</option>
-                            <option value="vencida">Vencida</option>
-                            <option value="cancelada">Cancelada</option>
-                        </select>
-                        <div class="form-validation" id="estadoValidation"></div>
-                    </div>
-                </div>
-
-                <!-- Descripción de Servicios -->
-                <div class="form-group">
-                    <label for="descripcion_servicios" class="form-label">
-                        <i class="fas fa-align-left"></i>Descripción de Servicios *
-                    </label>
-                    <textarea class="form-control" id="descripcion_servicios" name="descripcion_servicios" rows="4" required placeholder="Descripción detallada de los servicios facturados">Servicios de construcción</textarea>
-                    <div class="form-validation" id="descripcionServiciosValidation"></div>
-                </div>
-
-                <!-- Acciones del Formulario -->
-                <div class="form-actions">
-                    <a href="{% url 'facturas_list' %}" class="btn btn-cancel">
-                        <i class="fas fa-times"></i>Cancelar
-                    </a>
-                    <button type="submit" class="btn btn-save" id="saveButton">
-                        <i class="fas fa-save"></i>Crear Factura
-                    </button>
+                    <!-- Botones -->
+                    <div class="form-group text-center">
+                        <button type="submit" class="btn btn-primary me-3">
+                            <i class="fas fa-save"></i>
+                            Crear Factura
+                        </button>
+                        <a href="{% url 'dashboard' %}" class="btn btn-secondary">
+                            <i class="fas fa-times"></i>
+                            Cancelar
+                        </a>
                 </div>
             </form>
         </div>
@@ -641,7 +449,7 @@
     <div class="col-lg-4">
         <div class="info-sidebar">
             <div class="info-header">
-                <div class="info-header-icon">
+                    <div class="info-icon">
                     <i class="fas fa-info-circle"></i>
                 </div>
                 <h4 class="info-header-title">Información Útil</h4>
@@ -649,28 +457,31 @@
             
             <div class="info-item">
                 <span class="info-label">Total Clientes:</span>
-                <span class="info-value">{{ clientes.count }}</span>
+                    <span class="info-value">{{ clientes.count }}</span>
             </div>
             
             <div class="info-item">
                 <span class="info-label">Total Proyectos:</span>
-                <span class="info-value">{{ proyectos.count }}</span>
+                    <span class="info-value">{{ proyectos.count }}</span>
             </div>
             
             <div class="info-item">
                 <span class="info-label">Facturas del Mes:</span>
-                <span class="info-value">{{ facturas_mes|default:"0" }}</span>
+                    <span class="info-value">{{ facturas_mes|default:"0" }}</span>
             </div>
             
             <div class="info-item">
                 <span class="info-label">Total Facturado:</span>
-                <span class="info-value">Q {{ total_facturado|default:"0.00" }}</span>
+                    <span class="info-value">${{ total_facturado|default:"0.00" }}</span>
             </div>
             
             <div class="info-alert">
                 <i class="fas fa-lightbulb"></i>
                 <h6>Consejos</h6>
-                <p>Completa toda la información requerida para crear una factura válida. Los campos marcados con * son obligatorios.</p>
+                    <p>• El ITBMS se calcula automáticamente según el porcentaje seleccionado</p>
+                    <p>• El total se actualiza automáticamente al ingresar el subtotal</p>
+                    <p>• Asegúrate de seleccionar el cliente y proyecto correctos</p>
+                </div>
             </div>
         </div>
     </div>
@@ -681,379 +492,84 @@
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     console.log('Página de crear factura cargada');
-    const form = document.getElementById('createForm');
-    const saveButton = document.getElementById('saveButton');
     
-    console.log('Formulario encontrado:', form);
-    console.log('Botón guardar encontrado:', saveButton);
-    const montoSubtotalInput = document.getElementById('monto_subtotal');
-    const montoIvaInput = document.getElementById('monto_iva');
-    const montoTotalInput = document.getElementById('monto_total');
-    const totalPreview = document.getElementById('totalPreview');
-    const totalAmount = document.getElementById('totalAmount');
+    // Definir variables globales
+    const montoSubtotalInput = document.getElementById('id_monto_subtotal');
+    const porcentajeItbmsSelect = document.getElementById('id_porcentaje_itbms');
+    const montoIvaInput = document.getElementById('id_monto_iva');
+    const montoTotalInput = document.getElementById('id_monto_total');
     
-    // Animación de entrada para las tarjetas
-    const cards = document.querySelectorAll('.form-container, .info-sidebar');
-    cards.forEach((card, index) => {
-        card.style.opacity = '0';
-        card.style.transform = 'translateY(30px)';
+    console.log('🔍 Elementos encontrados:');
+    console.log('  - Subtotal:', montoSubtotalInput ? '✅' : '❌');
+    console.log('  - Porcentaje ITBMS:', porcentajeItbmsSelect ? '✅' : '❌');
+    console.log('  - Monto IVA:', montoIvaInput ? '✅' : '❌');
+    console.log('  - Monto Total:', montoTotalInput ? '✅' : '❌');
+    
+    // Función de cálculo
+    function calcularFactura() {
+        console.log('🔄 Función calcularFactura ejecutada');
         
-        setTimeout(() => {
-            card.style.transition = 'all 0.8s ease';
-            card.style.opacity = '1';
-            card.style.transform = 'translateY(0)';
-        }, index * 200);
-    });
-    
-    // Efecto hover para los pasos
-    const steps = document.querySelectorAll('.create-step');
-    steps.forEach(step => {
-        step.addEventListener('mouseenter', function() {
-            this.style.transform = 'scale(1.05)';
-        });
+        if (!montoSubtotalInput || !porcentajeItbmsSelect || !montoIvaInput || !montoTotalInput) {
+            console.log('❌ No se encontraron todos los campos necesarios');
+            return;
+        }
         
-        step.addEventListener('mouseleave', function() {
-            this.style.transform = 'scale(1)';
-        });
-    });
-    
-    // Cálculo automático del total
-    function calcularTotal() {
         const subtotal = parseFloat(montoSubtotalInput.value) || 0;
-        const iva = parseFloat(montoIvaInput.value) || 0;
-        const total = subtotal + iva;
+        const porcentajeItbms = parseFloat(porcentajeItbmsSelect.value) || 0;
         
-        montoTotalInput.value = total.toFixed(2);
-        totalAmount.textContent = total.toFixed(2);
+        console.log('💰 Subtotal:', subtotal);
+        console.log('📊 Porcentaje ITBMS:', porcentajeItbms + '%');
         
-        if (total > 0) {
-            totalPreview.classList.add('show');
+        if (subtotal > 0) {
+            // Calcular ITBMS según el porcentaje seleccionado
+            const itbms = subtotal * (porcentajeItbms / 100);
+            const total = subtotal + itbms;
+            
+            console.log('🧾 ITBMS calculado:', itbms);
+            console.log('💵 Total calculado:', total);
+            
+            // Actualizar campos
+            montoIvaInput.value = itbms.toFixed(2);
+            montoTotalInput.value = total.toFixed(2);
+            
+            console.log('✅ Campos actualizados');
         } else {
-            totalPreview.classList.remove('show');
+            // Limpiar campos si no hay subtotal
+            montoIvaInput.value = '0.00';
+            montoTotalInput.value = '0.00';
+            console.log('🧹 Campos limpiados');
         }
     }
     
-    // Vista previa del total en tiempo real
-    if (montoSubtotalInput && montoIvaInput) {
-        montoSubtotalInput.addEventListener('input', calcularTotal);
-        montoIvaInput.addEventListener('input', calcularTotal);
-    }
-    
-    // Validación en tiempo real
-    const numeroFacturaInput = document.getElementById('numero_factura');
-    const clienteInput = document.getElementById('cliente');
-    const proyectoInput = document.getElementById('proyecto');
-    const tipoInput = document.getElementById('tipo');
-    const estadoInput = document.getElementById('estado');
-    const fechaEmisionInput = document.getElementById('fecha_emision');
-    const fechaVencimientoInput = document.getElementById('fecha_vencimiento');
-    
-    function validateField(input, validationElement, fieldName) {
-        const value = input.value.trim();
-        let isValid = true;
-        let message = '';
-        
-        if (fieldName === 'numeroFactura') {
-            if (value.length < 3) {
-                isValid = false;
-                message = 'El número de factura debe tener al menos 3 caracteres';
-            } else if (value.length > 50) {
-                isValid = false;
-                message = 'El número de factura no puede exceder 50 caracteres';
-            }
-        } else if (fieldName === 'cliente') {
-            if (!value) {
-                isValid = false;
-                message = 'Debes seleccionar un cliente';
-            }
-        } else if (fieldName === 'proyecto') {
-            if (!value) {
-                isValid = false;
-                message = 'Debes seleccionar un proyecto';
-            }
-        } else if (fieldName === 'montoSubtotal') {
-            if (!value || parseFloat(value) <= 0) {
-                isValid = false;
-                message = 'El subtotal debe ser mayor a 0';
-            }
-        } else if (fieldName === 'montoTotal') {
-            if (!value || parseFloat(value) <= 0) {
-                isValid = false;
-                message = 'El total debe ser mayor a 0';
-            }
-        } else if (fieldName === 'fechaEmision') {
-            if (!value) {
-                isValid = false;
-                message = 'Debes seleccionar una fecha de emisión';
-            }
-        } else if (fieldName === 'fechaVencimiento') {
-            if (value && fechaEmisionInput.value) {
-                const emision = new Date(fechaEmisionInput.value);
-                const vencimiento = new Date(value);
-                if (vencimiento <= emision) {
-                    isValid = false;
-                    message = 'La fecha de vencimiento debe ser posterior a la emisión';
-                }
-            }
-        } else if (fieldName === 'tipo') {
-            if (!value) {
-                isValid = false;
-                message = 'Debes seleccionar un tipo de factura';
-            }
-        } else if (fieldName === 'estado') {
-            if (!value) {
-                isValid = false;
-                message = 'Debes seleccionar un estado';
-            }
-        } else if (fieldName === 'descripcionServicios') {
-            if (!value || value.trim().length < 10) {
-                isValid = false;
-                message = 'La descripción debe tener al menos 10 caracteres';
-            }
-        }
-        
-        if (isValid) {
-            validationElement.className = 'form-validation success';
-            validationElement.innerHTML = '<i class="fas fa-check-circle me-1"></i>Campo válido';
-        } else {
-            validationElement.className = 'form-validation error';
-            validationElement.innerHTML = '<i class="fas fa-exclamation-circle me-1"></i>' + message;
-        }
-        
-        return isValid;
-    }
-    
-    // Aplicar validación en tiempo real
-    if (numeroFacturaInput) {
-        numeroFacturaInput.addEventListener('input', () => validateField(numeroFacturaInput, document.getElementById('numeroFacturaValidation'), 'numeroFactura'));
-        numeroFacturaInput.addEventListener('blur', () => validateField(numeroFacturaInput, document.getElementById('numeroFacturaValidation'), 'numeroFactura'));
-    }
-    
-    if (clienteInput) {
-        console.log('✅ Event listener agregado al select de cliente');
-        clienteInput.addEventListener('change', () => {
-            console.log('🔄 Cliente cambiado, ejecutando filtrado...');
-            validateField(clienteInput, document.getElementById('clienteValidation'), 'cliente');
-            filtrarProyectosPorCliente();
-        });
-    } else {
-        console.log('❌ No se encontró el select de cliente');
-    }
-    
-    if (proyectoInput) {
-        proyectoInput.addEventListener('change', () => validateField(proyectoInput, document.getElementById('proyectoValidation'), 'proyecto'));
-    }
-    
-    if (tipoInput) {
-        tipoInput.addEventListener('change', () => validateField(tipoInput, document.getElementById('tipoValidation'), 'tipo'));
-    }
-    
-    if (estadoInput) {
-        estadoInput.addEventListener('change', () => validateField(estadoInput, document.getElementById('estadoValidation'), 'estado'));
-    }
-    
+    // Agregar event listeners
     if (montoSubtotalInput) {
-        montoSubtotalInput.addEventListener('input', () => validateField(montoSubtotalInput, document.getElementById('montoSubtotalValidation'), 'montoSubtotal'));
-        montoSubtotalInput.addEventListener('blur', () => validateField(montoSubtotalInput, document.getElementById('montoSubtotalValidation'), 'montoSubtotal'));
+        montoSubtotalInput.addEventListener('input', calcularFactura);
+        montoSubtotalInput.addEventListener('change', calcularFactura);
+        montoSubtotalInput.addEventListener('keyup', calcularFactura);
+        console.log('✅ Event listeners agregados al campo subtotal');
     }
     
-    if (montoTotalInput) {
-        montoTotalInput.addEventListener('blur', () => validateField(montoTotalInput, document.getElementById('montoTotalValidation'), 'montoTotal'));
+    if (porcentajeItbmsSelect) {
+        porcentajeItbmsSelect.addEventListener('change', calcularFactura);
+        console.log('✅ Event listeners agregados al campo porcentaje ITBMS');
     }
-    
-    if (fechaEmisionInput) {
-        fechaEmisionInput.addEventListener('change', () => {
-            validateField(fechaEmisionInput, document.getElementById('fechaEmisionValidation'), 'fechaEmision');
-            if (fechaVencimientoInput.value) {
-                validateField(fechaVencimientoInput, document.getElementById('fechaVencimientoValidation'), 'fechaVencimiento');
-            }
-        });
-    }
-    
-    if (fechaVencimientoInput) {
-        fechaVencimientoInput.addEventListener('change', () => validateField(fechaVencimientoInput, document.getElementById('fechaVencimientoValidation'), 'fechaVencimiento'));
-    }
-    
-    const descripcionServiciosInput = document.getElementById('descripcion_servicios');
-    if (descripcionServiciosInput) {
-        descripcionServiciosInput.addEventListener('input', () => validateField(descripcionServiciosInput, document.getElementById('descripcionServiciosValidation'), 'descripcionServicios'));
-        descripcionServiciosInput.addEventListener('blur', () => validateField(descripcionServiciosInput, document.getElementById('descripcionServiciosValidation'), 'descripcionServicios'));
-    }
-    
-    // Validación del formulario antes de enviar
-    form.addEventListener('submit', function(e) {
-        console.log('=== INICIO ENVÍO FORMULARIO ===');
-        console.log('Evento submit capturado');
-        let isValid = true;
-        
-        // Validar todos los campos requeridos
-        console.log('🔍 Validando campos...');
-        
-        if (numeroFacturaInput && !validateField(numeroFacturaInput, document.getElementById('numeroFacturaValidation'), 'numeroFactura')) {
-            console.log('❌ Número de factura inválido');
-            isValid = false;
-        } else {
-            console.log('✅ Número de factura válido');
-        }
-        
-        if (clienteInput && !validateField(clienteInput, document.getElementById('clienteValidation'), 'cliente')) {
-            console.log('❌ Cliente inválido');
-            isValid = false;
-        } else {
-            console.log('✅ Cliente válido');
-        }
-        
-        if (proyectoInput && !validateField(proyectoInput, document.getElementById('proyectoValidation'), 'proyecto')) {
-            console.log('❌ Proyecto inválido');
-            isValid = false;
-        } else {
-            console.log('✅ Proyecto válido');
-        }
-        
-        if (tipoInput && !validateField(tipoInput, document.getElementById('tipoValidation'), 'tipo')) {
-            console.log('❌ Tipo inválido');
-            isValid = false;
-        } else {
-            console.log('✅ Tipo válido');
-        }
-        
-        if (estadoInput && !validateField(estadoInput, document.getElementById('estadoValidation'), 'estado')) {
-            console.log('❌ Estado inválido');
-            isValid = false;
-        } else {
-            console.log('✅ Estado válido');
-        }
-        
-        if (montoSubtotalInput && !validateField(montoSubtotalInput, document.getElementById('montoSubtotalValidation'), 'montoSubtotal')) {
-            console.log('❌ Subtotal inválido');
-            isValid = false;
-        } else {
-            console.log('✅ Subtotal válido');
-        }
-        
-        // No validar montoTotal ya que se calcula automáticamente
-        console.log('ℹ️ Saltando validación de monto total (se calcula automáticamente)');
-        
-        if (fechaEmisionInput && !validateField(fechaEmisionInput, document.getElementById('fechaEmisionValidation'), 'fechaEmision')) {
-            console.log('❌ Fecha emisión inválida');
-            isValid = false;
-        } else {
-            console.log('✅ Fecha emisión válida');
-        }
-        
-        const descripcionServiciosInput = document.getElementById('descripcion_servicios');
-        if (descripcionServiciosInput && !validateField(descripcionServiciosInput, document.getElementById('descripcionServiciosValidation'), 'descripcionServicios')) {
-            console.log('❌ Descripción inválida');
-            isValid = false;
-        } else {
-            console.log('✅ Descripción válida');
-        }
-        
-        if (!isValid) {
-            console.log('❌ Validación falló, previniendo envío');
-            e.preventDefault();
-            
-            // Mostrar mensaje de error
-            saveButton.innerHTML = '<i class="fas fa-exclamation-triangle me-2"></i>Corrige los errores';
-            saveButton.style.background = 'linear-gradient(135deg, #e74c3c 0%, #c0392b 100%)';
-            
-            setTimeout(() => {
-                saveButton.innerHTML = '<i class="fas fa-save me-2"></i>Crear Factura';
-                saveButton.style.background = 'linear-gradient(135deg, #e74c3c 0%, #c0392b 100%)';
-            }, 3000);
-            
-            // Scroll al primer error
-            const firstError = document.querySelector('.form-validation.error');
-            if (firstError) {
-                firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            }
-        } else {
-            // Mostrar estado de carga
-            console.log('✅ Validación pasó, enviando formulario...');
-            console.log('Formulario válido, permitiendo envío al servidor');
-            saveButton.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Creando...';
-            saveButton.disabled = true;
-        }
-    });
-    
-    // Efecto de focus en los campos
-    const formInputs = document.querySelectorAll('.form-control, .form-select');
-    formInputs.forEach(input => {
-        input.addEventListener('focus', function() {
-            this.parentElement.style.transform = 'translateY(-2px)';
-        });
-        
-        input.addEventListener('blur', function() {
-            this.parentElement.style.transform = 'translateY(0)';
-        });
-    });
-    
-    // Animación del botón de guardar
-    saveButton.addEventListener('mouseenter', function() {
-        this.style.transform = 'translateY(-3px) scale(1.02)';
-    });
-    
-    saveButton.addEventListener('mouseleave', function() {
-        this.style.transform = 'translateY(0) scale(1)';
-    });
     
     // Establecer fecha de emisión por defecto
+    const fechaEmisionInput = document.getElementById('id_fecha_emision');
     if (fechaEmisionInput) {
         const today = new Date().toISOString().split('T')[0];
         fechaEmisionInput.value = today;
     }
     
     // Establecer fecha de vencimiento por defecto (30 días después)
+    const fechaVencimientoInput = document.getElementById('id_fecha_vencimiento');
     if (fechaVencimientoInput) {
         const today = new Date();
         const futureDate = new Date(today.getTime() + (30 * 24 * 60 * 60 * 1000)); // 30 días después
         fechaVencimientoInput.value = futureDate.toISOString().split('T')[0];
     }
     
-    // Función para filtrar proyectos por cliente
-    function filtrarProyectosPorCliente() {
-        console.log('🔄 Función filtrarProyectosPorCliente ejecutada');
-        
-        const clienteId = clienteInput.value;
-        const proyectoSelect = document.getElementById('proyecto');
-        
-        console.log('🔍 Cliente seleccionado ID:', clienteId);
-        console.log('🔍 Select de proyectos encontrado:', proyectoSelect);
-        
-        // Limpiar opciones actuales
-        proyectoSelect.innerHTML = '<option value="">Seleccionar proyecto...</option>';
-        
-        if (clienteId) {
-            // Obtener proyectos del cliente seleccionado
-            const proyectosCliente = proyectosPorCliente[clienteId] || [];
-            
-            console.log('🔍 Proyectos encontrados para cliente', clienteId, ':', proyectosCliente);
-            
-            proyectosCliente.forEach(proyecto => {
-                const option = document.createElement('option');
-                option.value = proyecto.id;
-                option.textContent = proyecto.nombre;
-                proyectoSelect.appendChild(option);
-                console.log('✅ Agregado proyecto:', proyecto.nombre, 'con ID:', proyecto.id);
-            });
-            
-            // Resetear validación del proyecto
-            if (proyectoInput) {
-                validateField(proyectoInput, document.getElementById('proyectoValidation'), 'proyecto');
-            }
-        } else {
-            console.log('⚠️ No se seleccionó ningún cliente');
-        }
-    }
-    
-    // Datos de proyectos por cliente (se pasan desde la vista)
-    const proyectosPorCliente = {{ proyectos_por_cliente|safe }};
-    
-    // Debug: Verificar que los datos se cargaron correctamente
-    console.log('🔍 Proyectos por cliente cargados:', proyectosPorCliente);
-    
-    // Verificar que la función de filtrado esté disponible globalmente
-    window.filtrarProyectosPorCliente = filtrarProyectosPorCliente;
+    console.log('✅ Factura form inicializado correctamente');
 });
 </script>
 {% endblock %}

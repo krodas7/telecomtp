@@ -1,0 +1,421 @@
+{% extends "base.html" %}
+{% load custom_filters %}
+
+{% block title %}Editar Cotización - Sistema de Construcción{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">
+        <i class="fas fa-edit me-2"></i>Editar Cotización: {{ cotizacion.numero_cotizacion }}
+    </h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <a href="{% url 'cotizacion_detail' cotizacion.id %}" class="btn btn-outline-secondary me-2">
+            <i class="fas fa-arrow-left me-1"></i>Volver
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-edit me-2"></i>Editar Información de la Cotización
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="post" enctype="multipart/form-data" id="editForm">
+                    {% csrf_token %}
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.numero_cotizacion.id_for_label }}" class="form-label">
+                                {{ form.numero_cotizacion.label }}
+                            </label>
+                            {{ form.numero_cotizacion }}
+                            {% if form.numero_cotizacion.errors %}
+                                <div class="text-danger small">
+                                    {% for error in form.numero_cotizacion.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.titulo.id_for_label }}" class="form-label">
+                                {{ form.titulo.label }}
+                            </label>
+                            {{ form.titulo }}
+                            {% if form.titulo.errors %}
+                                <div class="text-danger small">
+                                    {% for error in form.titulo.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.proyecto.id_for_label }}" class="form-label">
+                                {{ form.proyecto.label }}
+                            </label>
+                            {{ form.proyecto }}
+                            {% if form.proyecto.errors %}
+                                <div class="text-danger small">
+                                    {% for error in form.proyecto.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.cliente.id_for_label }}" class="form-label">
+                                {{ form.cliente.label }}
+                            </label>
+                            {{ form.cliente }}
+                            {% if form.cliente.errors %}
+                                <div class="text-danger small">
+                                    {% for error in form.cliente.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.descripcion.id_for_label }}" class="form-label">
+                            {{ form.descripcion.label }}
+                        </label>
+                        {{ form.descripcion }}
+                        {% if form.descripcion.errors %}
+                            <div class="text-danger small">
+                                {% for error in form.descripcion.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label for="{{ form.monto_subtotal.id_for_label }}" class="form-label">
+                                {{ form.monto_subtotal.label }}
+                            </label>
+                            {{ form.monto_subtotal }}
+                            {% if form.monto_subtotal.errors %}
+                                <div class="text-danger small">
+                                    {% for error in form.monto_subtotal.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <label for="{{ form.monto_iva.id_for_label }}" class="form-label">
+                                {{ form.monto_iva.label }}
+                            </label>
+                            <div class="input-group">
+                                {{ form.monto_iva }}
+                                <span class="input-group-text bg-primary text-white">7%</span>
+                            </div>
+                            <small class="text-muted">Se calcula automáticamente: 7% del subtotal</small>
+                            {% if form.monto_iva.errors %}
+                                <div class="text-danger small">
+                                    {% for error in form.monto_iva.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <label for="{{ form.monto_total.id_for_label }}" class="form-label">
+                                {{ form.monto_total.label }}
+                            </label>
+                            {{ form.monto_total }}
+                            {% if form.monto_total.errors %}
+                                <div class="text-danger small">
+                                    {% for error in form.monto_total.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label for="{{ form.tipo_cotizacion.id_for_label }}" class="form-label">
+                                {{ form.tipo_cotizacion.label }}
+                            </label>
+                            {{ form.tipo_cotizacion }}
+                            {% if form.tipo_cotizacion.errors %}
+                                <div class="text-danger small">
+                                    {% for error in form.tipo_cotizacion.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <label for="{{ form.estado.id_for_label }}" class="form-label">
+                                {{ form.estado.label }}
+                            </label>
+                            {{ form.estado }}
+                            {% if form.estado.errors %}
+                                <div class="text-danger small">
+                                    {% for error in form.estado.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <label for="{{ form.validez_dias.id_for_label }}" class="form-label">
+                                {{ form.validez_dias.label }}
+                            </label>
+                            {{ form.validez_dias }}
+                            {% if form.validez_dias.errors %}
+                                <div class="text-danger small">
+                                    {% for error in form.validez_dias.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.fecha_emision.id_for_label }}" class="form-label">
+                                {{ form.fecha_emision.label }}
+                            </label>
+                            {{ form.fecha_emision }}
+                            {% if form.fecha_emision.errors %}
+                                <div class="text-danger small">
+                                    {% for error in form.fecha_emision.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.fecha_vencimiento.id_for_label }}" class="form-label">
+                                {{ form.fecha_vencimiento.label }}
+                            </label>
+                            {{ form.fecha_vencimiento }}
+                            {% if form.fecha_vencimiento.errors %}
+                                <div class="text-danger small">
+                                    {% for error in form.fecha_vencimiento.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.condiciones_pago.id_for_label }}" class="form-label">
+                            {{ form.condiciones_pago.label }}
+                        </label>
+                        {{ form.condiciones_pago }}
+                        {% if form.condiciones_pago.errors %}
+                            <div class="text-danger small">
+                                {% for error in form.condiciones_pago.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.terminos_condiciones.id_for_label }}" class="form-label">
+                            {{ form.terminos_condiciones.label }}
+                        </label>
+                        {{ form.terminos_condiciones }}
+                        {% if form.terminos_condiciones.errors %}
+                            <div class="text-danger small">
+                                {% for error in form.terminos_condiciones.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.archivo_cotizacion.id_for_label }}" class="form-label">
+                            {{ form.archivo_cotizacion.label }}
+                        </label>
+                        {{ form.archivo_cotizacion }}
+                        {% if cotizacion.archivo_cotizacion %}
+                            <div class="mt-2">
+                                <small class="text-muted">Archivo actual: 
+                                    <a href="{{ cotizacion.archivo_cotizacion.url }}" target="_blank">{{ cotizacion.archivo_cotizacion.name|basename }}</a>
+                                </small>
+                            </div>
+                        {% endif %}
+                        {% if form.archivo_cotizacion.errors %}
+                            <div class="text-danger small">
+                                {% for error in form.archivo_cotizacion.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.observaciones.id_for_label }}" class="form-label">
+                                {{ form.observaciones.label }}
+                            </label>
+                            {{ form.observaciones }}
+                            {% if form.observaciones.errors %}
+                                <div class="text-danger small">
+                                    {% for error in form.observaciones.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.notas_cliente.id_for_label }}" class="form-label">
+                                {{ form.notas_cliente.label }}
+                            </label>
+                            {{ form.notas_cliente }}
+                            {% if form.notas_cliente.errors %}
+                                <div class="text-danger small">
+                                    {% for error in form.notas_cliente.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-2"></i>Guardar Cambios
+                        </button>
+                        <a href="{% url 'cotizacion_detail' cotizacion.id %}" class="btn btn-secondary">
+                            <i class="fas fa-times me-2"></i>Cancelar
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="fas fa-info-circle me-2"></i>Información Actual
+                </h6>
+            </div>
+            <div class="card-body">
+                <p><strong>Número:</strong> {{ cotizacion.numero_cotizacion }}</p>
+                <p><strong>Proyecto:</strong> {{ cotizacion.proyecto.nombre }}</p>
+                <p><strong>Cliente:</strong> {{ cotizacion.cliente.razon_social }}</p>
+                <p><strong>Estado:</strong> 
+                    {% if cotizacion.estado == 'aceptada' %}
+                        <span class="badge bg-success">{{ cotizacion.get_estado_display }}</span>
+                    {% elif cotizacion.estado == 'enviada' %}
+                        <span class="badge bg-primary">{{ cotizacion.get_estado_display }}</span>
+                    {% elif cotizacion.estado == 'borrador' %}
+                        <span class="badge bg-secondary">{{ cotizacion.get_estado_display }}</span>
+                    {% elif cotizacion.estado == 'rechazada' %}
+                        <span class="badge bg-danger">{{ cotizacion.get_estado_display }}</span>
+                    {% elif cotizacion.estado == 'vencida' %}
+                        <span class="badge bg-warning">{{ cotizacion.get_estado_display }}</span>
+                    {% else %}
+                        <span class="badge bg-dark">{{ cotizacion.get_estado_display }}</span>
+                    {% endif %}
+                </p>
+                <p><strong>Monto Total:</strong> ${{ cotizacion.monto_total|floatformat:2 }}</p>
+                <p><strong>Creado:</strong> {{ cotizacion.fecha_creacion|date:"d/m/Y H:i" }}</p>
+                {% if cotizacion.fecha_modificacion %}
+                    <p><strong>Última modificación:</strong> {{ cotizacion.fecha_modificacion|date:"d/m/Y H:i" }}</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Página de editar cotización cargada');
+    
+    const montoSubtotalInput = document.getElementById('id_monto_subtotal');
+    const montoIvaInput = document.getElementById('id_monto_iva');
+    const montoTotalInput = document.getElementById('id_monto_total');
+    
+    console.log('Campos encontrados:', {
+        subtotal: montoSubtotalInput,
+        iva: montoIvaInput,
+        total: montoTotalInput
+    });
+    
+    // Función para calcular automáticamente ITBMS y Total
+    function calcularCotizacionEdit() {
+        console.log('🔄 Función calcularCotizacionEdit ejecutada');
+        
+        if (!montoSubtotalInput || !montoIvaInput || !montoTotalInput) {
+            console.log('❌ No se encontraron todos los campos necesarios');
+            return;
+        }
+        
+        const subtotal = parseFloat(montoSubtotalInput.value) || 0;
+        console.log('💰 Subtotal ingresado:', subtotal);
+        
+        if (subtotal > 0) {
+            // Calcular ITBMS (7% del subtotal)
+            const itbms = subtotal * 0.07;
+            console.log('🧾 ITBMS calculado (7%):', itbms);
+            
+            // Calcular total (subtotal + ITBMS)
+            const total = subtotal + itbms;
+            console.log('💵 Total calculado:', total);
+            
+            // Actualizar campos
+            montoIvaInput.value = itbms.toFixed(2);
+            montoTotalInput.value = total.toFixed(2);
+            
+            console.log('✅ Campos actualizados - ITBMS:', itbms.toFixed(2), 'Total:', total.toFixed(2));
+        } else {
+            // Limpiar campos si no hay subtotal
+            montoIvaInput.value = '0.00';
+            montoTotalInput.value = '0.00';
+            console.log('🧹 Campos limpiados (sin subtotal)');
+        }
+    }
+    
+    // Agregar event listeners
+    if (montoSubtotalInput) {
+        montoSubtotalInput.addEventListener('input', calcularCotizacionEdit);
+        montoSubtotalInput.addEventListener('change', calcularCotizacionEdit);
+        montoSubtotalInput.addEventListener('keyup', calcularCotizacionEdit);
+        console.log('✅ Event listeners agregados al campo subtotal');
+    }
+    
+    // Ejecutar cálculo inicial
+    calcularCotizacionEdit();
+    
+    // Hacer función disponible globalmente
+    window.calcularCotizacionEdit = calcularCotizacionEdit;
+    
+    console.log('✅ JavaScript de edición de cotización cargado correctamente');
+});
+</script>
+{% endblock %}

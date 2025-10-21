@@ -227,17 +227,17 @@
                                 <div class="row">
                                     <div class="col-6">
                                         <strong class="text-primary">Total a Pagar:</strong><br>
-                                        <span class="badge bg-primary fs-6" id="total-general-pagar">Q{{ total_a_pagar|floatformat:2 }}</span>
+                                        <span class="badge bg-primary fs-6" id="total-general-pagar">${{ total_a_pagar|floatformat:2 }}</span>
                                     </div>
                                     <div class="col-6">
                                         <strong class="text-warning">Anticipos Aplicados:</strong><br>
-                                        <span class="badge bg-warning fs-6" id="total-anticipos">Q{{ total_aplicado|floatformat:2 }}</span>
+                                        <span class="badge bg-warning fs-6" id="total-anticipos">${{ total_aplicado|floatformat:2 }}</span>
                                     </div>
                                 </div>
                                 <hr>
                                 <div class="text-center">
                                     <strong class="text-success">Saldo Pendiente:</strong><br>
-                                    <span class="badge bg-success fs-5" id="saldo-pendiente">Q{{ saldo_pendiente|floatformat:2 }}</span>
+                                    <span class="badge bg-success fs-5" id="saldo-pendiente">${{ saldo_pendiente|floatformat:2 }}</span>
                                 </div>
                             </div>
                         </div>
@@ -252,7 +252,7 @@
                                 </div>
                                 <div class="col-6">
                                     <div class="border rounded p-3">
-                                        <h4 class="text-success">Q{{ total_anticipos|floatformat:2 }}</h4>
+                                        <h4 class="text-success">${{ total_anticipos|floatformat:2 }}</h4>
                                         <small class="text-muted">Anticipos</small>
                                     </div>
                                 </div>
@@ -285,14 +285,14 @@
                         <div class="col-md-4">
                             <div class="border rounded p-4 bg-light">
                                 <i class="fas fa-dollar-sign fa-2x text-success mb-2"></i>
-                                <h3 class="text-success mb-1">Q{{ total_historico_gastos|floatformat:2 }}</h3>
+                                <h3 class="text-success mb-1">${{ total_historico_gastos|floatformat:2 }}</h3>
                                 <small class="text-muted">Total Diarios</small>
                             </div>
                         </div>
                         <div class="col-md-4">
                             <div class="border rounded p-4 bg-light">
                                 <i class="fas fa-chart-line fa-2x text-info mb-2"></i>
-                                <h3 class="text-info mb-1">Q{{ promedio_por_planilla|floatformat:2 }}</h3>
+                                <h3 class="text-info mb-1">${{ promedio_por_planilla|floatformat:2 }}</h3>
                                 <small class="text-muted">Promedio por Planilla</small>
                             </div>
                         </div>
@@ -348,7 +348,7 @@
                                         {% endif %}
                                     </div>
                                 </td>
-                                <td class="text-end">Q{{ trabajador.pago_diario|floatformat:2 }}</td>
+                                <td class="text-end">${{ trabajador.pago_diario|floatformat:2 }}</td>
                                 <td class="text-center">
                                     {% if trabajador.activo %}
                                         <input type="number" 
@@ -370,11 +370,11 @@
                                 <td class="text-end">
                                     <div class="d-flex flex-column">
                                         <span class="total-pagar-display" data-trabajador-id="{{ trabajador.id }}">
-                                            Q0.00
+                                            $0.00
                                         </span>
                                         {% if trabajador.total_anticipos_aplicados > 0 %}
                                         <small class="text-danger fw-bold">
-                                            <i class="fas fa-minus-circle"></i> Anticipo: -Q{{ trabajador.total_anticipos_aplicados|floatformat:2 }}
+                                            <i class="fas fa-minus-circle"></i> Anticipo: -${{ trabajador.total_anticipos_aplicados|floatformat:2 }}
                                         </small>
                                         {% endif %}
                                     </div>
@@ -416,7 +416,7 @@
                                     <strong>TOTAL GENERAL A PAGAR:</strong>
                                 </th>
                                 <th class="text-center" style="font-size: 1.2em; padding: 15px;">
-                                    <span class="badge bg-success fs-5 total-general-display" id="total-general-tabla">Q0.00</span>
+                                    <span class="badge bg-success fs-5 total-general-display" id="total-general-tabla">$0.00</span>
                                 </th>
                                 <th colspan="2" style="padding: 15px;"></th>
                             </tr>

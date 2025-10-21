@@ -135,7 +135,7 @@
                     <p class="text-muted">{{ trabajador.nombre }}</p>
                     
                     <h6><strong>Pago Diario:</strong></h6>
-                    <p class="text-muted">Q{{ trabajador.pago_diario|floatformat:2 }}</p>
+                    <p class="text-muted">${{ trabajador.pago_diario|floatformat:2 }}</p>
                     
                     <h6><strong>Fecha Inicio:</strong></h6>
                     <p class="text-muted">{{ registro.fecha_inicio|date:"d/m/Y" }}</p>
@@ -147,7 +147,7 @@
                     <p class="text-muted">{{ registro.dias_trabajados }}</p>
                     
                     <h6><strong>Total a Pagar:</strong></h6>
-                    <p class="text-muted">Q{{ registro.total_pagar|floatformat:2 }}</p>
+                    <p class="text-muted">${{ registro.total_pagar|floatformat:2 }}</p>
                 </div>
             </div>
         </div>

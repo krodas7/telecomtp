@@ -482,13 +482,7 @@
 
                 <!-- Presupuesto y Estado -->
                 <div class="form-row">
-                    <div class="form-group">
-                        <label for="presupuesto" class="form-label">
-                            <i class="fas fa-dollar-sign"></i>Presupuesto (Q)
-                        </label>
-                        <input type="number" class="form-control" id="presupuesto" name="presupuesto" step="0.01" min="0" placeholder="0.00">
-                        <div class="form-validation" id="presupuestoValidation"></div>
-                    </div>
+                    <!-- CAMPO DE PRESUPUESTO ELIMINADO - YA NO SE USA -->
                     
                     <div class="form-group">
                         <label for="estado" class="form-label">
@@ -514,13 +508,7 @@
                         <div class="form-validation" id="fechaInicioValidation"></div>
                     </div>
                     
-                    <div class="form-group">
-                        <label for="fecha_fin" class="form-label">
-                            <i class="fas fa-flag-checkered"></i>Fecha de Finalización
-                        </label>
-                        <input type="date" class="form-control" id="fecha_fin" name="fecha_fin">
-                        <div class="form-validation" id="fechaFinValidation"></div>
-                    </div>
+                    <!-- CAMPO DE FECHA DE FINALIZACIÓN ELIMINADO - YA NO SE USA -->
                 </div>
 
                 <!-- Acciones del Formulario -->
@@ -556,10 +544,7 @@
                 <span class="info-value">{{ proyectos_activos|default:"0" }}</span>
             </div>
             
-            <div class="info-item">
-                <span class="info-label">Presupuesto Promedio:</span>
-                <span class="info-value">Q {{ presupuesto_promedio|default:"0.00" }}</span>
-            </div>
+            <!-- INFORMACIÓN DE PRESUPUESTO PROMEDIO ELIMINADA - YA NO SE USA -->
             
             <div class="info-alert">
                 <i class="fas fa-lightbulb"></i>
@@ -606,9 +591,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const nombreInput = document.getElementById('nombre');
     const clienteInput = document.getElementById('cliente');
     const descripcionInput = document.getElementById('descripcion');
-    const presupuestoInput = document.getElementById('presupuesto');
+    // CAMPO DE PRESUPUESTO ELIMINADO - YA NO SE USA
     const fechaInicioInput = document.getElementById('fecha_inicio');
-    const fechaFinInput = document.getElementById('fecha_fin');
+    // fechaFinInput ELIMINADO - YA NO SE USA
     
     function validateField(input, validationElement, fieldName) {
         const value = input.value.trim();
@@ -633,11 +618,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 isValid = false;
                 message = 'La descripción no puede exceder 1000 caracteres';
             }
-        } else if (fieldName === 'presupuesto') {
-            if (value && parseFloat(value) < 0) {
-                isValid = false;
-                message = 'El presupuesto no puede ser negativo';
-            }
+        // VALIDACIÓN DE PRESUPUESTO ELIMINADA - YA NO SE USA
         } else if (fieldName === 'fechaInicio' || fieldName === 'fechaFin') {
             if (value) {
                 const fecha = new Date(value);
@@ -674,10 +655,7 @@ document.addEventListener('DOMContentLoaded', function() {
         descripcionInput.addEventListener('blur', () => validateField(descripcionInput, document.getElementById('descripcionValidation'), 'descripcion'));
     }
     
-    if (presupuestoInput) {
-        presupuestoInput.addEventListener('input', () => validateField(presupuestoInput, document.getElementById('presupuestoValidation'), 'presupuesto'));
-        presupuestoInput.addEventListener('blur', () => validateField(presupuestoInput, document.getElementById('presupuestoValidation'), 'presupuesto'));
-    }
+    // EVENT LISTENERS DE PRESUPUESTO ELIMINADOS - YA NO SE USA
     
     if (fechaInicioInput) {
         fechaInicioInput.addEventListener('change', () => validateField(fechaInicioInput, document.getElementById('fechaInicioValidation'), 'fechaInicio'));

@@ -80,12 +80,16 @@
                                     </td>
                                 </tr>
                                 <tr>
-                                    <td><strong>Presupuesto:</strong></td>
+                                    <td><strong>Balance:</strong></td>
                                     <td>
-                                        {% if proyecto.presupuesto %}
-                                            {{proyecto.presupuesto|currency_gtq}}
+                                        {% if proyecto.ingresos.exists or proyecto.facturas.exists or proyecto.gasto_set.exists %}
+                                            {% if proyecto_balance >= 0 %}
+                                                <span class="text-success">${{ proyecto_balance|floatformat:2 }}</span>
+                                            {% else %}
+                                                <span class="text-danger">${{ proyecto_balance|floatformat:2 }}</span>
+                                            {% endif %}
                                         {% else %}
-                                            <span class="text-muted">No especificado</span>
+                                            <span class="text-muted">$0.00</span>
                                         {% endif %}
                                     </td>
                                 </tr>
@@ -93,11 +97,11 @@
                                     <td><strong>Fondos Disponibles:</strong></td>
                                     <td>
                                         <span class="text-success font-weight-bold">
-                                            {{total_anticipos_disponibles|currency_gtq}}
+                                            ${{total_anticipos_disponibles|floatformat:2}}
                                         </span>
                                         <small class="text-muted d-block">
                                             {% if total_anticipos_aplicados_proyecto > 0 %}
-                                                {{total_anticipos_aplicados_proyecto|currency_gtq}} aplicados - {{total_gastos|currency_gtq}} gastos
+                                                ${{total_anticipos_aplicados_proyecto|floatformat:2}} aplicados - ${{total_gastos|floatformat:2}} gastos
                                             {% else %}
                                                 Sin anticipos aplicados
                                             {% endif %}
@@ -108,7 +112,7 @@
                                     <td><strong>Fondos Pendientes:</strong></td>
                                     <td>
                                         <span class="text-warning font-weight-bold">
-                                            {{total_anticipos_pendientes|currency_gtq}}
+                                            ${{total_anticipos_pendientes|floatformat:2}}
                                         </span>
                                         <small class="text-muted d-block">
                                             Monto disponible en anticipos
@@ -119,11 +123,11 @@
                                     <td><strong>Anticipos Aplicados:</strong></td>
                                     <td>
                                         <span class="text-info font-weight-bold">
-                                            {{total_anticipos_aplicados|currency_gtq}}
+                                            ${{total_anticipos_aplicados|floatformat:2}}
                                         </span>
                                         <small class="text-muted d-block">
                                             {% if total_anticipos_aplicados_proyecto > 0 %}
-                                                {{total_anticipos_aplicados_proyecto|currency_gtq}} al proyecto
+                                                ${{total_anticipos_aplicados_proyecto|floatformat:2}} al proyecto
                                             {% endif %}
                                         </small>
                                     </td>
@@ -174,10 +178,31 @@
                                     <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
                                         Total Facturado
                                     </div>
-                                    <div class="h5 mb-0 font-weight-bold text-gray-800">{{total_facturado|currency_gtq}}</div>
+                                    <div class="h5 mb-0 font-weight-bold text-gray-800">${{total_facturado|floatformat:2}}</div>
                                 </div>
                                 <div class="col-auto">
                                     <i class="fas fa-file-invoice fa-2x text-gray-300"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-12 mb-4">
+                    <div class="card border-left-info shadow h-100 py-2">
+                        <div class="card-body">
+                            <div class="row no-gutters align-items-center">
+                                <div class="col mr-2">
+                                    <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                        Ingresos por Facturas
+                                    </div>
+                                    <div class="h5 mb-0 font-weight-bold text-gray-800">${{total_facturas_proyecto|floatformat:2}}</div>
+                                    <small class="text-muted">
+                                        Facturas pagadas que afectan el balance
+                                    </small>
+                                </div>
+                                <div class="col-auto">
+                                    <i class="fas fa-receipt fa-2x text-gray-300"></i>
                                 </div>
                             </div>
                         </div>
@@ -192,9 +217,9 @@
                                     <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
                                         Total Cobrado
                                     </div>
-                                    <div class="h5 mb-0 font-weight-bold text-gray-800">{{total_cobrado|currency_gtq}}</div>
+                                    <div class="h5 mb-0 font-weight-bold text-gray-800">${{total_cobrado|floatformat:2}}</div>
                                     <small class="text-muted">
-                                        {{total_facturas_pagadas|currency_gtq}} facturas + {{total_anticipos_aplicados|currency_gtq}} anticipos facturas + {{total_anticipos_aplicados_proyecto|currency_gtq}} anticipos proyecto
+                                        ${{total_facturas_pagadas|floatformat:2}} facturas + ${{total_anticipos_aplicados|floatformat:2}} anticipos facturas + ${{total_anticipos_aplicados_proyecto|floatformat:2}} anticipos proyecto
                                     </small>
                                 </div>
                                 <div class="col-auto">
@@ -213,7 +238,7 @@
                                     <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
                                         Total Gastos
                                     </div>
-                                    <div class="h5 mb-0 font-weight-bold text-gray-800">{{total_gastos|currency_gtq}}</div>
+                                    <div class="h5 mb-0 font-weight-bold text-gray-800">${{total_gastos|floatformat:2}}</div>
                                     <small class="text-muted">{{total_gastos_count}} gasto{{total_gastos_count|pluralize}}</small>
                                 </div>
                                 <div class="col-auto">
@@ -233,7 +258,7 @@
                                         Rentabilidad
                                     </div>
                                     <div class="h5 mb-0 font-weight-bold {% if rentabilidad_proyecto >= 0 %}text-success{% else %}text-danger{% endif %}">
-                                        {{rentabilidad_proyecto|currency_gtq}}
+                                        ${{rentabilidad_proyecto|floatformat:2}}
                                     </div>
                                 </div>
                                 <div class="col-auto">
@@ -252,10 +277,10 @@
                                     <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
                                         Fondos Disponibles
                                     </div>
-                                    <div class="h5 mb-0 font-weight-bold text-gray-800">{{total_anticipos_disponibles|currency_gtq}}</div>
+                                    <div class="h5 mb-0 font-weight-bold text-gray-800">{{total_anticipos_disponibles|floatformat:2}}</div>
                                     <small class="text-muted">
                                         {% if total_anticipos_aplicados_proyecto > 0 %}
-                                            {{total_anticipos_aplicados_proyecto|currency_gtq}} aplicados - {{total_gastos|currency_gtq}} gastos
+                                            {{total_anticipos_aplicados_proyecto|floatformat:2}} aplicados - {{total_gastos|floatformat:2}} gastos
                                         {% else %}
                                             Sin anticipos aplicados
                                         {% endif %}
@@ -277,9 +302,9 @@
                                     <div class="text-xs font-weight-bold text-uppercase mb-1" style="color: #6f42c1;">
                                         <i class="fas fa-history me-1"></i>Total Histórico de Nómina
                                     </div>
-                                    <div class="h5 mb-0 font-weight-bold text-gray-800">{{total_historico_nomina|currency_gtq}}</div>
+                                    <div class="h5 mb-0 font-weight-bold text-gray-800">{{total_historico_nomina|floatformat:2}}</div>
                                     <small class="text-muted d-block mb-2">
-                                        {{total_historico_personal|currency_gtq}} personal + {{total_historico_trabajadores_diarios|currency_gtq}} trabajadores diarios
+                                        {{total_historico_personal|floatformat:2}} personal + {{total_historico_trabajadores_diarios|floatformat:2}} trabajadores diarios
                                     </small>
                                     {% if total_historico_nomina > 0 %}
                                     <form method="POST" action="{% url 'resetear_historico_nomina' proyecto.id %}" style="display: inline;" 
@@ -323,7 +348,7 @@
                                             <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
                                                 Total Anticipos
                                             </div>
-                                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{total_anticipos|currency_gtq}}</div>
+                                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{total_anticipos|floatformat:2}}</div>
                                             <small class="text-muted">{{total_anticipos_count}} anticipo{{total_anticipos_count|pluralize}}</small>
                                         </div>
                                         <div class="col-auto">
@@ -343,7 +368,7 @@
                                                     <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
                                                         Aplicados a Facturas
                                                     </div>
-                                                    <div class="h5 mb-0 font-weight-bold text-gray-800">{{total_anticipos_aplicados|currency_gtq}}</div>
+                                                    <div class="h5 mb-0 font-weight-bold text-gray-800">{{total_anticipos_aplicados|floatformat:2}}</div>
                                                     <small class="text-muted">
                                                         {% if total_anticipos > 0 %}
                                                             {{total_anticipos_aplicados|divide:total_anticipos|multiply:100|floatformat:1}}% del total
@@ -369,7 +394,7 @@
                                                     <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
                                                         Aplicados al Proyecto
                                                     </div>
-                                                    <div class="h5 mb-0 font-weight-bold text-gray-800">{{total_anticipos_aplicados_proyecto|currency_gtq}}</div>
+                                                    <div class="h5 mb-0 font-weight-bold text-gray-800">{{total_anticipos_aplicados_proyecto|floatformat:2}}</div>
                                                     <small class="text-muted">
                                                         {% if total_anticipos > 0 %}
                                                             {{total_anticipos_aplicados_proyecto|divide:total_anticipos|multiply:100|floatformat:1}}% del total
@@ -395,7 +420,7 @@
                                                     <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
                                                         Disponibles
                                                     </div>
-                                                    <div class="h5 mb-0 font-weight-bold text-gray-800">{{total_anticipos_disponibles|currency_gtq}}</div>
+                                                    <div class="h5 mb-0 font-weight-bold text-gray-800">{{total_anticipos_disponibles|floatformat:2}}</div>
                                                     <small class="text-muted">
                                                         {% if total_anticipos > 0 %}
                                                             {{total_anticipos_disponibles|divide:total_anticipos|multiply:100|floatformat:1}}% del total
@@ -544,7 +569,7 @@
                                         <div>
                                             <h6 class="mb-0">{{ factura.numero_factura }}</h6>
                                             <small class="text-muted">
-                                                {{ factura.fecha_emision|date:"d/m/Y" }} • {{factura.monto_total|currency_gtq}}
+                                                {{ factura.fecha_emision|date:"d/m/Y" }} • {{factura.monto_total|floatformat:2}}
                                             </small>
                                         </div>
                                         <span class="badge badge-{{ factura.estado|yesno:'success,warning' }}">
@@ -569,7 +594,7 @@
                                                 {{ gasto.fecha_gasto|date:"d/m/Y" }} • {{ gasto.categoria.nombre }}
                                             </small>
                                         </div>
-                                        <span class="text-danger">{{gasto.monto|currency_gtq}}</span>
+                                        <span class="text-danger">{{gasto.monto|floatformat:2}}</span>
                                     </div>
                                     {% endfor %}
                                 </div>
@@ -591,7 +616,7 @@
                                             </small>
                                         </div>
                                         <div class="text-right">
-                                            <div class="text-success font-weight-bold">{{anticipo.monto|currency_gtq}}</div>
+                                            <div class="text-success font-weight-bold">{{anticipo.monto|floatformat:2}}</div>
                                             <small class="text-muted">
                                                 {% if anticipo.estado == 'pendiente' %}
                                                     <span class="badge badge-warning">Pendiente</span>

@@ -82,19 +82,19 @@
                     <p class="mb-3">{{ trabajador.nombre }}</p>
                     
                     <h6 class="text-primary">Pago diario:</h6>
-                    <p class="mb-3">Q{{ trabajador.pago_diario|floatformat:2 }}</p>
+                    <p class="mb-3">${{ trabajador.pago_diario|floatformat:2 }}</p>
                     
                     <h6 class="text-primary">Días trabajados:</h6>
                     <p class="mb-3">{{ trabajador.dias_trabajados|default:"0" }}</p>
                     
                     <h6 class="text-primary">Total bruto:</h6>
-                    <p class="mb-3">Q{{ trabajador.total_bruto|floatformat:2 }}</p>
+                    <p class="mb-3">${{ trabajador.total_bruto|floatformat:2 }}</p>
                     
                     <h6 class="text-primary">Anticipos:</h6>
-                    <p class="mb-3">Q{{ trabajador.total_anticipos_aplicados|floatformat:2 }}</p>
+                    <p class="mb-3">${{ trabajador.total_anticipos_aplicados|floatformat:2 }}</p>
                     
                     <h6 class="text-primary">Total a pagar:</h6>
-                    <p class="mb-3"><strong>Q{{ trabajador.total_a_pagar|floatformat:2 }}</strong></p>
+                    <p class="mb-3"><strong>${{ trabajador.total_a_pagar|floatformat:2 }}</strong></p>
                     
                     <h6 class="text-primary">Planilla:</h6>
                     <p class="mb-3">{{ planilla.nombre }}</p>

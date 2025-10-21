@@ -336,7 +336,7 @@
                         <span class="info-label">Precio Unitario:</span>
                         <span class="info-value">
                             {% if item.precio_unitario %}
-                                Q{{ item.precio_unitario|floatformat:2 }}
+                                ${{ item.precio_unitario|floatformat:2 }}
                             {% else %}
                                 No establecido
                             {% endif %}

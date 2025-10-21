@@ -190,9 +190,7 @@ class Proyecto(models.Model):
     descripcion = models.TextField(blank=True)
     cliente = models.ForeignKey(Cliente, on_delete=models.CASCADE)
     colaboradores = models.ManyToManyField(Colaborador, blank=True, related_name='proyectos')
-    presupuesto = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
     fecha_inicio = models.DateField(null=True, blank=True)
-    fecha_fin = models.DateField(null=True, blank=True)
     estado = models.CharField(max_length=20, choices=ESTADO_CHOICES, default='pendiente')
     activo = models.BooleanField(default=True)
     creado_en = models.DateTimeField(auto_now_add=True)
@@ -203,11 +201,8 @@ class Proyecto(models.Model):
     
     def clean(self):
         """Validaciones del modelo Proyecto"""
-        if self.fecha_fin and self.fecha_inicio and self.fecha_fin < self.fecha_inicio:
-            raise ValidationError("La fecha de fin debe ser posterior a la fecha de inicio.")
-        
-        if self.presupuesto and self.presupuesto < 0:
-            raise ValidationError("El presupuesto no puede ser negativo.")
+        # Validaciones removidas: presupuesto y fecha_fin ya no se usan
+        pass
     
     def __str__(self):
         return f"{self.nombre} - {self.cliente.razon_social}"
@@ -299,7 +294,8 @@ class Factura(models.Model):
     
     # Montos
     monto_subtotal = models.DecimalField(max_digits=12, decimal_places=2, help_text="Subtotal antes de impuestos", default=0)
-    monto_iva = models.DecimalField(max_digits=12, decimal_places=2, default=0, help_text="Monto del IVA")
+    porcentaje_itbms = models.DecimalField(max_digits=5, decimal_places=2, default=7.00, help_text="Porcentaje de ITBMS aplicado")
+    monto_iva = models.DecimalField(max_digits=12, decimal_places=2, default=0, help_text="Monto del ITBMS")
     monto_total = models.DecimalField(max_digits=12, decimal_places=2, help_text="Monto total de la factura", default=0)
     monto_pagado = models.DecimalField(max_digits=12, decimal_places=2, default=0, help_text="Monto ya pagado")
     monto_anticipos = models.DecimalField(max_digits=12, decimal_places=2, default=0, help_text="Monto de anticipos aplicados")
@@ -357,7 +353,7 @@ class Factura(models.Model):
             raise ValidationError("El monto pagado no puede ser mayor al monto total.")
     
     def __str__(self):
-        return f"Factura {self.numero_factura} - {self.cliente.razon_social} - Q{self.monto_total}"
+        return f"Factura {self.numero_factura} - {self.cliente.razon_social} - ${self.monto_total}"
     
     def save(self, *args, **kwargs):
         # Calcular montos si no están definidos
@@ -441,7 +437,7 @@ class Factura(models.Model):
     def aplicar_anticipo(self, anticipo, monto):
         """Aplica un anticipo a esta factura"""
         if not self.puede_aplicar_anticipo(monto):
-            raise ValueError(f"No se puede aplicar Q{monto} del anticipo a esta factura")
+            raise ValueError(f"No se puede aplicar ${monto} del anticipo a esta factura")
         
         # Aplicar el anticipo
         anticipo.aplicar_a_factura(self, monto)
@@ -503,7 +499,6 @@ class Gasto(models.Model):
     descripcion = models.TextField()
     monto = models.FloatField()
     fecha_gasto = models.DateField()
-    fecha_vencimiento = models.DateField(null=True, blank=True, help_text="Fecha límite para el pago (opcional)")
     aprobado = models.BooleanField(default=False)
     aprobado_por = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
     observaciones = models.TextField(blank=True, help_text="Observaciones adicionales sobre el gasto")
@@ -515,7 +510,7 @@ class Gasto(models.Model):
         verbose_name_plural = 'Gastos'
     
     def __str__(self):
-        return f"{self.descripcion} - Q{self.monto}"
+        return f"{self.descripcion} - ${self.monto}"
 
 
 class GastoFijoMensual(models.Model):
@@ -530,7 +525,7 @@ class GastoFijoMensual(models.Model):
         verbose_name_plural = 'Gastos Fijos Mensuales'
     
     def __str__(self):
-        return f"{self.concepto} - Q{self.monto}"
+        return f"{self.concepto} - ${self.monto}"
 
 
 class LogActividad(models.Model):
@@ -623,7 +618,7 @@ class Anticipo(models.Model):
         ]
     
     def __str__(self):
-        return f"Anticipo {self.numero_anticipo} - {self.cliente.razon_social} - Q{self.monto}"
+        return f"Anticipo {self.numero_anticipo} - {self.cliente.razon_social} - ${self.monto}"
     
     def save(self, *args, **kwargs):
         # Calcular monto disponible considerando aplicaciones a facturas y al proyecto
@@ -672,7 +667,7 @@ class Anticipo(models.Model):
     def aplicar_a_factura(self, factura, monto):
         """Aplica el anticipo a una factura específica"""
         if not self.puede_aplicar(monto):
-            raise ValueError(f"No se puede aplicar Q{monto} del anticipo")
+            raise ValueError(f"No se puede aplicar ${monto} del anticipo")
         
         # Crear la aplicación
         AplicacionAnticipo.objects.create(
@@ -695,7 +690,7 @@ class Anticipo(models.Model):
     def aplicar_al_proyecto(self, monto):
         """Aplica el anticipo directamente al proyecto"""
         if not self.puede_aplicar(monto):
-            raise ValueError(f"No se puede aplicar Q{monto} del anticipo al proyecto")
+            raise ValueError(f"No se puede aplicar ${monto} del anticipo al proyecto")
         
         # Actualizar montos y fecha de aplicación (sumar al existente)
         self.monto_aplicado_proyecto += monto
@@ -726,7 +721,7 @@ class AplicacionAnticipo(models.Model):
         ordering = ['-fecha_aplicacion']
     
     def __str__(self):
-        return f"Aplicación Q{self.monto_aplicado} - {self.anticipo} → {self.factura}"
+        return f"Aplicación ${self.monto_aplicado} - {self.anticipo} → {self.factura}"
 
 
 class ArchivoProyecto(models.Model):
@@ -910,123 +905,11 @@ class CarpetaProyecto(models.Model):
         return self.archivos.count() == 0 and self.subcarpetas.filter(activa=True).count() == 0
 
 
-class Presupuesto(models.Model):
-    """Presupuesto inicial de un proyecto"""
-    proyecto = models.ForeignKey(Proyecto, on_delete=models.CASCADE, related_name='presupuestos')
-    nombre = models.CharField(max_length=200, help_text="Nombre descriptivo del presupuesto")
-    version = models.CharField(max_length=20, default="1.0", help_text="Versión del presupuesto")
-    fecha_creacion = models.DateTimeField(auto_now_add=True)
-    fecha_aprobacion = models.DateTimeField(null=True, blank=True)
-    estado = models.CharField(
-        max_length=20,
-        choices=[
-            ('borrador', 'Borrador'),
-            ('en_revision', 'En Revisión'),
-            ('aprobado', 'Aprobado'),
-            ('rechazado', 'Rechazado'),
-            ('obsoleto', 'Obsoleto')
-        ],
-        default='borrador'
-    )
-    monto_total = models.DecimalField(max_digits=15, decimal_places=2, default=0)
-    monto_aprobado = models.DecimalField(max_digits=15, decimal_places=2, default=0)
-    observaciones = models.TextField(blank=True)
-    creado_por = models.ForeignKey(User, on_delete=models.CASCADE, related_name='presupuestos_creados')
-    aprobado_por = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True, related_name='presupuestos_aprobados')
-    activo = models.BooleanField(default=True)
+# MODELOS DE PRESUPUESTO ELIMINADOS - YA NO SE USAN
 
-    class Meta:
-        unique_together = ['proyecto', 'version']
-        ordering = ['-fecha_creacion']
+# MODELO PARTIDAPRESUPUESTO ELIMINADO - YA NO SE USA
 
-    def __str__(self):
-        return f"Presupuesto {self.version} - {self.proyecto.nombre}"
-
-    def calcular_total(self):
-        """Calcular el monto total del presupuesto"""
-        total = self.partidas.aggregate(
-            total=models.Sum('monto_estimado')
-        )['total'] or 0
-        self.monto_total = total
-        self.save(update_fields=['monto_total'])
-        return total
-
-    def obtener_variacion(self):
-        """Obtener la variación entre presupuesto y gastos reales"""
-        gastos_reales = Gasto.objects.filter(
-            proyecto=self.proyecto,
-            aprobado=True
-        ).aggregate(total=models.Sum('monto'))['total'] or 0
-        
-        return {
-            'presupuesto': self.monto_total,
-            'gastos_reales': gastos_reales,
-            'variacion': gastos_reales - self.monto_total,
-            'porcentaje_variacion': (gastos_reales / self.monto_total * 100) if self.monto_total > 0 else 0
-        }
-
-class PartidaPresupuesto(models.Model):
-    """Partida individual del presupuesto"""
-    presupuesto = models.ForeignKey(Presupuesto, on_delete=models.CASCADE, related_name='partidas')
-    codigo = models.CharField(max_length=20, help_text="Código de la partida")
-    descripcion = models.CharField(max_length=500)
-    unidad = models.CharField(max_length=50, help_text="Unidad de medida (m², m³, kg, etc.)")
-    cantidad = models.DecimalField(max_digits=10, decimal_places=2)
-    precio_unitario = models.DecimalField(max_digits=10, decimal_places=2)
-    monto_estimado = models.DecimalField(max_digits=15, decimal_places=2)
-    categoria = models.ForeignKey(CategoriaGasto, on_delete=models.SET_NULL, null=True, blank=True)
-    subcategoria = models.CharField(max_length=100, blank=True)
-    notas = models.TextField(blank=True)
-    orden = models.PositiveIntegerField(default=0)
-    
-    class Meta:
-        ordering = ['orden', 'codigo']
-
-    def __str__(self):
-        return f"{self.codigo} - {self.descripcion}"
-
-    def save(self, *args, **kwargs):
-        """Calcular automáticamente el monto estimado"""
-        if self.cantidad and self.precio_unitario:
-            self.monto_estimado = self.cantidad * self.precio_unitario
-        super().save(*args, **kwargs)
-        # Actualizar total del presupuesto
-        self.presupuesto.calcular_total()
-
-class VariacionPresupuesto(models.Model):
-    """Registro de variaciones del presupuesto"""
-    presupuesto = models.ForeignKey(Presupuesto, on_delete=models.CASCADE, related_name='variaciones')
-    partida = models.ForeignKey(PartidaPresupuesto, on_delete=models.CASCADE, null=True, blank=True)
-    tipo = models.CharField(
-        max_length=20,
-        choices=[
-            ('aumento', 'Aumento'),
-            ('disminucion', 'Disminución'),
-            ('nueva_partida', 'Nueva Partida'),
-            ('eliminacion', 'Eliminación')
-        ]
-    )
-    monto_anterior = models.DecimalField(max_digits=15, decimal_places=2, default=0)
-    monto_nuevo = models.DecimalField(max_digits=15, decimal_places=2, default=0)
-    diferencia = models.DecimalField(max_digits=15, decimal_places=2)
-    motivo = models.TextField()
-    fecha_variacion = models.DateTimeField(auto_now_add=True)
-    aprobado_por = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
-    estado = models.CharField(
-        max_length=20,
-        choices=[
-            ('pendiente', 'Pendiente'),
-            ('aprobada', 'Aprobada'),
-            ('rechazada', 'Rechazada')
-        ],
-        default='pendiente'
-    )
-
-    class Meta:
-        ordering = ['-fecha_variacion']
-
-    def __str__(self):
-        return f"Variación {self.tipo} - {self.presupuesto.proyecto.nombre}"
+# MODELO VARIACIONPRESUPUESTO ELIMINADO - YA NO SE USA
 
 # ==================== MODELO DE NOTIFICACIONES ====================
 
@@ -1401,7 +1284,7 @@ class AnticipoProyecto(models.Model):
         ordering = ['-fecha_anticipo']
     
     def __str__(self):
-        return f"Anticipo {self.colaborador.nombre} - {self.proyecto.nombre} - Q{self.monto}"
+        return f"Anticipo {self.colaborador.nombre} - {self.proyecto.nombre} - ${self.monto}"
     
     @property
     def saldo_pendiente(self):
@@ -1687,7 +1570,7 @@ class AnticipoTrabajadorDiario(models.Model):
         ordering = ['-fecha_creacion']
     
     def __str__(self):
-        return f"Anticipo {self.trabajador.nombre} - Q{self.monto}"
+        return f"Anticipo {self.trabajador.nombre} - ${self.monto}"
     
     @property
     def monto_aplicado(self):
@@ -1764,6 +1647,193 @@ class PlanillaLiquidada(models.Model):
         ordering = ['-fecha_liquidacion']
     
     def __str__(self):
-        return f"Planilla {self.proyecto.nombre} - {self.fecha_liquidacion.strftime('%d/%m/%Y')} - Q{self.total_planilla}"
+        return f"Planilla {self.proyecto.nombre} - {self.fecha_liquidacion.strftime('%d/%m/%Y')} - ${self.total_planilla}"
+
+
+class IngresoProyecto(models.Model):
+    """Modelo para registrar ingresos por proyecto basados en facturas"""
+    
+    TIPO_INGRESO_CHOICES = [
+        ('factura_completa', 'Factura Completa'),
+        ('factura_parcial', 'Factura Parcial'),
+        ('anticipo', 'Anticipo'),
+        ('pago_directo', 'Pago Directo'),
+        ('otros', 'Otros'),
+    ]
+    
+    proyecto = models.ForeignKey(Proyecto, on_delete=models.CASCADE, related_name='ingresos')
+    factura = models.ForeignKey(Factura, on_delete=models.CASCADE, related_name='ingresos_proyecto', null=True, blank=True)
+    
+    # Información del ingreso
+    tipo_ingreso = models.CharField(max_length=20, choices=TIPO_INGRESO_CHOICES, default='factura_completa')
+    numero_documento = models.CharField(max_length=50, help_text="Número de factura o documento de referencia")
+    descripcion = models.TextField(help_text="Descripción del ingreso")
+    
+    # Montos
+    monto_subtotal = models.DecimalField(max_digits=12, decimal_places=2, default=0, help_text="Subtotal del ingreso (en dólares)")
+    monto_iva = models.DecimalField(max_digits=12, decimal_places=2, default=0, help_text="IVA del ingreso (en dólares)")
+    monto_total = models.DecimalField(max_digits=12, decimal_places=2, help_text="Monto total del ingreso (en dólares)")
+    
+    # Fechas
+    fecha_emision = models.DateField(help_text="Fecha de emisión del documento")
+    fecha_registro = models.DateField(default=timezone.now, help_text="Fecha de registro del ingreso")
+    fecha_pago = models.DateField(null=True, blank=True, help_text="Fecha de pago (si aplica)")
+    
+    # Estado del pago
+    pagado = models.BooleanField(default=False, help_text="Indica si el ingreso ha sido pagado")
+    porcentaje_pagado = models.DecimalField(max_digits=5, decimal_places=2, default=0, help_text="Porcentaje del monto que ha sido pagado")
+    
+    # Campos adicionales
+    observaciones = models.TextField(blank=True, help_text="Observaciones adicionales")
+    
+    # Campos de auditoría
+    creado_por = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='ingresos_creados')
+    fecha_creacion = models.DateTimeField(auto_now_add=True)
+    modificado_por = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='ingresos_modificados')
+    fecha_modificacion = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        verbose_name = 'Ingreso por Proyecto'
+        verbose_name_plural = 'Ingresos por Proyecto'
+        ordering = ['-fecha_emision', '-fecha_registro']
+        indexes = [
+            models.Index(fields=['proyecto', 'fecha_emision']),
+            models.Index(fields=['factura']),
+            models.Index(fields=['pagado', 'fecha_pago']),
+        ]
+    
+    def clean(self):
+        """Validaciones del modelo IngresoProyecto"""
+        if self.fecha_pago and self.fecha_emision and self.fecha_pago < self.fecha_emision:
+            raise ValidationError("La fecha de pago no puede ser anterior a la fecha de emisión.")
+        
+        if self.porcentaje_pagado < 0 or self.porcentaje_pagado > 100:
+            raise ValidationError("El porcentaje pagado debe estar entre 0 y 100.")
+        
+        if self.monto_total <= 0:
+            raise ValidationError("El monto total debe ser mayor a 0.")
+    
+    def save(self, *args, **kwargs):
+        """Guardar con validaciones automáticas"""
+        self.clean()
+        
+        # Calcular monto total si no está definido
+        if not self.monto_total:
+            self.monto_total = self.monto_subtotal + self.monto_iva
+        
+        # Actualizar estado de pago
+        if self.porcentaje_pagado >= 100:
+            self.pagado = True
+            if not self.fecha_pago:
+                self.fecha_pago = timezone.now().date()
+        else:
+            self.pagado = False
+        
+        super().save(*args, **kwargs)
+    
+    def __str__(self):
+        return f"Ingreso {self.numero_documento} - {self.proyecto.nombre} - ${self.monto_total}"
+
+
+class Cotizacion(models.Model):
+    """Modelo para cotizaciones de proyectos"""
+    
+    ESTADO_CHOICES = [
+        ('borrador', 'Borrador'),
+        ('enviada', 'Enviada'),
+        ('aceptada', 'Aceptada'),
+        ('rechazada', 'Rechazada'),
+        ('vencida', 'Vencida'),
+        ('cancelada', 'Cancelada'),
+    ]
+    
+    TIPO_COTIZACION_CHOICES = [
+        ('inicial', 'Cotización Inicial'),
+        ('adicional', 'Cotización Adicional'),
+        ('cambio_alcance', 'Cambio de Alcance'),
+        ('servicios_extra', 'Servicios Extra'),
+        ('mantenimiento', 'Mantenimiento'),
+        ('otros', 'Otros'),
+    ]
+    
+    # Información básica
+    proyecto = models.ForeignKey(Proyecto, on_delete=models.CASCADE, related_name='cotizaciones')
+    cliente = models.ForeignKey(Cliente, on_delete=models.CASCADE, related_name='cotizaciones')
+    
+    # Número y descripción
+    numero_cotizacion = models.CharField(max_length=50, unique=True, help_text="Número único de la cotización")
+    titulo = models.CharField(max_length=200, help_text="Título descriptivo de la cotización")
+    descripcion = models.TextField(help_text="Descripción detallada de los servicios")
+    
+    # Tipo y estado
+    tipo_cotizacion = models.CharField(max_length=20, choices=TIPO_COTIZACION_CHOICES, default='inicial')
+    estado = models.CharField(max_length=20, choices=ESTADO_CHOICES, default='borrador')
+    
+    # Montos
+    monto_subtotal = models.DecimalField(max_digits=12, decimal_places=2, default=0, help_text="Subtotal de la cotización (en dólares)")
+    monto_iva = models.DecimalField(max_digits=12, decimal_places=2, default=0, help_text="ITBMS de la cotización (en dólares)")
+    monto_total = models.DecimalField(max_digits=12, decimal_places=2, help_text="Monto total de la cotización (en dólares)")
+    
+    # Fechas importantes
+    fecha_emision = models.DateField(help_text="Fecha de emisión de la cotización")
+    fecha_vencimiento = models.DateField(help_text="Fecha límite de validez de la cotización")
+    fecha_aceptacion = models.DateField(null=True, blank=True, help_text="Fecha de aceptación por el cliente")
+    
+    # Condiciones y términos
+    validez_dias = models.PositiveIntegerField(default=30, help_text="Días de validez de la cotización")
+    condiciones_pago = models.TextField(blank=True, help_text="Condiciones de pago")
+    terminos_condiciones = models.TextField(blank=True, help_text="Términos y condiciones generales")
+    
+    # Archivos adjuntos
+    archivo_cotizacion = models.FileField(upload_to='cotizaciones/', blank=True, null=True, help_text="Archivo PDF de la cotización")
+    
+    # Campos adicionales
+    observaciones = models.TextField(blank=True, help_text="Observaciones internas")
+    notas_cliente = models.TextField(blank=True, help_text="Notas o comentarios del cliente")
+    
+    # Campos de auditoría
+    creado_por = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='cotizaciones_creadas')
+    fecha_creacion = models.DateTimeField(auto_now_add=True)
+    modificado_por = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='cotizaciones_modificadas')
+    fecha_modificacion = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        verbose_name = 'Cotización'
+        verbose_name_plural = 'Cotizaciones'
+        ordering = ['-fecha_emision', '-numero_cotizacion']
+        indexes = [
+            models.Index(fields=['proyecto', 'estado']),
+            models.Index(fields=['cliente', 'estado']),
+            models.Index(fields=['fecha_emision']),
+            models.Index(fields=['fecha_vencimiento']),
+        ]
+    
+    def __str__(self):
+        return f"Cotización {self.numero_cotizacion} - {self.proyecto.nombre} - ${self.monto_total}"
+    
+    @property
+    def esta_vencida(self):
+        """Verifica si la cotización está vencida"""
+        from django.utils import timezone
+        return timezone.now().date() > self.fecha_vencimiento and self.estado not in ['aceptada', 'rechazada', 'cancelada']
+    
+    @property
+    def dias_para_vencer(self):
+        """Calcula los días restantes para vencer"""
+        from django.utils import timezone
+        if self.esta_vencida:
+            return 0
+        delta = self.fecha_vencimiento - timezone.now().date()
+        return delta.days
+    
+    def calcular_totales(self):
+        """Calcula automáticamente los totales con ITBMS"""
+        self.monto_iva = self.monto_subtotal * Decimal('0.07')  # 7% ITBMS
+        self.monto_total = self.monto_subtotal + self.monto_iva
+    
+    def save(self, *args, **kwargs):
+        """Override save para calcular totales automáticamente"""
+        self.calcular_totales()
+        super().save(*args, **kwargs)
 
 

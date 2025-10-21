@@ -377,7 +377,7 @@
                             <th>Nombre</th>
                             <th>Cliente</th>
                             <th>Estado</th>
-                            <th>Presupuesto</th>
+                            <!-- ENCABEZADO DE PRESUPUESTO ELIMINADO - YA NO SE USA -->
                             <th>Acciones</th>
                         </tr>
                     </thead>
@@ -403,9 +403,7 @@
                                     <span class="badge badge-secondary">{{ proyecto.estado|title }}</span>
                                 {% endif %}
                             </td>
-                            <td>
-                                <strong>{{proyecto.presupuesto|currency_gtq}}</strong>
-                            </td>
+                            <!-- COLUMNA DE PRESUPUESTO ELIMINADA - YA NO SE USA -->
                             <td>
                                 <div class="btn-group" role="group">
                                     <a href="{% url 'proyecto_dashboard' proyecto.id %}" class="btn btn-sm btn-outline-primary" title="Ver Dashboard">
@@ -417,7 +415,7 @@
                                     <a href="{% url 'asignar_colaboradores_proyecto' proyecto.id %}" class="btn btn-sm btn-outline-info" title="Asignar Colaboradores">
                                         <i class="fas fa-users"></i>
                                     </a>
-                                    <button type="button" class="btn btn-sm btn-outline-danger" title="Eliminar" onclick="confirmarEliminarProyecto({{ proyecto.id }}, '{{ proyecto.nombre|escapejs }}', '{{ proyecto.cliente.razon_social|escapejs }}', '{{ proyecto.presupuesto|currency_gtq|escapejs }}')">
+                                    <button type="button" class="btn btn-sm btn-outline-danger" title="Eliminar" onclick="confirmarEliminarProyecto({{ proyecto.id }}, '{{ proyecto.nombre|escapejs }}', '{{ proyecto.cliente.razon_social|escapejs }}')">
                                         <i class="fas fa-trash"></i>
                                     </button>
                                 </div>
@@ -484,11 +482,10 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 // Función para confirmar eliminación de proyecto
-function confirmarEliminarProyecto(proyectoId, nombreProyecto, clienteProyecto, presupuestoProyecto) {
+function confirmarEliminarProyecto(proyectoId, nombreProyecto, clienteProyecto) {
     // Actualizar el contenido del modal con la información del proyecto
     document.getElementById('nombreProyectoEliminar').textContent = nombreProyecto;
     document.getElementById('clienteProyectoEliminar').textContent = clienteProyecto;
-    document.getElementById('presupuestoProyectoEliminar').textContent = presupuestoProyecto;
     document.getElementById('btnConfirmarEliminacionProyecto').href = `/proyectos/${proyectoId}/eliminar/`;
     
     // Mostrar el modal
@@ -571,8 +568,7 @@ function showSuccessNotification(message) {
                         </div>
                         <div class="row mt-2">
                             <div class="col-12">
-                                <strong>Presupuesto:</strong><br>
-                                <span id="presupuestoProyectoEliminar" class="text-danger fw-bold"></span>
+                                <!-- INFORMACIÓN DE PRESUPUESTO ELIMINADA - YA NO SE USA -->
                             </div>
                         </div>
                     </div>

@@ -1,0 +1,262 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Ingresos por Proyecto{% endblock %}
+
+{% block extra_css %}
+<style>
+    .stats-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+    .stats-card.success {
+        background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+    }
+    .stats-card.warning {
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    }
+    .ingreso-card {
+        border-left: 4px solid #667eea;
+        transition: all 0.3s ease;
+    }
+    .ingreso-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+    .status-badge {
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 0.8em;
+        font-weight: 500;
+    }
+    .status-pagado {
+        background-color: #d4edda;
+        color: #155724;
+    }
+    .status-pendiente {
+        background-color: #fff3cd;
+        color: #856404;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="h3 mb-0">
+                        <i class="fas fa-money-bill-wave me-2 text-success"></i>
+                        Ingresos por Proyecto
+                    </h1>
+                    <p class="text-muted mb-0">Gestiona los ingresos registrados para cada proyecto</p>
+                </div>
+                <div>
+                    <a href="{% url 'ingreso_create' %}" class="btn btn-success">
+                        <i class="fas fa-plus me-2"></i>Nuevo Ingreso
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Estadísticas -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="stats-card">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h4 class="mb-1">${{ total_ingresos|floatformat:2 }}</h4>
+                        <p class="mb-0">Total Ingresos</p>
+                    </div>
+                    <i class="fas fa-chart-line fa-2x opacity-75"></i>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="stats-card success">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h4 class="mb-1">${{ ingresos_pagados|floatformat:2 }}</h4>
+                        <p class="mb-0">Ingresos Pagados</p>
+                    </div>
+                    <i class="fas fa-check-circle fa-2x opacity-75"></i>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="stats-card warning">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h4 class="mb-1">${{ ingresos_pendientes|floatformat:2 }}</h4>
+                        <p class="mb-0">Ingresos Pendientes</p>
+                    </div>
+                    <i class="fas fa-clock fa-2x opacity-75"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filtros -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="mb-0">
+                <i class="fas fa-filter me-2"></i>Filtros
+            </h5>
+        </div>
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-3">
+                    <label for="proyecto" class="form-label">Proyecto</label>
+                    <select name="proyecto" id="proyecto" class="form-select">
+                        <option value="">Todos los proyectos</option>
+                        {% for proyecto in proyectos %}
+                            <option value="{{ proyecto.id }}" {% if filtro_proyecto == proyecto.id|stringformat:"s" %}selected{% endif %}>
+                                {{ proyecto.nombre }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label for="estado" class="form-label">Estado</label>
+                    <select name="estado" id="estado" class="form-select">
+                        <option value="">Todos los estados</option>
+                        <option value="pagado" {% if filtro_estado == 'pagado' %}selected{% endif %}>Pagado</option>
+                        <option value="pendiente" {% if filtro_estado == 'pendiente' %}selected{% endif %}>Pendiente</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label for="fecha_desde" class="form-label">Desde</label>
+                    <input type="date" name="fecha_desde" id="fecha_desde" class="form-control" value="{{ filtro_fecha_desde }}">
+                </div>
+                <div class="col-md-2">
+                    <label for="fecha_hasta" class="form-label">Hasta</label>
+                    <input type="date" name="fecha_hasta" id="fecha_hasta" class="form-control" value="{{ filtro_fecha_hasta }}">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">&nbsp;</label>
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-search"></i>
+                        </button>
+                        <a href="{% url 'ingresos_list' %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-times"></i>
+                        </a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Lista de Ingresos -->
+    <div class="card">
+        <div class="card-header">
+            <h5 class="mb-0">
+                <i class="fas fa-list me-2"></i>Lista de Ingresos
+                <span class="badge bg-primary ms-2">{{ ingresos.count }}</span>
+            </h5>
+        </div>
+        <div class="card-body">
+            {% if ingresos %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Documento</th>
+                                <th>Proyecto</th>
+                                <th>Descripción</th>
+                                <th>Monto</th>
+                                <th>Fecha Emisión</th>
+                                <th>Estado</th>
+                                <th>Creado por</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for ingreso in ingresos %}
+                                <tr class="ingreso-card">
+                                    <td>
+                                        <strong>{{ ingreso.numero_documento }}</strong>
+                                        <br>
+                                        <small class="text-muted">{{ ingreso.get_tipo_ingreso_display }}</small>
+                                    </td>
+                                    <td>
+                                        <a href="{% url 'proyecto_dashboard' ingreso.proyecto.id %}" class="text-decoration-none">
+                                            {{ ingreso.proyecto.nombre }}
+                                        </a>
+                                    </td>
+                                    <td>
+                                        <span title="{{ ingreso.descripcion }}">
+                                            {{ ingreso.descripcion|truncatechars:50 }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <strong>${{ ingreso.monto_total|floatformat:2 }}</strong>
+                                    </td>
+                                    <td>{{ ingreso.fecha_emision|date:"d/m/Y" }}</td>
+                                    <td>
+                                        {% if ingreso.pagado %}
+                                            <span class="status-badge status-pagado">
+                                                <i class="fas fa-check me-1"></i>Pagado
+                                            </span>
+                                        {% else %}
+                                            <span class="status-badge status-pendiente">
+                                                <i class="fas fa-clock me-1"></i>Pendiente
+                                            </span>
+                                        {% endif %}
+                                        {% if ingreso.porcentaje_pagado > 0 %}
+                                            <br><small class="text-muted">{{ ingreso.porcentaje_pagado }}% pagado</small>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ ingreso.creado_por.get_full_name|default:ingreso.creado_por.username }}</td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm">
+                                            <a href="{% url 'ingreso_detail' ingreso.id %}" class="btn btn-outline-info" title="Ver detalle">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            <a href="{% url 'ingreso_edit' ingreso.id %}" class="btn btn-outline-warning" title="Editar">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            <a href="{% url 'ingreso_delete' ingreso.id %}" class="btn btn-outline-danger" title="Eliminar">
+                                                <i class="fas fa-trash"></i>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                    <h5 class="text-muted">No hay ingresos registrados</h5>
+                    <p class="text-muted">Comienza creando tu primer ingreso para un proyecto.</p>
+                    <a href="{% url 'ingreso_create' %}" class="btn btn-success">
+                        <i class="fas fa-plus me-2"></i>Crear Primer Ingreso
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Auto-submit form when filters change
+    document.addEventListener('DOMContentLoaded', function() {
+        const filterSelects = document.querySelectorAll('#proyecto, #estado');
+        filterSelects.forEach(select => {
+            select.addEventListener('change', function() {
+                this.form.submit();
+            });
+        });
+    });
+</script>
+{% endblock %}

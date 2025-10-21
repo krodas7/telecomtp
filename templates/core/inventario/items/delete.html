@@ -286,7 +286,7 @@
                 <div class="stat-item">
                     <div class="stat-value">
                         {% if item.precio_unitario %}
-                            Q{{ item.precio_unitario|floatformat:2 }}
+                            ${{ item.precio_unitario|floatformat:2 }}
                         {% else %}
                             N/A
                         {% endif %}

@@ -1,0 +1,178 @@
+{% extends "base.html" %}
+{% load custom_filters %}
+
+{% block title %}Cotizaciones de {{ proyecto.nombre }} - Sistema de Construcción{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">
+        <i class="fas fa-file-invoice-dollar me-2"></i>Cotizaciones de {{ proyecto.nombre }}
+    </h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <a href="{% url 'proyecto_dashboard' proyecto.id %}" class="btn btn-outline-secondary me-2">
+            <i class="fas fa-arrow-left me-1"></i>Volver al Proyecto
+        </a>
+        <a href="{% url 'cotizacion_create' %}" class="btn btn-primary">
+            <i class="fas fa-plus me-1"></i>Nueva Cotización
+        </a>
+    </div>
+</div>
+
+<!-- Estadísticas del Proyecto -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card bg-primary text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="card-title">Total Cotizaciones</h6>
+                        <h3 class="mb-0">{{ total_cotizaciones }}</h3>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-file-invoice fa-2x opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-success text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="card-title">Aceptadas</h6>
+                        <h3 class="mb-0">{{ cotizaciones_aceptadas }}</h3>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-check-circle fa-2x opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-info text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="card-title">Total Cotizado</h6>
+                        <h3 class="mb-0">${{ monto_total_cotizado|floatformat:2 }}</h3>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-dollar-sign fa-2x opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-success text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="card-title">Monto Aceptado</h6>
+                        <h3 class="mb-0">${{ monto_aceptado|floatformat:2 }}</h3>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-handshake fa-2x opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Lista de Cotizaciones -->
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0">
+            <i class="fas fa-list me-2"></i>Cotizaciones del Proyecto
+        </h5>
+    </div>
+    <div class="card-body">
+        {% if cotizaciones %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Número</th>
+                            <th>Título</th>
+                            <th>Cliente</th>
+                            <th>Monto</th>
+                            <th>Estado</th>
+                            <th>Fecha Emisión</th>
+                            <th>Vencimiento</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for cotizacion in cotizaciones %}
+                        <tr>
+                            <td>
+                                <strong>{{ cotizacion.numero_cotizacion }}</strong>
+                            </td>
+                            <td>
+                                <div class="text-truncate" style="max-width: 200px;" title="{{ cotizacion.titulo }}">
+                                    {{ cotizacion.titulo }}
+                                </div>
+                            </td>
+                            <td>{{ cotizacion.cliente.razon_social }}</td>
+                            <td>
+                                <strong>${{ cotizacion.monto_total|floatformat:2 }}</strong>
+                            </td>
+                            <td>
+                                {% if cotizacion.estado == 'aceptada' %}
+                                    <span class="badge bg-success">{{ cotizacion.get_estado_display }}</span>
+                                {% elif cotizacion.estado == 'enviada' %}
+                                    <span class="badge bg-primary">{{ cotizacion.get_estado_display }}</span>
+                                {% elif cotizacion.estado == 'borrador' %}
+                                    <span class="badge bg-secondary">{{ cotizacion.get_estado_display }}</span>
+                                {% elif cotizacion.estado == 'rechazada' %}
+                                    <span class="badge bg-danger">{{ cotizacion.get_estado_display }}</span>
+                                {% elif cotizacion.estado == 'vencida' %}
+                                    <span class="badge bg-warning">{{ cotizacion.get_estado_display }}</span>
+                                {% else %}
+                                    <span class="badge bg-dark">{{ cotizacion.get_estado_display }}</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ cotizacion.fecha_emision|date:"d/m/Y" }}</td>
+                            <td>
+                                {% if cotizacion.esta_vencida %}
+                                    <span class="text-danger">
+                                        <i class="fas fa-exclamation-triangle me-1"></i>{{ cotizacion.fecha_vencimiento|date:"d/m/Y" }}
+                                    </span>
+                                {% else %}
+                                    {{ cotizacion.fecha_vencimiento|date:"d/m/Y" }}
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="btn-group btn-group-sm" role="group">
+                                    <a href="{% url 'cotizacion_detail' cotizacion.id %}" class="btn btn-outline-primary" title="Ver detalle">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    <a href="{% url 'cotizacion_edit' cotizacion.id %}" class="btn btn-outline-warning" title="Editar">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <a href="{% url 'cotizacion_delete' cotizacion.id %}" class="btn btn-outline-danger" title="Eliminar">
+                                        <i class="fas fa-trash"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="text-center py-5">
+                <i class="fas fa-file-invoice fa-3x text-muted mb-3"></i>
+                <h5 class="text-muted">No hay cotizaciones para este proyecto</h5>
+                <p class="text-muted">Comienza creando la primera cotización para este proyecto</p>
+                <a href="{% url 'cotizacion_create' %}" class="btn btn-primary">
+                    <i class="fas fa-plus me-1"></i>Crear Cotización
+                </a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

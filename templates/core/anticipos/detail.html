@@ -194,9 +194,9 @@
                         <!-- Debug info -->
                         <div class="alert alert-info small mb-2">
                             <strong>Debug:</strong>
-                            Monto: Q{{ anticipo.monto }} |
-                            Aplicado: Q{{ anticipo.monto_aplicado }} |
-                            Total Aplicado: Q{{ anticipo.total_aplicado }} |
+                            Monto: ${{ anticipo.monto }} |
+                            Aplicado: ${{ anticipo.monto_aplicado }} |
+                            Total Aplicado: ${{ anticipo.total_aplicado }} |
                             Porcentaje: {{ anticipo.porcentaje_aplicado|floatformat:2 }}%
                         </div>
                         
@@ -237,7 +237,7 @@
                                     <i class="fas fa-check-circle"></i> Aplicado
                                 </small>
                                 <span class="text-success fw-bold" style="font-size: 1.2rem;">
-                                    Q{{ anticipo.monto_aplicado|floatformat:2 }}
+                                    ${{ anticipo.monto_aplicado|floatformat:2 }}
                                 </span>
                             </div>
                             <div class="text-center align-self-center">
@@ -248,7 +248,7 @@
                                     <i class="fas fa-coins"></i> Total
                                 </small>
                                 <span class="text-primary fw-bold" style="font-size: 1.2rem;">
-                                    Q{{ anticipo.monto|floatformat:2 }}
+                                    ${{ anticipo.monto|floatformat:2 }}
                                 </span>
                             </div>
                         </div>
@@ -260,7 +260,7 @@
                             <div class="border-end">
                                 <div style="background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%); padding: 1rem; border-radius: 10px;">
                                     <i class="fas fa-check-circle text-success fa-2x mb-2"></i>
-                                    <h6 class="text-success fw-bold mb-0">Q{{ anticipo.total_aplicado|floatformat:2 }}</h6>
+                                    <h6 class="text-success fw-bold mb-0">${{ anticipo.total_aplicado|floatformat:2 }}</h6>
                                     <small class="text-muted">Aplicado</small>
                                 </div>
                             </div>
@@ -269,7 +269,7 @@
                             <div class="border-end">
                                 <div style="background: linear-gradient(135deg, #fff3cd 0%, #ffeeba 100%); padding: 1rem; border-radius: 10px;">
                                     <i class="fas fa-hourglass-half text-warning fa-2x mb-2"></i>
-                                    <h6 class="text-warning fw-bold mb-0">Q{{ anticipo.monto_disponible|floatformat:2 }}</h6>
+                                    <h6 class="text-warning fw-bold mb-0">${{ anticipo.monto_disponible|floatformat:2 }}</h6>
                                     <small class="text-muted">Disponible</small>
                                 </div>
                             </div>
@@ -277,7 +277,7 @@
                         <div class="col-4">
                             <div style="background: linear-gradient(135deg, #cfe2ff 0%, #b6d4fe 100%); padding: 1rem; border-radius: 10px;">
                                 <i class="fas fa-coins text-primary fa-2x mb-2"></i>
-                                <h6 class="text-primary fw-bold mb-0">Q{{ anticipo.monto|floatformat:2 }}</h6>
+                                <h6 class="text-primary fw-bold mb-0">${{ anticipo.monto|floatformat:2 }}</h6>
                                 <small class="text-muted">Total</small>
                             </div>
                         </div>

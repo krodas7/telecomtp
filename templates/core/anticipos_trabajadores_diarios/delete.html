@@ -45,7 +45,7 @@
                         <div class="col-md-6">
                             <h6><strong>Información del Anticipo:</strong></h6>
                             <ul class="list-unstyled">
-                                <li><strong>Monto:</strong> Q{{ anticipo.monto|floatformat:2 }}</li>
+                                <li><strong>Monto:</strong> ${{ anticipo.monto|floatformat:2 }}</li>
                                 <li><strong>Fecha:</strong> {{ anticipo.fecha_anticipo|date:"d/m/Y" }}</li>
                                 <li><strong>Estado:</strong> 
                                     {% if anticipo.estado == 'pendiente' %}
@@ -64,8 +64,8 @@
                             <h6><strong>Información del Trabajador:</strong></h6>
                             <ul class="list-unstyled">
                                 <li><strong>Nombre:</strong> {{ anticipo.trabajador.nombre }}</li>
-                                <li><strong>Pago Diario:</strong> Q{{ anticipo.trabajador.pago_diario|floatformat:2 }}</li>
-                                <li><strong>Total a Pagar:</strong> Q{{ anticipo.trabajador.total_a_pagar|floatformat:2 }}</li>
+                                <li><strong>Pago Diario:</strong> ${{ anticipo.trabajador.pago_diario|floatformat:2 }}</li>
+                                <li><strong>Total a Pagar:</strong> ${{ anticipo.trabajador.total_a_pagar|floatformat:2 }}</li>
                             </ul>
                         </div>
                     </div>
@@ -73,11 +73,11 @@
                     <div class="row mb-4">
                         <div class="col-md-6">
                             <h6><strong>Monto Aplicado:</strong></h6>
-                            <p class="text-muted">Q{{ anticipo.monto_aplicado|floatformat:2 }}</p>
+                            <p class="text-muted">${{ anticipo.monto_aplicado|floatformat:2 }}</p>
                         </div>
                         <div class="col-md-6">
                             <h6><strong>Saldo Pendiente:</strong></h6>
-                            <p class="text-muted">Q{{ anticipo.saldo_pendiente|floatformat:2 }}</p>
+                            <p class="text-muted">${{ anticipo.saldo_pendiente|floatformat:2 }}</p>
                         </div>
                     </div>
 

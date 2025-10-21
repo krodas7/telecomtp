@@ -1,0 +1,563 @@
+{% extends "base.html" %}
+{% load custom_filters %}
+
+{% block title %}Nueva Cotización - Sistema de Construcción{% endblock %}
+
+{% block extra_css %}
+<style>
+    .create-hero {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 3rem 2rem;
+        border-radius: 20px;
+        margin-bottom: 2rem;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .form-container {
+        background: white;
+        border-radius: 20px;
+        padding: 2.5rem;
+        box-shadow: 0 8px 30px rgba(44, 62, 80, 0.1);
+        margin-bottom: 2rem;
+        border: none;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .form-container::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+    }
+    
+    .form-group {
+        margin-bottom: 2rem;
+        position: relative;
+    }
+    
+    .form-label {
+        font-weight: 600;
+        color: #2c3e50;
+        margin-bottom: 0.8rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .form-label i {
+        color: #667eea;
+        font-size: 1.1rem;
+    }
+    
+    .form-control, .form-select {
+        border: 2px solid #e0e0e0 !important;
+        border-radius: 12px !important;
+        padding: 1rem 1.2rem !important;
+        font-size: 1rem !important;
+        transition: all 0.3s ease !important;
+        background: white !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+    }
+    
+    .form-control:focus, .form-select:focus {
+        border-color: #667eea !important;
+        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25) !important;
+        outline: none !important;
+    }
+    
+    .form-row {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1.5rem;
+    }
+    
+    .btn {
+        padding: 1rem 2rem;
+        border-radius: 25px;
+        font-weight: 600;
+        text-decoration: none;
+        transition: all 0.3s ease;
+        border: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 1rem;
+        cursor: pointer;
+    }
+    
+    .btn-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+    }
+    
+    .btn-primary:hover {
+        background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
+        transform: translateY(-3px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+    }
+    
+    .btn-secondary {
+        background: #6c757d;
+        color: white;
+    }
+    
+    .btn-secondary:hover {
+        background: #5a6268;
+        transform: translateY(-3px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+    }
+    
+    .total-preview {
+        background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%);
+        color: white;
+        border-radius: 15px;
+        padding: 1.5rem;
+        margin-top: 1rem;
+        text-align: center;
+        display: none;
+    }
+    
+    .total-preview.show {
+        display: block;
+        animation: slideIn 0.5s ease;
+    }
+    
+    @keyframes slideIn {
+        from {
+            opacity: 0;
+            transform: translateY(-20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<div class="create-hero">
+    <div class="create-hero-content">
+        <h1 class="create-hero-title">
+            <i class="fas fa-file-invoice-dollar me-2"></i>Nueva Cotización
+        </h1>
+        <p class="create-hero-subtitle">
+            Crea una nueva cotización para tu proyecto de construcción
+        </p>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Formulario Principal -->
+    <div class="col-lg-8">
+        <div class="form-container">
+            <form method="post" enctype="multipart/form-data" id="createForm">
+                {% csrf_token %}
+                
+                <!-- Información Básica -->
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="numero_cotizacion" class="form-label">
+                            <i class="fas fa-hashtag"></i>Número de Cotización *
+                        </label>
+                        {{ form.numero_cotizacion }}
+                        {% if form.numero_cotizacion.errors %}
+                            <div class="text-danger small mt-1">
+                                {% for error in form.numero_cotizacion.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="titulo" class="form-label">
+                            <i class="fas fa-heading"></i>Título *
+                        </label>
+                        {{ form.titulo }}
+                        {% if form.titulo.errors %}
+                            <div class="text-danger small mt-1">
+                                {% for error in form.titulo.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Proyecto y Cliente -->
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="proyecto" class="form-label">
+                            <i class="fas fa-project-diagram"></i>Proyecto *
+                        </label>
+                        {{ form.proyecto }}
+                        {% if form.proyecto.errors %}
+                            <div class="text-danger small mt-1">
+                                {% for error in form.proyecto.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="cliente" class="form-label">
+                            <i class="fas fa-users"></i>Cliente *
+                        </label>
+                        {{ form.cliente }}
+                        {% if form.cliente.errors %}
+                            <div class="text-danger small mt-1">
+                                {% for error in form.cliente.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Descripción -->
+                <div class="form-group">
+                    <label for="descripcion" class="form-label">
+                        <i class="fas fa-align-left"></i>Descripción de Servicios *
+                    </label>
+                    {{ form.descripcion }}
+                    {% if form.descripcion.errors %}
+                        <div class="text-danger small mt-1">
+                            {% for error in form.descripcion.errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <!-- Montos -->
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="monto_subtotal" class="form-label">
+                            <i class="fas fa-dollar-sign"></i>Subtotal ($) *
+                        </label>
+                        {{ form.monto_subtotal }}
+                        {% if form.monto_subtotal.errors %}
+                            <div class="text-danger small mt-1">
+                                {% for error in form.monto_subtotal.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="monto_iva" class="form-label">
+                            <i class="fas fa-percentage"></i>ITBMS (7% Fijo)
+                        </label>
+                        <div class="input-group">
+                            {{ form.monto_iva }}
+                            <span class="input-group-text bg-primary text-white">7%</span>
+                        </div>
+                        <small class="text-muted">Se calcula automáticamente: 7% del subtotal</small>
+                        {% if form.monto_iva.errors %}
+                            <div class="text-danger small mt-1">
+                                {% for error in form.monto_iva.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="monto_total" class="form-label">
+                            <i class="fas fa-calculator"></i>Total ($) *
+                        </label>
+                        {{ form.monto_total }}
+                        {% if form.monto_total.errors %}
+                            <div class="text-danger small mt-1">
+                                {% for error in form.monto_total.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                        
+                        <!-- Vista previa del total -->
+                        <div class="total-preview" id="totalPreview">
+                            <h5>Total de la Cotización</h5>
+                            <div class="amount">$ <span id="totalAmount">0.00</span></div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="tipo_cotizacion" class="form-label">
+                            <i class="fas fa-tag"></i>Tipo de Cotización
+                        </label>
+                        {{ form.tipo_cotizacion }}
+                        {% if form.tipo_cotizacion.errors %}
+                            <div class="text-danger small mt-1">
+                                {% for error in form.tipo_cotizacion.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Fechas -->
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="fecha_emision" class="form-label">
+                            <i class="fas fa-calendar"></i>Fecha de Emisión *
+                        </label>
+                        {{ form.fecha_emision }}
+                        {% if form.fecha_emision.errors %}
+                            <div class="text-danger small mt-1">
+                                {% for error in form.fecha_emision.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="fecha_vencimiento" class="form-label">
+                            <i class="fas fa-clock"></i>Fecha de Vencimiento *
+                        </label>
+                        {{ form.fecha_vencimiento }}
+                        {% if form.fecha_vencimiento.errors %}
+                            <div class="text-danger small mt-1">
+                                {% for error in form.fecha_vencimiento.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Condiciones -->
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="condiciones_pago" class="form-label">
+                            <i class="fas fa-credit-card"></i>Condiciones de Pago
+                        </label>
+                        {{ form.condiciones_pago }}
+                        {% if form.condiciones_pago.errors %}
+                            <div class="text-danger small mt-1">
+                                {% for error in form.condiciones_pago.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="validez_dias" class="form-label">
+                            <i class="fas fa-calendar-check"></i>Validez (días)
+                        </label>
+                        {{ form.validez_dias }}
+                        {% if form.validez_dias.errors %}
+                            <div class="text-danger small mt-1">
+                                {% for error in form.validez_dias.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Términos y Condiciones -->
+                <div class="form-group">
+                    <label for="terminos_condiciones" class="form-label">
+                        <i class="fas fa-file-contract"></i>Términos y Condiciones
+                    </label>
+                    {{ form.terminos_condiciones }}
+                    {% if form.terminos_condiciones.errors %}
+                        <div class="text-danger small mt-1">
+                            {% for error in form.terminos_condiciones.errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <!-- Archivo -->
+                <div class="form-group">
+                    <label for="archivo_cotizacion" class="form-label">
+                        <i class="fas fa-file-upload"></i>Archivo de Cotización
+                    </label>
+                    {{ form.archivo_cotizacion }}
+                    {% if form.archivo_cotizacion.errors %}
+                        <div class="text-danger small mt-1">
+                            {% for error in form.archivo_cotizacion.errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <!-- Observaciones -->
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="observaciones" class="form-label">
+                            <i class="fas fa-sticky-note"></i>Observaciones Internas
+                        </label>
+                        {{ form.observaciones }}
+                        {% if form.observaciones.errors %}
+                            <div class="text-danger small mt-1">
+                                {% for error in form.observaciones.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="notas_cliente" class="form-label">
+                            <i class="fas fa-comment"></i>Notas del Cliente
+                        </label>
+                        {{ form.notas_cliente }}
+                        {% if form.notas_cliente.errors %}
+                            <div class="text-danger small mt-1">
+                                {% for error in form.notas_cliente.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Acciones del Formulario -->
+                <div class="d-flex gap-2 justify-content-end mt-4">
+                    <a href="{% url 'cotizaciones_list' %}" class="btn btn-secondary">
+                        <i class="fas fa-times"></i>Cancelar
+                    </a>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i>Crear Cotización
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Sidebar de Información -->
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-info-circle me-2"></i>Información Útil
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <strong>Proyectos Activos:</strong>
+                    <span class="badge bg-primary">{{ proyectos.count }}</span>
+                </div>
+                <div class="mb-3">
+                    <strong>Clientes Activos:</strong>
+                    <span class="badge bg-success">{{ clientes.count }}</span>
+                </div>
+                <div class="alert alert-info">
+                    <i class="fas fa-lightbulb me-2"></i>
+                    <strong>Consejos:</strong>
+                    <ul class="mb-0 mt-2">
+                        <li>Usa números únicos para las cotizaciones</li>
+                        <li>El ITBMS se calcula automáticamente al 7%</li>
+                        <li>Establece fechas de vencimiento realistas</li>
+                        <li>Adjunta archivos PDF cuando sea posible</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Página de crear cotización cargada');
+    
+    const montoSubtotalInput = document.getElementById('id_monto_subtotal');
+    const montoIvaInput = document.getElementById('id_monto_iva');
+    const montoTotalInput = document.getElementById('id_monto_total');
+    const totalPreview = document.getElementById('totalPreview');
+    const totalAmount = document.getElementById('totalAmount');
+    
+    // Función para calcular automáticamente ITBMS y Total
+    function calcularCotizacion() {
+        console.log('🔄 Función calcularCotizacion ejecutada');
+        
+        if (!montoSubtotalInput || !montoIvaInput || !montoTotalInput) {
+            console.log('❌ No se encontraron todos los campos necesarios');
+            return;
+        }
+        
+        const subtotal = parseFloat(montoSubtotalInput.value) || 0;
+        console.log('💰 Subtotal ingresado:', subtotal);
+        
+        if (subtotal > 0) {
+            // Calcular ITBMS (7% del subtotal)
+            const itbms = subtotal * 0.07;
+            console.log('🧾 ITBMS calculado (7%):', itbms);
+            
+            // Calcular total (subtotal + ITBMS)
+            const total = subtotal + itbms;
+            console.log('💵 Total calculado:', total);
+            
+            // Actualizar campos
+            montoIvaInput.value = itbms.toFixed(2);
+            montoTotalInput.value = total.toFixed(2);
+            if (totalAmount) totalAmount.textContent = total.toFixed(2);
+            
+            // Mostrar vista previa
+            if (totalPreview) totalPreview.classList.add('show');
+            
+            console.log('✅ Campos actualizados - ITBMS:', itbms.toFixed(2), 'Total:', total.toFixed(2));
+        } else {
+            // Limpiar campos si no hay subtotal
+            montoIvaInput.value = '0.00';
+            montoTotalInput.value = '0.00';
+            if (totalAmount) totalAmount.textContent = '0.00';
+            if (totalPreview) totalPreview.classList.remove('show');
+            console.log('🧹 Campos limpiados (sin subtotal)');
+        }
+    }
+    
+    // Agregar event listeners
+    if (montoSubtotalInput) {
+        montoSubtotalInput.addEventListener('input', calcularCotizacion);
+        montoSubtotalInput.addEventListener('change', calcularCotizacion);
+        montoSubtotalInput.addEventListener('keyup', calcularCotizacion);
+        console.log('✅ Event listeners agregados al campo subtotal');
+    }
+    
+    // Establecer fecha de emisión por defecto
+    const fechaEmisionInput = document.getElementById('id_fecha_emision');
+    if (fechaEmisionInput) {
+        const today = new Date().toISOString().split('T')[0];
+        fechaEmisionInput.value = today;
+    }
+    
+    // Establecer fecha de vencimiento por defecto (30 días después)
+    const fechaVencimientoInput = document.getElementById('id_fecha_vencimiento');
+    if (fechaVencimientoInput) {
+        const today = new Date();
+        const futureDate = new Date(today.getTime() + (30 * 24 * 60 * 60 * 1000)); // 30 días después
+        fechaVencimientoInput.value = futureDate.toISOString().split('T')[0];
+    }
+    
+    // Hacer función disponible globalmente
+    window.calcularCotizacion = calcularCotizacion;
+    
+    console.log('✅ JavaScript de cotización cargado correctamente');
+});
+</script>
+{% endblock %}

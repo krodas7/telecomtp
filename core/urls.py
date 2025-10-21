@@ -93,15 +93,15 @@ urlpatterns = [
     path('facturas/reportes/excel/', views.facturas_reporte_excel, name='facturas_reporte_excel'),
     path('facturas/reportes/detallado/', views.facturas_reporte_detallado, name='facturas_reporte_detallado'),
     
-    # Gastos
-    path('gastos/dashboard/', views.gastos_dashboard, name='gastos_dashboard'),
-    path('gastos/', views.gastos_list, name='gastos_list'),
-    path('gastos/crear/', views.gasto_create, name='gasto_create'),
-    path('gastos/<int:gasto_id>/', views.gasto_detail, name='gasto_detail'),
-    path('gastos/<int:gasto_id>/editar/', views.gasto_edit, name='gasto_edit'),
-    path('gastos/<int:gasto_id>/eliminar/', views.gasto_delete, name='gasto_delete'),
-    path('gastos/<int:gasto_id>/aprobar/', views.gasto_aprobar, name='gasto_aprobar'),
-    path('gastos/<int:gasto_id>/desaprobar/', views.gasto_desaprobar, name='gasto_desaprobar'),
+    # Egresos
+    path('egresos/dashboard/', views.gastos_dashboard, name='egresos_dashboard'),
+    path('egresos/', views.gastos_list, name='egresos_list'),
+    path('egresos/crear/', views.gasto_create, name='egreso_create'),
+    path('egresos/<int:gasto_id>/', views.gasto_detail, name='egreso_detail'),
+    path('egresos/<int:gasto_id>/editar/', views.gasto_edit, name='egreso_edit'),
+    path('egresos/<int:gasto_id>/eliminar/', views.gasto_delete, name='egreso_delete'),
+    path('egresos/<int:gasto_id>/aprobar/', views.gasto_aprobar, name='egreso_aprobar'),
+    path('egresos/<int:gasto_id>/desaprobar/', views.gasto_desaprobar, name='egreso_desaprobar'),
     
     # Pagos
     path('pagos/', views.pagos_list, name='pagos_list'),
@@ -109,11 +109,11 @@ urlpatterns = [
     path('pagos/<int:pago_id>/editar/', views.pago_edit, name='pago_edit'),
     path('pagos/<int:pago_id>/eliminar/', views.pago_delete, name='pago_delete'),
     
-    # Categorías de Gasto
-    path('categorias-gasto/', views.categorias_gasto_list, name='categorias_gasto_list'),
-    path('categorias-gasto/crear/', views.categoria_gasto_create, name='categoria_gasto_create'),
-    path('categorias-gasto/<int:categoria_id>/editar/', views.categoria_gasto_edit, name='categoria_gasto_edit'),
-    path('categorias-gasto/<int:categoria_id>/eliminar/', views.categoria_gasto_delete, name='categoria_gasto_delete'),
+    # Categorías de Egreso
+    path('categorias-egreso/', views.categorias_gasto_list, name='categoria_egreso_list'),
+    path('categorias-egreso/crear/', views.categoria_gasto_create, name='categoria_egreso_create'),
+    path('categorias-egreso/<int:categoria_id>/editar/', views.categoria_gasto_edit, name='categoria_egreso_edit'),
+    path('categorias-egreso/<int:categoria_id>/eliminar/', views.categoria_gasto_delete, name='categoria_egreso_delete'),
     
     # Rentabilidad
     path('rentabilidad/', views.rentabilidad_view, name='rentabilidad'),
@@ -180,13 +180,7 @@ urlpatterns = [
     path('archivos/carpeta/<int:carpeta_id>/eliminar/', views.carpeta_delete, name='carpeta_delete'),
     path('archivos/carpeta/<int:carpeta_id>/', views.carpeta_detail, name='carpeta_detail'),
 
-    # Presupuestos
-    path('presupuestos/', views.presupuestos_list, name='presupuestos_list'),
-    path('presupuestos/crear/', views.presupuesto_create, name='presupuesto_create'),
-    path('presupuestos/<int:presupuesto_id>/', views.presupuesto_detail, name='presupuesto_detail'),
-    path('presupuestos/<int:presupuesto_id>/editar/', views.presupuesto_edit, name='presupuesto_edit'),
-    path('presupuestos/<int:presupuesto_id>/partida/crear/', views.partida_create, name='partida_create'),
-    path('presupuestos/<int:presupuesto_id>/aprobar/', views.presupuesto_aprobar, name='presupuesto_aprobar'),
+    # URLs de Presupuestos ELIMINADAS - YA NO SE USAN
 
     # ==================== URLs DE NOTIFICACIONES ====================
     path('notificaciones/', views.notificaciones_list, name='notificaciones_list'),
@@ -293,4 +287,21 @@ urlpatterns = [
     path('proyectos/<int:proyecto_id>/planillas-trabajadores-diarios/<int:planilla_id>/finalizar/', views.planilla_trabajadores_diarios_finalizar, name='planilla_trabajadores_diarios_finalizar'),
     path('proyectos/<int:proyecto_id>/planillas-trabajadores-diarios/<int:planilla_id>/agregar-trabajador/', views.trabajador_diario_add_to_planilla, name='trabajador_diario_add_to_planilla'),
     path('proyectos/<int:proyecto_id>/planillas-trabajadores-diarios/<int:planilla_id>/remover-trabajador/<int:trabajador_id>/', views.trabajador_diario_remove_from_planilla, name='trabajador_diario_remove_from_planilla'),
+    
+    # ==================== INGRESOS POR PROYECTO ====================
+    path('ingresos/', views.ingresos_list, name='ingresos_list'),
+    path('ingresos/crear/', views.ingreso_create, name='ingreso_create'),
+    path('ingresos/<int:ingreso_id>/', views.ingreso_detail, name='ingreso_detail'),
+    path('ingresos/<int:ingreso_id>/editar/', views.ingreso_edit, name='ingreso_edit'),
+    path('ingresos/<int:ingreso_id>/eliminar/', views.ingreso_delete, name='ingreso_delete'),
+    path('proyectos/<int:proyecto_id>/ingresos/', views.ingresos_proyecto, name='ingresos_proyecto'),
+    
+    # ==================== COTIZACIONES ====================
+    path('cotizaciones/', views.cotizaciones_list, name='cotizaciones_list'),
+    path('cotizaciones/dashboard/', views.cotizaciones_dashboard, name='cotizaciones_dashboard'),
+    path('cotizaciones/crear/', views.cotizacion_create, name='cotizacion_create'),
+    path('cotizaciones/<int:cotizacion_id>/', views.cotizacion_detail, name='cotizacion_detail'),
+    path('cotizaciones/<int:cotizacion_id>/editar/', views.cotizacion_edit, name='cotizacion_edit'),
+    path('cotizaciones/<int:cotizacion_id>/eliminar/', views.cotizacion_delete, name='cotizacion_delete'),
+    path('proyectos/<int:proyecto_id>/cotizaciones/', views.cotizaciones_proyecto, name='cotizaciones_proyecto'),
 ]

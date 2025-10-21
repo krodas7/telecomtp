@@ -1,0 +1,362 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Crear Ingreso{% endblock %}
+
+{% block extra_css %}
+<style>
+    .form-section {
+        background: white;
+        border-radius: 10px;
+        padding: 25px;
+        margin-bottom: 20px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    .section-title {
+        color: #667eea;
+        font-weight: 600;
+        margin-bottom: 20px;
+        padding-bottom: 10px;
+        border-bottom: 2px solid #e9ecef;
+    }
+    .form-label {
+        font-weight: 500;
+        color: #495057;
+    }
+    .form-control:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+    }
+    .btn-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border: none;
+    }
+    .btn-primary:hover {
+        background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
+    }
+    .help-text {
+        font-size: 0.875em;
+        color: #6c757d;
+        margin-top: 5px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="h3 mb-0">
+                        <i class="fas fa-plus-circle me-2 text-success"></i>
+                        {{ titulo }}
+                    </h1>
+                    <p class="text-muted mb-0">Registra un nuevo ingreso para un proyecto</p>
+                </div>
+                <div>
+                    <a href="{% url 'ingresos_list' %}" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left me-2"></i>Volver a Lista
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <form method="post" id="ingresoForm">
+        {% csrf_token %}
+        
+        <!-- Información del Proyecto y Factura -->
+        <div class="form-section">
+            <h5 class="section-title">
+                <i class="fas fa-project-diagram me-2"></i>Información del Proyecto
+            </h5>
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="{{ form.proyecto.id_for_label }}" class="form-label">
+                            <i class="fas fa-building me-1"></i>{{ form.proyecto.label }}
+                        </label>
+                        {{ form.proyecto }}
+                        {% if form.proyecto.errors %}
+                            <div class="text-danger small">
+                                {% for error in form.proyecto.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                        <div class="help-text">Selecciona el proyecto al que pertenece este ingreso</div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="{{ form.factura.id_for_label }}" class="form-label">
+                            <i class="fas fa-file-invoice me-1"></i>{{ form.factura.label }}
+                        </label>
+                        {{ form.factura }}
+                        {% if form.factura.errors %}
+                            <div class="text-danger small">
+                                {% for error in form.factura.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                        <div class="help-text">Opcional: Vincula este ingreso a una factura específica</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Información del Documento -->
+        <div class="form-section">
+            <h5 class="section-title">
+                <i class="fas fa-file-alt me-2"></i>Información del Documento
+            </h5>
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="{{ form.tipo_ingreso.id_for_label }}" class="form-label">
+                            <i class="fas fa-tags me-1"></i>{{ form.tipo_ingreso.label }}
+                        </label>
+                        {{ form.tipo_ingreso }}
+                        {% if form.tipo_ingreso.errors %}
+                            <div class="text-danger small">
+                                {% for error in form.tipo_ingreso.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="{{ form.numero_documento.id_for_label }}" class="form-label">
+                            <i class="fas fa-hashtag me-1"></i>{{ form.numero_documento.label }}
+                        </label>
+                        {{ form.numero_documento }}
+                        {% if form.numero_documento.errors %}
+                            <div class="text-danger small">
+                                {% for error in form.numero_documento.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-12">
+                    <div class="mb-3">
+                        <label for="{{ form.descripcion.id_for_label }}" class="form-label">
+                            <i class="fas fa-align-left me-1"></i>{{ form.descripcion.label }}
+                        </label>
+                        {{ form.descripcion }}
+                        {% if form.descripcion.errors %}
+                            <div class="text-danger small">
+                                {% for error in form.descripcion.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Montos -->
+        <div class="form-section">
+            <h5 class="section-title">
+                <i class="fas fa-dollar-sign me-2"></i>Montos
+            </h5>
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        <label for="{{ form.monto_subtotal.id_for_label }}" class="form-label">
+                            <i class="fas fa-calculator me-1"></i>{{ form.monto_subtotal.label }}
+                        </label>
+                        {{ form.monto_subtotal }}
+                        {% if form.monto_subtotal.errors %}
+                            <div class="text-danger small">
+                                {% for error in form.monto_subtotal.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        <label for="{{ form.monto_iva.id_for_label }}" class="form-label">
+                            <i class="fas fa-percentage me-1"></i>{{ form.monto_iva.label }}
+                        </label>
+                        {{ form.monto_iva }}
+                        {% if form.monto_iva.errors %}
+                            <div class="text-danger small">
+                                {% for error in form.monto_iva.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        <label for="{{ form.monto_total.id_for_label }}" class="form-label">
+                            <i class="fas fa-coins me-1"></i>{{ form.monto_total.label }}
+                        </label>
+                        {{ form.monto_total }}
+                        {% if form.monto_total.errors %}
+                            <div class="text-danger small">
+                                {% for error in form.monto_total.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                        <div class="help-text">Se calcula automáticamente: Subtotal + IVA (en dólares)</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Fechas -->
+        <div class="form-section">
+            <h5 class="section-title">
+                <i class="fas fa-calendar-alt me-2"></i>Fechas
+            </h5>
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        <label for="{{ form.fecha_emision.id_for_label }}" class="form-label">
+                            <i class="fas fa-calendar me-1"></i>{{ form.fecha_emision.label }}
+                        </label>
+                        {{ form.fecha_emision }}
+                        {% if form.fecha_emision.errors %}
+                            <div class="text-danger small">
+                                {% for error in form.fecha_emision.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        <label for="{{ form.fecha_registro.id_for_label }}" class="form-label">
+                            <i class="fas fa-clock me-1"></i>{{ form.fecha_registro.label }}
+                        </label>
+                        {{ form.fecha_registro }}
+                        {% if form.fecha_registro.errors %}
+                            <div class="text-danger small">
+                                {% for error in form.fecha_registro.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        <label for="{{ form.fecha_pago.id_for_label }}" class="form-label">
+                            <i class="fas fa-calendar-check me-1"></i>{{ form.fecha_pago.label }}
+                        </label>
+                        {{ form.fecha_pago }}
+                        {% if form.fecha_pago.errors %}
+                            <div class="text-danger small">
+                                {% for error in form.fecha_pago.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                        <div class="help-text">Dejar vacío si aún no se ha pagado</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Estado de Pago -->
+        <div class="form-section">
+            <h5 class="section-title">
+                <i class="fas fa-credit-card me-2"></i>Estado de Pago
+            </h5>
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="{{ form.porcentaje_pagado.id_for_label }}" class="form-label">
+                            <i class="fas fa-percentage me-1"></i>{{ form.porcentaje_pagado.label }}
+                        </label>
+                        {{ form.porcentaje_pagado }}
+                        {% if form.porcentaje_pagado.errors %}
+                            <div class="text-danger small">
+                                {% for error in form.porcentaje_pagado.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                        <div class="help-text">Porcentaje del monto que ha sido pagado (0-100)</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Observaciones -->
+        <div class="form-section">
+            <h5 class="section-title">
+                <i class="fas fa-sticky-note me-2"></i>Observaciones
+            </h5>
+            <div class="row">
+                <div class="col-12">
+                    <div class="mb-3">
+                        <label for="{{ form.observaciones.id_for_label }}" class="form-label">
+                            <i class="fas fa-comment me-1"></i>{{ form.observaciones.label }}
+                        </label>
+                        {{ form.observaciones }}
+                        {% if form.observaciones.errors %}
+                            <div class="text-danger small">
+                                {% for error in form.observaciones.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Botones de Acción -->
+        <div class="form-section">
+            <div class="d-flex justify-content-between">
+                <a href="{% url 'ingresos_list' %}" class="btn btn-outline-secondary">
+                    <i class="fas fa-times me-2"></i>Cancelar
+                </a>
+                <button type="submit" class="btn btn-primary btn-lg">
+                    <i class="fas fa-save me-2"></i>Guardar Ingreso
+                </button>
+            </div>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const subtotalInput = document.getElementById('id_monto_subtotal');
+        const ivaInput = document.getElementById('id_monto_iva');
+        const totalInput = document.getElementById('id_monto_total');
+        
+        function calculateTotal() {
+            const subtotal = parseFloat(subtotalInput.value) || 0;
+            const iva = parseFloat(ivaInput.value) || 0;
+            const total = subtotal + iva;
+            totalInput.value = total.toFixed(2);
+        }
+        
+        subtotalInput.addEventListener('input', calculateTotal);
+        ivaInput.addEventListener('input', calculateTotal);
+        
+        // Calcular total inicial si hay valores
+        calculateTotal();
+    });
+</script>
+{% endblock %}

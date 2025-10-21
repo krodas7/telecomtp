@@ -1,0 +1,559 @@
+{% extends "base.html" %}
+{% load custom_filters %}
+
+{% block title %}Nueva Factura - Sistema de Construcción{% endblock %}
+
+{% block extra_css %}
+<style>
+    .create-hero {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 3rem 2rem;
+        border-radius: 20px;
+        margin-bottom: 2rem;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .form-container {
+        background: white;
+        border-radius: 20px;
+        padding: 2.5rem;
+        box-shadow: 0 8px 30px rgba(44, 62, 80, 0.1);
+        margin-bottom: 2rem;
+        border: none;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .form-container::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+    }
+    
+    .form-group {
+        margin-bottom: 2rem;
+        position: relative;
+    }
+    
+    .form-label {
+        font-weight: 600;
+        color: #2c3e50;
+        margin-bottom: 0.8rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .form-label i {
+        color: #667eea;
+        font-size: 1.1rem;
+    }
+    
+    .form-control, .form-select {
+        border: 2px solid #e0e0e0 !important;
+        border-radius: 12px !important;
+        padding: 1rem 1.2rem !important;
+        font-size: 1rem !important;
+        transition: all 0.3s ease !important;
+        background: white !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+    }
+    
+    .form-control:focus, .form-select:focus {
+        border-color: #667eea !important;
+        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25) !important;
+        outline: none !important;
+    }
+    
+    .form-row {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1.5rem;
+    }
+    
+    .btn {
+        padding: 1rem 2rem;
+        border-radius: 25px;
+        font-weight: 600;
+        text-decoration: none;
+        transition: all 0.3s ease;
+        border: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 1rem;
+        cursor: pointer;
+    }
+    
+    .btn-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+    }
+    
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+    }
+    
+    .btn-secondary {
+        background: #6c757d;
+        color: white;
+    }
+    
+    .btn-secondary:hover {
+        background: #5a6268;
+        transform: translateY(-2px);
+    }
+    
+    .info-sidebar {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        border-radius: 20px;
+        padding: 2rem;
+        border: none;
+        position: sticky;
+        top: 2rem;
+    }
+    
+    .info-header {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 2rem;
+        padding-bottom: 1rem;
+        border-bottom: 2px solid #dee2e6;
+    }
+    
+    .info-icon {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+    }
+    
+    .info-header-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #2c3e50;
+        margin: 0;
+    }
+    
+    .info-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1rem 0;
+        border-bottom: 1px solid #e9ecef;
+    }
+    
+    .info-label {
+        font-weight: 600;
+        color: #495057;
+    }
+    
+    .info-value {
+        font-weight: 700;
+        color: #667eea;
+    }
+    
+    .info-alert {
+        background: #fff3cd;
+        border: 1px solid #ffeaa7;
+        border-radius: 10px;
+        padding: 1rem;
+        margin-top: 2rem;
+    }
+    
+    .info-alert i {
+        color: #856404;
+        margin-right: 0.5rem;
+    }
+    
+    .info-alert h6 {
+        color: #856404;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+    }
+    
+    .info-alert p {
+        color: #856404;
+        margin: 0;
+        font-size: 0.9rem;
+    }
+    
+    .required {
+        color: #dc3545;
+    }
+    
+    .text-danger {
+        color: #dc3545 !important;
+    }
+    
+    .small {
+        font-size: 0.875rem;
+    }
+    
+    .mt-1 {
+        margin-top: 0.25rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Header -->
+    <div class="create-hero">
+        <div class="create-hero-content">
+            <h1 class="create-hero-title">
+                <i class="fas fa-file-invoice"></i>
+                Nueva Factura
+            </h1>
+            <p class="create-hero-subtitle">
+                Crear una nueva factura para el proyecto
+            </p>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Formulario Principal -->
+        <div class="col-lg-8">
+            <div class="form-container">
+                <form method="post" id="createForm" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    
+                    <!-- Número de Factura y Cliente -->
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="{{ form.numero_factura.id_for_label }}" class="form-label">
+                                <i class="fas fa-hashtag"></i>
+                                Número de Factura <span class="required">*</span>
+                            </label>
+                            {{ form.numero_factura }}
+                            {% if form.numero_factura.errors %}
+                                <div class="text-danger small mt-1">
+                                    {% for error in form.numero_factura.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="{{ form.cliente.id_for_label }}" class="form-label">
+                                <i class="fas fa-users"></i>
+                                Cliente <span class="required">*</span>
+                            </label>
+                            {{ form.cliente }}
+                            {% if form.cliente.errors %}
+                                <div class="text-danger small mt-1">
+                                    {% for error in form.cliente.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Proyecto y Tipo -->
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="{{ form.proyecto.id_for_label }}" class="form-label">
+                                <i class="fas fa-project-diagram"></i>
+                                Proyecto <span class="required">*</span>
+                            </label>
+                            {{ form.proyecto }}
+                            {% if form.proyecto.errors %}
+                                <div class="text-danger small mt-1">
+                                    {% for error in form.proyecto.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="{{ form.tipo.id_for_label }}" class="form-label">
+                                <i class="fas fa-tag"></i>
+                                Tipo de Factura
+                            </label>
+                            {{ form.tipo }}
+                            {% if form.tipo.errors %}
+                                <div class="text-danger small mt-1">
+                                    {% for error in form.tipo.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Fechas -->
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="{{ form.fecha_emision.id_for_label }}" class="form-label">
+                                <i class="fas fa-calendar"></i>
+                                Fecha de Emisión <span class="required">*</span>
+                            </label>
+                            {{ form.fecha_emision }}
+                            {% if form.fecha_emision.errors %}
+                                <div class="text-danger small mt-1">
+                                    {% for error in form.fecha_emision.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="{{ form.fecha_vencimiento.id_for_label }}" class="form-label">
+                                <i class="fas fa-clock"></i>
+                                Fecha de Vencimiento <span class="required">*</span>
+                            </label>
+                            {{ form.fecha_vencimiento }}
+                            {% if form.fecha_vencimiento.errors %}
+                                <div class="text-danger small mt-1">
+                                    {% for error in form.fecha_vencimiento.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Montos -->
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="{{ form.monto_subtotal.id_for_label }}" class="form-label">
+                                <i class="fas fa-dollar-sign"></i>
+                                Subtotal ($) <span class="required">*</span>
+                            </label>
+                            {{ form.monto_subtotal }}
+                            {% if form.monto_subtotal.errors %}
+                                <div class="text-danger small mt-1">
+                                    {% for error in form.monto_subtotal.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="{{ form.porcentaje_itbms.id_for_label }}" class="form-label">
+                                <i class="fas fa-percentage"></i>
+                                Porcentaje de ITBMS
+                            </label>
+                            {{ form.porcentaje_itbms }}
+                            {% if form.porcentaje_itbms.errors %}
+                                <div class="text-danger small mt-1">
+                                    {% for error in form.porcentaje_itbms.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- ITBMS y Total -->
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="{{ form.monto_iva.id_for_label }}" class="form-label">
+                                <i class="fas fa-calculator"></i>
+                                Monto ITBMS
+                            </label>
+                            {{ form.monto_iva }}
+                            {% if form.monto_iva.errors %}
+                                <div class="text-danger small mt-1">
+                                    {% for error in form.monto_iva.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="{{ form.monto_total.id_for_label }}" class="form-label">
+                                <i class="fas fa-calculator"></i>
+                                Total ($) <span class="required">*</span>
+                            </label>
+                            {{ form.monto_total }}
+                            {% if form.monto_total.errors %}
+                                <div class="text-danger small mt-1">
+                                    {% for error in form.monto_total.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Descripción -->
+                    <div class="form-group">
+                        <label for="{{ form.descripcion_servicios.id_for_label }}" class="form-label">
+                            <i class="fas fa-file-alt"></i>
+                            Descripción de Servicios
+                        </label>
+                        {{ form.descripcion_servicios }}
+                        {% if form.descripcion_servicios.errors %}
+                            <div class="text-danger small mt-1">
+                                {% for error in form.descripcion_servicios.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Botones -->
+                    <div class="form-group text-center">
+                        <button type="submit" class="btn btn-primary me-3">
+                            <i class="fas fa-save"></i>
+                            Crear Factura
+                        </button>
+                        <a href="{% url 'return_to_dashboard' %}" class="btn btn-secondary">
+                            <i class="fas fa-times"></i>
+                            Cancelar
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Sidebar de Información -->
+        <div class="col-lg-4">
+            <div class="info-sidebar">
+                <div class="info-header">
+                    <div class="info-icon">
+                        <i class="fas fa-info-circle"></i>
+                    </div>
+                    <h4 class="info-header-title">Información Útil</h4>
+                </div>
+                
+                <div class="info-item">
+                    <span class="info-label">Total Clientes:</span>
+                    <span class="info-value">{{ clientes.count }}</span>
+                </div>
+                
+                <div class="info-item">
+                    <span class="info-label">Total Proyectos:</span>
+                    <span class="info-value">{{ proyectos.count }}</span>
+                </div>
+                
+                <div class="info-item">
+                    <span class="info-label">Facturas del Mes:</span>
+                    <span class="info-value">{{ facturas_mes|default:"0" }}</span>
+                </div>
+                
+                <div class="info-item">
+                    <span class="info-label">Total Facturado:</span>
+                    <span class="info-value">${{ total_facturado|default:"0.00" }}</span>
+                </div>
+                
+                <div class="info-alert">
+                    <i class="fas fa-lightbulb"></i>
+                    <h6>Consejos</h6>
+                    <p>• El ITBMS se calcula automáticamente según el porcentaje seleccionado</p>
+                    <p>• El total se actualiza automáticamente al ingresar el subtotal</p>
+                    <p>• Asegúrate de seleccionar el cliente y proyecto correctos</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Página de crear factura cargada');
+    
+    // Definir variables globales
+    const montoSubtotalInput = document.getElementById('id_monto_subtotal');
+    const porcentajeItbmsSelect = document.getElementById('id_porcentaje_itbms');
+    const montoIvaInput = document.getElementById('id_monto_iva');
+    const montoTotalInput = document.getElementById('id_monto_total');
+    
+    console.log('🔍 Elementos encontrados:');
+    console.log('  - Subtotal:', montoSubtotalInput ? '✅' : '❌');
+    console.log('  - Porcentaje ITBMS:', porcentajeItbmsSelect ? '✅' : '❌');
+    console.log('  - Monto IVA:', montoIvaInput ? '✅' : '❌');
+    console.log('  - Monto Total:', montoTotalInput ? '✅' : '❌');
+    
+    // Función de cálculo
+    function calcularFactura() {
+        console.log('🔄 Función calcularFactura ejecutada');
+        
+        if (!montoSubtotalInput || !porcentajeItbmsSelect || !montoIvaInput || !montoTotalInput) {
+            console.log('❌ No se encontraron todos los campos necesarios');
+            return;
+        }
+        
+        const subtotal = parseFloat(montoSubtotalInput.value) || 0;
+        const porcentajeItbms = parseFloat(porcentajeItbmsSelect.value) || 0;
+        
+        console.log('💰 Subtotal:', subtotal);
+        console.log('📊 Porcentaje ITBMS:', porcentajeItbms + '%');
+        
+        if (subtotal > 0) {
+            // Calcular ITBMS según el porcentaje seleccionado
+            const itbms = subtotal * (porcentajeItbms / 100);
+            const total = subtotal + itbms;
+            
+            console.log('🧾 ITBMS calculado:', itbms);
+            console.log('💵 Total calculado:', total);
+            
+            // Actualizar campos
+            montoIvaInput.value = itbms.toFixed(2);
+            montoTotalInput.value = total.toFixed(2);
+            
+            console.log('✅ Campos actualizados');
+        } else {
+            // Limpiar campos si no hay subtotal
+            montoIvaInput.value = '0.00';
+            montoTotalInput.value = '0.00';
+            console.log('🧹 Campos limpiados');
+        }
+    }
+    
+    // Agregar event listeners
+    if (montoSubtotalInput) {
+        montoSubtotalInput.addEventListener('input', calcularFactura);
+        montoSubtotalInput.addEventListener('change', calcularFactura);
+        montoSubtotalInput.addEventListener('keyup', calcularFactura);
+        console.log('✅ Event listeners agregados al campo subtotal');
+    }
+    
+    if (porcentajeItbmsSelect) {
+        porcentajeItbmsSelect.addEventListener('change', calcularFactura);
+        console.log('✅ Event listeners agregados al campo porcentaje ITBMS');
+    }
+    
+    // Establecer fecha de emisión por defecto
+    const fechaEmisionInput = document.getElementById('id_fecha_emision');
+    if (fechaEmisionInput) {
+        const today = new Date().toISOString().split('T')[0];
+        fechaEmisionInput.value = today;
+    }
+    
+    // Establecer fecha de vencimiento por defecto (30 días después)
+    const fechaVencimientoInput = document.getElementById('id_fecha_vencimiento');
+    if (fechaVencimientoInput) {
+        const today = new Date();
+        const futureDate = new Date(today.getTime() + (30 * 24 * 60 * 60 * 1000)); // 30 días después
+        fechaVencimientoInput.value = futureDate.toISOString().split('T')[0];
+    }
+    
+    console.log('✅ Factura form inicializado correctamente');
+});
+</script>
+{% endblock %}

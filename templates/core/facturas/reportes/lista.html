@@ -342,19 +342,19 @@
             <!-- Estadísticas -->
             <div class="reportes-stats">
                 <div class="reportes-stat">
-                    <span class="reportes-stat-number">{{ facturas.count }}</span>
+                    <span class="reportes-stat-number">${{ facturas.count }}</span>
                     <span class="reportes-stat-label">Facturas</span>
                 </div>
                 <div class="reportes-stat">
-                    <span class="reportes-stat-number">{{total_facturado|currency_gtq}}</span>
+                    <span class="reportes-stat-number">${{total_facturado|floatformat:2}}</span>
                     <span class="reportes-stat-label">Total Facturado</span>
                 </div>
                 <div class="reportes-stat">
-                    <span class="reportes-stat-number">{{total_cobrado|currency_gtq}}</span>
+                    <span class="reportes-stat-number">${{total_cobrado|floatformat:2}}</span>
                     <span class="reportes-stat-label">Total Cobrado</span>
                 </div>
                 <div class="reportes-stat">
-                    <span class="reportes-stat-number">{{total_pendiente|currency_gtq}}</span>
+                    <span class="reportes-stat-number">${{total_pendiente|floatformat:2}}</span>
                     <span class="reportes-stat-label">Total Pendiente</span>
                 </div>
             </div>
@@ -386,8 +386,8 @@
                 <select name="cliente" class="form-select">
                     <option value="">Todos los Clientes</option>
                     {% for cliente in clientes %}
-                        <option value="{{ cliente.id }}" {% if filtros.cliente_id == cliente.id|stringformat:"s" %}selected{% endif %}>
-                            {{ cliente.razon_social }}
+                        <option value="${{ cliente.id }}" {% if filtros.cliente_id == cliente.id|stringformat:"s" %}selected{% endif %}>
+                            ${{ cliente.razon_social }}
                         </option>
                     {% endfor %}
                 </select>
@@ -395,12 +395,12 @@
             
             <div class="form-group">
                 <label class="form-label">Fecha Inicio</label>
-                <input type="date" name="fecha_inicio" class="form-control" value="{{ filtros.fecha_inicio }}">
+                <input type="date" name="fecha_inicio" class="form-control" value="${{ filtros.fecha_inicio }}">
             </div>
             
             <div class="form-group">
                 <label class="form-label">Fecha Fin</label>
-                <input type="date" name="fecha_fin" class="form-control" value="{{ filtros.fecha_fin }}">
+                <input type="date" name="fecha_fin" class="form-control" value="${{ filtros.fecha_fin }}">
             </div>
             
             <div class="form-group">
@@ -415,9 +415,9 @@
     <div class="stats-grid">
         {% for stat in stats_por_estado %}
         <div class="stat-card">
-            <div class="stat-card-title">{{ stat.estado|title }}</div>
-            <div class="stat-card-value">{{ stat.cantidad }}</div>
-            <div class="stat-card-subtitle">{{stat.monto_total|currency_gtq}}</div>
+            <div class="stat-card-title">${{ stat.estado|title }}</div>
+            <div class="stat-card-value">${{ stat.cantidad }}</div>
+            <div class="stat-card-subtitle">${{stat.monto_total|floatformat:2}}</div>
         </div>
         {% endfor %}
     </div>
@@ -429,13 +429,13 @@
                 <i class="fas fa-list"></i>Resultados del Reporte
             </h3>
             <div class="resultados-actions">
-                <a href="{% url 'facturas_reporte_pdf' %}?{{ request.GET.urlencode }}" class="btn-reporte btn-pdf">
+                <a href="{% url 'facturas_reporte_pdf' %}?${{ request.GET.urlencode }}" class="btn-reporte btn-pdf">
                     <i class="fas fa-file-pdf"></i>Exportar PDF
                 </a>
-                <a href="{% url 'facturas_reporte_excel' %}?{{ request.GET.urlencode }}" class="btn-reporte btn-excel">
+                <a href="{% url 'facturas_reporte_excel' %}?${{ request.GET.urlencode }}" class="btn-reporte btn-excel">
                     <i class="fas fa-file-excel"></i>Exportar Excel
                 </a>
-                <a href="{% url 'facturas_reporte_detallado' %}?{{ request.GET.urlencode }}" class="btn-reporte btn-detallado">
+                <a href="{% url 'facturas_reporte_detallado' %}?${{ request.GET.urlencode }}" class="btn-reporte btn-detallado">
                     <i class="fas fa-chart-line"></i>Reporte Detallado
                 </a>
             </div>
@@ -459,16 +459,16 @@
                     {% for factura in facturas %}
                     <tr>
                         <td>
-                            <strong>{{ factura.numero_factura }}</strong>
+                            <strong>${{ factura.numero_factura }}</strong>
                         </td>
                         <td>
-                            <div class="fw-bold text-primary">{{ factura.cliente.razon_social|default:"N/A" }}</div>
+                            <div class="fw-bold text-primary">${{ factura.cliente.razon_social|default:"N/A" }}</div>
                         </td>
                         <td>
-                            <div class="fw-bold text-info">{{ factura.proyecto.nombre|default:"N/A" }}</div>
+                            <div class="fw-bold text-info">${{ factura.proyecto.nombre|default:"N/A" }}</div>
                         </td>
                         <td>
-                            <strong>{{factura.monto_total|currency_gtq}}</strong>
+                            <strong>${{factura.monto_total|floatformat:2}}</strong>
                         </td>
                         <td>
                             <div class="text-center">
@@ -497,15 +497,15 @@
                                         <i class="fas fa-ban me-1"></i>Cancelada
                                     </span>
                                 {% else %}
-                                    <span class="badge-modern secondary">{{ factura.estado|title }}</span>
+                                    <span class="badge-modern secondary">${{ factura.estado|title }}</span>
                                 {% endif %}
                             </div>
                         </td>
                         <td>
-                            {{ factura.fecha_emision|date:"d/m/Y"|default:"N/A" }}
+                            ${{ factura.fecha_emision|date:"d/m/Y"|default:"N/A" }}
                         </td>
                         <td>
-                            {{ factura.fecha_vencimiento|date:"d/m/Y"|default:"N/A" }}
+                            ${{ factura.fecha_vencimiento|date:"d/m/Y"|default:"N/A" }}
                         </td>
                     </tr>
                     {% endfor %}

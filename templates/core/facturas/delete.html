@@ -45,7 +45,7 @@ function mostrarAyudaFacturas() {
                         <i class="fas fa-exclamation-triangle me-2"></i>¡Atención!
                     </h6>
                     <p class="mb-0">
-                        Está a punto de eliminar la factura <strong>"{{ factura.numero_factura }}"</strong>. 
+                        Está a punto de eliminar la factura <strong>"${{ factura.numero_factura }}"</strong>. 
                         Esta acción desactivará la factura y no podrá ser utilizada en nuevas operaciones.
                     </p>
                 </div>
@@ -57,33 +57,33 @@ function mostrarAyudaFacturas() {
                     <div class="card-body">
                         <div class="row">
                             <div class="col-md-6">
-                                <p><strong>Número:</strong> {{ factura.numero_factura }}</p>
-                                <p><strong>Proyecto:</strong> {{ factura.proyecto.nombre }}</p>
-                                <p><strong>Cliente:</strong> {{ factura.cliente.razon_social }}</p>
+                                <p><strong>Número:</strong> ${{ factura.numero_factura }}</p>
+                                <p><strong>Proyecto:</strong> ${{ factura.proyecto.nombre }}</p>
+                                <p><strong>Cliente:</strong> ${{ factura.cliente.razon_social }}</p>
                             </div>
                             <div class="col-md-6">
                                 <p><strong>Estado:</strong> 
                                     <span class="badge bg-{% if factura.estado == 'pagada' %}success{% elif factura.estado == 'pendiente' %}warning{% elif factura.estado == 'vencida' %}danger{% else %}secondary{% endif %}">
-                                        {{ factura.get_estado_display }}
+                                        ${{ factura.get_estado_display }}
                                     </span>
                                 </p>
                                 {% if factura.monto_total %}
-                                    <p><strong>Monto Total:</strong> {{factura.monto_total|currency_gtq}}</p>
+                                    <p><strong>Monto Total:</strong> ${{factura.monto_total|floatformat:2}}</p>
                                 {% endif %}
-                                <p><strong>Creado:</strong> {{ factura.fecha_creacion|date:"d/m/Y H:i" }}</p>
+                                <p><strong>Creado:</strong> ${{ factura.fecha_creacion|date:"d/m/Y H:i" }}</p>
                             </div>
                         </div>
                         
                         {% if factura.descripcion_servicios %}
-                            <p><strong>Descripción:</strong> {{ factura.descripcion_servicios }}</p>
+                            <p><strong>Descripción:</strong> ${{ factura.descripcion_servicios }}</p>
                         {% endif %}
                         
                         {% if factura.fecha_emision %}
-                            <p><strong>Fecha de Emisión:</strong> {{ factura.fecha_emision|date:"d/m/Y" }}</p>
+                            <p><strong>Fecha de Emisión:</strong> ${{ factura.fecha_emision|date:"d/m/Y" }}</p>
                         {% endif %}
                         
                         {% if factura.fecha_vencimiento %}
-                            <p><strong>Fecha de Vencimiento:</strong> {{ factura.fecha_vencimiento|date:"d/m/Y" }}</p>
+                            <p><strong>Fecha de Vencimiento:</strong> ${{ factura.fecha_vencimiento|date:"d/m/Y" }}</p>
                         {% endif %}
                     </div>
                 </div>
@@ -126,12 +126,12 @@ function mostrarAyudaFacturas() {
                                 <div class="d-flex align-items-center">
                                     <i class="fas fa-money-bill me-2 text-success"></i>
                                     <div>
-                                        <strong>{{pago.monto|currency_gtq}}</strong>
+                                        <strong>${{pago.monto|floatformat:2}}</strong>
                                         <br>
                                         <small class="text-muted">
-                                            {{ pago.fecha_pago|date:"d/m/Y" }} - 
+                                            ${{ pago.fecha_pago|date:"d/m/Y" }} - 
                                             <span class="badge bg-{% if pago.estado == 'confirmado' %}success{% elif pago.estado == 'pendiente' %}warning{% else %}danger{% endif %}">
-                                                {{ pago.get_estado_display }}
+                                                ${{ pago.get_estado_display }}
                                             </span>
                                         </small>
                                     </div>
@@ -140,7 +140,7 @@ function mostrarAyudaFacturas() {
                         {% endfor %}
                         {% if factura.pagos.count > 5 %}
                             <li class="text-muted">
-                                <small>... y {{ factura.pagos.count|add:"-5" }} más</small>
+                                <small>... y ${{ factura.pagos.count|add:"-5" }} más</small>
                             </li>
                         {% endif %}
                     </ul>
@@ -165,10 +165,10 @@ function mostrarAyudaFacturas() {
                                 <div class="d-flex align-items-center">
                                     <i class="fas fa-hand-holding-usd me-2 text-info"></i>
                                     <div>
-                                        <strong>{{aplicacion.monto_aplicado|currency_gtq}}</strong>
+                                        <strong>${{aplicacion.monto_aplicado|floatformat:2}}</strong>
                                         <br>
                                         <small class="text-muted">
-                                            {{ aplicacion.fecha_aplicacion|date:"d/m/Y" }}
+                                            ${{ aplicacion.fecha_aplicacion|date:"d/m/Y" }}
                                         </small>
                                     </div>
                                 </div>
@@ -176,7 +176,7 @@ function mostrarAyudaFacturas() {
                         {% endfor %}
                         {% if factura.aplicaciones_anticipo.count > 5 %}
                             <li class="text-muted">
-                                <small>... y {{ factura.aplicaciones_anticipo.count|add:"-5" }} más</small>
+                                <small>... y ${{ factura.aplicaciones_anticipo.count|add:"-5" }} más</small>
                             </li>
                         {% endif %}
                     </ul>

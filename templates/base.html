@@ -99,10 +99,25 @@
                     </a>
                 </li>
                 
+                <!-- Updated: Gastos -> Egresos -->
                 <li class="nav-item">
-                    <a class="nav-link {% if 'gastos' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'gastos_dashboard' %}">
+                    <a class="nav-link {% if 'egresos' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'egresos_dashboard' %}">
                         <i class="fas fa-file-invoice"></i>
-                        <span>Gastos</span>
+                        <span>Egresos</span>
+                    </a>
+                </li>
+                
+                <li class="nav-item">
+                    <a class="nav-link {% if 'ingresos' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'ingresos_list' %}">
+                        <i class="fas fa-money-bill-wave"></i>
+                        <span>Ingresos</span>
+                    </a>
+                </li>
+                
+                <li class="nav-item">
+                    <a class="nav-link {% if 'cotizaciones' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'cotizaciones_dashboard' %}">
+                        <i class="fas fa-file-invoice-dollar"></i>
+                        <span>Cotizaciones</span>
                     </a>
                 </li>
                 
@@ -113,12 +128,7 @@
                     </a>
                 </li>
                 
-                <li class="nav-item">
-                    <a class="nav-link {% if 'presupuestos' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'presupuestos_list' %}">
-                        <i class="fas fa-calculator"></i>
-                        <span>Presupuestos</span>
-                    </a>
-                </li>
+                <!-- MENÚ DE PRESUPUESTOS ELIMINADO - YA NO SE USA -->
                 
                 <li class="nav-item">
                     <a class="nav-link {% if 'usuarios' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'usuarios_dashboard' %}">

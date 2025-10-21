@@ -1,12 +1,12 @@
 {% extends "base.html" %}
 {% load custom_filters %}
 
-{% block title %}Dashboard de Gastos - Sistema de Construcción{% endblock %}
+{% block title %}Dashboard de Egresos - Sistema de Construcción{% endblock %}
 
 {% block extra_css %}
 <style>
     /* Hero Section con gradiente */
-    .gastos-hero {
+    .egresos-hero {
         background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
         color: white;
         padding: 60px 0;
@@ -16,7 +16,7 @@
         overflow: hidden;
     }
     
-    .gastos-hero::before {
+    .egresos-hero::before {
         content: '';
         position: absolute;
         top: 0;
@@ -27,7 +27,7 @@
         opacity: 0.3;
     }
     
-    .gastos-hero-content {
+    .egresos-hero-content {
         position: relative;
         z-index: 1;
         text-align: center;
@@ -39,27 +39,27 @@
         opacity: 0.9;
     }
     
-    .gastos-hero-title {
+    .egresos-hero-title {
         font-size: 3rem;
         font-weight: 900;
         margin-bottom: 20px;
         text-shadow: 0 4px 8px rgba(0,0,0,0.3);
     }
     
-    .gastos-hero-subtitle {
+    .egresos-hero-subtitle {
         font-size: 1.2rem;
         opacity: 0.9;
         margin-bottom: 40px;
     }
     
-    .gastos-actions {
+    .egresos-actions {
         display: flex;
         gap: 15px;
         justify-content: center;
         flex-wrap: wrap;
     }
     
-    .gastos-action-btn {
+    .egresos-action-btn {
         background: rgba(255,255,255,0.2);
         border: 2px solid rgba(255,255,255,0.3);
         color: white;
@@ -73,7 +73,7 @@
         gap: 8px;
     }
     
-    .gastos-action-btn:hover {
+    .egresos-action-btn:hover {
         background: rgba(255,255,255,0.3);
         border-color: rgba(255,255,255,0.5);
         transform: translateY(-3px);
@@ -251,8 +251,8 @@
         color: #2c3e50;
     }
     
-    /* Gastos Recientes */
-    .gastos-recientes-section {
+    /* Egresos Recientes */
+    .egresos-recientes-section {
         background: rgba(255, 255, 255, 0.95);
         backdrop-filter: blur(20px);
         border-radius: 24px;
@@ -262,14 +262,14 @@
         border: 1px solid rgba(255, 255, 255, 0.2);
     }
     
-    .gastos-recientes-grid {
+    .egresos-recientes-grid {
         display: grid;
         grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
         gap: 1.5rem;
         margin-bottom: 2rem;
     }
     
-    .gasto-item {
+    .egreso-item {
         background: white;
         border-radius: 16px;
         padding: 1.5rem;
@@ -280,7 +280,7 @@
         overflow: hidden;
     }
     
-    .gasto-item::before {
+    .egreso-item::before {
         content: '';
         position: absolute;
         top: 0;
@@ -290,19 +290,19 @@
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     }
     
-    .gasto-item:hover {
+    .egreso-item:hover {
         transform: translateY(-5px);
         box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
     }
     
-    .gasto-header {
+    .egreso-header {
         display: flex;
         align-items: center;
         gap: 1rem;
         margin-bottom: 1rem;
     }
     
-    .gasto-categoria {
+    .egreso-categoria {
         width: 50px;
         height: 50px;
         border-radius: 12px;
@@ -314,32 +314,32 @@
         flex-shrink: 0;
     }
     
-    .gasto-info {
+    .egreso-info {
         flex: 1;
         min-width: 0;
     }
     
-    .gasto-descripcion {
+    .egreso-descripcion {
         font-weight: 600;
         color: #2c3e50;
         margin-bottom: 0.25rem;
         font-size: 1rem;
     }
     
-    .gasto-proyecto {
+    .egreso-proyecto {
         color: #6c757d;
         font-size: 0.9rem;
         font-weight: 500;
     }
     
-    .gasto-monto {
+    .egreso-monto {
         font-size: 1.3rem;
         font-weight: 700;
         color: #e74c3c;
         text-align: right;
     }
     
-    .gasto-footer {
+    .egreso-footer {
         display: flex;
         justify-content: space-between;
         align-items: center;
@@ -347,7 +347,7 @@
         border-top: 1px solid #e9ecef;
     }
     
-    .gasto-fecha {
+    .egreso-fecha {
         display: flex;
         align-items: center;
         gap: 0.5rem;
@@ -356,11 +356,11 @@
         font-weight: 500;
     }
     
-    .gasto-fecha i {
+    .egreso-fecha i {
         color: #667eea;
     }
     
-    .gasto-estado {
+    .egreso-estado {
         display: flex;
         align-items: center;
     }
@@ -387,7 +387,7 @@
         border: 1px solid rgba(255, 193, 7, 0.2);
     }
     
-    .gastos-recientes-footer {
+    .egresos-recientes-footer {
         text-align: center;
         padding-top: 1rem;
         border-top: 1px solid #e9ecef;
@@ -413,8 +413,8 @@
         color: white;
     }
     
-    /* Sección de gastos recientes */
-    .gastos-recientes-section {
+    /* Sección de egresos recientes */
+    .egresos-recientes-section {
         background: white;
         border-radius: 20px;
         padding: 30px;
@@ -422,7 +422,7 @@
         border: 1px solid rgba(255, 255, 255, 0.2);
     }
     
-    .gasto-item {
+    .egreso-item {
         display: flex;
         justify-content: space-between;
         align-items: center;
@@ -430,55 +430,55 @@
         border-bottom: 1px solid #f1f3f4;
     }
     
-    .gasto-item:last-child {
+    .egreso-item:last-child {
         border-bottom: none;
     }
     
-    .gasto-info {
+    .egreso-info {
         flex: 1;
     }
     
-    .gasto-titulo {
+    .egreso-titulo {
         font-size: 1.1rem;
         font-weight: 600;
         color: #2c3e50;
         margin-bottom: 8px;
     }
     
-    .gasto-details {
+    .egreso-details {
         display: flex;
         gap: 20px;
         font-size: 0.9rem;
         color: #6c757d;
     }
     
-    .gasto-detail {
+    .egreso-detail {
         display: flex;
         align-items: center;
         gap: 5px;
     }
     
-    .gasto-detail-label {
+    .egreso-detail-label {
         font-weight: 500;
     }
     
-    .gasto-detail-value {
+    .egreso-detail-value {
         color: #2c3e50;
     }
     
-    .gasto-right {
+    .egreso-right {
         display: flex;
         align-items: center;
         gap: 20px;
     }
     
-    .gasto-fecha {
+    .egreso-fecha {
         font-size: 0.9rem;
         color: #6c757d;
         text-align: right;
     }
     
-    .gasto-estado {
+    .egreso-estado {
         padding: 4px 12px;
         border-radius: 20px;
         font-size: 0.8rem;
@@ -496,7 +496,7 @@
         color: #856404;
     }
     
-    .gasto-monto {
+    .egreso-monto {
         font-size: 1.2rem;
         font-weight: 700;
         color: #e74c3c;
@@ -527,7 +527,7 @@
     
     /* Responsive */
     @media (max-width: 768px) {
-        .gastos-header h1 {
+        .egresos-header h1 {
             font-size: 2rem;
         }
         
@@ -539,18 +539,18 @@
             grid-template-columns: 1fr;
         }
         
-        .gasto-item {
+        .egreso-item {
             flex-direction: column;
             align-items: flex-start;
             gap: 15px;
         }
         
-        .gasto-right {
+        .egreso-right {
             width: 100%;
             justify-content: space-between;
         }
         
-        .gasto-details {
+        .egreso-details {
             flex-direction: column;
             gap: 10px;
         }
@@ -560,22 +560,22 @@
 
 {% block content %}
 <!-- Hero Section con gradiente -->
-<div class="gastos-hero">
-    <div class="gastos-hero-content">
+<div class="egresos-hero">
+    <div class="egresos-hero-content">
         <div class="hero-icon">
             <i class="fas fa-receipt"></i>
         </div>
-        <h1 class="gastos-hero-title">Gestión de Gastos</h1>
-        <p class="gastos-hero-subtitle">Control y seguimiento de todos los gastos del sistema de construcción</p>
+        <h1 class="egresos-hero-title">Gestión de Egresos</h1>
+        <p class="egresos-hero-subtitle">Control y seguimiento de todos los egresos del sistema de construcción</p>
         
-        <div class="gastos-actions">
-            <a href="{% url 'gasto_create' %}" class="gastos-action-btn">
-                <i class="fas fa-plus"></i>Nuevo Gasto
+        <div class="egresos-actions">
+            <a href="{% url 'egreso_create' %}" class="egresos-action-btn">
+                <i class="fas fa-plus"></i>Nuevo Egreso
             </a>
-            <a href="{% url 'categorias_gasto_list' %}" class="gastos-action-btn">
+            <a href="{% url 'categoria_egreso_list' %}" class="egresos-action-btn">
                 <i class="fas fa-tags"></i>Categorías
             </a>
-            <a href="{% url 'gastos_list' %}" class="gastos-action-btn">
+            <a href="{% url 'egresos_list' %}" class="egresos-action-btn">
                 <i class="fas fa-list"></i>Ver Todo
             </a>
         </div>
@@ -586,36 +586,36 @@
     <!-- Estadísticas Principales -->
     <div class="stats-grid">
         <div class="stat-card">
-            <div class="stat-value">{{ total_gastos }}</div>
-            <div class="stat-label">Total Gastos</div>
+            <div class="stat-value">{{ total_egresos }}</div>
+            <div class="stat-label">Total Egresos</div>
         </div>
         
         <div class="stat-card">
-            <div class="stat-value">Q{{ total_monto|currency_format }}</div>
+            <div class="stat-value">${{ total_monto|currency_format }}</div>
             <div class="stat-label">Monto Total</div>
         </div>
         
         <div class="stat-card">
-            <div class="stat-value">{{ gastos_aprobados }}</div>
+            <div class="stat-value">{{ egresos_aprobados }}</div>
             <div class="stat-label">Aprobados</div>
         </div>
         
         <div class="stat-card">
-            <div class="stat-value">{{ gastos_pendientes }}</div>
+            <div class="stat-value">{{ egresos_pendientes }}</div>
             <div class="stat-label">Pendientes</div>
         </div>
     </div>
 
-    <!-- Gastos por Categoría -->
+    <!-- Egresos por Categoría -->
     <div class="categorias-section">
         <h2 class="section-title">
             <i class="fas fa-chart-pie icon"></i>
-            Gastos por Categoría
+            Egresos por Categoría
         </h2>
         
-        {% if gastos_por_categoria %}
+        {% if egresos_por_categoria %}
             <div class="categorias-grid">
-                {% for categoria in gastos_por_categoria %}
+                {% for categoria in egresos_por_categoria %}
                 <div class="categoria-card">
                     <div class="categoria-header">
                         <div class="categoria-icon" style="color: {{ categoria.categoria__color|default:'#007bff' }};">
@@ -623,14 +623,14 @@
                         </div>
                         <div class="categoria-info">
                             <div class="categoria-nombre" style="color: {{ categoria.categoria__color|default:'#007bff' }};">{{ categoria.categoria__nombre|default:"Sin categoría" }}</div>
-                            <div class="categoria-total">Q{{ categoria.total|currency_format }}</div>
+                            <div class="categoria-total">${{ categoria.total|currency_format }}</div>
                         </div>
                     </div>
                     
                     <div class="categoria-stats">
                         <div class="categoria-stat">
                             <div class="categoria-stat-label">Cantidad</div>
-                            <div class="categoria-stat-value">{{ categoria.cantidad }} gastos</div>
+                            <div class="categoria-stat-value">{{ categoria.cantidad }} egresos</div>
                         </div>
                         <div class="categoria-stat">
                             <div class="categoria-stat-label">Promedio</div>
@@ -643,24 +643,24 @@
         {% else %}
             <div class="empty-state">
                 <i class="fas fa-chart-pie"></i>
-                <h3>No hay gastos registrados</h3>
-                <p>Comienza registrando los gastos del sistema</p>
-                <a href="{% url 'gasto_create' %}" class="gastos-action-btn">
-                    <i class="fas fa-plus"></i>Registrar Primer Gasto
+                <h3>No hay egresos registrados</h3>
+                <p>Comienza registrando los egresos del sistema</p>
+                <a href="{% url 'egreso_create' %}" class="egresos-action-btn">
+                    <i class="fas fa-plus"></i>Registrar Primer Egreso
                 </a>
             </div>
         {% endif %}
     </div>
 
-    <!-- Gastos Recientes -->
-    <div class="gastos-recientes-section">
+    <!-- Egresos Recientes -->
+    <div class="egresos-recientes-section">
         <h2 class="section-title">
             <i class="fas fa-clock icon"></i>
-            Gastos Recientes
+            Egresos Recientes
         </h2>
         
-        {% if gastos_recientes %}
-            <div class="gastos-recientes-lista">
+        {% if egresos_recientes %}
+            <div class="egresos-recientes-lista">
                 <table class="table table-hover">
                     <thead>
                         <tr>
@@ -672,21 +672,21 @@
                         </tr>
                     </thead>
                     <tbody>
-                        {% for gasto in gastos_recientes %}
+                        {% for egreso in egresos_recientes %}
                         <tr>
                             <td>
                                 <div class="d-flex align-items-center">
-                                    <div class="categoria-mini" style="background-color: {{ gasto.categoria.color|default:'#667eea' }}; width: 20px; height: 20px; border-radius: 50%; margin-right: 10px; display: flex; align-items: center; justify-content: center;">
-                                        <i class="{{ gasto.categoria.icono|default:'fas fa-tag' }}" style="color: white; font-size: 10px;"></i>
+                                    <div class="categoria-mini" style="background-color: {{ egreso.categoria.color|default:'#667eea' }}; width: 20px; height: 20px; border-radius: 50%; margin-right: 10px; display: flex; align-items: center; justify-content: center;">
+                                        <i class="{{ egreso.categoria.icono|default:'fas fa-tag' }}" style="color: white; font-size: 10px;"></i>
                                     </div>
-                                    <span>{{ gasto.descripcion|truncatechars:30 }}</span>
+                                    <span>{{ egreso.descripcion|truncatechars:30 }}</span>
                                 </div>
                             </td>
-                            <td>{{ gasto.proyecto.nombre|truncatechars:20 }}</td>
-                            <td class="text-end fw-bold text-danger">Q{{ gasto.monto|floatformat:2 }}</td>
-                            <td>{{ gasto.fecha_gasto|date:"d/m/Y" }}</td>
+                            <td>{{ egreso.proyecto.nombre|truncatechars:20 }}</td>
+                            <td class="text-end fw-bold text-danger">${{ egreso.monto|floatformat:2 }}</td>
+                            <td>{{ egreso.fecha_egreso|date:"d/m/Y" }}</td>
                             <td>
-                                {% if gasto.aprobado %}
+                                {% if egreso.aprobado %}
                                     <span class="badge bg-success">
                                         <i class="fas fa-check"></i> Aprobado
                                     </span>
@@ -702,18 +702,18 @@
                 </table>
             </div>
             
-            <div class="gastos-recientes-footer">
-                <a href="{% url 'gastos_list' %}" class="ver-todos-btn">
-                    <i class="fas fa-list"></i>Ver Todos los Gastos
+            <div class="egresos-recientes-footer">
+                <a href="{% url 'egresos_list' %}" class="ver-todos-btn">
+                    <i class="fas fa-list"></i>Ver Todos los Egresos
                 </a>
             </div>
         {% else %}
             <div class="empty-state">
                 <i class="fas fa-receipt"></i>
-                <h3>No hay gastos recientes</h3>
-                <p>Los gastos recientes aparecerán aquí</p>
-                <a href="{% url 'gasto_create' %}" class="gastos-action-btn">
-                    <i class="fas fa-plus"></i>Registrar Primer Gasto
+                <h3>No hay egresos recientes</h3>
+                <p>Los egresos recientes aparecerán aquí</p>
+                <a href="{% url 'egreso_create' %}" class="egresos-action-btn">
+                    <i class="fas fa-plus"></i>Registrar Primer Egreso
                 </a>
             </div>
         {% endif %}

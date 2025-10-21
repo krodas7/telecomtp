@@ -16,8 +16,8 @@ import json
 import logging
 from .models import (
     Cliente, Proyecto, Colaborador, Factura, Pago, 
-    Gasto, CategoriaGasto, GastoFijoMensual, LogActividad, Anticipo, AplicacionAnticipo, ArchivoProyecto, Presupuesto, PartidaPresupuesto, VariacionPresupuesto,
-    NotificacionSistema, ConfiguracionNotificaciones, HistorialNotificaciones,
+    Gasto, CategoriaGasto, GastoFijoMensual, LogActividad, Anticipo, AplicacionAnticipo, ArchivoProyecto,
+    NotificacionSistema, ConfiguracionNotificaciones, HistorialNotificaciones, IngresoProyecto, Cotizacion,
     ItemInventario, CategoriaInventario, AsignacionInventario,
     Rol, PerfilUsuario, Modulo, Permiso, RolPermiso, AnticipoProyecto,
     CarpetaProyecto, ConfiguracionSistema, EventoCalendario,
@@ -27,10 +27,10 @@ from .forms_simple import (
     ClienteForm, ProyectoForm, ColaboradorForm, FacturaForm, 
     GastoForm, CategoriaGastoForm, UsuarioForm, RolForm, 
     PerfilUsuarioForm, ArchivoProyectoForm, CarpetaProyectoForm,
-    AnticipoForm, PagoForm, EventoCalendarioForm, PresupuestoForm,
-    PartidaPresupuestoForm, CategoriaInventarioForm, ItemInventarioForm,
+    AnticipoForm, PagoForm, EventoCalendarioForm,
+    CategoriaInventarioForm, ItemInventarioForm,
     AsignacionInventarioForm, TrabajadorDiarioForm, RegistroTrabajoForm,
-    AnticipoTrabajadorDiarioForm, PlanillaTrabajadoresDiariosForm
+    AnticipoTrabajadorDiarioForm, PlanillaTrabajadoresDiariosForm, IngresoProyectoForm, CotizacionForm
 )
 from django.contrib.auth.models import User
 from django.contrib.auth.forms import UserCreationForm, UserChangeForm
@@ -143,7 +143,7 @@ def dashboard(request):
         ).aggregate(total=Sum('monto_total'))['total'] or Decimal('0.00')
         
         # Log información del dashboard para debugging
-        logger.debug(f"Dashboard - Mes: {mes_actual}/{año_actual}, Facturado: Q{total_facturado_mes}, Cobrado: Q{ingresos_mes}")
+        logger.debug(f"Dashboard - Mes: {mes_actual}/{año_actual}, Facturado: ${total_facturado_mes}, Cobrado: ${ingresos_mes}")
         
         # Gastos del mes (gastos aprobados)
         gastos_mes_raw = Gasto.objects.filter(
@@ -720,15 +720,13 @@ def proyecto_create(request):
     
     # Obtener estadísticas para el sidebar
     proyectos_activos = Proyecto.objects.filter(activo=True).count()
-    presupuesto_promedio = Proyecto.objects.filter(activo=True).aggregate(
-        promedio=Avg('presupuesto')
-    )['promedio'] or 0.00
+    # CÁLCULO DE PRESUPUESTO PROMEDIO ELIMINADO - YA NO SE USA
     
     context = {
         'form': form,
         'clientes': clientes,
         'proyectos_activos': proyectos_activos,
-        'presupuesto_promedio': presupuesto_promedio
+        # 'presupuesto_promedio' ELIMINADO - YA NO SE USA
     }
     
     return render(request, 'core/proyectos/create.html', context)
@@ -763,16 +761,14 @@ def proyecto_edit(request, proyecto_id):
     
     # Obtener estadísticas para el sidebar
     proyectos_activos = Proyecto.objects.filter(activo=True).count()
-    presupuesto_promedio = Proyecto.objects.filter(activo=True).aggregate(
-        promedio=Avg('presupuesto')
-    )['promedio'] or 0.00
+    # CÁLCULO DE PRESUPUESTO PROMEDIO ELIMINADO - YA NO SE USA
     
     context = {
         'form': form,
         'proyecto': proyecto,
         'clientes': clientes,
         'proyectos_activos': proyectos_activos,
-        'presupuesto_promedio': presupuesto_promedio
+        # 'presupuesto_promedio' ELIMINADO - YA NO SE USA
     }
     
     return render(request, 'core/proyectos/edit.html', context)
@@ -1058,9 +1054,16 @@ def factura_detail(request, factura_id):
     # Obtener pagos relacionados
     pagos = Pago.objects.filter(factura=factura)
     
+    # Calcular balance del proyecto
+    proyecto = factura.proyecto
+    total_ingresos_proyecto = proyecto.ingresos.aggregate(total=Sum('monto_total'))['total'] or Decimal('0.00')
+    total_gastos_proyecto = proyecto.get_total_gastos_aprobados()
+    proyecto_balance = total_ingresos_proyecto - total_gastos_proyecto
+    
     context = {
         'factura': factura,
-        'pagos': pagos
+        'pagos': pagos,
+        'proyecto_balance': proyecto_balance
     }
     
     return render(request, 'core/facturas/detail.html', context)
@@ -1104,6 +1107,8 @@ def factura_create(request):
             return redirect('facturas_list')
         else:
             logger.warning(f"Formulario inválido: {form.errors}")
+            logger.warning(f"Datos del POST: {request.POST}")
+            messages.error(request, f'Error en el formulario: {form.errors}')
     
     # Obtener clientes y proyectos activos para los dropdowns
     clientes = Cliente.objects.filter(activo=True).order_by('razon_social')
@@ -1323,12 +1328,12 @@ def gastos_list(request):
             'gastos_pendientes': gastos_pendientes,
         }
         
-        return render(request, 'core/gastos/list_moderno.html', context)
+        return render(request, 'core/egresos/list_moderno.html', context)
         
     except Exception as e:
         logger.error(f'Error en gastos_list: {e}')
         messages.error(request, 'Error al cargar la lista de gastos')
-        return redirect('gastos_dashboard')
+        return redirect('egresos_dashboard')
 
 
 @login_required
@@ -1373,19 +1378,19 @@ def gastos_dashboard(request):
             'gastos_por_mes': gastos_por_mes,
         }
         
-        return render(request, 'core/gastos/dashboard.html', context)
+        return render(request, 'core/egresos/dashboard.html', context)
         
     except Exception as e:
         logger.error(f'Error en gastos_dashboard: {e}')
         messages.error(request, 'Error al cargar el dashboard de gastos')
-        return redirect('gastos_list')
+        return redirect('egresos_list')
 
 
 @login_required
 def gasto_create(request):
     """Crear gasto"""
     if request.method == 'POST':
-        form = GastoForm(request.POST)
+        form = GastoForm(request.POST, request.FILES)
         if form.is_valid():
             gasto = form.save()
             
@@ -1394,16 +1399,20 @@ def gasto_create(request):
                 usuario=request.user,
                 accion='Crear',
                 modulo='Gastos',
-                descripcion=f'Gasto creado: {gasto.descripcion} - Q{gasto.monto}',
+                descripcion=f'Gasto creado: {gasto.descripcion} - ${gasto.monto}',
                 ip_address=request.META.get('REMOTE_ADDR')
             )
             
             messages.success(request, 'Gasto creado exitosamente')
-            return redirect('gastos_list')
+            return redirect('egresos_list')
+        else:
+            # Log de errores para debugging
+            logger.error(f'Errores en formulario de gasto: {form.errors}')
+            messages.error(request, f'Error al crear el gasto. Por favor verifica los campos.')
     else:
         form = GastoForm()
     
-    return render(request, 'core/gastos/create_moderno.html', {'form': form})
+    return render(request, 'core/egresos/create_moderno.html', {'form': form})
 
 
 @login_required
@@ -1427,28 +1436,28 @@ def gasto_aprobar(request, gasto_id):
                     usuario=request.user,
                     accion='Aprobar',
                     modulo='Gastos',
-                    descripcion=f'Gasto aprobado para el proyecto {proyecto.nombre}: {gasto.descripcion} - Q{gasto.monto}',
+                    descripcion=f'Gasto aprobado para el proyecto {proyecto.nombre}: {gasto.descripcion} - ${gasto.monto}',
                     ip_address=request.META.get('REMOTE_ADDR')
                 )
                 
                 # Mostrar información del impacto en el proyecto (sin modificar presupuesto)
-                presupuesto_disponible = proyecto.get_presupuesto_disponible()
+                # presupuesto_disponible ELIMINADO - YA NO SE USA
                 total_gastos = proyecto.get_total_gastos_aprobados()
-                print(f"✅ Total gastos aprobados del proyecto: Q{total_gastos}")
-                print(f"✅ Presupuesto disponible: Q{presupuesto_disponible}")
-                print(f"✅ Presupuesto del proyecto (sin cambios): Q{proyecto.presupuesto}")
+                print(f"✅ Total gastos aprobados del proyecto: ${total_gastos}")
+                print(f"✅ Presupuesto eliminado del sistema - ya no se usa")
+                print(f"✅ Presupuesto eliminado del sistema - ya no se usa")
             
             messages.success(request, f'Gasto "{gasto.descripcion}" aprobado y aplicado al proyecto exitosamente')
         
-        return redirect('gastos_list')
+        return redirect('egresos_list')
         
     except Gasto.DoesNotExist:
         messages.error(request, 'Gasto no encontrado')
-        return redirect('gastos_list')
+        return redirect('egresos_list')
     except Exception as e:
         logger.error(f'Error aprobando gasto {gasto_id}: {e}')
         messages.error(request, 'Error al aprobar el gasto')
-        return redirect('gastos_list')
+        return redirect('egresos_list')
 
 
 @login_required
@@ -1468,31 +1477,31 @@ def gasto_desaprobar(request, gasto_id):
                     usuario=request.user,
                     accion='Desaprobar',
                     modulo='Gastos',
-                    descripcion=f'Gasto desaprobado para el proyecto {proyecto.nombre}: {gasto.descripcion} - Q{gasto.monto}',
+                    descripcion=f'Gasto desaprobado para el proyecto {proyecto.nombre}: {gasto.descripcion} - ${gasto.monto}',
                     ip_address=request.META.get('REMOTE_ADDR')
                 )
                 
                 # Mostrar información del impacto en el proyecto (sin modificar presupuesto)
-                presupuesto_disponible = proyecto.get_presupuesto_disponible()
+                # presupuesto_disponible ELIMINADO - YA NO SE USA
                 total_gastos = proyecto.get_total_gastos_aprobados()
-                print(f"✅ Total gastos aprobados del proyecto: Q{total_gastos}")
-                print(f"✅ Presupuesto disponible: Q{presupuesto_disponible}")
-                print(f"✅ Presupuesto del proyecto (sin cambios): Q{proyecto.presupuesto}")
+                print(f"✅ Total gastos aprobados del proyecto: ${total_gastos}")
+                print(f"✅ Presupuesto eliminado del sistema - ya no se usa")
+                print(f"✅ Presupuesto eliminado del sistema - ya no se usa")
             
             gasto.aprobado = False
             gasto.aprobado_por = None
             gasto.save()
             messages.success(request, f'Gasto "{gasto.descripcion}" desaprobado y revertido del proyecto exitosamente')
         
-        return redirect('gastos_list')
+        return redirect('egresos_list')
         
     except Gasto.DoesNotExist:
         messages.error(request, 'Gasto no encontrado')
-        return redirect('gastos_list')
+        return redirect('egresos_list')
     except Exception as e:
         logger.error(f'Error desaprobando gasto {gasto_id}: {e}')
         messages.error(request, 'Error al desaprobar el gasto')
-        return redirect('gastos_list')
+        return redirect('egresos_list')
 
 
 @login_required
@@ -1504,7 +1513,7 @@ def gasto_detail(request, gasto_id):
         'gasto': gasto,
     }
     
-    return render(request, 'core/gastos/detail.html', context)
+    return render(request, 'core/egresos/detail.html', context)
 
 
 @login_required
@@ -1522,16 +1531,16 @@ def gasto_edit(request, gasto_id):
                 usuario=request.user,
                 accion='Editar',
                 modulo='Gastos',
-                descripcion=f'Gasto editado: {gasto.descripcion} - Q{gasto.monto}',
+                descripcion=f'Gasto editado: {gasto.descripcion} - ${gasto.monto}',
                 ip_address=request.META.get('REMOTE_ADDR')
             )
             
             messages.success(request, 'Gasto actualizado exitosamente')
-            return redirect('gastos_list')
+            return redirect('egresos_list')
     else:
         form = GastoForm(instance=gasto)
     
-    return render(request, 'core/gastos/edit.html', {'form': form, 'gasto': gasto})
+    return render(request, 'core/egresos/edit.html', {'form': form, 'gasto': gasto})
 
 
 @login_required
@@ -1545,15 +1554,15 @@ def gasto_delete(request, gasto_id):
             usuario=request.user,
             accion='Eliminar',
             modulo='Gastos',
-            descripcion=f'Gasto eliminado: {gasto.descripcion} - Q{gasto.monto}',
+            descripcion=f'Gasto eliminado: {gasto.descripcion} - ${gasto.monto}',
             ip_address=request.META.get('REMOTE_ADDR')
         )
         
         gasto.delete()
         messages.success(request, 'Gasto eliminado exitosamente')
-        return redirect('gastos_list')
+        return redirect('egresos_list')
     
-    return render(request, 'core/gastos/delete.html', {'gasto': gasto})
+    return render(request, 'core/egresos/delete.html', {'gasto': gasto})
 
 
 @login_required
@@ -1583,7 +1592,7 @@ def pago_create(request):
                 usuario=request.user,
                 accion='Crear',
                 modulo='Pagos',
-                descripcion=f'Pago registrado: Q{pago.monto} para factura {pago.factura.numero_factura}',
+                descripcion=f'Pago registrado: ${pago.monto} para factura {pago.factura.numero_factura}',
                 ip_address=request.META.get('REMOTE_ADDR')
             )
             
@@ -1610,7 +1619,7 @@ def pago_edit(request, pago_id):
                 usuario=request.user,
                 accion='Editar',
                 modulo='Pagos',
-                descripcion=f'Pago editado: Q{pago.monto} para factura {pago.factura.numero_factura}',
+                descripcion=f'Pago editado: ${pago.monto} para factura {pago.factura.numero_factura}',
                 ip_address=request.META.get('REMOTE_ADDR')
             )
             
@@ -1633,7 +1642,7 @@ def pago_delete(request, pago_id):
             usuario=request.user,
             accion='Eliminar',
             modulo='Pagos',
-            descripcion=f'Pago eliminado: Q{pago.monto} para factura {pago.factura.numero_factura}',
+            descripcion=f'Pago eliminado: ${pago.monto} para factura {pago.factura.numero_factura}',
             ip_address=request.META.get('REMOTE_ADDR')
         )
         
@@ -1658,7 +1667,7 @@ def categorias_gasto_list(request):
         'categorias_activas': categorias_activas,
     }
     
-    return render(request, 'core/categorias_gasto/list.html', context)
+    return render(request, 'core/categorias-egreso/list.html', context)
 
 
 
@@ -1679,11 +1688,11 @@ def categoria_gasto_create(request):
             )
             
             messages.success(request, 'Categoría creada exitosamente')
-            return redirect('categorias_gasto_list')
+            return redirect('categoria_egreso_list')
     else:
         form = CategoriaGastoForm()
     
-    return render(request, 'core/categorias_gasto/create.html', {'form': form})
+    return render(request, 'core/categorias-egreso/create.html', {'form': form})
 
 
 @login_required
@@ -1706,11 +1715,11 @@ def categoria_gasto_edit(request, categoria_id):
             )
             
             messages.success(request, 'Categoría actualizada exitosamente')
-            return redirect('categorias_gasto_list')
+            return redirect('categoria_egreso_list')
     else:
         form = CategoriaGastoForm(instance=categoria)
     
-    return render(request, 'core/categorias_gasto/edit.html', {'form': form, 'categoria': categoria})
+    return render(request, 'core/categorias-egreso/edit.html', {'form': form, 'categoria': categoria})
 
 
 @login_required
@@ -1722,7 +1731,7 @@ def categoria_gasto_delete(request, categoria_id):
         # Verificar si hay gastos usando esta categoría
         if Gasto.objects.filter(categoria=categoria).exists():
             messages.error(request, 'No se puede eliminar la categoría porque tiene gastos asociados')
-            return redirect('categorias_gasto_list')
+            return redirect('categoria_egreso_list')
         
         # Registrar actividad antes de eliminar
         LogActividad.objects.create(
@@ -1735,9 +1744,9 @@ def categoria_gasto_delete(request, categoria_id):
         
         categoria.delete()
         messages.success(request, 'Categoría eliminada exitosamente')
-        return redirect('categorias_gasto_list')
+        return redirect('categoria_egreso_list')
     
-    return render(request, 'core/categorias_gasto/delete.html', {'categoria': categoria})
+    return render(request, 'core/categorias-egreso/delete.html', {'categoria': categoria})
 
 
 # ==================== VISTAS DE ANTICIPOS ====================
@@ -2100,13 +2109,13 @@ def anticipo_create(request):
                 usuario=request.user,
                 accion='Crear',
                 modulo='Anticipos',
-                descripcion=f'Anticipo creado: {anticipo.numero_anticipo} - Q{anticipo.monto}',
+                descripcion=f'Anticipo creado: {anticipo.numero_anticipo} - ${anticipo.monto}',
                 ip_address=request.META.get('REMOTE_ADDR')
             )
             
             messages.success(request, 
                 f'✅ <strong>Anticipo creado exitosamente</strong><br>'
-                f'💰 Monto: <strong>Q{anticipo.monto:,.2f}</strong><br>'
+                f'💰 Monto: <strong>${anticipo.monto:,.2f}</strong><br>'
                 f'🏗️ Proyecto: <strong>{anticipo.proyecto.nombre}</strong><br>'
                 f'👤 Cliente: <strong>{anticipo.cliente.razon_social}</strong>',
                 extra_tags='html'
@@ -2196,7 +2205,7 @@ def anticipo_edit(request, anticipo_id):
             
             messages.success(request, 
                 f'✅ <strong>Anticipo actualizado exitosamente</strong><br>'
-                f'💰 Monto: <strong>Q{anticipo.monto:,.2f}</strong><br>'
+                f'💰 Monto: <strong>${anticipo.monto:,.2f}</strong><br>'
                 f'🏗️ Proyecto: <strong>{anticipo.proyecto.nombre}</strong><br>'
                 f'👤 Cliente: <strong>{anticipo.cliente.razon_social}</strong>',
                 extra_tags='html'
@@ -2238,7 +2247,7 @@ def anticipo_delete(request, anticipo_id):
         
         messages.success(request, 
             f'🗑️ <strong>Anticipo eliminado exitosamente</strong><br>'
-            f'💰 Monto: <strong>Q{anticipo.monto:,.2f}</strong><br>'
+            f'💰 Monto: <strong>${anticipo.monto:,.2f}</strong><br>'
             f'🏗️ Proyecto: <strong>{anticipo.proyecto.nombre}</strong><br>'
             f'👤 Cliente: <strong>{anticipo.cliente.razon_social}</strong>',
             extra_tags='html'
@@ -2268,13 +2277,13 @@ def aplicar_anticipo(request, anticipo_id):
                     usuario=request.user,
                     accion='Aplicar Anticipo',
                     modulo='Anticipos',
-                    descripcion=f'Anticipo {anticipo.numero_anticipo} aplicado a factura {factura.numero_factura} por Q{monto_aplicar}',
+                    descripcion=f'Anticipo {anticipo.numero_anticipo} aplicado a factura {factura.numero_factura} por ${monto_aplicar}',
                     ip_address=request.META.get('REMOTE_ADDR')
                 )
                 
                 messages.success(request, 
                     f'✅ <strong>Anticipo aplicado a factura</strong><br>'
-                    f'💰 Monto: <strong>Q{monto_aplicar:,.2f}</strong><br>'
+                    f'💰 Monto: <strong>${monto_aplicar:,.2f}</strong><br>'
                     f'📄 Factura: <strong>{factura.numero_factura}</strong><br>'
                     f'🏗️ Proyecto: <strong>{anticipo.proyecto.nombre}</strong>',
                     extra_tags='html'
@@ -2288,13 +2297,13 @@ def aplicar_anticipo(request, anticipo_id):
                     usuario=request.user,
                     accion='Aplicar Anticipo',
                     modulo='Anticipos',
-                    descripcion=f'Anticipo {anticipo.numero_anticipo} aplicado al proyecto {anticipo.proyecto.nombre} por Q{monto_aplicar}',
+                    descripcion=f'Anticipo {anticipo.numero_anticipo} aplicado al proyecto {anticipo.proyecto.nombre} por ${monto_aplicar}',
                     ip_address=request.META.get('REMOTE_ADDR')
                 )
                 
                 messages.success(request, 
                     f'✅ <strong>Anticipo aplicado exitosamente</strong><br>'
-                    f'💰 Monto: <strong>Q{monto_aplicar:,.2f}</strong><br>'
+                    f'💰 Monto: <strong>${monto_aplicar:,.2f}</strong><br>'
                     f'🏗️ Proyecto: <strong>{anticipo.proyecto.nombre}</strong><br>'
                     f'👤 Cliente: <strong>{anticipo.cliente.razon_social}</strong>',
                     extra_tags='html'
@@ -2409,6 +2418,12 @@ def proyecto_dashboard(request, proyecto_id=None):
     # 3. Total Histórico de Nómina Combinado
     total_historico_nomina = total_historico_personal + total_historico_trabajadores_diarios
     
+    # Cálculo del Balance del Proyecto (Ingresos + Facturas - Gastos)
+    total_ingresos_proyecto = proyecto.ingresos.aggregate(total=Sum('monto_total'))['total'] or Decimal('0.00')
+    total_facturas_proyecto = proyecto.facturas.filter(estado='pagada').aggregate(total=Sum('monto_total'))['total'] or Decimal('0.00')
+    total_ingresos_totales = total_ingresos_proyecto + total_facturas_proyecto
+    proyecto_balance = total_ingresos_totales - total_gastos
+    
     context = {
         'proyecto': proyecto,
         'todos_proyectos': todos_proyectos,
@@ -2437,6 +2452,10 @@ def proyecto_dashboard(request, proyecto_id=None):
         'total_historico_personal': total_historico_personal,
         'total_historico_trabajadores_diarios': total_historico_trabajadores_diarios,
         'total_historico_nomina': total_historico_nomina,
+        'total_ingresos_proyecto': total_ingresos_proyecto,
+        'total_facturas_proyecto': total_facturas_proyecto,
+        'total_ingresos_totales': total_ingresos_totales,
+        'proyecto_balance': proyecto_balance,
     }
     
     return render(request, 'core/proyecto_dashboard.html', context)
@@ -3465,7 +3484,7 @@ def rentabilidad_view(request):
         
         # Log información de rentabilidad
         periodo_info = f"{fecha_inicio} a {fecha_fin}" if fecha_inicio and fecha_fin else "Todos los datos"
-        logger.debug(f"Período: {periodo_info}, Facturado: Q{total_facturado}, Cobrado: Q{ingresos}")
+        logger.debug(f"Período: {periodo_info}, Facturado: ${total_facturado}, Cobrado: ${ingresos}")
         
         # Calcular gastos
         gastos_filter = {'aprobado': True}
@@ -3619,45 +3638,8 @@ def rentabilidad_view(request):
         
         return render(request, 'core/rentabilidad/index.html', context)
  
-# ===== VISTAS DE PRESUPUESTOS =====
-@login_required
-def presupuestos_list(request):
-    """Lista de presupuestos del sistema"""
-    presupuestos = Presupuesto.objects.select_related('proyecto', 'creado_por').filter(activo=True)
-    
-    # Filtros
-    proyecto_id = request.GET.get('proyecto')
-    estado = request.GET.get('estado')
-    
-    if proyecto_id:
-        presupuestos = presupuestos.filter(proyecto_id=proyecto_id)
-    if estado:
-        presupuestos = presupuestos.filter(estado=estado)
-    
-    # Calcular estadísticas
-    total_presupuestos = presupuestos.count()
-    presupuestos_aprobados = presupuestos.filter(estado='aprobado').count()
-    presupuestos_revision = presupuestos.filter(estado='en_revision').count()
-    presupuestos_borrador = presupuestos.filter(estado='borrador').count()
-    
-    # Calcular variaciones para cada presupuesto
-    for presupuesto in presupuestos:
-        variacion = presupuesto.obtener_variacion()
-        presupuesto.variacion_data = variacion
-    
-    context = {
-        'presupuestos': presupuestos,
-        'proyectos': Proyecto.objects.filter(activo=True),
-        'estados': Presupuesto._meta.get_field('estado').choices,
-        'selected_proyecto': request.GET.get('proyecto', ''),
-        'selected_estado': request.GET.get('estado', ''),
-        'total_presupuestos': total_presupuestos,
-        'presupuestos_aprobados': presupuestos_aprobados,
-        'presupuestos_revision': presupuestos_revision,
-        'presupuestos_borrador': presupuestos_borrador,
-    }
-    
-    return render(request, 'core/presupuestos/list.html', context)
+# ===== VISTAS DE PRESUPUESTOS ELIMINADAS - YA NO SE USAN =====
+# VISTA presupuestos_list ELIMINADA - YA NO SE USA
 
 @login_required
 def presupuesto_create(request):
@@ -3807,11 +3789,11 @@ def partida_create(request, presupuesto_id):
                 usuario=request.user,
                 accion='Crear Partida',
                 modulo='Presupuestos',
-                descripcion=f'Partida creada: {partida.descripcion} - Q{partida.monto_estimado} en presupuesto {presupuesto.nombre}',
+                descripcion=f'Partida creada: {partida.descripcion} - ${partida.monto_estimado} en presupuesto {presupuesto.nombre}',
                 ip_address=request.META.get('REMOTE_ADDR')
             )
             
-            messages.success(request, f'Partida "{partida.descripcion}" creada exitosamente por Q{partida.monto_estimado}')
+            messages.success(request, f'Partida "{partida.descripcion}" creada exitosamente por ${partida.monto_estimado}')
             return redirect('presupuesto_detail', presupuesto_id=presupuesto.id)
     else:
         form = PartidaPresupuestoForm()
@@ -3851,11 +3833,11 @@ def presupuesto_aprobar(request, presupuesto_id):
                 usuario=request.user,
                 accion='Aprobar',
                 modulo='Presupuestos',
-                descripcion=f'Presupuesto aprobado: {presupuesto.nombre} - Q{presupuesto.monto_total}',
+                descripcion=f'Presupuesto aprobado: {presupuesto.nombre} - ${presupuesto.monto_total}',
                 ip_address=request.META.get('REMOTE_ADDR')
             )
             
-            messages.success(request, f'Presupuesto "{presupuesto.nombre}" aprobado exitosamente por Q{presupuesto.monto_total}')
+            messages.success(request, f'Presupuesto "{presupuesto.nombre}" aprobado exitosamente por ${presupuesto.monto_total}')
             return redirect('presupuesto_detail', presupuesto_id=presupuesto.id)
             
         except Exception as e:
@@ -5186,19 +5168,8 @@ def dashboard_intelligent_data(request):
         proyectos_completados = Proyecto.objects.filter(estado='completado').count()
         eficiencia_proyectos = (proyectos_completados / total_proyectos * 100) if total_proyectos > 0 else 0
         
-        # Calcular tiempo promedio de proyectos
-        proyectos_con_fechas = Proyecto.objects.filter(
-            fecha_inicio__isnull=False,
-            fecha_fin__isnull=False
-        )
-        
+        # CÁLCULO DE TIEMPO PROMEDIO ELIMINADO - YA NO SE USA fecha_fin
         tiempo_promedio = 0
-        if proyectos_con_fechas.exists():
-            total_dias = 0
-            for proyecto in proyectos_con_fechas:
-                dias = (proyecto.fecha_fin - proyecto.fecha_inicio).days
-                total_dias += dias
-            tiempo_promedio = total_dias / proyectos_con_fechas.count()
         
         # KPIs inteligentes
         satisfaccion_cliente = 85  # Simulado - en producción se calcularía de encuestas
@@ -5530,16 +5501,16 @@ def liquidar_y_generar_planilla(request, proyecto_id):
                 usuario=request.user,
                 accion='Liquidar Planilla',
                 modulo='Planilla Personal',
-                descripcion=f'Planilla #{planilla.id} liquidada - Salarios: Q{total_salarios} - Anticipos: Q{total_anticipos_liquidados} - Total: Q{total_planilla}',
+                descripcion=f'Planilla #{planilla.id} liquidada - Salarios: ${total_salarios} - Anticipos: ${total_anticipos_liquidados} - Total: ${total_planilla}',
                 ip_address=request.META.get('REMOTE_ADDR')
             )
             
             messages.success(
                 request,
                 f'✅ <strong>Planilla liquidada exitosamente</strong><br>'
-                f'💼 Total Salarios: <strong>Q{total_salarios:,.2f}</strong><br>'
-                f'💰 Anticipos Descontados: <strong>Q{total_anticipos_liquidados:,.2f}</strong><br>'
-                f'📋 <strong>TOTAL A PAGAR: Q{total_planilla:,.2f}</strong><br>'
+                f'💼 Total Salarios: <strong>${total_salarios:,.2f}</strong><br>'
+                f'💰 Anticipos Descontados: <strong>${total_anticipos_liquidados:,.2f}</strong><br>'
+                f'📋 <strong>TOTAL A PAGAR: ${total_planilla:,.2f}</strong><br>'
                 f'👥 Personal: <strong>{colaboradores_asignados.count()}</strong>',
                 extra_tags='html'
             )
@@ -5676,11 +5647,11 @@ def planilla_proyecto_pdf(request, proyecto_id):
             data.append([
                 str(i),
                 colaborador.nombre,
-                f"Q{salario_base:,.2f}",
-                f"Q{anticipos_pendientes:,.2f}",
-                f"Q{anticipos_liquidados:,.2f}",
-                f"Q{total_anticipos_colaborador:,.2f}",
-                f"Q{salario_neto:,.2f}",
+                f"${salario_base:,.2f}",
+                f"${anticipos_pendientes:,.2f}",
+                f"${anticipos_liquidados:,.2f}",
+                f"${total_anticipos_colaborador:,.2f}",
+                f"${salario_neto:,.2f}",
                 estado
             ])
         
@@ -5694,11 +5665,11 @@ def planilla_proyecto_pdf(request, proyecto_id):
         # Agregar fila de totales
         data.append([
             '', 'TOTAL GENERAL:', 
-            f"Q{total_salarios_base:,.2f}", 
-            f"Q{total_anticipos_pendientes:,.2f}", 
-            f"Q{total_anticipos_liquidados:,.2f}", 
-            f"Q{total_anticipos_general:,.2f}", 
-            f"Q{total_salarios_netos:,.2f}", 
+            f"${total_salarios_base:,.2f}", 
+            f"${total_anticipos_pendientes:,.2f}", 
+            f"${total_anticipos_liquidados:,.2f}", 
+            f"${total_anticipos_general:,.2f}", 
+            f"${total_salarios_netos:,.2f}", 
             ''
         ])
         
@@ -5743,11 +5714,11 @@ def planilla_proyecto_pdf(request, proyecto_id):
     # Resumen financiero
     resumen_data = [
         ['CONCEPTO', 'MONTO'],
-        ['Total Salarios Base', f"Q{total_salarios_base:,.2f}"],
-        ['Total Anticipos Pendientes', f"Q{total_anticipos_pendientes:,.2f}"],
-        ['Total Anticipos Liquidados', f"Q{total_anticipos_liquidados:,.2f}"],
-        ['Total Anticipos General', f"Q{total_anticipos_general:,.2f}"],
-        ['Total Salarios Netos', f"Q{total_salarios_netos:,.2f}"],
+        ['Total Salarios Base', f"${total_salarios_base:,.2f}"],
+        ['Total Anticipos Pendientes', f"${total_anticipos_pendientes:,.2f}"],
+        ['Total Anticipos Liquidados', f"${total_anticipos_liquidados:,.2f}"],
+        ['Total Anticipos General', f"${total_anticipos_general:,.2f}"],
+        ['Total Salarios Netos', f"${total_salarios_netos:,.2f}"],
     ]
     
     resumen_table = Table(resumen_data, colWidths=[4*inch, 2*inch])
@@ -5812,7 +5783,7 @@ def crear_anticipo_masivo(request, proyecto_id):
             
             messages.success(
                 request, 
-                f'✅ Se crearon exitosamente {len(anticipos_creados)} anticipos de Q{monto:,.2f} cada uno para el proyecto "{proyecto.nombre}". Total desembolsado: Q{(monto * len(anticipos_creados)):,.2f}'
+                f'✅ Se crearon exitosamente {len(anticipos_creados)} anticipos de ${monto:,.2f} cada uno para el proyecto "{proyecto.nombre}". Total desembolsado: ${(monto * len(anticipos_creados)):,.2f}'
             )
             
             return redirect('planilla_proyecto', proyecto_id=proyecto.id)
@@ -5853,7 +5824,7 @@ def crear_anticipo_individual(request, proyecto_id):
                 
                 messages.success(
                     request, 
-                    f'✅ Anticipo creado exitosamente: Q{monto:,.2f} para {colaborador.nombre} en el proyecto "{proyecto.nombre}". Concepto: {concepto}'
+                    f'✅ Anticipo creado exitosamente: ${monto:,.2f} para {colaborador.nombre} en el proyecto "{proyecto.nombre}". Concepto: {concepto}'
                 )
                 
                 return redirect('planilla_proyecto', proyecto_id=proyecto.id)
@@ -5880,7 +5851,7 @@ def liquidar_anticipo(request, anticipo_id):
             anticipo.liquidar_anticipo(request.user)
             messages.success(
                 request, 
-                f'Anticipo de Q{anticipo.monto} para {anticipo.colaborador.nombre} ha sido liquidado'
+                f'Anticipo de ${anticipo.monto} para {anticipo.colaborador.nombre} ha sido liquidado'
             )
         else:
             messages.warning(request, 'Este anticipo ya no está pendiente de liquidación')
@@ -5927,7 +5898,7 @@ def calendario_pagos_proyecto(request, proyecto_id):
     eventos_calendario[ultimo_dia] = {
         'tipo': 'pago_salario',
         'titulo': 'Pago de Salarios',
-        'descripcion': f'Pago mensual de salarios - Total: Q{sum(c.salario or 0 for c in colaboradores):.2f}',
+        'descripcion': f'Pago mensual de salarios - Total: ${sum(c.salario or 0 for c in colaboradores):.2f}',
         'color': 'success',
         'icono': 'fas fa-money-bill-wave'
     }
@@ -5943,7 +5914,7 @@ def calendario_pagos_proyecto(request, proyecto_id):
         eventos_calendario[dia].append({
             'tipo': 'anticipo_realizado',
             'titulo': f'Anticipo: {anticipo.colaborador.nombre}',
-            'descripcion': f'Q{anticipo.monto} - {anticipo.concepto}',
+            'descripcion': f'${anticipo.monto} - {anticipo.concepto}',
             'color': 'warning',
             'icono': 'fas fa-hand-holding-usd',
             'anticipo_id': anticipo.id
@@ -5960,7 +5931,7 @@ def calendario_pagos_proyecto(request, proyecto_id):
         eventos_calendario[dia].append({
             'tipo': 'anticipo_liquidado',
             'titulo': f'Liquidado: {anticipo.colaborador.nombre}',
-            'descripcion': f'Q{anticipo.monto} liquidado por {anticipo.liquidado_por.username if anticipo.liquidado_por else "Sistema"}',
+            'descripcion': f'${anticipo.monto} liquidado por {anticipo.liquidado_por.username if anticipo.liquidado_por else "Sistema"}',
             'color': 'success',
             'icono': 'fas fa-check-circle',
             'anticipo_id': anticipo.id
@@ -6355,9 +6326,9 @@ def facturas_reporte_pdf(request):
     # Resumen financiero
     resumen_data = [
         ['CONCEPTO', 'MONTO'],
-        ['Total Facturado', f"Q{total_facturado:,.2f}"],
-        ['Total Cobrado', f"Q{total_cobrado:,.2f}"],
-        ['Total Pendiente', f"Q{total_pendiente:,.2f}"],
+        ['Total Facturado', f"${total_facturado:,.2f}"],
+        ['Total Cobrado', f"${total_cobrado:,.2f}"],
+        ['Total Pendiente', f"${total_pendiente:,.2f}"],
         ['Cantidad Facturas', str(facturas.count())],
     ]
     
@@ -6387,7 +6358,7 @@ def facturas_reporte_pdf(request):
                 factura.numero_factura,
                 factura.cliente.razon_social if factura.cliente else 'N/A',
                 factura.proyecto.nombre if factura.proyecto else 'N/A',
-                f"Q{factura.monto_total:,.2f}",
+                f"${factura.monto_total:,.2f}",
                 factura.get_estado_display(),
                 factura.fecha_emision.strftime('%d/%m/%Y') if factura.fecha_emision else 'N/A',
                 factura.fecha_vencimiento.strftime('%d/%m/%Y') if factura.fecha_vencimiento else 'N/A',
@@ -6554,7 +6525,8 @@ def facturas_reporte_detallado(request):
         
         # Obtener el presupuesto del proyecto más reciente del cliente
         proyecto_mas_reciente = Proyecto.objects.filter(cliente_id=cliente_id).order_by('-creado_en').first()
-        presupuesto_proyecto = proyecto_mas_reciente.presupuesto if proyecto_mas_reciente else 0
+        # presupuesto_proyecto ELIMINADO - YA NO SE USA
+        presupuesto_proyecto = 0
         
         # Calcular porcentaje basado en el presupuesto del proyecto
         if presupuesto_proyecto and presupuesto_proyecto > 0:
@@ -6863,15 +6835,15 @@ def finalizar_planilla_trabajadores(request, proyecto_id):
             data.append([
                 str(i),
                 trabajador.nombre,
-                f"Q{trabajador.pago_diario:.2f}",
+                f"${trabajador.pago_diario:.2f}",
                 str(dias_trabajados),
-                f"Q{total_bruto:.2f}",
-                f"Q{total_anticipos_trabajador:.2f}",
-                f"Q{total_neto:.2f}"
+                f"${total_bruto:.2f}",
+                f"${total_anticipos_trabajador:.2f}",
+                f"${total_neto:.2f}"
             ])
         
         # Agregar fila de totales
-        data.append(['', '', '', 'TOTAL GENERAL:', f"Q{total_bruto_general:.2f}", f"Q{total_anticipos_general:.2f}", f"Q{total_neto_general:.2f}"])
+        data.append(['', '', '', 'TOTAL GENERAL:', f"${total_bruto_general:.2f}", f"${total_anticipos_general:.2f}", f"${total_neto_general:.2f}"])
         
         # Crear la tabla con columnas adicionales (7 columnas total)
         table = Table(data, colWidths=[0.6*inch, 2.5*inch, 1.2*inch, 1.2*inch, 1.4*inch, 1.4*inch, 1.4*inch])
@@ -6902,9 +6874,9 @@ def finalizar_planilla_trabajadores(request, proyecto_id):
         
         # Información adicional
         story.append(Paragraph(f"<b>Total de Trabajadores:</b> {total_trabajadores}", normal_style))
-        story.append(Paragraph(f"<b>Total Bruto a Pagar:</b> Q{total_bruto_general:.2f}", normal_style))
-        story.append(Paragraph(f"<b>Total Anticipos Aplicados:</b> Q{total_anticipos_general:.2f}", normal_style))
-        story.append(Paragraph(f"<b>Total Neto a Pagar:</b> Q{total_neto_general:.2f}", normal_style))
+        story.append(Paragraph(f"<b>Total Bruto a Pagar:</b> ${total_bruto_general:.2f}", normal_style))
+        story.append(Paragraph(f"<b>Total Anticipos Aplicados:</b> ${total_anticipos_general:.2f}", normal_style))
+        story.append(Paragraph(f"<b>Total Neto a Pagar:</b> ${total_neto_general:.2f}", normal_style))
         
         # Construir el PDF
         doc.build(story)
@@ -6966,15 +6938,15 @@ def finalizar_planilla_trabajadores(request, proyecto_id):
             total_planilla=Decimal(str(total_neto_general)),
             cantidad_personal=trabajadores.count(),
             liquidada_por=request.user,
-            observaciones=f'Planilla de trabajadores diarios finalizada - Total: Q{total_neto_general:.2f}'
+            observaciones=f'Planilla de trabajadores diarios finalizada - Total: ${total_neto_general:.2f}'
         )
         
-        print(f"✅ Planilla liquidada creada: ID {planilla_liquidada.id}, Total: Q{total_neto_general:.2f}")
+        print(f"✅ Planilla liquidada creada: ID {planilla_liquidada.id}, Total: ${total_neto_general:.2f}")
         
         # 4.5. Actualizar total histórico del proyecto
         proyecto.total_diarios = (proyecto.total_diarios or Decimal('0.00')) + Decimal(str(total_neto_general))
         proyecto.save()
-        print(f"✅ Total diarios actualizado: Q{proyecto.total_diarios}")
+        print(f"✅ Total diarios actualizado: ${proyecto.total_diarios}")
         
         # 5. Limpiar lista de trabajadores (marcar como inactivos)
         trabajadores_eliminados = trabajadores.count()
@@ -7356,11 +7328,11 @@ def trabajadores_diarios_pdf(request, proyecto_id):
             data.append([
                 str(i),
                 trabajador.nombre,
-                f"Q{trabajador.pago_diario:.2f}",
+                f"${trabajador.pago_diario:.2f}",
                 str(dias_trabajados),
-                f"Q{total_bruto:.2f}",
-                f"Q{total_anticipos_trabajador:.2f}",
-                f"Q{total_neto:.2f}"
+                f"${total_bruto:.2f}",
+                f"${total_anticipos_trabajador:.2f}",
+                f"${total_neto:.2f}"
             ])
             
             total_bruto_general += total_bruto
@@ -7368,7 +7340,7 @@ def trabajadores_diarios_pdf(request, proyecto_id):
             total_neto_general += total_neto
         
         # Agregar fila de totales
-        data.append(['', '', '', 'TOTAL GENERAL:', f"Q{total_bruto_general:.2f}", f"Q{total_anticipos_general:.2f}", f"Q{total_neto_general:.2f}"])
+        data.append(['', '', '', 'TOTAL GENERAL:', f"${total_bruto_general:.2f}", f"${total_anticipos_general:.2f}", f"${total_neto_general:.2f}"])
         
         # Crear la tabla con columnas adicionales (7 columnas total)
         # Ancho total: 11.7" - 2" (márgenes) = 9.7" disponibles
@@ -7406,9 +7378,9 @@ def trabajadores_diarios_pdf(request, proyecto_id):
         
         anticipos_data = [
             ['Concepto', 'Monto (Q)'],
-            ['Total Bruto a Pagar', f"Q{total_bruto_general:.2f}"],
-            ['Total Anticipos Aplicados', f"Q{total_anticipos_general:.2f}"],
-            ['Total Neto a Pagar', f"Q{total_neto_general:.2f}"]
+            ['Total Bruto a Pagar', f"${total_bruto_general:.2f}"],
+            ['Total Anticipos Aplicados', f"${total_anticipos_general:.2f}"],
+            ['Total Neto a Pagar', f"${total_neto_general:.2f}"]
         ]
         
         anticipos_table = Table(anticipos_data, colWidths=[3*inch, 1.5*inch])
@@ -7432,9 +7404,9 @@ def trabajadores_diarios_pdf(request, proyecto_id):
         # Crear tabla de resumen de anticipos
         resumen_data = [
             ['Concepto', 'Monto (Q)'],
-            ['Total Bruto a Pagar', f"Q{total_bruto_general:.2f}"],
-            ['Total Anticipos Aplicados', f"Q{total_anticipos_general:.2f}"],
-            ['Total Neto a Pagar', f"Q{total_neto_general:.2f}"]
+            ['Total Bruto a Pagar', f"${total_bruto_general:.2f}"],
+            ['Total Anticipos Aplicados', f"${total_anticipos_general:.2f}"],
+            ['Total Neto a Pagar', f"${total_neto_general:.2f}"]
         ]
         
         resumen_table = Table(resumen_data, colWidths=[4*inch, 2*inch])
@@ -7463,9 +7435,9 @@ def trabajadores_diarios_pdf(request, proyecto_id):
         
         # Información adicional
         story.append(Paragraph(f"<b>Total de Trabajadores:</b> {total_trabajadores}", normal_style))
-        story.append(Paragraph(f"<b>Total Bruto a Pagar:</b> Q{total_bruto_general:.2f}", normal_style))
-        story.append(Paragraph(f"<b>Total Anticipos Aplicados:</b> Q{total_anticipos_general:.2f}", normal_style))
-        story.append(Paragraph(f"<b>Total Neto a Pagar:</b> Q{total_neto_general:.2f}", normal_style))
+        story.append(Paragraph(f"<b>Total Bruto a Pagar:</b> ${total_bruto_general:.2f}", normal_style))
+        story.append(Paragraph(f"<b>Total Anticipos Aplicados:</b> ${total_anticipos_general:.2f}", normal_style))
+        story.append(Paragraph(f"<b>Total Neto a Pagar:</b> ${total_neto_general:.2f}", normal_style))
         
     else:
         story.append(Paragraph("No hay trabajadores diarios registrados en este proyecto.", normal_style))
@@ -7598,8 +7570,8 @@ def anticipo_trabajador_diario_create(request, proyecto_id):
             # Aplicar el anticipo al trabajador (restar del total a pagar)
             trabajador = anticipo.trabajador
             # El anticipo se resta del total a pagar (saldo negativo)
-            logger.info(f"💰 Aplicando anticipo de Q{anticipo.monto} al trabajador {trabajador.nombre}")
-            logger.info(f"💰 Total a pagar antes: Q{trabajador.total_a_pagar}")
+            logger.info(f"💰 Aplicando anticipo de ${anticipo.monto} al trabajador {trabajador.nombre}")
+            logger.info(f"💰 Total a pagar antes: ${trabajador.total_a_pagar}")
             # No modificamos directamente el total_a_pagar, se calcula dinámicamente
             logger.info(f"✅ Anticipo aplicado exitosamente")
             
@@ -7608,14 +7580,14 @@ def anticipo_trabajador_diario_create(request, proyecto_id):
                 usuario=request.user,
                 accion='Crear',
                 modulo='Anticipos Trabajadores Diarios',
-                descripcion=f'Anticipo creado y aplicado: {anticipo.trabajador.nombre} - Q{anticipo.monto}',
+                descripcion=f'Anticipo creado y aplicado: {anticipo.trabajador.nombre} - ${anticipo.monto}',
                 ip_address=request.META.get('REMOTE_ADDR')
             )
             
             messages.success(request, 
                 f'✅ <strong>Anticipo creado y aplicado exitosamente</strong><br>'
                 f'👤 Trabajador: <strong>{anticipo.trabajador.nombre}</strong><br>'
-                f'💰 Monto: <strong>Q{anticipo.monto:,.2f}</strong><br>'
+                f'💰 Monto: <strong>${anticipo.monto:,.2f}</strong><br>'
                 f'🏗️ Proyecto: <strong>{proyecto.nombre}</strong>',
                 extra_tags='html'
             )
@@ -7686,7 +7658,7 @@ def anticipo_trabajador_diario_delete(request, proyecto_id, anticipo_id):
             usuario=request.user,
             accion='Eliminar',
             modulo='Anticipos Trabajadores Diarios',
-            descripcion=f'Anticipo eliminado para {trabajador_nombre}: Q{monto}',
+            descripcion=f'Anticipo eliminado para {trabajador_nombre}: ${monto}',
             ip_address=request.META.get('REMOTE_ADDR')
         )
         
@@ -7716,11 +7688,11 @@ def anticipo_trabajador_diario_aplicar(request, proyecto_id, anticipo_id):
                 usuario=request.user,
                 accion='Aplicar',
                 modulo='Anticipos Trabajadores Diarios',
-                descripcion=f'Anticipo aplicado para {anticipo.trabajador.nombre}: Q{anticipo.monto}',
+                descripcion=f'Anticipo aplicado para {anticipo.trabajador.nombre}: ${anticipo.monto}',
                 ip_address=request.META.get('REMOTE_ADDR')
             )
             
-            messages.success(request, f'Anticipo de Q{anticipo.monto} aplicado correctamente para {anticipo.trabajador.nombre}.')
+            messages.success(request, f'Anticipo de ${anticipo.monto} aplicado correctamente para {anticipo.trabajador.nombre}.')
             return redirect('anticipo_trabajador_diario_list', proyecto_id=proyecto_id)
             
         except Exception as e:
@@ -7902,15 +7874,17 @@ def dashboard_intelligent_analytics(request):
         
         # Proyectos con mayor riesgo (gastos altos vs presupuesto)
         proyectos_riesgo = []
-        for proyecto in Proyecto.objects.filter(activo=True, presupuesto__gt=0):
+        # FILTRO DE PRESUPUESTO ELIMINADO - YA NO SE USA
+        for proyecto in Proyecto.objects.filter(activo=True):
             estadisticas = ProyectoService.obtener_estadisticas_proyecto(proyecto)
             if estadisticas.get('gastos', {}).get('total', 0) > 0:
-                porcentaje_gastado = (estadisticas['gastos']['total'] / proyecto.presupuesto) * 100
+                # CÁLCULO DE PORCENTAJE ELIMINADO - YA NO SE USA
+                porcentaje_gastado = 0
                 if porcentaje_gastado > 80:  # Más del 80% gastado
                     proyectos_riesgo.append({
                         'proyecto': proyecto.nombre,
                         'porcentaje_gastado': round(porcentaje_gastado, 2),
-                        'presupuesto': proyecto.presupuesto,
+                        'presupuesto': 0,  # ELIMINADO - YA NO SE USA
                         'gastado': estadisticas['gastos']['total']
                     })
         
@@ -7964,7 +7938,7 @@ def cliente_estadisticas(request, cliente_id):
         # Estadísticas de proyectos
         proyectos_stats = Proyecto.objects.filter(cliente=cliente).aggregate(
             total=Count('id'),
-            presupuesto_total=Sum('presupuesto')
+            # presupuesto_total ELIMINADO - YA NO SE USA
         )
         
         # Estadísticas de facturas
@@ -8231,3 +8205,381 @@ def trabajador_diario_remove_from_planilla(request, proyecto_id, planilla_id, tr
     }
     
     return render(request, 'core/planillas_trabajadores_diarios/remove_trabajador.html', context)
+
+
+# ========================================
+# VISTAS PARA MÓDULO DE INGRESOS POR PROYECTO
+# ========================================
+
+@login_required
+def ingresos_list(request):
+    """Lista de ingresos por proyecto"""
+    filtro_proyecto = request.GET.get('proyecto', '')
+    filtro_estado = request.GET.get('estado', '')
+    filtro_fecha_desde = request.GET.get('fecha_desde', '')
+    filtro_fecha_hasta = request.GET.get('fecha_hasta', '')
+    
+    # Query base
+    ingresos = IngresoProyecto.objects.all().select_related('proyecto', 'factura', 'creado_por')
+    
+    # Aplicar filtros
+    if filtro_proyecto:
+        ingresos = ingresos.filter(proyecto_id=filtro_proyecto)
+    
+    if filtro_estado:
+        if filtro_estado == 'pagado':
+            ingresos = ingresos.filter(pagado=True)
+        elif filtro_estado == 'pendiente':
+            ingresos = ingresos.filter(pagado=False)
+    
+    if filtro_fecha_desde:
+        ingresos = ingresos.filter(fecha_emision__gte=filtro_fecha_desde)
+    
+    if filtro_fecha_hasta:
+        ingresos = ingresos.filter(fecha_emision__lte=filtro_fecha_hasta)
+    
+    # Ordenar por fecha de emisión descendente
+    ingresos = ingresos.order_by('-fecha_emision', '-fecha_registro')
+    
+    # Obtener proyectos para el filtro
+    proyectos = Proyecto.objects.filter(activo=True).order_by('nombre')
+    
+    # Estadísticas
+    total_ingresos = ingresos.aggregate(total=Sum('monto_total'))['total'] or 0
+    ingresos_pagados = ingresos.filter(pagado=True).aggregate(total=Sum('monto_total'))['total'] or 0
+    ingresos_pendientes = ingresos.filter(pagado=False).aggregate(total=Sum('monto_total'))['total'] or 0
+    
+    context = {
+        'ingresos': ingresos,
+        'proyectos': proyectos,
+        'filtro_proyecto': filtro_proyecto,
+        'filtro_estado': filtro_estado,
+        'filtro_fecha_desde': filtro_fecha_desde,
+        'filtro_fecha_hasta': filtro_fecha_hasta,
+        'total_ingresos': total_ingresos,
+        'ingresos_pagados': ingresos_pagados,
+        'ingresos_pendientes': ingresos_pendientes,
+    }
+    
+    return render(request, 'core/ingresos/list.html', context)
+
+
+@login_required
+def ingreso_create(request):
+    """Crear nuevo ingreso por proyecto"""
+    if request.method == 'POST':
+        form = IngresoProyectoForm(request.POST)
+        if form.is_valid():
+            ingreso = form.save(commit=False)
+            ingreso.creado_por = request.user
+            ingreso.save()
+            
+            # Registrar actividad
+            LogActividad.objects.create(
+                usuario=request.user,
+                accion='Crear Ingreso',
+                modulo='Ingresos',
+                descripcion=f'Ingreso creado: {ingreso.numero_documento} - {ingreso.proyecto.nombre} - ${ingreso.monto_total}',
+                ip_address=request.META.get('REMOTE_ADDR')
+            )
+            
+            messages.success(request, f'Ingreso "{ingreso.numero_documento}" creado exitosamente')
+            return redirect('ingresos_list')
+    else:
+        form = IngresoProyectoForm()
+    
+    context = {
+        'form': form,
+        'titulo': 'Crear Nuevo Ingreso',
+    }
+    
+    return render(request, 'core/ingresos/create.html', context)
+
+
+@login_required
+def ingreso_edit(request, ingreso_id):
+    """Editar ingreso por proyecto"""
+    ingreso = get_object_or_404(IngresoProyecto, id=ingreso_id)
+    
+    if request.method == 'POST':
+        form = IngresoProyectoForm(request.POST, instance=ingreso)
+        if form.is_valid():
+            ingreso = form.save(commit=False)
+            ingreso.modificado_por = request.user
+            ingreso.save()
+            
+            # Registrar actividad
+            LogActividad.objects.create(
+                usuario=request.user,
+                accion='Editar Ingreso',
+                modulo='Ingresos',
+                descripcion=f'Ingreso editado: {ingreso.numero_documento} - {ingreso.proyecto.nombre} - ${ingreso.monto_total}',
+                ip_address=request.META.get('REMOTE_ADDR')
+            )
+            
+            messages.success(request, f'Ingreso "{ingreso.numero_documento}" actualizado exitosamente')
+            return redirect('ingresos_list')
+    else:
+        form = IngresoProyectoForm(instance=ingreso)
+    
+    context = {
+        'form': form,
+        'ingreso': ingreso,
+        'titulo': 'Editar Ingreso',
+    }
+    
+    return render(request, 'core/ingresos/edit.html', context)
+
+
+@login_required
+def ingreso_detail(request, ingreso_id):
+    """Detalle de un ingreso por proyecto"""
+    ingreso = get_object_or_404(IngresoProyecto, id=ingreso_id)
+    
+    context = {
+        'ingreso': ingreso,
+    }
+    
+    return render(request, 'core/ingresos/detail.html', context)
+
+
+@login_required
+def ingreso_delete(request, ingreso_id):
+    """Eliminar ingreso por proyecto"""
+    ingreso = get_object_or_404(IngresoProyecto, id=ingreso_id)
+    
+    if request.method == 'POST':
+        numero_documento = ingreso.numero_documento
+        proyecto_nombre = ingreso.proyecto.nombre
+        
+        # Registrar actividad antes de eliminar
+        LogActividad.objects.create(
+            usuario=request.user,
+            accion='Eliminar Ingreso',
+            modulo='Ingresos',
+            descripcion=f'Ingreso eliminado: {numero_documento} - {proyecto_nombre}',
+            ip_address=request.META.get('REMOTE_ADDR')
+        )
+        
+        ingreso.delete()
+        messages.success(request, f'Ingreso "{numero_documento}" eliminado exitosamente')
+        return redirect('ingresos_list')
+    
+    context = {
+        'ingreso': ingreso,
+    }
+    
+    return render(request, 'core/ingresos/delete.html', context)
+
+
+@login_required
+def ingresos_proyecto(request, proyecto_id):
+    """Lista de ingresos específicos de un proyecto"""
+    proyecto = get_object_or_404(Proyecto, id=proyecto_id)
+    
+    ingresos = IngresoProyecto.objects.filter(proyecto=proyecto).select_related('factura', 'creado_por').order_by('-fecha_emision')
+    
+    # Estadísticas del proyecto
+    total_ingresos = ingresos.aggregate(total=Sum('monto_total'))['total'] or 0
+    ingresos_pagados = ingresos.filter(pagado=True).aggregate(total=Sum('monto_total'))['total'] or 0
+    ingresos_pendientes = ingresos.filter(pagado=False).aggregate(total=Sum('monto_total'))['total'] or 0
+    
+    context = {
+        'proyecto': proyecto,
+        'ingresos': ingresos,
+        'total_ingresos': total_ingresos,
+        'ingresos_pagados': ingresos_pagados,
+        'ingresos_pendientes': ingresos_pendientes,
+    }
+    
+    return render(request, 'core/ingresos/proyecto.html', context)
+
+
+# ==================== VISTAS DE COTIZACIONES ====================
+
+@login_required
+def cotizaciones_list(request):
+    """Lista todas las cotizaciones"""
+    cotizaciones = Cotizacion.objects.select_related('proyecto', 'cliente', 'creado_por').order_by('-fecha_emision')
+    
+    # Filtros
+    estado = request.GET.get('estado')
+    proyecto_id = request.GET.get('proyecto')
+    
+    if estado:
+        cotizaciones = cotizaciones.filter(estado=estado)
+    
+    if proyecto_id:
+        cotizaciones = cotizaciones.filter(proyecto_id=proyecto_id)
+    
+    # Estadísticas
+    total_cotizaciones = cotizaciones.count()
+    cotizaciones_aceptadas = cotizaciones.filter(estado='aceptada').count()
+    cotizaciones_pendientes = cotizaciones.filter(estado__in=['borrador', 'enviada']).count()
+    monto_total_cotizado = cotizaciones.aggregate(total=Sum('monto_total'))['total'] or 0
+    
+    # Proyectos para filtro
+    proyectos = Proyecto.objects.filter(activo=True).order_by('nombre')
+    
+    context = {
+        'cotizaciones': cotizaciones,
+        'total_cotizaciones': total_cotizaciones,
+        'cotizaciones_aceptadas': cotizaciones_aceptadas,
+        'cotizaciones_pendientes': cotizaciones_pendientes,
+        'monto_total_cotizado': monto_total_cotizado,
+        'proyectos': proyectos,
+        'estado_filtro': estado,
+        'proyecto_filtro': proyecto_id,
+    }
+    
+    return render(request, 'core/cotizaciones/list.html', context)
+
+
+@login_required
+def cotizacion_create(request):
+    """Crear nueva cotización"""
+    if request.method == 'POST':
+        form = CotizacionForm(request.POST, request.FILES)
+        if form.is_valid():
+            cotizacion = form.save(commit=False)
+            cotizacion.creado_por = request.user
+            cotizacion.save()
+            messages.success(request, f'Cotización {cotizacion.numero_cotizacion} creada exitosamente.')
+            return redirect('cotizaciones_list')
+    else:
+        form = CotizacionForm()
+    
+    # Datos para el formulario
+    proyectos = Proyecto.objects.filter(activo=True).order_by('nombre')
+    clientes = Cliente.objects.filter(activo=True).order_by('razon_social')
+    
+    context = {
+        'form': form,
+        'proyectos': proyectos,
+        'clientes': clientes,
+    }
+    
+    return render(request, 'core/cotizaciones/create.html', context)
+
+
+@login_required
+def cotizacion_detail(request, cotizacion_id):
+    """Detalle de una cotización"""
+    cotizacion = get_object_or_404(Cotizacion, id=cotizacion_id)
+    
+    context = {
+        'cotizacion': cotizacion,
+    }
+    
+    return render(request, 'core/cotizaciones/detail.html', context)
+
+
+@login_required
+def cotizacion_edit(request, cotizacion_id):
+    """Editar cotización"""
+    cotizacion = get_object_or_404(Cotizacion, id=cotizacion_id)
+    
+    if request.method == 'POST':
+        form = CotizacionForm(request.POST, request.FILES, instance=cotizacion)
+        if form.is_valid():
+            cotizacion = form.save(commit=False)
+            cotizacion.modificado_por = request.user
+            cotizacion.save()
+            messages.success(request, f'Cotización {cotizacion.numero_cotizacion} actualizada exitosamente.')
+            return redirect('cotizacion_detail', cotizacion_id=cotizacion.id)
+    else:
+        form = CotizacionForm(instance=cotizacion)
+    
+    context = {
+        'form': form,
+        'cotizacion': cotizacion,
+    }
+    
+    return render(request, 'core/cotizaciones/edit.html', context)
+
+
+@login_required
+def cotizacion_delete(request, cotizacion_id):
+    """Eliminar cotización"""
+    cotizacion = get_object_or_404(Cotizacion, id=cotizacion_id)
+    
+    if request.method == 'POST':
+        numero_cotizacion = cotizacion.numero_cotizacion
+        cotizacion.delete()
+        messages.success(request, f'Cotización {numero_cotizacion} eliminada exitosamente.')
+        return redirect('cotizaciones_list')
+    
+    context = {
+        'cotizacion': cotizacion,
+    }
+    
+    return render(request, 'core/cotizaciones/delete.html', context)
+
+
+@login_required
+def cotizaciones_dashboard(request):
+    """Dashboard de cotizaciones"""
+    # Estadísticas generales
+    total_cotizaciones = Cotizacion.objects.count()
+    cotizaciones_aceptadas = Cotizacion.objects.filter(estado='aceptada').count()
+    cotizaciones_pendientes = Cotizacion.objects.filter(estado__in=['borrador', 'enviada']).count()
+    cotizaciones_vencidas = Cotizacion.objects.filter(estado__in=['borrador', 'enviada']).filter(fecha_vencimiento__lt=timezone.now().date()).count()
+    
+    # Montos
+    monto_total_cotizado = Cotizacion.objects.aggregate(total=Sum('monto_total'))['total'] or 0
+    monto_aceptado = Cotizacion.objects.filter(estado='aceptada').aggregate(total=Sum('monto_total'))['total'] or 0
+    monto_pendiente = Cotizacion.objects.filter(estado__in=['borrador', 'enviada']).aggregate(total=Sum('monto_total'))['total'] or 0
+    
+    # Cotizaciones recientes
+    cotizaciones_recientes = Cotizacion.objects.select_related('proyecto', 'cliente').order_by('-fecha_emision')[:10]
+    
+    # Cotizaciones por estado
+    cotizaciones_por_estado = Cotizacion.objects.values('estado').annotate(
+        cantidad=Count('id'),
+        monto_total=Sum('monto_total')
+    ).order_by('estado')
+    
+    # Cotizaciones por proyecto
+    cotizaciones_por_proyecto = Cotizacion.objects.values('proyecto__nombre').annotate(
+        cantidad=Count('id'),
+        monto_total=Sum('monto_total')
+    ).order_by('-monto_total')[:10]
+    
+    context = {
+        'total_cotizaciones': total_cotizaciones,
+        'cotizaciones_aceptadas': cotizaciones_aceptadas,
+        'cotizaciones_pendientes': cotizaciones_pendientes,
+        'cotizaciones_vencidas': cotizaciones_vencidas,
+        'monto_total_cotizado': monto_total_cotizado,
+        'monto_aceptado': monto_aceptado,
+        'monto_pendiente': monto_pendiente,
+        'cotizaciones_recientes': cotizaciones_recientes,
+        'cotizaciones_por_estado': cotizaciones_por_estado,
+        'cotizaciones_por_proyecto': cotizaciones_por_proyecto,
+    }
+    
+    return render(request, 'core/cotizaciones/dashboard.html', context)
+
+
+@login_required
+def cotizaciones_proyecto(request, proyecto_id):
+    """Cotizaciones de un proyecto específico"""
+    proyecto = get_object_or_404(Proyecto, id=proyecto_id)
+    cotizaciones = Cotizacion.objects.filter(proyecto=proyecto).select_related('cliente', 'creado_por').order_by('-fecha_emision')
+    
+    # Estadísticas del proyecto
+    total_cotizaciones = cotizaciones.count()
+    cotizaciones_aceptadas = cotizaciones.filter(estado='aceptada').count()
+    monto_total_cotizado = cotizaciones.aggregate(total=Sum('monto_total'))['total'] or 0
+    monto_aceptado = cotizaciones.filter(estado='aceptada').aggregate(total=Sum('monto_total'))['total'] or 0
+    
+    context = {
+        'proyecto': proyecto,
+        'cotizaciones': cotizaciones,
+        'total_cotizaciones': total_cotizaciones,
+        'cotizaciones_aceptadas': cotizaciones_aceptadas,
+        'monto_total_cotizado': monto_total_cotizado,
+        'monto_aceptado': monto_aceptado,
+    }
+    
+    return render(request, 'core/cotizaciones/proyecto.html', context)

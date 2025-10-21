@@ -49,7 +49,7 @@ class ColaboradorAdmin(admin.ModelAdmin):
 
 @admin.register(Proyecto)
 class ProyectoAdmin(admin.ModelAdmin):
-    list_display = ['nombre', 'cliente', 'presupuesto', 'estado', 'fecha_inicio', 'activo']
+    list_display = ['nombre', 'cliente', 'estado', 'fecha_inicio', 'activo']
     list_filter = ['estado', 'activo', 'fecha_inicio', 'cliente']
     search_fields = ['nombre', 'cliente__razon_social']
     list_editable = ['estado', 'activo']

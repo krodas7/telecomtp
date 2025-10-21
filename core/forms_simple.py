@@ -6,6 +6,7 @@ Solo los formularios esenciales que funcionan correctamente
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
+from django.utils import timezone
 from .models import *
 
 
@@ -52,8 +53,8 @@ class ProyectoForm(forms.ModelForm):
     class Meta:
         model = Proyecto
         fields = [
-            'nombre', 'descripcion', 'cliente', 'presupuesto', 
-            'fecha_inicio', 'fecha_fin', 'estado', 'activo'
+            'nombre', 'descripcion', 'cliente', 
+            'fecha_inicio', 'estado', 'activo'
         ]
         widgets = {
             'nombre': forms.TextInput(attrs={
@@ -68,16 +69,7 @@ class ProyectoForm(forms.ModelForm):
             'cliente': forms.Select(attrs={
                 'class': 'form-select'
             }),
-            'presupuesto': forms.NumberInput(attrs={
-                'class': 'form-control',
-                'step': '0.01',
-                'min': '0'
-            }),
             'fecha_inicio': forms.DateInput(attrs={
-                'class': 'form-control',
-                'type': 'date'
-            }),
-            'fecha_fin': forms.DateInput(attrs={
                 'class': 'form-control',
                 'type': 'date'
             }),
@@ -143,12 +135,34 @@ class ColaboradorForm(forms.ModelForm):
 class FacturaForm(forms.ModelForm):
     """Formulario para facturas"""
     
+    # Opciones para el porcentaje de ITBMS
+    PORCENTAJE_ITBMS_CHOICES = [
+        ('0.00', 'Sin impuesto'),
+        ('3.50', 'ITBMS 3.5%'),
+        ('7.00', 'ITBMS 7%'),
+    ]
+    
+    porcentaje_itbms = forms.ChoiceField(
+        choices=PORCENTAJE_ITBMS_CHOICES,
+        initial='7.00',
+        widget=forms.Select(attrs={
+            'class': 'form-select',
+            'onchange': 'calcularFactura()'
+        })
+    )
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Establecer valor por defecto para estado
+        if not self.instance.pk:  # Solo para nuevas instancias
+            self.fields['estado'].initial = 'emitida'
+    
     class Meta:
         model = Factura
         fields = [
             'numero_factura', 'proyecto', 'cliente', 'tipo', 'estado',
             'fecha_emision', 'fecha_vencimiento', 'monto_subtotal',
-            'monto_iva', 'monto_total', 'descripcion_servicios',
+            'porcentaje_itbms', 'monto_iva', 'monto_total', 'descripcion_servicios',
             'porcentaje_avance', 'metodo_pago', 'referencia_pago',
             'banco_origen', 'observaciones'
         ]
@@ -180,17 +194,23 @@ class FacturaForm(forms.ModelForm):
             'monto_subtotal': forms.NumberInput(attrs={
                 'class': 'form-control',
                 'step': '0.01',
-                'min': '0'
+                'min': '0',
+                'placeholder': 'Ingrese el subtotal',
+                'oninput': 'calcularFactura()'
             }),
             'monto_iva': forms.NumberInput(attrs={
                 'class': 'form-control',
                 'step': '0.01',
-                'min': '0'
+                'min': '0',
+                'readonly': 'readonly',
+                'style': 'background-color: #f8f9fa;'
             }),
             'monto_total': forms.NumberInput(attrs={
                 'class': 'form-control',
                 'step': '0.01',
-                'min': '0'
+                'min': '0',
+                'readonly': 'readonly',
+                'style': 'background-color: #f8f9fa;'
             }),
             'descripcion_servicios': forms.Textarea(attrs={
                 'class': 'form-control',
@@ -225,6 +245,13 @@ class FacturaForm(forms.ModelForm):
 class GastoForm(forms.ModelForm):
     """Formulario para gastos"""
     
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Establecer fecha por defecto si es un nuevo registro
+        if not self.instance.pk:
+            from datetime import date
+            self.fields['fecha_gasto'].initial = date.today()
+    
     def clean_monto(self):
         monto = self.cleaned_data.get('monto')
         if monto is not None:
@@ -253,7 +280,7 @@ class GastoForm(forms.ModelForm):
         model = Gasto
         fields = [
             'proyecto', 'categoria', 'descripcion', 'monto', 
-            'fecha_gasto', 'fecha_vencimiento', 'aprobado', 
+            'fecha_gasto', 'aprobado', 
             'observaciones', 'comprobante'
         ]
         widgets = {
@@ -274,10 +301,6 @@ class GastoForm(forms.ModelForm):
                 'pattern': '[0-9]+(\.[0-9]{1,2})?'
             }),
             'fecha_gasto': forms.DateInput(attrs={
-                'class': 'form-control',
-                'type': 'date'
-            }),
-            'fecha_vencimiento': forms.DateInput(attrs={
                 'class': 'form-control',
                 'type': 'date'
             }),
@@ -685,89 +708,10 @@ class EventoCalendarioForm(forms.ModelForm):
         }
 
 
-class PresupuestoForm(forms.ModelForm):
-    """Formulario para presupuestos"""
-    
-    class Meta:
-        model = Presupuesto
-        fields = ['proyecto', 'nombre', 'version', 'estado']
-        widgets = {
-            'proyecto': forms.Select(attrs={
-                'class': 'form-select'
-            }),
-            'nombre': forms.TextInput(attrs={
-                'class': 'form-control',
-                'placeholder': 'Nombre del presupuesto'
-            }),
-            'version': forms.TextInput(attrs={
-                'class': 'form-control',
-                'placeholder': '1.0'
-            }),
-            'estado': forms.Select(attrs={
-                'class': 'form-select'
-            })
-        }
+# FORMULARIO PresupuestoForm ELIMINADO - YA NO SE USA
 
 
-class PartidaPresupuestoForm(forms.ModelForm):
-    """Formulario para partidas de presupuesto"""
-    
-    class Meta:
-        model = PartidaPresupuesto
-        fields = [
-            'presupuesto', 'codigo', 'descripcion', 'unidad', 
-            'cantidad', 'precio_unitario', 'monto_estimado', 'categoria',
-            'subcategoria', 'notas', 'orden'
-        ]
-        widgets = {
-            'presupuesto': forms.Select(attrs={
-                'class': 'form-select'
-            }),
-            'codigo': forms.TextInput(attrs={
-                'class': 'form-control',
-                'placeholder': 'Código de la partida'
-            }),
-            'descripcion': forms.Textarea(attrs={
-                'class': 'form-control',
-                'rows': 2,
-                'placeholder': 'Descripción de la partida'
-            }),
-            'unidad': forms.TextInput(attrs={
-                'class': 'form-control',
-                'placeholder': 'Unidad de medida'
-            }),
-            'cantidad': forms.NumberInput(attrs={
-                'class': 'form-control',
-                'step': '0.01',
-                'min': '0'
-            }),
-            'precio_unitario': forms.NumberInput(attrs={
-                'class': 'form-control',
-                'step': '0.01',
-                'min': '0'
-            }),
-            'monto_estimado': forms.NumberInput(attrs={
-                'class': 'form-control',
-                'step': '0.01',
-                'min': '0'
-            }),
-            'categoria': forms.Select(attrs={
-                'class': 'form-select'
-            }),
-            'subcategoria': forms.TextInput(attrs={
-                'class': 'form-control',
-                'placeholder': 'Subcategoría'
-            }),
-            'notas': forms.Textarea(attrs={
-                'class': 'form-control',
-                'rows': 2,
-                'placeholder': 'Notas adicionales'
-            }),
-            'orden': forms.NumberInput(attrs={
-                'class': 'form-control',
-                'min': '0'
-            })
-        }
+# FORMULARIO PartidaPresupuestoForm ELIMINADO - YA NO SE USA
 
 
 class CategoriaInventarioForm(forms.ModelForm):
@@ -1018,4 +962,243 @@ class PlanillaTrabajadoresDiariosForm(forms.ModelForm):
     
     def clean(self):
         cleaned_data = super().clean()
+        return cleaned_data
+
+
+class IngresoProyectoForm(forms.ModelForm):
+    """Formulario para registrar ingresos por proyecto"""
+    
+    class Meta:
+        model = IngresoProyecto
+        fields = [
+            'proyecto', 'factura', 'tipo_ingreso', 'numero_documento', 'descripcion',
+            'monto_subtotal', 'monto_iva', 'monto_total', 'fecha_emision', 'fecha_registro',
+            'fecha_pago', 'porcentaje_pagado', 'observaciones'
+        ]
+        widgets = {
+            'proyecto': forms.Select(attrs={
+                'class': 'form-control',
+                'required': True
+            }),
+            'factura': forms.Select(attrs={
+                'class': 'form-control'
+            }),
+            'tipo_ingreso': forms.Select(attrs={
+                'class': 'form-control',
+                'required': True
+            }),
+            'numero_documento': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Ej: FAC-001-2025',
+                'required': True
+            }),
+            'descripcion': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 3,
+                'placeholder': 'Descripción detallada del ingreso',
+                'required': True
+            }),
+            'monto_subtotal': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'step': '0.01',
+                'min': '0',
+                'placeholder': '$0.00'
+            }),
+            'monto_iva': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'step': '0.01',
+                'min': '0',
+                'placeholder': '$0.00'
+            }),
+            'monto_total': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'step': '0.01',
+                'min': '0',
+                'placeholder': '$0.00',
+                'readonly': True
+            }),
+            'fecha_emision': forms.DateInput(attrs={
+                'class': 'form-control',
+                'type': 'date',
+                'required': True
+            }),
+            'fecha_registro': forms.DateInput(attrs={
+                'class': 'form-control',
+                'type': 'date'
+            }),
+            'fecha_pago': forms.DateInput(attrs={
+                'class': 'form-control',
+                'type': 'date'
+            }),
+            'porcentaje_pagado': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'step': '0.01',
+                'min': '0',
+                'max': '100',
+                'placeholder': '0.00'
+            }),
+            'observaciones': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 2,
+                'placeholder': 'Observaciones adicionales'
+            }),
+        }
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        
+        # Filtrar proyectos activos
+        self.fields['proyecto'].queryset = Proyecto.objects.filter(activo=True).order_by('nombre')
+        
+        # Filtrar facturas activas
+        self.fields['factura'].queryset = Factura.objects.filter(
+            estado__in=['emitida', 'enviada', 'pagada']
+        ).order_by('-fecha_emision')
+        
+        # Establecer fecha de registro por defecto
+        if not self.instance.pk:
+            self.fields['fecha_registro'].initial = timezone.now().date()
+    
+    def clean(self):
+        cleaned_data = super().clean()
+        
+        # Validar que el monto total sea positivo
+        monto_total = cleaned_data.get('monto_total')
+        if monto_total and monto_total <= 0:
+            raise forms.ValidationError('El monto total debe ser mayor a 0.')
+        
+        # Validar porcentaje pagado
+        porcentaje_pagado = cleaned_data.get('porcentaje_pagado')
+        if porcentaje_pagado and (porcentaje_pagado < 0 or porcentaje_pagado > 100):
+            raise forms.ValidationError('El porcentaje pagado debe estar entre 0 y 100.')
+        
+        return cleaned_data
+
+
+class CotizacionForm(forms.ModelForm):
+    """Formulario para cotizaciones"""
+    
+    class Meta:
+        model = Cotizacion
+        fields = [
+            'proyecto', 'cliente', 'numero_cotizacion', 'titulo', 'descripcion',
+            'tipo_cotizacion', 'estado', 'monto_subtotal', 'monto_iva', 'monto_total',
+            'fecha_emision', 'fecha_vencimiento', 'validez_dias', 'condiciones_pago',
+            'terminos_condiciones', 'archivo_cotizacion', 'observaciones', 'notas_cliente'
+        ]
+        widgets = {
+            'proyecto': forms.Select(attrs={
+                'class': 'form-select',
+                'required': True
+            }),
+            'cliente': forms.Select(attrs={
+                'class': 'form-select',
+                'required': True
+            }),
+            'numero_cotizacion': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'COT-001',
+                'required': True
+            }),
+            'titulo': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Título de la cotización',
+                'required': True
+            }),
+            'descripcion': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 4,
+                'placeholder': 'Descripción detallada de los servicios',
+                'required': True
+            }),
+            'tipo_cotizacion': forms.Select(attrs={
+                'class': 'form-select'
+            }),
+            'estado': forms.Select(attrs={
+                'class': 'form-select'
+            }),
+            'monto_subtotal': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'step': '0.01',
+                'min': '0',
+                'placeholder': '0.00',
+                'oninput': 'calcularCotizacion()'
+            }),
+            'monto_iva': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'step': '0.01',
+                'min': '0',
+                'placeholder': '0.00',
+                'readonly': True,
+                'style': 'background-color: #f8f9fa;'
+            }),
+            'monto_total': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'step': '0.01',
+                'min': '0',
+                'placeholder': '0.00',
+                'readonly': True,
+                'style': 'background-color: #f8f9fa;'
+            }),
+            'fecha_emision': forms.DateInput(attrs={
+                'class': 'form-control',
+                'type': 'date',
+                'required': True
+            }),
+            'fecha_vencimiento': forms.DateInput(attrs={
+                'class': 'form-control',
+                'type': 'date',
+                'required': True
+            }),
+            'validez_dias': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'min': '1',
+                'value': '30'
+            }),
+            'condiciones_pago': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 3,
+                'placeholder': 'Ej: 50% al inicio, 50% al finalizar'
+            }),
+            'terminos_condiciones': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 4,
+                'placeholder': 'Términos y condiciones generales'
+            }),
+            'archivo_cotizacion': forms.FileInput(attrs={
+                'class': 'form-control',
+                'accept': '.pdf,.doc,.docx'
+            }),
+            'observaciones': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 3,
+                'placeholder': 'Observaciones internas'
+            }),
+            'notas_cliente': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 3,
+                'placeholder': 'Notas o comentarios del cliente'
+            })
+        }
+    
+    def clean_numero_cotizacion(self):
+        numero_cotizacion = self.cleaned_data.get('numero_cotizacion')
+        if numero_cotizacion:
+            # Verificar que el número de cotización sea único
+            queryset = Cotizacion.objects.filter(numero_cotizacion=numero_cotizacion)
+            if self.instance.pk:
+                queryset = queryset.exclude(pk=self.instance.pk)
+            if queryset.exists():
+                raise forms.ValidationError('Ya existe una cotización con este número.')
+        return numero_cotizacion
+    
+    def clean(self):
+        cleaned_data = super().clean()
+        fecha_emision = cleaned_data.get('fecha_emision')
+        fecha_vencimiento = cleaned_data.get('fecha_vencimiento')
+        
+        if fecha_emision and fecha_vencimiento:
+            if fecha_vencimiento <= fecha_emision:
+                raise forms.ValidationError('La fecha de vencimiento debe ser posterior a la fecha de emisión.')
+        
         return cleaned_data

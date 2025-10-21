@@ -120,7 +120,7 @@
                             <p><strong>Fecha Inicio:</strong> {{ asignacion.proyecto.fecha_inicio|date:"d/m/Y"|default:"No definida" }}</p>
                         </div>
                         <div class="col-md-6">
-                            <p><strong>Presupuesto:</strong> Q{{ asignacion.proyecto.presupuesto_total|floatformat:2|default:"No definido" }}</p>
+                            <p><strong>Presupuesto:</strong> ${{ asignacion.proyecto.presupuesto_total|floatformat:2|default:"No definido" }}</p>
                             <p><strong>Progreso:</strong> {{ asignacion.proyecto.progreso|default:0 }}%</p>
                         </div>
                     </div>

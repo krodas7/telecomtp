@@ -99,7 +99,7 @@
                     <p class="text-muted">{{ trabajador.nombre }}</p>
                     
                     <h6><strong>Pago Diario:</strong></h6>
-                    <p class="text-muted">Q{{ trabajador.pago_diario|floatformat:2 }}</p>
+                    <p class="text-muted">${{ trabajador.pago_diario|floatformat:2 }}</p>
                     
                     <h6><strong>Estado:</strong></h6>
                     {% if trabajador.activo %}
@@ -121,7 +121,7 @@
                     
                     <h6><strong>Total a Pagar:</strong></h6>
                     <p class="text-muted" id="total-pagar-display">
-                        Q0.00
+                        $0.00
                     </p>
                 </div>
             </div>

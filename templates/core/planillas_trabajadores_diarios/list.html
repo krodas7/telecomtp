@@ -77,7 +77,7 @@
                                             <span class="badge bg-primary">{{ planilla.total_trabajadores }}</span>
                                         </td>
                                         <td>
-                                            <strong>Q{{ planilla.total_a_pagar|floatformat:2 }}</strong>
+                                            <strong>${{ planilla.total_a_pagar|floatformat:2 }}</strong>
                                         </td>
                                         <td>{{ planilla.fecha_creacion|date:"d/m/Y H:i" }}</td>
                                         <td>

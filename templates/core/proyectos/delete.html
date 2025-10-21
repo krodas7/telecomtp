@@ -66,9 +66,7 @@ function mostrarAyudaProyectos() {
                                 </p>
                             </div>
                             <div class="col-md-6">
-                                {% if proyecto.presupuesto %}
-                                    <p><strong>Presupuesto:</strong> {{proyecto.presupuesto|currency_gtq}}</p>
-                                {% endif %}
+                                <!-- INFORMACIÓN DE PRESUPUESTO ELIMINADA - YA NO SE USA -->
                                 {% if proyecto.fecha_inicio %}
                                     <p><strong>Fecha de Inicio:</strong> {{ proyecto.fecha_inicio|date:"d/m/Y" }}</p>
                                 {% endif %}

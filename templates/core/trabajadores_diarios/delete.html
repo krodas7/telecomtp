@@ -45,7 +45,7 @@
                             <h6><strong>Información del Trabajador:</strong></h6>
                             <ul class="list-unstyled">
                                 <li><strong>Nombre:</strong> {{ trabajador.nombre }}</li>
-                                <li><strong>Pago Diario:</strong> Q{{ trabajador.pago_diario|floatformat:2 }}</li>
+                                <li><strong>Pago Diario:</strong> ${{ trabajador.pago_diario|floatformat:2 }}</li>
                                 <li><strong>Estado:</strong> 
                                     {% if trabajador.activo %}
                                         <span class="badge bg-success">Activo</span>
@@ -59,7 +59,7 @@
                             <h6><strong>Resumen de Trabajo:</strong></h6>
                             <ul class="list-unstyled">
                                 <li><strong>Días Trabajados:</strong> {{ trabajador.total_dias_trabajados }}</li>
-                                <li><strong>Total a Pagar:</strong> Q{{ trabajador.total_a_pagar|floatformat:2 }}</li>
+                                <li><strong>Total a Pagar:</strong> ${{ trabajador.total_a_pagar|floatformat:2 }}</li>
                                 <li><strong>Registros:</strong> {{ trabajador.registros.count }}</li>
                             </ul>
                         </div>

@@ -45,7 +45,7 @@
                                 Total a Pagar
                             </div>
                             <div class="h5 mb-0 font-weight-bold text-gray-800">
-                                Q{{ total_a_pagar|floatformat:2 }}
+                                ${{ total_a_pagar|floatformat:2 }}
                             </div>
                         </div>
                         <div class="col-auto">
@@ -65,7 +65,7 @@
                                 Total Anticipos
                             </div>
                             <div class="h5 mb-0 font-weight-bold text-gray-800">
-                                Q{{ total_anticipos|floatformat:2 }}
+                                ${{ total_anticipos|floatformat:2 }}
                             </div>
                         </div>
                         <div class="col-auto">
@@ -85,7 +85,7 @@
                                 Anticipos Aplicados
                             </div>
                             <div class="h5 mb-0 font-weight-bold text-gray-800">
-                                Q{{ total_aplicado|floatformat:2 }}
+                                ${{ total_aplicado|floatformat:2 }}
                             </div>
                         </div>
                         <div class="col-auto">
@@ -105,7 +105,7 @@
                                 Saldo Pendiente
                             </div>
                             <div class="h5 mb-0 font-weight-bold text-gray-800">
-                                Q{{ saldo_pendiente|floatformat:2 }}
+                                ${{ saldo_pendiente|floatformat:2 }}
                             </div>
                         </div>
                         <div class="col-auto">
@@ -146,7 +146,7 @@
                                 <td>
                                     <strong>{{ anticipo.trabajador.nombre }}</strong>
                                 </td>
-                                <td class="text-end">Q{{ anticipo.monto|floatformat:2 }}</td>
+                                <td class="text-end">${{ anticipo.monto|floatformat:2 }}</td>
                                 <td>{{ anticipo.fecha_anticipo|date:"d/m/Y" }}</td>
                                 <td>
                                     {% if anticipo.estado == 'pendiente' %}
@@ -159,8 +159,8 @@
                                         <span class="badge bg-danger">Cancelado</span>
                                     {% endif %}
                                 </td>
-                                <td class="text-end">Q{{ anticipo.monto_aplicado|floatformat:2 }}</td>
-                                <td class="text-end">Q{{ anticipo.saldo_pendiente|floatformat:2 }}</td>
+                                <td class="text-end">${{ anticipo.monto_aplicado|floatformat:2 }}</td>
+                                <td class="text-end">${{ anticipo.saldo_pendiente|floatformat:2 }}</td>
                                 <td>{{ anticipo.observaciones|default:"-"|truncatechars:30 }}</td>
                                 <td>
                                     <div class="btn-group" role="group">

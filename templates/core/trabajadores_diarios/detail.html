@@ -64,7 +64,7 @@
                             <strong>Pago Diario:</strong>
                         </div>
                         <div class="col-sm-8">
-                            <span class="badge bg-success fs-6">Q{{ trabajador.pago_diario|floatformat:2 }}</span>
+                            <span class="badge bg-success fs-6">${{ trabajador.pago_diario|floatformat:2 }}</span>
                         </div>
                     </div>
                     
@@ -115,7 +115,7 @@
                             <small class="text-muted">Días Trabajados</small>
                         </div>
                         <div class="col-6">
-                            <h4 class="text-success">Q{{ trabajador.total_a_pagar|floatformat:2 }}</h4>
+                            <h4 class="text-success">${{ trabajador.total_a_pagar|floatformat:2 }}</h4>
                             <small class="text-muted">Total a Pagar</small>
                         </div>
                     </div>
@@ -154,7 +154,7 @@
                                         <td>{{ registro.fecha_inicio|date:"d/m/Y" }}</td>
                                         <td>{{ registro.fecha_fin|date:"d/m/Y" }}</td>
                                         <td class="text-center">{{ registro.dias_trabajados }}</td>
-                                        <td class="text-end">Q{{ registro.total_pagar|floatformat:2 }}</td>
+                                        <td class="text-end">${{ registro.total_pagar|floatformat:2 }}</td>
                                         <td>{{ registro.observaciones|default:"-" }}</td>
                                         <td>
                                             <div class="btn-group" role="group">

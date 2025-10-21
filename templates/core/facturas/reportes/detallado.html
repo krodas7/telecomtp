@@ -275,26 +275,26 @@
         <div class="stats-grid">
             <div class="stat-card">
                 <div class="stat-card-title">Total Facturado</div>
-                <div class="stat-card-value">{{total_facturado|currency_gtq}}</div>
+                <div class="stat-card-value">${{total_facturado|floatformat:2}}</div>
                 <div class="stat-card-subtitle">Monto total facturado</div>
             </div>
             
             <div class="stat-card">
                 <div class="stat-card-title">Total Cobrado</div>
-                <div class="stat-card-value">{{total_cobrado|currency_gtq}}</div>
+                <div class="stat-card-value">${{total_cobrado|floatformat:2}}</div>
                 <div class="stat-card-subtitle">Monto total cobrado</div>
             </div>
             
             <div class="stat-card">
                 <div class="stat-card-title">Total Pendiente</div>
-                <div class="stat-card-value">{{total_pendiente|currency_gtq}}</div>
+                <div class="stat-card-value">${{total_pendiente|floatformat:2}}</div>
                 <div class="stat-card-subtitle">Monto pendiente de cobro</div>
             </div>
             
             <div class="stat-card">
                 <div class="stat-card-title">Porcentaje Cobrado</div>
                                  <div class="stat-card-value">
-                     {{ total_cobrado|percentage:total_facturado }}%
+                     ${{ total_cobrado|percentage:total_facturado }}%
                  </div>
                 <div class="stat-card-subtitle">Eficiencia de cobranza</div>
             </div>
@@ -302,7 +302,7 @@
         
                  <!-- Barra de progreso -->
          <div class="progress-modern">
-             <div class="progress-bar-modern" style="width: {{ total_cobrado|percentage:total_facturado }}%"></div>
+             <div class="progress-bar-modern" style="width: ${{ total_cobrado|percentage:total_facturado }}%"></div>
          </div>
     </div>
 
@@ -315,7 +315,7 @@
         
         <div class="alert-modern danger">
             <h5><i class="fas fa-exclamation-triangle me-2"></i>Atención</h5>
-            <p class="mb-0">Tienes <strong>{{ facturas_vencidas.count }}</strong> facturas vencidas por un total de <strong>{{ total_vencidas|currency_gtq }}</strong></p>
+            <p class="mb-0">Tienes <strong>${{ facturas_vencidas.count }}</strong> facturas vencidas por un total de <strong>${{ total_vencidas|floatformat:2 }}</strong></p>
         </div>
         
         <div class="table-responsive">
@@ -332,13 +332,13 @@
                 <tbody>
                     {% for factura in facturas_vencidas %}
                     <tr>
-                        <td><strong>{{ factura.numero_factura }}</strong></td>
-                        <td>{{ factura.cliente.razon_social }}</td>
-                        <td><strong>{{factura.monto_total|currency_gtq}}</strong></td>
-                        <td>{{ factura.fecha_vencimiento|date:"d/m/Y" }}</td>
+                        <td><strong>${{ factura.numero_factura }}</strong></td>
+                        <td>${{ factura.cliente.razon_social }}</td>
+                        <td><strong>${{factura.monto_total|floatformat:2}}</strong></td>
+                        <td>${{ factura.fecha_vencimiento|date:"d/m/Y" }}</td>
                         <td>
                             <span class="badge-modern danger">
-                                {{ factura.fecha_vencimiento|timesince }}
+                                ${{ factura.fecha_vencimiento|timesince }}
                             </span>
                         </td>
                     </tr>
@@ -372,38 +372,38 @@
                         <td>
                             {% if stat.estado == 'emitida' %}
                                 <span class="badge-modern warning">
-                                    <i class="fas fa-clock me-1"></i>{{ stat.estado_display }}
+                                    <i class="fas fa-clock me-1"></i>${{ stat.estado_display }}
                                 </span>
                             {% elif stat.estado == 'pagada' %}
                                 <span class="badge-modern success">
-                                    <i class="fas fa-check-circle me-1"></i>{{ stat.estado_display }}
+                                    <i class="fas fa-check-circle me-1"></i>${{ stat.estado_display }}
                                 </span>
                             {% elif stat.estado == 'vencida' %}
                                 <span class="badge-modern danger">
-                                    <i class="fas fa-exclamation-triangle me-1"></i>{{ stat.estado_display }}
+                                    <i class="fas fa-exclamation-triangle me-1"></i>${{ stat.estado_display }}
                                 </span>
                             {% elif stat.estado == 'borrador' %}
                                 <span class="badge-modern secondary">
-                                    <i class="fas fa-edit me-1"></i>{{ stat.estado_display }}
+                                    <i class="fas fa-edit me-1"></i>${{ stat.estado_display }}
                                 </span>
                             {% elif stat.estado == 'enviada' %}
                                 <span class="badge-modern info">
-                                    <i class="fas fa-paper-plane me-1"></i>{{ stat.estado_display }}
+                                    <i class="fas fa-paper-plane me-1"></i>${{ stat.estado_display }}
                                 </span>
                             {% elif stat.estado == 'cancelada' %}
                                 <span class="badge-modern dark">
-                                    <i class="fas fa-ban me-1"></i>{{ stat.estado_display }}
+                                    <i class="fas fa-ban me-1"></i>${{ stat.estado_display }}
                                 </span>
                             {% else %}
-                                <span class="badge-modern secondary">{{ stat.estado_display }}</span>
+                                <span class="badge-modern secondary">${{ stat.estado_display }}</span>
                             {% endif %}
                         </td>
-                        <td><strong>{{ stat.cantidad }}</strong></td>
-                        <td><strong>{{ stat.monto_total|currency_gtq }}</strong></td>
-                        <td><strong>{{ stat.monto_pagado|currency_gtq }}</strong></td>
+                        <td><strong>${{ stat.cantidad }}</strong></td>
+                        <td><strong>${{ stat.monto_total|floatformat:2 }}</strong></td>
+                        <td><strong>${{ stat.monto_pagado|floatformat:2 }}</strong></td>
                         <td>
                             <span class="badge-modern {% if stat.porcentaje >= 80 %}success{% elif stat.porcentaje >= 50 %}warning{% else %}danger{% endif %}">
-                                {{ stat.porcentaje }}%
+                                ${{ stat.porcentaje }}%
                             </span>
                         </td>
                     </tr>
@@ -433,18 +433,18 @@
                 <tbody>
                     {% for stat in stats_por_cliente %}
                     <tr>
-                        <td><strong>{{ stat.cliente_nombre|default:"Sin Cliente" }}</strong></td>
-                        <td><strong>{{ stat.cantidad }}</strong></td>
-                        <td><strong>{{ stat.monto_total|currency_gtq }}</strong></td>
-                        <td><strong>{{ stat.monto_pagado|currency_gtq }}</strong></td>
+                        <td><strong>${{ stat.cliente_nombre|default:"Sin Cliente" }}</strong></td>
+                        <td><strong>${{ stat.cantidad }}</strong></td>
+                        <td><strong>${{ stat.monto_total|floatformat:2 }}</strong></td>
+                        <td><strong>${{ stat.monto_pagado|floatformat:2 }}</strong></td>
                         <td>
                             <span class="badge-modern {% if stat.porcentaje >= 80 %}success{% elif stat.porcentaje >= 50 %}warning{% else %}danger{% endif %}">
-                                {{ stat.porcentaje }}%
+                                ${{ stat.porcentaje }}%
                             </span>
                             {% if stat.presupuesto_proyecto %}
                                 <small class="text-muted d-block">
                                     <i class="fas fa-info-circle me-1"></i>
-                                    Basado en presupuesto: {{ stat.presupuesto_proyecto|currency_gtq }}
+                                    Basado en presupuesto: ${{ stat.presupuesto_proyecto|floatformat:2 }}
                                 </small>
                             {% endif %}
                         </td>
@@ -462,10 +462,10 @@
         </h3>
         
         <div class="d-flex gap-3 flex-wrap">
-            <a href="{% url 'facturas_reporte_pdf' %}?{{ request.GET.urlencode }}" class="btn-export btn-pdf">
+            <a href="{% url 'facturas_reporte_pdf' %}?${{ request.GET.urlencode }}" class="btn-export btn-pdf">
                 <i class="fas fa-file-pdf"></i>Exportar PDF
             </a>
-            <a href="{% url 'facturas_reporte_excel' %}?{{ request.GET.urlencode }}" class="btn-export btn-excel">
+            <a href="{% url 'facturas_reporte_excel' %}?${{ request.GET.urlencode }}" class="btn-export btn-excel">
                 <i class="fas fa-file-excel"></i>Exportar Excel
             </a>
             <a href="{% url 'facturas_list' %}" class="btn-export">

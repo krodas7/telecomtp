@@ -31,39 +31,39 @@
                         <div class="col-md-6">
                             <div class="info-item">
                                 <label class="info-label">Número de Factura</label>
-                                <p class="info-value">{{ factura.numero_factura }}</p>
+                                <p class="info-value">${{ factura.numero_factura }}</p>
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="info-item">
                                 <label class="info-label">Estado</label>
                                 <span class="badge {% if factura.estado == 'pagada' %}bg-success{% elif factura.estado == 'emitida' %}bg-warning{% else %}bg-danger{% endif %}">
-                                    {{ factura.get_estado_display }}
+                                    ${{ factura.get_estado_display }}
                                 </span>
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="info-item">
                                 <label class="info-label">Monto Total</label>
-                                <p class="info-value">{{factura.monto_total|currency_gtq}}</p>
+                                <p class="info-value">${{factura.monto_total|floatformat:2}}</p>
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="info-item">
                                 <label class="info-label">Monto Pagado</label>
-                                <p class="info-value">{{factura.monto_pagado|currency_gtq}}</p>
+                                <p class="info-value">${{factura.monto_pagado|floatformat:2}}</p>
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="info-item">
                                 <label class="info-label">Fecha de Emisión</label>
-                                <p class="info-value">{{ factura.fecha_emision|date:"d/m/Y" }}</p>
+                                <p class="info-value">${{ factura.fecha_emision|date:"d/m/Y" }}</p>
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="info-item">
                                 <label class="info-label">Fecha de Vencimiento</label>
-                                <p class="info-value">{{ factura.fecha_vencimiento|date:"d/m/Y" }}</p>
+                                <p class="info-value">${{ factura.fecha_vencimiento|date:"d/m/Y" }}</p>
                             </div>
                         </div>
                         {% if factura.estado == 'pagada' and factura.fecha_pago %}
@@ -71,7 +71,7 @@
                             <div class="info-item">
                                 <label class="info-label">Fecha de Pago</label>
                                 <p class="info-value text-success">
-                                    <i class="fas fa-check-circle me-2"></i>{{ factura.fecha_pago|date:"d/m/Y" }}
+                                    <i class="fas fa-check-circle me-2"></i>${{ factura.fecha_pago|date:"d/m/Y" }}
                                 </p>
                             </div>
                         </div>
@@ -79,13 +79,13 @@
                         <div class="col-12">
                             <div class="info-item">
                                 <label class="info-label">Cliente</label>
-                                <p class="info-value">{{ factura.cliente.razon_social }}</p>
+                                <p class="info-value">${{ factura.cliente.razon_social }}</p>
                             </div>
                         </div>
                         <div class="col-12">
                             <div class="info-item">
                                 <label class="info-label">Proyecto</label>
-                                <p class="info-value">{{ factura.proyecto.nombre }}</p>
+                                <p class="info-value">${{ factura.proyecto.nombre }}</p>
                             </div>
                         </div>
                         <div class="col-12">
@@ -93,7 +93,7 @@
                                 <label class="info-label">Creado por</label>
                                 <p class="info-value">
                                     {% if factura.creado_por %}
-                                        {{ factura.creado_por.get_full_name|default:factura.creado_por.username }}
+                                        ${{ factura.creado_por.get_full_name|default:factura.creado_por.username }}
                                     {% else %}
                                         <span class="text-muted">No especificado</span>
                                     {% endif %}
@@ -117,27 +117,27 @@
                         <div class="col-md-6">
                             <div class="info-item">
                                 <label class="info-label">Nombre del Proyecto</label>
-                                <p class="info-value">{{ factura.proyecto.nombre }}</p>
+                                <p class="info-value">${{ factura.proyecto.nombre }}</p>
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="info-item">
                                 <label class="info-label">Estado del Proyecto</label>
                                 <span class="badge {% if factura.proyecto.estado == 'completado' %}bg-success{% elif factura.proyecto.estado == 'en_progreso' %}bg-primary{% elif factura.proyecto.estado == 'pendiente' %}bg-warning{% else %}bg-secondary{% endif %}">
-                                    {{ factura.proyecto.get_estado_display }}
+                                    ${{ factura.proyecto.get_estado_display }}
                                 </span>
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="info-item">
-                                <label class="info-label">Presupuesto del Proyecto</label>
-                                <p class="info-value">Q{{ factura.proyecto.presupuesto|floatformat:2|default:"No especificado" }}</p>
+                                <label class="info-label">Balance del Proyecto</label>
+                                <p class="info-value">$${{ factura.proyecto_balance|floatformat:2|default:"0.00" }}</p>
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="info-item">
                                 <label class="info-label">Fecha de Inicio</label>
-                                <p class="info-value">{{ factura.proyecto.fecha_inicio|date:"d/m/Y"|default:"No especificada" }}</p>
+                                <p class="info-value">${{ factura.proyecto.fecha_inicio|date:"d/m/Y"|default:"No especificada" }}</p>
                             </div>
                         </div>
                     </div>
@@ -155,7 +155,7 @@
                 <div class="card-body">
                     <div class="d-grid gap-3">
                         {% if factura.estado != 'pagada' %}
-                            <button type="button" class="btn btn-success" onclick="marcarComoPagada({{ factura.id }}, '{{ factura.numero_factura }}')">
+                            <button type="button" class="btn btn-success" onclick="marcarComoPagada(${{ factura.id }}, '${{ factura.numero_factura }}')">
                                 <i class="fas fa-check me-2"></i>Marcar como Pagada
                             </button>
                         {% endif %}
