@@ -54,7 +54,7 @@
                             <td>
                                 {% if categoria.gastos.count > 0 %}
                                     <strong class="text-success">
-                                        ${{ categoria.gastos.all|dictsort:"monto"|last.monto|floatformat:2 }}
+                                        ${{ categoria.gastos_total|floatformat:2 }}
                                     </strong>
                                 {% else %}
                                     <span class="text-muted">$0.00</span>

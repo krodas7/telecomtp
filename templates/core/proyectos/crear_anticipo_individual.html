@@ -259,7 +259,7 @@
             <label for="colaborador" class="form-label">
                 <i class="fas fa-user me-2"></i>Seleccionar Colaborador
             </label>
-            <select id="colaborador" name="colaborador" class="form-select" required onchange="mostrarColaborador()">
+            <select id="colaborador" name="colaborador" class="form-select" required>
                 <option value="">-- Selecciona un colaborador --</option>
                 {% for colaborador in colaboradores_disponibles %}
                     <option value="{{ colaborador.id }}" 
@@ -276,7 +276,7 @@
         
         <div class="form-group">
             <label for="monto" class="form-label">
-                <i class="fas fa-dollar-sign me-2"></i>Monto del Anticipo (Q)
+                <i class="fas fa-dollar-sign me-2"></i>Monto del Anticipo
             </label>
             <input type="number" 
                    id="monto" 
@@ -366,7 +366,7 @@
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
                     <i class="fas fa-times me-2"></i>Cancelar
                 </button>
-                <button type="button" class="btn btn-success" id="confirmSubmit">
+                <button type="button" class="btn btn-success" onclick="confirmarAnticipo()">
                     <i class="fas fa-check me-2"></i>Confirmar Anticipo
                 </button>
             </div>
@@ -377,14 +377,16 @@
 
 {% block extra_js %}
 <script>
-function mostrarColaborador() {
+// Hacer la función disponible globalmente
+window.mostrarColaborador = function() {
+    console.log('mostrarColaborador llamada');
     const select = document.getElementById('colaborador');
     const preview = document.getElementById('colaboradorPreview');
     const info = document.getElementById('colaboradorInfo');
     const contact = document.getElementById('colaboradorContact');
     const btnCrear = document.getElementById('btnCrear');
     
-    if (select.value) {
+    if (select && select.value) {
         const option = select.options[select.selectedIndex];
         const nombre = option.getAttribute('data-nombre');
         const dpi = option.getAttribute('data-dpi');
@@ -403,14 +405,21 @@ function mostrarColaborador() {
         
         contact.innerHTML = contactInfo || 'Sin información de contacto';
         preview.style.display = 'block';
-        btnCrear.disabled = false;
+        if (btnCrear) {
+            btnCrear.disabled = false;
+        }
     } else {
-        preview.style.display = 'none';
-        btnCrear.disabled = true;
+        if (preview) {
+            preview.style.display = 'none';
+        }
+        if (btnCrear) {
+            btnCrear.disabled = true;
+        }
     }
-}
+};
 
 document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOMContentLoaded ejecutado');
     // Animación de entrada
     const container = document.querySelector('.anticipo-container');
     container.style.opacity = '0';
@@ -445,25 +454,30 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
         
-        // Mostrar modal de confirmación
+        // Llenar el modal con los datos
         const colaboradorNombre = colaboradorSelect.options[colaboradorSelect.selectedIndex].text;
         const concepto = document.getElementById('concepto').value;
         
-        // Llenar el modal con los datos
         document.getElementById('modalColaborador').textContent = colaboradorNombre;
-        document.getElementById('modalMonto').textContent = `Q${monto.toFixed(2)}`;
+        document.getElementById('modalMonto').textContent = `$${monto.toFixed(2)}`;
         document.getElementById('modalConcepto').textContent = concepto;
         
         // Mostrar el modal
-        const modal = new bootstrap.Modal(document.getElementById('confirmModal'));
+        const modalElement = document.getElementById('confirmModal');
+        const modal = new bootstrap.Modal(modalElement);
         modal.show();
     });
     
-    // Manejar la confirmación del modal
-    document.getElementById('confirmSubmit').addEventListener('click', function() {
-        // Enviar el formulario
+    // Manejar la confirmación del modal - usar onclick directamente en el HTML
+    window.confirmarAnticipo = function() {
+        console.log('Botón confirmar presionado');
         document.getElementById('anticipoForm').submit();
-    });
+    };
+    
+    // Agregar event listener al selector de colaborador
+    if (colaboradorSelect) {
+        colaboradorSelect.addEventListener('change', mostrarColaborador);
+    }
 });
 </script>
 {% endblock %}

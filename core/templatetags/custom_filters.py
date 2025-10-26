@@ -72,19 +72,19 @@ def currency_format(value):
 
 @register.filter
 def currency_gtq(value):
-    """Formatea un valor como moneda guatemalteca (Q)"""
+    """Formatea un valor como moneda (USD)"""
     try:
         if value is None:
-            return "Q0.00"
+            return "$0.00"
         
         # Convertir a float si es Decimal
         if isinstance(value, Decimal):
             value = float(value)
         
         # Formatear con separador de miles y 2 decimales
-        return f"Q{value:,.2f}"
+        return f"${value:,.2f}"
     except (ValueError, TypeError):
-        return "Q0.00"
+        return "$0.00"
 
 @register.filter
 def js_float(value):

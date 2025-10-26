@@ -490,6 +490,11 @@ class CategoriaGasto(models.Model):
     
     def __str__(self):
         return self.nombre
+    
+    @property
+    def gastos_total(self):
+        """Retorna el total de gastos en esta categoría"""
+        return self.gastos.aggregate(total=Sum('monto'))['total'] or 0
 
 
 class Gasto(models.Model):
