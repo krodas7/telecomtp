@@ -1390,9 +1390,17 @@ def gastos_dashboard(request):
 def gasto_create(request):
     """Crear gasto"""
     if request.method == 'POST':
+        logger.info(f"📝 POST recibido para crear gasto")
+        logger.info(f"📝 Datos POST: {request.POST}")
+        logger.info(f"📝 Archivos FILES: {request.FILES}")
+        
         form = GastoForm(request.POST, request.FILES)
+        logger.info(f"📝 Formulario creado: {form}")
+        
         if form.is_valid():
+            logger.info("✅ Formulario es válido, guardando gasto...")
             gasto = form.save()
+            logger.info(f"✅ Gasto guardado con ID: {gasto.id}")
             
             # Registrar actividad
             LogActividad.objects.create(
@@ -1404,15 +1412,23 @@ def gasto_create(request):
             )
             
             messages.success(request, 'Gasto creado exitosamente')
-            return redirect('egresos_list')
+            return redirect('egresos_dashboard')
         else:
             # Log de errores para debugging
-            logger.error(f'Errores en formulario de gasto: {form.errors}')
+            logger.error(f'❌ Errores en formulario de gasto: {form.errors}')
+            logger.error(f'❌ Datos del formulario: {form.data}')
+            logger.error(f'❌ Clases de datos: {[(k, type(v)) for k, v in form.data.items()]}')
             messages.error(request, f'Error al crear el gasto. Por favor verifica los campos.')
     else:
         form = GastoForm()
     
-    return render(request, 'core/egresos/create_moderno.html', {'form': form})
+    context = {
+        'form': form,
+        'categorias': CategoriaGasto.objects.all(),
+        'proyectos': Proyecto.objects.filter(activo=True)
+    }
+    
+    return render(request, 'core/egresos/create_moderno.html', context)
 
 
 @login_required

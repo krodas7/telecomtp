@@ -738,17 +738,24 @@
         
         // Validación del formulario al enviar
         form.addEventListener('submit', function(e) {
+            console.log('📝 Formulario intentando enviarse...');
             let isValid = true;
             
             inputs.forEach(input => {
                 if (!validateField(input)) {
                     isValid = false;
+                    console.log(`❌ Campo inválido: ${input.id} = "${input.value}"`);
+                } else {
+                    console.log(`✅ Campo válido: ${input.id} = "${input.value}"`);
                 }
             });
             
             if (!isValid) {
+                console.log('❌ Formulario tiene errores, previniendo envío');
                 e.preventDefault();
                 showAlert('Por favor, corrige los errores en el formulario', 'danger');
+            } else {
+                console.log('✅ Formulario válido, enviando...');
             }
         });
         
@@ -772,6 +779,15 @@
                 } else if (field.type === 'number' && isNaN(value)) {
                     field.classList.add('is-invalid');
                     isValid = false;
+                } else if (field.id === 'id_monto') {
+                    // Validación específica para monto
+                    const montoValue = parseFloat(value);
+                    if (isNaN(montoValue) || montoValue <= 0) {
+                        field.classList.add('is-invalid');
+                        isValid = false;
+                    } else {
+                        field.classList.add('is-valid');
+                    }
                 } else {
                     field.classList.add('is-valid');
                 }
