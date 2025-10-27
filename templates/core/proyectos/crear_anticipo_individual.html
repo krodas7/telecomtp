@@ -366,7 +366,7 @@
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
                     <i class="fas fa-times me-2"></i>Cancelar
                 </button>
-                <button type="button" class="btn btn-success" onclick="confirmarAnticipo()">
+                <button type="button" class="btn btn-success" id="btnConfirmarAnticipo">
                     <i class="fas fa-check me-2"></i>Confirmar Anticipo
                 </button>
             </div>
@@ -471,8 +471,24 @@ document.addEventListener('DOMContentLoaded', function() {
     // Manejar la confirmación del modal - usar onclick directamente en el HTML
     window.confirmarAnticipo = function() {
         console.log('Botón confirmar presionado');
+        // Cerrar el modal primero
+        const modalElement = document.getElementById('confirmModal');
+        const modal = bootstrap.Modal.getInstance(modalElement);
+        if (modal) {
+            modal.hide();
+        }
+        // Enviar el formulario
         document.getElementById('anticipoForm').submit();
     };
+    
+    // También agregar listener al botón por si acaso
+    const btnConfirmar = document.getElementById('btnConfirmarAnticipo');
+    if (btnConfirmar) {
+        btnConfirmar.addEventListener('click', function(e) {
+            e.preventDefault();
+            window.confirmarAnticipo();
+        });
+    }
     
     // Agregar event listener al selector de colaborador
     if (colaboradorSelect) {
