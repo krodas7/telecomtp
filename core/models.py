@@ -1842,3 +1842,53 @@ class Cotizacion(models.Model):
         super().save(*args, **kwargs)
 
 
+class ItemCotizacion(models.Model):
+    """Modelo para items individuales dentro de una cotización"""
+    
+    cotizacion = models.ForeignKey(Cotizacion, on_delete=models.CASCADE, related_name='items')
+    
+    # Descripción y cantidad
+    descripcion = models.CharField(max_length=500, help_text="Descripción del item")
+    cantidad = models.DecimalField(max_digits=10, decimal_places=2, default=1, help_text="Cantidad del item")
+    
+    # Precios
+    precio_unitario = models.DecimalField(max_digits=12, decimal_places=2, help_text="Precio unitario de venta")
+    precio_costo = models.DecimalField(max_digits=12, decimal_places=2, default=0, help_text="Precio de costo del item")
+    total = models.DecimalField(max_digits=12, decimal_places=2, help_text="Total del item (cantidad × precio unitario)")
+    
+    # Orden de visualización
+    orden = models.PositiveIntegerField(default=0, help_text="Orden de visualización del item")
+    
+    # Campos de auditoría
+    creado_en = models.DateTimeField(auto_now_add=True)
+    modificado_en = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        verbose_name = 'Item de Cotización'
+        verbose_name_plural = 'Items de Cotización'
+        ordering = ['orden', 'id']
+        indexes = [
+            models.Index(fields=['cotizacion', 'orden']),
+        ]
+    
+    def __str__(self):
+        return f"{self.cotizacion.numero_cotizacion} - Item {self.orden}: {self.descripcion[:50]}"
+    
+    @property
+    def margen_ganancia(self):
+        """Calcula el margen de ganancia del item"""
+        if self.precio_costo > 0:
+            ganancia = self.total - (self.cantidad * self.precio_costo)
+            return (ganancia / (self.cantidad * self.precio_costo)) * 100
+        return 0
+    
+    def calcular_total(self):
+        """Calcula automáticamente el total del item"""
+        self.total = self.cantidad * self.precio_unitario
+    
+    def save(self, *args, **kwargs):
+        """Override save para calcular total automáticamente"""
+        self.calcular_total()
+        super().save(*args, **kwargs)
+
+

@@ -140,6 +140,76 @@
             transform: translateY(0);
         }
     }
+    
+    /* Items Table Styles */
+    .items-table-container {
+        margin-top: 1rem;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    }
+    
+    #itemsTable {
+        margin-bottom: 0;
+    }
+    
+    #itemsTable thead th {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        font-weight: 600;
+        padding: 1rem;
+        text-align: center;
+        border: none;
+    }
+    
+    #itemsTable tbody td {
+        padding: 0.75rem;
+        vertical-align: middle;
+        border-bottom: 1px solid #e9ecef;
+    }
+    
+    #itemsTable tfoot {
+        background-color: #f8f9fa;
+        font-weight: 600;
+    }
+    
+    #itemsTable tfoot td {
+        padding: 1rem;
+        border-top: 2px solid #667eea;
+    }
+    
+    .item-row input {
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+    }
+    
+    .item-row input:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+        outline: none;
+    }
+    
+    .item-total {
+        background-color: #f8f9fa;
+        font-weight: 600;
+        color: #667eea;
+    }
+    
+    .add-item, .remove-item {
+        border-radius: 8px;
+        transition: all 0.3s ease;
+    }
+    
+    .add-item:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    }
+    
+    .remove-item:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(220, 53, 69, 0.3);
+    }
 </style>
 {% endblock %}
 
@@ -222,6 +292,66 @@
                                 {% endfor %}
                             </div>
                         {% endif %}
+                    </div>
+                </div>
+
+                <!-- Items de Cotización -->
+                <div class="form-group">
+                    <label class="form-label">
+                        <i class="fas fa-list"></i>Items de la Cotización
+                    </label>
+                    <div class="items-table-container">
+                        <table class="table table-bordered" id="itemsTable">
+                            <thead class="table-light">
+                                <tr>
+                                    <th style="width: 40%;">Descripción</th>
+                                    <th style="width: 12%;">Cantidad</th>
+                                    <th style="width: 12%;">Precio Unitario</th>
+                                    <th style="width: 12%;">Precio Costo</th>
+                                    <th style="width: 12%;">Total</th>
+                                    <th style="width: 12%;">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="itemsTableBody">
+                                <tr class="item-row">
+                                    <td>
+                                        <input type="text" class="form-control item-descripcion" placeholder="Descripción del item">
+                                    </td>
+                                    <td>
+                                        <input type="number" class="form-control item-cantidad" step="0.01" min="0" value="1" placeholder="1">
+                                    </td>
+                                    <td>
+                                        <input type="number" class="form-control item-precio-unitario" step="0.01" min="0" placeholder="0.00">
+                                    </td>
+                                    <td>
+                                        <input type="number" class="form-control item-precio-costo" step="0.01" min="0" placeholder="0.00">
+                                    </td>
+                                    <td>
+                                        <input type="text" class="form-control item-total" readonly placeholder="0.00">
+                                    </td>
+                                    <td>
+                                        <button type="button" class="btn btn-danger btn-sm remove-item" title="Eliminar item">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                            <tfoot>
+                                <tr>
+                                    <td colspan="4" class="text-end">
+                                        <strong>Subtotal:</strong>
+                                    </td>
+                                    <td>
+                                        <strong id="itemsSubtotal">$0.00</strong>
+                                    </td>
+                                    <td>
+                                        <button type="button" class="btn btn-primary btn-sm add-item" title="Agregar item">
+                                            <i class="fas fa-plus"></i> Agregar
+                                        </button>
+                                    </td>
+                                </tr>
+                            </tfoot>
+                        </table>
                     </div>
                 </div>
 
@@ -558,6 +688,98 @@ document.addEventListener('DOMContentLoaded', function() {
     window.calcularCotizacion = calcularCotizacion;
     
     console.log('✅ JavaScript de cotización cargado correctamente');
+    
+    // ===========================
+    // Funciones para Items
+    // ===========================
+    let itemCounter = 1;
+    
+    // Función para calcular total de un item
+    function calcularItemTotal(row) {
+        const cantidad = parseFloat(row.querySelector('.item-cantidad').value) || 0;
+        const precioUnitario = parseFloat(row.querySelector('.item-precio-unitario').value) || 0;
+        const total = cantidad * precioUnitario;
+        row.querySelector('.item-total').value = total.toFixed(2);
+        actualizarSubtotalItems();
+    }
+    
+    // Función para actualizar subtotal de items
+    function actualizarSubtotalItems() {
+        let subtotal = 0;
+        const rows = document.querySelectorAll('.item-row');
+        
+        rows.forEach(row => {
+            const total = parseFloat(row.querySelector('.item-total').value) || 0;
+            subtotal += total;
+        });
+        
+        document.getElementById('itemsSubtotal').textContent = `$${subtotal.toFixed(2)}`;
+        
+        // Actualizar el campo subtotal del formulario
+        if (montoSubtotalInput) {
+            montoSubtotalInput.value = subtotal.toFixed(2);
+            calcularCotizacion();
+        }
+    }
+    
+    // Función para agregar un nuevo item
+    function agregarItem() {
+        const tbody = document.getElementById('itemsTableBody');
+        const newRow = document.createElement('tr');
+        newRow.className = 'item-row';
+        newRow.innerHTML = `
+            <td>
+                <input type="text" class="form-control item-descripcion" placeholder="Descripción del item">
+            </td>
+            <td>
+                <input type="number" class="form-control item-cantidad" step="0.01" min="0" value="1" placeholder="1">
+            </td>
+            <td>
+                <input type="number" class="form-control item-precio-unitario" step="0.01" min="0" placeholder="0.00">
+            </td>
+            <td>
+                <input type="number" class="form-control item-precio-costo" step="0.01" min="0" placeholder="0.00">
+            </td>
+            <td>
+                <input type="text" class="form-control item-total" readonly placeholder="0.00">
+            </td>
+            <td>
+                <button type="button" class="btn btn-danger btn-sm remove-item" title="Eliminar item">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </td>
+        `;
+        tbody.appendChild(newRow);
+        
+        // Agregar event listeners al nuevo row
+        agregarEventListenersItem(newRow);
+        itemCounter++;
+    }
+    
+    // Función para agregar event listeners a un item
+    function agregarEventListenersItem(row) {
+        row.querySelector('.item-cantidad').addEventListener('input', () => calcularItemTotal(row));
+        row.querySelector('.item-precio-unitario').addEventListener('input', () => calcularItemTotal(row));
+        row.querySelector('.item-precio-costo').addEventListener('input', () => calcularItemTotal(row));
+        row.querySelector('.remove-item').addEventListener('click', function() {
+            if (document.querySelectorAll('.item-row').length > 1) {
+                row.remove();
+                actualizarSubtotalItems();
+            } else {
+                alert('Debe haber al menos un item en la cotización');
+            }
+        });
+    }
+    
+    // Agregar event listeners a los items iniciales
+    document.querySelectorAll('.item-row').forEach(row => {
+        agregarEventListenersItem(row);
+    });
+    
+    // Event listener para el botón agregar item
+    document.querySelector('.add-item').addEventListener('click', agregarItem);
+    
+    console.log('✅ JavaScript de items de cotización cargado correctamente');
 });
 </script>
 {% endblock %}

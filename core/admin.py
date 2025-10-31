@@ -5,7 +5,8 @@ from .models import (
     Rol, PerfilUsuario, Cliente, Colaborador, Proyecto,
     Factura, Pago, CategoriaGasto, Gasto, GastoFijoMensual,
     LogActividad, ArchivoAdjunto, Anticipo, AplicacionAnticipo,
-    ArchivoProyecto, CarpetaProyecto, ConfiguracionSistema
+    ArchivoProyecto, CarpetaProyecto, ConfiguracionSistema,
+    Cotizacion, ItemCotizacion
 )
 
 
@@ -289,3 +290,62 @@ class ConfiguracionSistemaAdmin(admin.ModelAdmin):
         if not change:  # Si es una nueva carpeta
             obj.creada_por = request.user
         super().save_model(request, obj, form, change)
+
+
+class ItemCotizacionInline(admin.TabularInline):
+    """Inline para items de cotización"""
+    model = ItemCotizacion
+    extra = 1
+    fields = ['descripcion', 'cantidad', 'precio_unitario', 'precio_costo', 'total', 'orden']
+    readonly_fields = ['total']
+    ordering = ['orden']
+
+
+@admin.register(Cotizacion)
+class CotizacionAdmin(admin.ModelAdmin):
+    list_display = ['numero_cotizacion', 'titulo', 'cliente', 'proyecto', 'monto_total', 'estado', 'fecha_emision']
+    list_filter = ['estado', 'tipo_cotizacion', 'fecha_emision', 'fecha_vencimiento']
+    search_fields = ['numero_cotizacion', 'titulo', 'cliente__razon_social', 'proyecto__nombre']
+    readonly_fields = ['monto_iva', 'monto_total', 'fecha_creacion', 'fecha_modificacion', 'creado_por', 'modificado_por']
+    date_hierarchy = 'fecha_emision'
+    inlines = [ItemCotizacionInline]
+    
+    fieldsets = (
+        ('Información Básica', {
+            'fields': ('numero_cotizacion', 'titulo', 'proyecto', 'cliente', 'tipo_cotizacion', 'estado')
+        }),
+        ('Descripción', {
+            'fields': ('descripcion',)
+        }),
+        ('Montos', {
+            'fields': ('monto_subtotal', 'monto_iva', 'monto_total')
+        }),
+        ('Fechas', {
+            'fields': ('fecha_emision', 'fecha_vencimiento', 'fecha_aceptacion', 'validez_dias')
+        }),
+        ('Condiciones', {
+            'fields': ('condiciones_pago', 'terminos_condiciones')
+        }),
+        ('Archivos y Notas', {
+            'fields': ('archivo_cotizacion', 'observaciones', 'notas_cliente')
+        }),
+        ('Auditoría', {
+            'fields': ('creado_por', 'fecha_creacion', 'modificado_por', 'fecha_modificacion'),
+            'classes': ('collapse',)
+        }),
+    )
+    
+    def save_model(self, request, obj, form, change):
+        if not change:
+            obj.creado_por = request.user
+        obj.modificado_por = request.user
+        super().save_model(request, obj, form, change)
+
+
+@admin.register(ItemCotizacion)
+class ItemCotizacionAdmin(admin.ModelAdmin):
+    list_display = ['cotizacion', 'descripcion', 'cantidad', 'precio_unitario', 'total', 'orden']
+    list_filter = ['cotizacion__estado', 'cotizacion__proyecto']
+    search_fields = ['descripcion', 'cotizacion__numero_cotizacion']
+    readonly_fields = ['total', 'creado_en', 'modificado_en']
+    list_per_page = 25
