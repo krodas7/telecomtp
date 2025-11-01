@@ -9,7 +9,7 @@ from django.db.models.functions import Extract
 from django.utils import timezone
 from django.views.decorators.http import require_http_methods
 from datetime import datetime, timedelta
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation
 from django.core.cache import cache
 import os
 import json
@@ -21,7 +21,8 @@ from .models import (
     ItemInventario, CategoriaInventario, AsignacionInventario,
     Rol, PerfilUsuario, Modulo, Permiso, RolPermiso, AnticipoProyecto,
     CarpetaProyecto, ConfiguracionSistema, EventoCalendario,
-    TrabajadorDiario, RegistroTrabajo, AnticipoTrabajadorDiario, PlanillaLiquidada, PlanillaTrabajadoresDiarios
+    TrabajadorDiario, RegistroTrabajo, AnticipoTrabajadorDiario, PlanillaLiquidada, PlanillaTrabajadoresDiarios,
+    ItemCotizacion, ItemReutilizable, ConfiguracionPlanilla
 )
 from .forms_simple import (
     ClienteForm, ProyectoForm, ColaboradorForm, FacturaForm, 
@@ -30,7 +31,8 @@ from .forms_simple import (
     AnticipoForm, PagoForm, EventoCalendarioForm,
     CategoriaInventarioForm, ItemInventarioForm,
     AsignacionInventarioForm, TrabajadorDiarioForm, RegistroTrabajoForm,
-    AnticipoTrabajadorDiarioForm, PlanillaTrabajadoresDiariosForm, IngresoProyectoForm, CotizacionForm
+    AnticipoTrabajadorDiarioForm, PlanillaTrabajadoresDiariosForm, IngresoProyectoForm, CotizacionForm,
+    ConfiguracionPlanillaForm
 )
 from django.contrib.auth.models import User
 from django.contrib.auth.forms import UserCreationForm, UserChangeForm
@@ -40,13 +42,13 @@ from .services import NotificacionService, DashboardService, ProyectoService
 from .query_utils import QueryOptimizer, DashboardQueries
 from .decorators import api_view, secure_view, cache_view
 from reportlab.lib.pagesizes import letter, A4, landscape
-from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, PageBreak
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, PageBreak, Image
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.units import inch
 from reportlab.lib import colors
 from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_RIGHT
 from io import BytesIO
-
+import os
 from django.conf import settings
 
 # Configurar logger
@@ -210,7 +212,13 @@ def dashboard(request):
         proyectos_rentables.sort(key=lambda x: x['rentabilidad'], reverse=True)
         proyectos_rentables = proyectos_rentables[:5]  # Top 5
         
-        # Calendario con eventos básicos y eventos del calendario
+        # Eventos del calendario (para la agenda)
+        eventos_agenda = EventoCalendario.objects.filter(
+            creado_por=request.user,
+            fecha_inicio__gte=timezone.now().date()
+        ).order_by('fecha_inicio')[:10]
+        
+        # Calendario con eventos básicos (para FullCalendar si se usa)
         eventos_calendario = []
         
         # Eventos de facturas
@@ -254,18 +262,34 @@ def dashboard(request):
         for evento in eventos_personalizados:
             eventos_calendario.append(evento.to_calendar_event())
         
-        # Inicializar variables para gráficos
-        evolucion_proyectos = []
-        meses_grafico = []
-        ingresos_mensuales = []
-        gastos_mensuales = []
+        # Datos para gráfico de proyectos por estado
+        proyectos_por_estado = {
+            'Planificación': Proyecto.objects.filter(activo=True, estado='planificacion').count(),
+            'En Progreso': Proyecto.objects.filter(activo=True, estado='en_progreso').count(),
+            'En Pausa': Proyecto.objects.filter(activo=True, estado='en_pausa').count(),
+            'Completado': Proyecto.objects.filter(activo=True, estado='completado').count(),
+        }
+        
+        # Datos para gráfico de gastos por categoría (top 8)
+        gastos_por_categoria = Gasto.objects.filter(
+            aprobado=True,
+            fecha_gasto__month=mes_actual,
+            fecha_gasto__year=año_actual
+        ).values('categoria__nombre').annotate(
+            total=Sum('monto')
+        ).order_by('-total')[:8]
         
         # Convertir a JSON para el template
         import json
         eventos_calendario_json = json.dumps(eventos_calendario, default=str)
-        evolucion_proyectos_json = json.dumps(evolucion_proyectos, default=str)
-        categorias_gastos_json = json.dumps([item['categoria__nombre'] for item in gastos_categoria_mes], default=str)
-        montos_gastos_json = json.dumps([float(item['total']) for item in gastos_categoria_mes], default=str)
+        
+        # Datos de proyectos por estado
+        estados_proyectos_json = json.dumps(list(proyectos_por_estado.keys()), default=str)
+        cantidad_proyectos_json = json.dumps(list(proyectos_por_estado.values()), default=str)
+        
+        # Datos de gastos por categoría
+        categorias_gastos_json = json.dumps([item['categoria__nombre'] if item['categoria__nombre'] else 'Sin Categoría' for item in gastos_por_categoria], default=str)
+        montos_gastos_json = json.dumps([float(item['total']) for item in gastos_por_categoria], default=str)
         
         # Log eventos del calendario para debugging
         logger.debug(f"Eventos calendario: {len(eventos_calendario)} eventos generados")
@@ -415,9 +439,10 @@ def dashboard(request):
             'total_anticipos_aplicados': total_anticipos_aplicados,
             'total_colaboradores': total_colaboradores,
             'proyectos_completados': proyectos_completados,
-            'eventos_calendario': eventos_calendario,
+            'eventos_calendario': eventos_agenda,  # Eventos reales del modelo
             'eventos_calendario_json': eventos_calendario_json,
-            'evolucion_proyectos': evolucion_proyectos_json,
+            'estados_proyectos': estados_proyectos_json,
+            'cantidad_proyectos': cantidad_proyectos_json,
             'categorias_gastos': categorias_gastos_json,
             'montos_gastos': montos_gastos_json,
             'ingresos_mensuales': ingresos_mensuales,
@@ -442,7 +467,7 @@ def dashboard(request):
             if isinstance(value, Decimal):
                 logger.debug(f"Variable {key} es Decimal: {value}")
         
-        return render(request, 'core/dashboard.html.broken', context)
+        return render(request, 'core/dashboard.html', context)
         
     except Exception as e:
         logger.error(f"Error en dashboard: {str(e)}")
@@ -467,7 +492,7 @@ def dashboard(request):
             'meses_grafico': [],
         }
         
-        return render(request, 'core/dashboard.html.broken', context)
+        return render(request, 'core/dashboard.html', context)
 
 
 # ===== CRUD CLIENTES =====
@@ -1908,53 +1933,116 @@ def eventos_calendario_json(request):
 
 
 @login_required
+def nota_postit_create(request):
+    """Crear nota post-it para un evento"""
+    if request.method == 'POST':
+        try:
+            evento_id = request.POST.get('evento_id')
+            contenido = request.POST.get('contenido')
+            color = request.POST.get('color', '#fef3c7')
+            
+            if not evento_id or not contenido:
+                return JsonResponse({
+                    'success': False,
+                    'message': 'Evento y contenido son requeridos'
+                }, status=400)
+            
+            evento = get_object_or_404(EventoCalendario, id=evento_id)
+            
+            nota = NotaPostit.objects.create(
+                evento=evento,
+                contenido=contenido,
+                color=color,
+                creado_por=request.user
+            )
+            
+            return JsonResponse({
+                'success': True,
+                'message': 'Post-it creado exitosamente',
+                'nota': {
+                    'id': nota.id,
+                    'contenido': nota.contenido,
+                    'color': nota.color
+                }
+            })
+            
+        except Exception as e:
+            return JsonResponse({
+                'success': False,
+                'message': f'Error al crear post-it: {str(e)}'
+            }, status=400)
+    
+    return JsonResponse({'success': False, 'message': 'Método no permitido'}, status=405)
+
+@login_required
+def nota_postit_delete(request, nota_id):
+    """Eliminar nota post-it"""
+    if request.method == 'POST':
+        try:
+            nota = get_object_or_404(NotaPostit, id=nota_id, creado_por=request.user)
+            nota.delete()
+            
+            return JsonResponse({
+                'success': True,
+                'message': 'Post-it eliminado'
+            })
+        except Exception as e:
+            return JsonResponse({
+                'success': False,
+                'message': f'Error: {str(e)}'
+            }, status=400)
+    
+    return JsonResponse({'success': False, 'message': 'Método no permitido'}, status=405)
+
+@login_required
 def evento_calendario_create_ajax(request):
     """Crear evento del calendario via AJAX"""
     if request.method == 'POST':
         try:
-            data = json.loads(request.body)
+            # Leer datos desde request.POST (FormData) en lugar de request.body (JSON)
+            titulo = request.POST.get('titulo')
+            fecha_inicio = request.POST.get('fecha_inicio')
             
             # Validar datos requeridos
-            if not data.get('titulo') or not data.get('fecha_inicio'):
+            if not titulo or not fecha_inicio:
                 return JsonResponse({
                     'success': False,
                     'message': 'Título y fecha de inicio son requeridos'
                 }, status=400)
             
-            # Procesar fechas
+            # Procesar fechas desde request.POST
             from datetime import datetime, date
             
-            fecha_inicio = data.get('fecha_inicio')
-            if isinstance(fecha_inicio, str):
-                fecha_inicio = datetime.strptime(fecha_inicio, '%Y-%m-%d').date()
+            fecha_inicio_str = request.POST.get('fecha_inicio')
+            fecha_inicio = datetime.strptime(fecha_inicio_str, '%Y-%m-%d').date()
             
-            fecha_fin = data.get('fecha_fin')
-            if fecha_fin and isinstance(fecha_fin, str):
-                fecha_fin = datetime.strptime(fecha_fin, '%Y-%m-%d').date()
+            fecha_fin_str = request.POST.get('fecha_fin')
+            fecha_fin = datetime.strptime(fecha_fin_str, '%Y-%m-%d').date() if fecha_fin_str else None
             
-            # Procesar horas
-            hora_inicio = data.get('hora_inicio')
-            if hora_inicio and isinstance(hora_inicio, str):
-                hora_inicio = datetime.strptime(hora_inicio, '%H:%M').time()
+            # Procesar horas (opcionales)
+            hora_inicio_str = request.POST.get('hora_inicio')
+            hora_inicio = datetime.strptime(hora_inicio_str, '%H:%M').time() if hora_inicio_str else None
             
-            hora_fin = data.get('hora_fin')
-            if hora_fin and isinstance(hora_fin, str):
-                hora_fin = datetime.strptime(hora_fin, '%H:%M').time()
+            hora_fin_str = request.POST.get('hora_fin')
+            hora_fin = datetime.strptime(hora_fin_str, '%H:%M').time() if hora_fin_str else None
+            
+            # Obtener otros datos del formulario
+            tipo = request.POST.get('tipo', 'otro')
+            descripcion = request.POST.get('descripcion', '')
+            color = request.POST.get('color', '#3b82f6')
             
             # Crear evento
             evento = EventoCalendario.objects.create(
-                titulo=data.get('titulo'),
-                descripcion=data.get('descripcion', ''),
+                titulo=titulo,
+                descripcion=descripcion,
                 fecha_inicio=fecha_inicio,
                 fecha_fin=fecha_fin,
                 hora_inicio=hora_inicio,
                 hora_fin=hora_fin,
-                tipo=data.get('tipo', 'otro'),
-                color=data.get('color', '#667eea'),
-                todo_el_dia=data.get('todo_el_dia', True),
-                creado_por=request.user,
-                proyecto_id=data.get('proyecto_id') if data.get('proyecto_id') else None,
-                factura_id=data.get('factura_id') if data.get('factura_id') else None
+                tipo=tipo,
+                color=color,
+                todo_el_dia=True,
+                creado_por=request.user
             )
             
             # Registrar actividad
@@ -3544,13 +3632,14 @@ def rentabilidad_view(request):
         proyectos_rentabilidad.sort(key=lambda x: x['rentabilidad'], reverse=True)
         
         # Análisis por categoría de gasto
-        gastos_por_categoria = Gasto.objects.filter(
-            fecha_gasto__range=[fecha_inicio_dt, fecha_fin_dt],
-            aprobado=True
-        ).values('categoria__nombre').annotate(
+        gastos_categoria_filter = {'aprobado': True}
+        if fecha_inicio_dt and fecha_fin_dt:
+            gastos_categoria_filter['fecha_gasto__range'] = [fecha_inicio_dt, fecha_fin_dt]
+        
+        gastos_por_categoria = Gasto.objects.filter(**gastos_categoria_filter).values('categoria__nombre').annotate(
             total=Sum('monto'),
             cantidad=Count('id')
-        ).order_by('-total')
+        ).order_by('-total')[:8]
         
         # Tendencias mensuales (últimos 12 meses)
         tendencias_mensuales = []
@@ -3608,10 +3697,57 @@ def rentabilidad_view(request):
         rentabilidad_mes_actual = ingresos_mes_actual - gastos_mes_actual
         margen_mes_actual = (rentabilidad_mes_actual / ingresos_mes_actual * 100) if ingresos_mes_actual > 0 else Decimal('0.00')
         
+        # ===== CALCULAR TENDENCIAS VS MES ANTERIOR =====
+        # Obtener mes anterior
+        mes_anterior = mes_actual - 1 if mes_actual > 1 else 12
+        año_anterior = año_actual if mes_actual > 1 else año_actual - 1
+        
+        # Ingresos mes anterior
+        ingresos_mes_anterior = Factura.objects.filter(
+            fecha_emision__month=mes_anterior,
+            fecha_emision__year=año_anterior,
+            monto_pagado__gt=0
+        ).aggregate(total=Sum('monto_pagado'))['total'] or Decimal('0.00')
+        
+        # Gastos mes anterior
+        gastos_mes_anterior_raw = Gasto.objects.filter(
+            fecha_gasto__month=mes_anterior,
+            fecha_gasto__year=año_anterior,
+            aprobado=True
+        ).aggregate(total=Sum('monto'))['total'] or 0
+        gastos_mes_anterior = Decimal(str(gastos_mes_anterior_raw))
+        
+        # Calcular tendencias (% de cambio)
+        tendencia_ingresos = Decimal('0')
+        tendencia_gastos = Decimal('0')
+        tendencia_rentabilidad = Decimal('0')
+        
+        if ingresos_mes_anterior > 0:
+            tendencia_ingresos = ((ingresos_mes_actual - ingresos_mes_anterior) / ingresos_mes_anterior * 100)
+        
+        if gastos_mes_anterior > 0:
+            tendencia_gastos = ((gastos_mes_actual - gastos_mes_anterior) / gastos_mes_anterior * 100)
+        
+        rentabilidad_mes_anterior = ingresos_mes_anterior - gastos_mes_anterior
+        if rentabilidad_mes_anterior != 0:
+            tendencia_rentabilidad = ((rentabilidad_mes_actual - rentabilidad_mes_anterior) / abs(rentabilidad_mes_anterior) * 100)
+        
+        # Preparar datos para gráficos (formato JSON)
+        import json
+        meses_tendencia = [t['mes'] for t in tendencias_mensuales]
+        ingresos_tendencia = [float(t['ingresos']) for t in tendencias_mensuales]
+        gastos_tendencia = [float(t['gastos']) for t in tendencias_mensuales]
+        
+        categorias_gastos_labels = [cat['categoria__nombre'] if cat['categoria__nombre'] else 'Sin Categoría' for cat in gastos_por_categoria]
+        categorias_gastos_data = [float(cat['total']) for cat in gastos_por_categoria]
+        
         context = {
             'periodo': periodo,
+            'periodo_seleccionado': periodo,  # Para el template
             'fecha_inicio': fecha_inicio,
             'fecha_fin': fecha_fin,
+            'fecha_inicio_str': fecha_inicio,  # Para los inputs
+            'fecha_fin_str': fecha_fin,  # Para los inputs
             'ingresos': ingresos,
             'gastos': gastos,
             'gastos_fijos': gastos_fijos,
@@ -3622,10 +3758,20 @@ def rentabilidad_view(request):
             'gastos_por_categoria': gastos_por_categoria,
             'tendencias_mensuales': tendencias_mensuales,
             'tendencias_json': tendencias_json,
+            # Datos para gráficos Chart.js
+            'meses_tendencia': json.dumps(meses_tendencia),
+            'ingresos_tendencia': json.dumps(ingresos_tendencia),
+            'gastos_tendencia': json.dumps(gastos_tendencia),
+            'categorias_gastos_chart_labels': json.dumps(categorias_gastos_labels),
+            'categorias_gastos_chart_data': json.dumps(categorias_gastos_data),
             # Datos para el dashboard
             'ingresos_mes': ingresos_mes_actual,
             'gastos_mes': gastos_mes_actual,
             'rentabilidad_mes': margen_mes_actual,
+            # Tendencias vs mes anterior
+            'tendencia_ingresos': tendencia_ingresos,
+            'tendencia_gastos': tendencia_gastos,
+            'tendencia_rentabilidad': tendencia_rentabilidad,
         }
         
         return render(request, 'core/rentabilidad/index.html', context)
@@ -5356,6 +5502,21 @@ def planilla_proyecto(request, proyecto_id):
     # Obtener colaboradores asignados al proyecto
     colaboradores_asignados = proyecto.colaboradores.all().order_by('nombre')
     
+    # Obtener configuración de planilla (retenciones y bonos)
+    try:
+        configuracion_planilla = proyecto.configuracion_planilla
+    except ConfiguracionPlanilla.DoesNotExist:
+        # Crear configuración por defecto si no existe
+        configuracion_planilla = ConfiguracionPlanilla.objects.create(
+            proyecto=proyecto,
+            retencion_seguro_social=0,
+            retencion_seguro_educativo=0,
+            bono_general=0,
+            bono_produccion=0,
+            aplicar_retenciones=True,
+            aplicar_bonos=True
+        )
+    
     # Obtener anticipos del proyecto (pendientes y liquidados)
     anticipos = AnticipoProyecto.objects.filter(
         proyecto=proyecto
@@ -5370,6 +5531,8 @@ def planilla_proyecto(request, proyecto_id):
     total_salarios = 0
     total_anticipos_aplicados = 0
     total_salarios_netos = 0
+    total_retenciones = 0
+    total_bonos = 0
     
     for colaborador in colaboradores_asignados:
         salario_colaborador = colaborador.salario or 0
@@ -5394,14 +5557,55 @@ def planilla_proyecto(request, proyecto_id):
             colaborador.estado_actual = 'sin_anticipos'
             colaborador.estado_display = 'Sin Anticipos'
         
+        # Calcular retenciones y bonos solo si el colaborador los tiene habilitados
+        retenciones_monto = Decimal('0')
+        if colaborador.aplica_retenciones:
+            retenciones_monto = Decimal(str(configuracion_planilla.calcular_retenciones(salario_colaborador)))
+        
+        bonos_monto = Decimal('0')
+        if configuracion_planilla.aplicar_bonos:
+            # Bono general
+            if colaborador.aplica_bono_general:
+                bonos_monto += Decimal(str(configuracion_planilla.bono_general))
+            
+            # Bono de producción
+            if colaborador.aplica_bono_produccion:
+                bono_prod = (Decimal(str(salario_colaborador)) * Decimal(str(configuracion_planilla.bono_produccion))) / Decimal('100')
+                bonos_monto += bono_prod
+        
+        # Salario con bonos y retenciones (todo en Decimal)
+        salario_colaborador_decimal = Decimal(str(salario_colaborador))
+        salario_bruto = salario_colaborador_decimal + bonos_monto
+        salario_neto_con_retenciones = salario_bruto - retenciones_monto
+        
+        # Calcular valores quincenales
+        salario_quincenal = salario_colaborador_decimal / Decimal('2')
+        bonos_quincenal = bonos_monto / Decimal('2')  # Bonos se dividen entre 2 quincenas
+        retenciones_quincenal = retenciones_monto / Decimal('2')  # Retenciones se dividen entre 2 quincenas
+        
+        # Salario quincenal neto = Salario quincenal + Bonos quincenal - Retenciones quincenal - Anticipos
+        total_anticipos_decimal = Decimal(str(total_anticipos_colaborador))
+        salario_quincenal_neto = salario_quincenal + bonos_quincenal - retenciones_quincenal - total_anticipos_decimal
+        
         # Agregar campos calculados al colaborador
+        colaborador.salario_mensual = salario_colaborador
+        colaborador.bonos_monto = bonos_monto
+        colaborador.bonos_monto_quincenal = bonos_quincenal
+        colaborador.retenciones_monto = retenciones_monto
+        colaborador.retenciones_monto_quincenal = retenciones_quincenal
+        colaborador.salario_bruto = salario_bruto
+        colaborador.salario_quincenal = salario_quincenal
+        colaborador.salario_quincenal_bruto = salario_quincenal + bonos_quincenal
         colaborador.salario_neto = salario_neto
+        colaborador.salario_neto_quincenal = salario_quincenal_neto
         colaborador.deuda_anticipos = anticipos_pendientes
         colaborador.anticipos_liquidados = anticipos_liquidados
         
         total_salarios += salario_colaborador
         total_anticipos_aplicados += total_anticipos_colaborador
         total_salarios_netos += salario_neto
+        total_retenciones += retenciones_monto
+        total_bonos += bonos_monto
     
     # Calcular histórico de pagos usando el nuevo modelo PlanillaLiquidada
     planillas_liquidadas = PlanillaLiquidada.objects.filter(proyecto=proyecto)
@@ -5410,6 +5614,20 @@ def planilla_proyecto(request, proyecto_id):
     
     # Promedio por planilla
     promedio_por_planilla = total_historico_pagado / planillas_generadas if planillas_generadas > 0 else Decimal('0.00')
+    
+    # Obtener las últimas 5 planillas liquidadas
+    ultimas_planillas = PlanillaLiquidada.objects.filter(proyecto=proyecto).order_by('-año', '-mes', '-fecha_liquidacion')[:5]
+    
+    # Calcular totales quincenales con retenciones
+    total_salarios_quincenal = total_salarios / 2
+    total_retenciones_quincenal = total_retenciones / 2
+    total_bonos_quincenal = total_bonos / 2
+    
+    # Salario bruto quincenal (base + bonos)
+    total_salarios_bruto_quincenal = total_salarios_quincenal + total_bonos_quincenal
+    
+    # Salario neto quincenal (bruto - retenciones - anticipos)
+    total_neto_pagar_quincenal = total_salarios_bruto_quincenal - total_retenciones_quincenal - total_anticipos_aplicados
     
     # NOTA: Los anticipos se eliminan al liquidar la planilla, por lo que cada planilla empieza limpia
     
@@ -5421,11 +5639,19 @@ def planilla_proyecto(request, proyecto_id):
         'total_liquidado': total_anticipos_liquidados,
         'saldo_pendiente': total_anticipos_pendientes,
         'total_salarios': total_salarios,
+        'total_salarios_quincenal': total_salarios_quincenal,
+        'total_retenciones': total_retenciones,
+        'total_retenciones_quincenal': total_retenciones_quincenal,
+        'total_bonos': total_bonos,
+        'total_bonos_quincenal': total_bonos_quincenal,
         'total_anticipos_aplicados': total_anticipos_aplicados,
         'total_salarios_netos': total_salarios_netos,
+        'total_neto_pagar_quincenal': total_neto_pagar_quincenal,
         'total_historico_pagado': total_historico_pagado,
         'planillas_generadas': planillas_generadas,
         'promedio_por_planilla': promedio_por_planilla,
+        'ultimas_planillas': ultimas_planillas,
+        'configuracion_planilla': configuracion_planilla,
     }
     
     return render(request, 'core/proyectos/planilla.html', context)
@@ -5482,11 +5708,26 @@ def liquidar_y_generar_planilla(request, proyecto_id):
     
     if request.method == 'POST':
         try:
+            # Obtener mes, año y quincena del formulario
+            mes = int(request.POST.get('mes', timezone.now().month))
+            año = int(request.POST.get('año', timezone.now().year))
+            quincena = int(request.POST.get('quincena', 1))  # Siempre requerida
+            
+            # Verificar si ya existe una planilla para este mes/año/quincena
+            if PlanillaLiquidada.objects.filter(proyecto=proyecto, mes=mes, año=año, quincena=quincena).exists():
+                mes_nombre = dict(PlanillaLiquidada.MESES_CHOICES).get(mes, '')
+                quincena_nombre = dict(PlanillaLiquidada.QUINCENA_CHOICES).get(quincena, '')
+                messages.error(request, f'Ya existe una planilla liquidada para {mes_nombre} {año} - {quincena_nombre} en este proyecto.')
+                return redirect('planilla_proyecto', proyecto_id=proyecto_id)
+            
             # Obtener colaboradores asignados al proyecto
             colaboradores_asignados = proyecto.colaboradores.all()
             
-            # Calcular total de salarios
-            total_salarios = sum(c.salario or 0 for c in colaboradores_asignados)
+            # Calcular total de salarios MENSUAL
+            total_salarios_mensual = sum(c.salario or 0 for c in colaboradores_asignados)
+            
+            # Calcular salario QUINCENAL (dividir entre 2)
+            total_salarios_quincenal = total_salarios_mensual / 2
             
             # Liquidar TODOS los anticipos (pendientes y liquidados)
             anticipos_a_liquidar = AnticipoProyecto.objects.filter(
@@ -5499,13 +5740,16 @@ def liquidar_y_generar_planilla(request, proyecto_id):
             # Los anticipos ya fueron descontados del salario, no deben persistir
             anticipos_a_liquidar.delete()
             
-            # Total de la planilla = Salarios - Anticipos liquidados (salario neto)
-            total_planilla = Decimal(str(total_salarios)) - Decimal(str(total_anticipos_liquidados))
+            # Total de la planilla = Salario QUINCENAL - Anticipos liquidados
+            total_planilla = Decimal(str(total_salarios_quincenal)) - Decimal(str(total_anticipos_liquidados))
             
             # Crear registro de planilla liquidada
             planilla = PlanillaLiquidada.objects.create(
                 proyecto=proyecto,
-                total_salarios=Decimal(str(total_salarios)),
+                mes=mes,
+                año=año,
+                quincena=quincena,
+                total_salarios=Decimal(str(total_salarios_quincenal)),
                 total_anticipos=Decimal(str(total_anticipos_liquidados)),
                 total_planilla=total_planilla,
                 cantidad_personal=colaboradores_asignados.count(),
@@ -5513,18 +5757,22 @@ def liquidar_y_generar_planilla(request, proyecto_id):
             )
             
             # Guardar registro de la planilla generada en el log de actividad
+            mes_nombre = dict(PlanillaLiquidada.MESES_CHOICES).get(mes, '')
+            quincena_nombre = dict(PlanillaLiquidada.QUINCENA_CHOICES).get(quincena, '')
+            
             LogActividad.objects.create(
                 usuario=request.user,
                 accion='Liquidar Planilla',
                 modulo='Planilla Personal',
-                descripcion=f'Planilla #{planilla.id} liquidada - Salarios: ${total_salarios} - Anticipos: ${total_anticipos_liquidados} - Total: ${total_planilla}',
+                descripcion=f'Planilla {mes_nombre} {año} - {quincena_nombre} liquidada - Salarios Quincenales: ${total_salarios_quincenal:,.2f} - Anticipos: ${total_anticipos_liquidados:,.2f} - Total: ${total_planilla:,.2f}',
                 ip_address=request.META.get('REMOTE_ADDR')
             )
             
             messages.success(
                 request,
-                f'✅ <strong>Planilla liquidada exitosamente</strong><br>'
-                f'💼 Total Salarios: <strong>${total_salarios:,.2f}</strong><br>'
+                f'✅ <strong>Planilla Quincenal liquidada exitosamente</strong><br>'
+                f'📅 <strong>Período:</strong> {mes_nombre} {año} - {quincena_nombre}<br>'
+                f'💼 Total Salarios Quincenales: <strong>${total_salarios_quincenal:,.2f}</strong> (Mensual: ${total_salarios_mensual:,.2f})<br>'
                 f'💰 Anticipos Descontados: <strong>${total_anticipos_liquidados:,.2f}</strong><br>'
                 f'📋 <strong>TOTAL A PAGAR: ${total_planilla:,.2f}</strong><br>'
                 f'👥 Personal: <strong>{colaboradores_asignados.count()}</strong>',
@@ -5543,9 +5791,78 @@ def liquidar_y_generar_planilla(request, proyecto_id):
 
 
 @login_required
-def planilla_proyecto_pdf(request, proyecto_id):
-    """Generar PDF de la planilla del proyecto"""
+def configurar_planilla_proyecto(request, proyecto_id):
+    """Configurar retenciones y bonos para la planilla del proyecto"""
     proyecto = get_object_or_404(Proyecto, id=proyecto_id)
+    
+    # Obtener colaboradores del proyecto
+    colaboradores = proyecto.colaboradores.all().order_by('nombre')
+    
+    # Obtener o crear configuración
+    configuracion, created = ConfiguracionPlanilla.objects.get_or_create(
+        proyecto=proyecto,
+        defaults={
+            'retencion_seguro_social': 0,
+            'retencion_seguro_educativo': 0,
+            'bono_general': 0,
+            'bono_produccion': 0,
+            'aplicar_retenciones': True,
+            'aplicar_bonos': True
+        }
+    )
+    
+    if request.method == 'POST':
+        form = ConfiguracionPlanillaForm(request.POST, instance=configuracion)
+        
+        # Procesar asignación de bonos a colaboradores
+        for colaborador in colaboradores:
+            # Bonos (pueden ser individuales)
+            aplica_bono_general = f'bono_general_{colaborador.id}' in request.POST
+            aplica_bono_produccion = f'bono_produccion_{colaborador.id}' in request.POST
+            
+            # Actualizar colaborador
+            colaborador.aplica_bono_general = aplica_bono_general
+            colaborador.aplica_bono_produccion = aplica_bono_produccion
+            colaborador.aplica_retenciones = True  # Retenciones SIEMPRE para todos
+            colaborador.save()
+        
+        if form.is_valid():
+            config = form.save(commit=False)
+            config.modificado_por = request.user
+            config.save()
+            messages.success(request, '✅ Configuración de planilla y asignación de bonos actualizada exitosamente.')
+            return redirect('planilla_proyecto', proyecto_id=proyecto_id)
+    else:
+        form = ConfiguracionPlanillaForm(instance=configuracion)
+    
+    context = {
+        'proyecto': proyecto,
+        'form': form,
+        'configuracion': configuracion,
+        'colaboradores': colaboradores,
+    }
+    
+    return render(request, 'core/proyectos/configurar_planilla.html', context)
+
+
+@login_required
+def planilla_proyecto_pdf(request, proyecto_id):
+    """Generar PDF de la planilla del proyecto con desglose completo"""
+    proyecto = get_object_or_404(Proyecto, id=proyecto_id)
+    
+    # Obtener configuración de planilla (retenciones y bonos)
+    try:
+        configuracion_planilla = proyecto.configuracion_planilla
+    except ConfiguracionPlanilla.DoesNotExist:
+        configuracion_planilla = ConfiguracionPlanilla.objects.create(
+            proyecto=proyecto,
+            retencion_seguro_social=Decimal('0'),
+            retencion_seguro_educativo=Decimal('0'),
+            bono_general=Decimal('0'),
+            bono_produccion=Decimal('0'),
+            aplicar_retenciones=True,
+            aplicar_bonos=True
+        )
     
     # Obtener colaboradores asignados al proyecto
     colaboradores_asignados = proyecto.colaboradores.all().order_by('nombre')
@@ -5553,210 +5870,386 @@ def planilla_proyecto_pdf(request, proyecto_id):
     # Obtener anticipos del proyecto
     anticipos = AnticipoProyecto.objects.filter(proyecto=proyecto).select_related('colaborador')
     
-    # Calcular totales
+    # Calcular totales iniciales
     total_anticipos = anticipos.filter(estado='pendiente').aggregate(
         total=Sum('monto')
-    )['total'] or 0
+    )['total'] or Decimal('0')
     
     total_liquidado = anticipos.filter(estado='liquidado').aggregate(
         total=Sum('monto')
-    )['total'] or 0
+    )['total'] or Decimal('0')
     
-    total_salarios = sum(colaborador.salario or 0 for colaborador in colaboradores_asignados)
-    total_anticipos_aplicados = total_anticipos + total_liquidado
-    total_salarios_netos = total_salarios - total_anticipos_aplicados
+    # Variables para acumular totales
+    total_salarios = Decimal('0')
+    total_bonos = Decimal('0')
+    total_retenciones = Decimal('0')
+    total_anticipos_aplicados = Decimal('0')
+    total_salarios_netos = Decimal('0')
+    
+    # Calcular salarios con bonos y retenciones
+    for colaborador in colaboradores_asignados:
+        salario_colaborador = colaborador.salario or Decimal('0')
+        
+        # Calcular anticipos del colaborador
+        anticipos_colaborador = anticipos.filter(colaborador=colaborador)
+        total_anticipos_colaborador = anticipos_colaborador.filter(estado='pendiente').aggregate(total=Sum('monto'))['total'] or Decimal('0')
+        
+        # Calcular retenciones y bonos solo si el colaborador los tiene habilitados
+        retenciones_monto = Decimal('0')
+        if colaborador.aplica_retenciones and configuracion_planilla.aplicar_retenciones:
+            retenciones_monto = configuracion_planilla.calcular_retenciones(salario_colaborador)
+        
+        bonos_monto = Decimal('0')
+        if configuracion_planilla.aplicar_bonos:
+            if colaborador.aplica_bono_general:
+                bonos_monto += configuracion_planilla.bono_general
+            if colaborador.aplica_bono_produccion:
+                bonos_monto += (salario_colaborador * configuracion_planilla.bono_produccion) / Decimal('100')
+        
+        # Salario quincenal (todo dividido entre 2)
+        salario_quincenal = salario_colaborador / Decimal('2')
+        bonos_quincenal = bonos_monto / Decimal('2')
+        retenciones_quincenal = retenciones_monto / Decimal('2')
+        
+        # Salario neto quincenal
+        salario_neto = salario_quincenal + bonos_quincenal - retenciones_quincenal - total_anticipos_colaborador
+        
+        # Acumular totales
+        total_salarios += salario_colaborador
+        total_bonos += bonos_monto
+        total_retenciones += retenciones_monto
+        total_anticipos_aplicados += total_anticipos_colaborador
+        total_salarios_netos += salario_neto
+    
+    # Totales quincenales
+    total_salarios_quincenal = total_salarios / Decimal('2')
+    total_bonos_quincenal = total_bonos / Decimal('2')
+    total_retenciones_quincenal = total_retenciones / Decimal('2')
     
     # Crear el PDF en orientación horizontal
     buffer = BytesIO()
-    doc = SimpleDocTemplate(buffer, pagesize=landscape(A4))
+    doc = SimpleDocTemplate(
+        buffer, 
+        pagesize=landscape(A4),
+        leftMargin=0.5*inch,
+        rightMargin=0.5*inch,
+        topMargin=0.5*inch,
+        bottomMargin=0.5*inch
+    )
     elements = []
     
-    # Estilos
+    # Estilos personalizados
     styles = getSampleStyleSheet()
-    title_style = ParagraphStyle(
-        'CustomTitle',
+    
+    # Estilo para el encabezado principal
+    header_style = ParagraphStyle(
+        'HeaderStyle',
         parent=styles['Heading1'],
-        fontSize=18,
-        spaceAfter=30,
+        fontSize=24,
+        spaceAfter=10,
         alignment=TA_CENTER,
-        textColor=colors.darkblue
+        textColor=colors.HexColor('#1e3a8a'),
+        fontName='Helvetica-Bold',
+        leading=28
     )
     
+    # Estilo para subtítulo
     subtitle_style = ParagraphStyle(
-        'CustomSubtitle',
-        parent=styles['Heading2'],
+        'SubtitleStyle',
+        parent=styles['Normal'],
         fontSize=14,
         spaceAfter=20,
         alignment=TA_CENTER,
-        textColor=colors.darkblue
+        textColor=colors.HexColor('#3b82f6'),
+        fontName='Helvetica-Bold'
     )
     
-    # Título principal
-    elements.append(Paragraph(f"PLANILLA DE PERSONAL", title_style))
-    elements.append(Paragraph(f"Proyecto: {proyecto.nombre}", subtitle_style))
+    # Estilo para secciones
+    section_style = ParagraphStyle(
+        'SectionStyle',
+        parent=styles['Normal'],
+        fontSize=12,
+        spaceAfter=10,
+        textColor=colors.HexColor('#1e3a8a'),
+        fontName='Helvetica-Bold'
+    )
     
-    # Información del proyecto (solo cliente)
-    info_proyecto = [
-        ['Cliente:', proyecto.cliente.razon_social if proyecto.cliente else 'N/A'],
-    ]
+    # Logo y encabezado
+    try:
+        logo_path = os.path.join(settings.BASE_DIR, 'static', 'images', 'LOGO-TELECOM-small.png')
+        if os.path.exists(logo_path):
+            logo = Image(logo_path, width=120, height=60)
+        else:
+            logo = Paragraph("<b>TELECOM</b><br/>Technology Panama INC.", styles['Normal'])
+    except:
+        logo = Paragraph("<b>TELECOM</b><br/>Technology Panama INC.", styles['Normal'])
     
-    info_table = Table(info_proyecto, colWidths=[1.5*inch, 6*inch])
-    info_table.setStyle(TableStyle([
-        ('BACKGROUND', (0, 0), (0, -1), colors.lightgrey),
-        ('TEXTCOLOR', (0, 0), (0, -1), colors.black),
-        ('ALIGN', (0, 0), (0, -1), 'LEFT'),
-        ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
-        ('FONTSIZE', (0, 0), (0, -1), 10),
-        ('BOTTOMPADDING', (0, 0), (0, -1), 12),
-        ('BACKGROUND', (1, 0), (1, -1), colors.white),
-        ('GRID', (0, 0), (-1, -1), 1, colors.black),
-    ]))
-    
-    elements.append(info_table)
-    elements.append(Spacer(1, 20))
-    
-    # Fecha y hora de generación (hora local de Guatemala)
+    # Fecha de generación
     from datetime import datetime
     import pytz
-    
-    # Obtener zona horaria de Guatemala
     guatemala_tz = pytz.timezone('America/Guatemala')
     fecha_generacion = datetime.now(guatemala_tz).strftime('%d/%m/%Y %H:%M')
-    elements.append(Paragraph(f"<b>Reporte generado el:</b> {fecha_generacion}", styles['Normal']))
+    
+    # Header con logo y fecha
+    header_data = [[
+        logo,
+        Paragraph(
+            f'<b>PLANILLA DE PERSONAL QUINCENAL</b><br/>'
+            f'<font size="10">Generado: {fecha_generacion}</font>',
+            ParagraphStyle('HeaderRight', parent=styles['Normal'], fontSize=12, alignment=TA_RIGHT)
+        )
+    ]]
+    header_table = Table(header_data, colWidths=[3*inch, 7*inch])
+    header_table.setStyle(TableStyle([
+        ('ALIGN', (0, 0), (0, 0), 'LEFT'),
+        ('ALIGN', (1, 0), (1, 0), 'RIGHT'),
+        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+    ]))
+    elements.append(header_table)
     elements.append(Spacer(1, 20))
     
-    # Tabla de colaboradores
+    # Título del proyecto
+    elements.append(Paragraph(f"<b>PROYECTO: {proyecto.nombre.upper()}</b>", header_style))
+    
+    # Cliente
+    if proyecto.cliente:
+        elements.append(Paragraph(
+            f'<b>Cliente:</b> {proyecto.cliente.razon_social}', 
+            subtitle_style
+        ))
+    
+    elements.append(Spacer(1, 15))
+    
+    # Resumen de configuración de planilla
+    config_data = [[
+        Paragraph('<b>CONFIGURACIÓN DE PLANILLA</b>', section_style)
+    ]]
+    config_table = Table(config_data, colWidths=[10*inch])
+    config_table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, -1), colors.HexColor('#e0e7ff')),
+        ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+        ('LEFTPADDING', (0, 0), (-1, -1), 10),
+        ('RIGHTPADDING', (0, 0), (-1, -1), 10),
+        ('TOPPADDING', (0, 0), (-1, -1), 8),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
+    ]))
+    elements.append(config_table)
+    elements.append(Spacer(1, 5))
+    
+    # Detalles de configuración
+    config_details = [
+        ['Retenciones', ''],
+        ['• Seguro Social:', f'${configuracion_planilla.retencion_seguro_social:,.2f} mensuales'],
+        ['• Seguro Educativo:', f'${configuracion_planilla.retencion_seguro_educativo:,.2f} mensuales'],
+        ['Bonos', ''],
+        ['• Bono General:', f'${configuracion_planilla.bono_general:,.2f} mensuales'],
+        ['• Bono de Producción:', f'{configuracion_planilla.bono_produccion}% sobre salario base'],
+    ]
+    
+    config_details_table = Table(config_details, colWidths=[2.5*inch, 7.5*inch])
+    config_details_table.setStyle(TableStyle([
+        ('FONTNAME', (0, 0), (0, 0), 'Helvetica-Bold'),
+        ('FONTNAME', (0, 3), (0, 3), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, -1), 9),
+        ('LEFTPADDING', (0, 0), (-1, -1), 15),
+        ('TOPPADDING', (0, 0), (-1, -1), 3),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 3),
+        ('TEXTCOLOR', (0, 0), (-1, -1), colors.HexColor('#374151')),
+    ]))
+    elements.append(config_details_table)
+    elements.append(Spacer(1, 20))
+    
+    # Sección de desglose por colaborador
     if colaboradores_asignados:
-        # Encabezados de la tabla con columnas mejoradas
-        headers = ['No.', 'Colaborador', 'Salario Base', 'Anticipos Pendientes', 'Anticipos Liquidados', 'Total Anticipos', 'Salario Neto', 'Estado']
+        # Encabezado de tabla
+        elements.append(Paragraph('<b>DESGLOSE QUINCENAL POR COLABORADOR</b>', section_style))
+        elements.append(Spacer(1, 10))
+        
+        # Encabezados de la tabla
+        headers = [
+            'No.', 'Colaborador', 
+            'Salario\nQuincenal', 
+            'Bonos', 
+            'Retenciones', 
+            'Anticipos',
+            'Pago Neto\nQuincenal'
+        ]
         data = [headers]
         
-        total_salarios_base = 0
-        total_anticipos_pendientes = 0
-        total_anticipos_liquidados = 0
-        total_anticipos_general = 0
-        total_salarios_netos = 0
+        # Variables para totales
+        total_salarios_q = Decimal('0')
+        total_bonos_q = Decimal('0')
+        total_retenciones_q = Decimal('0')
+        total_anticipos_q = Decimal('0')
+        total_neto_q = Decimal('0')
         
         for i, colaborador in enumerate(colaboradores_asignados, 1):
-            salario_base = colaborador.salario or 0
+            salario_colaborador = colaborador.salario or Decimal('0')
             
             # Calcular anticipos del colaborador
             anticipos_colaborador = anticipos.filter(colaborador=colaborador)
-            anticipos_pendientes = anticipos_colaborador.filter(estado='pendiente').aggregate(
-                total=Sum('monto')
-            )['total'] or 0
-            anticipos_liquidados = anticipos_colaborador.filter(estado='liquidado').aggregate(
-                total=Sum('monto')
-            )['total'] or 0
-            total_anticipos_colaborador = anticipos_pendientes + anticipos_liquidados
+            total_anticipos_colaborador = anticipos_colaborador.filter(estado='pendiente').aggregate(total=Sum('monto'))['total'] or Decimal('0')
             
-            salario_neto = salario_base - total_anticipos_colaborador
+            # Calcular retenciones y bonos
+            retenciones_monto = Decimal('0')
+            if colaborador.aplica_retenciones and configuracion_planilla.aplicar_retenciones:
+                retenciones_monto = configuracion_planilla.calcular_retenciones(salario_colaborador)
             
-            # Determinar estado
-            if anticipos_pendientes > 0:
-                estado = 'Pendiente'
-            elif anticipos_liquidados > 0:
-                estado = 'Liquidado'
-            else:
-                estado = 'Sin Anticipos'
+            bonos_monto = Decimal('0')
+            if configuracion_planilla.aplicar_bonos:
+                if colaborador.aplica_bono_general:
+                    bonos_monto += configuracion_planilla.bono_general
+                if colaborador.aplica_bono_produccion:
+                    bonos_monto += (salario_colaborador * configuracion_planilla.bono_produccion) / Decimal('100')
+            
+            # Valores quincenales
+            salario_quincenal = salario_colaborador / Decimal('2')
+            bonos_quincenal = bonos_monto / Decimal('2')
+            retenciones_quincenal = retenciones_monto / Decimal('2')
+            
+            # Salario neto quincenal
+            salario_neto = salario_quincenal + bonos_quincenal - retenciones_quincenal - total_anticipos_colaborador
             
             data.append([
                 str(i),
                 colaborador.nombre,
-                f"${salario_base:,.2f}",
-                f"${anticipos_pendientes:,.2f}",
-                f"${anticipos_liquidados:,.2f}",
-                f"${total_anticipos_colaborador:,.2f}",
-                f"${salario_neto:,.2f}",
-                estado
+                f"${float(salario_quincenal):,.2f}",
+                f"+${float(bonos_quincenal):,.2f}",
+                f"-${float(retenciones_quincenal):,.2f}",
+                f"-${float(total_anticipos_colaborador):,.2f}",
+                f"${float(salario_neto):,.2f}"
             ])
-        
+            
             # Acumular totales
-            total_salarios_base += salario_base
-            total_anticipos_pendientes += anticipos_pendientes
-            total_anticipos_liquidados += anticipos_liquidados
-            total_anticipos_general += total_anticipos_colaborador
-            total_salarios_netos += salario_neto
+            total_salarios_q += salario_quincenal
+            total_bonos_q += bonos_quincenal
+            total_retenciones_q += retenciones_quincenal
+            total_anticipos_q += total_anticipos_colaborador
+            total_neto_q += salario_neto
         
         # Agregar fila de totales
         data.append([
-            '', 'TOTAL GENERAL:', 
-            f"${total_salarios_base:,.2f}", 
-            f"${total_anticipos_pendientes:,.2f}", 
-            f"${total_anticipos_liquidados:,.2f}", 
-            f"${total_anticipos_general:,.2f}", 
-            f"${total_salarios_netos:,.2f}", 
-            ''
+            '', 
+            'TOTALES:', 
+            f"${float(total_salarios_q):,.2f}", 
+            f"+${float(total_bonos_q):,.2f}", 
+            f"-${float(total_retenciones_q):,.2f}",
+            f"-${float(total_anticipos_q):,.2f}",
+            f"${float(total_neto_q):,.2f}"
         ])
         
-        # Crear tabla con columnas ajustadas para orientación horizontal (11.7 pulgadas total)
-        # Margenes: 1 pulgada cada lado = 9.7 pulgadas disponibles
-        table = Table(data, colWidths=[0.6*inch, 2.2*inch, 1.1*inch, 1.1*inch, 1.1*inch, 1.1*inch, 1.1*inch, 1.0*inch])
+        # Crear tabla con columnas ajustadas
+        table = Table(data, colWidths=[0.4*inch, 2.5*inch, 1.2*inch, 1.2*inch, 1.2*inch, 1.2*inch, 1.3*inch])
         table.setStyle(TableStyle([
             # Encabezados
-            ('BACKGROUND', (0, 0), (-1, 0), colors.darkblue),
-            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#1e3a8a')),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
             ('ALIGN', (0, 0), (-1, 0), 'CENTER'),
             ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-            ('FONTSIZE', (0, 0), (-1, 0), 8),
-            ('BOTTOMPADDING', (0, 0), (-1, 0), 8),
-            ('TOPPADDING', (0, 0), (-1, 0), 8),
-            ('LEFTPADDING', (0, 0), (-1, 0), 4),
-            ('RIGHTPADDING', (0, 0), (-1, 0), 4),
+            ('FONTSIZE', (0, 0), (-1, 0), 9),
+            ('BOTTOMPADDING', (0, 0), (-1, 0), 10),
+            ('TOPPADDING', (0, 0), (-1, 0), 10),
             
             # Fila de totales
-            ('BACKGROUND', (0, -1), (-1, -1), colors.lightgrey),
-            ('TEXTCOLOR', (0, -1), (-1, -1), colors.black),
-            ('ALIGN', (0, -1), (-1, -1), 'CENTER'),
+            ('BACKGROUND', (0, -1), (-1, -1), colors.HexColor('#1e3a8a')),
+            ('TEXTCOLOR', (0, -1), (-1, -1), colors.white),
+            ('ALIGN', (2, -1), (-1, -1), 'RIGHT'),
+            ('ALIGN', (1, -1), (1, -1), 'LEFT'),
             ('FONTNAME', (0, -1), (-1, -1), 'Helvetica-Bold'),
-            ('FONTSIZE', (0, -1), (-1, -1), 8),
+            ('FONTSIZE', (0, -1), (-1, -1), 10),
+            ('BOTTOMPADDING', (0, -1), (-1, -1), 10),
+            ('TOPPADDING', (0, -1), (-1, -1), 10),
             
             # Datos
             ('BACKGROUND', (0, 1), (-1, -2), colors.white),
-            ('FONTSIZE', (0, 1), (-1, -2), 7),
-            ('ALIGN', (2, 1), (-1, -2), 'RIGHT'),  # Alinear números a la derecha
-            ('ALIGN', (0, 1), (1, 1), 'LEFT'),     # Alinear texto a la izquierda
+            ('FONTSIZE', (0, 1), (-1, -2), 8),
+            ('ALIGN', (2, 1), (-1, -2), 'RIGHT'),
+            ('ALIGN', (0, 1), (1, -2), 'LEFT'),
             ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-            ('LEFTPADDING', (0, 1), (-1, -2), 4),
-            ('RIGHTPADDING', (0, 1), (-1, -2), 4),
+            ('LEFTPADDING', (0, 1), (-1, -2), 6),
+            ('RIGHTPADDING', (0, 1), (-1, -2), 6),
+            ('TOPPADDING', (0, 1), (-1, -2), 6),
+            ('BOTTOMPADDING', (0, 1), (-1, -2), 6),
+            
+            # Colores alternos en filas
+            ('ROWBACKGROUNDS', (0, 1), (-1, -2), [colors.white, colors.HexColor('#f8f9fa')]),
             
             # Bordes
-            ('GRID', (0, 0), (-1, -1), 1, colors.black),
+            ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#d1d5db')),
+            ('BOX', (0, 0), (-1, -1), 1.5, colors.HexColor('#1e3a8a')),
         ]))
         
         elements.append(table)
         elements.append(Spacer(1, 20))
     
-    # Resumen financiero
+    # Resumen financiero ejecutivo
+    elements.append(Spacer(1, 15))
+    elements.append(Paragraph('<b>RESUMEN FINANCIERO QUINCENAL</b>', section_style))
+    elements.append(Spacer(1, 10))
+    
+    # Cálculo del total neto a pagar
+    total_bruto_quincenal = total_salarios_quincenal + total_bonos_quincenal
+    total_deducciones = total_retenciones_quincenal + total_anticipos_aplicados
+    total_neto_pagar = total_bruto_quincenal - total_deducciones
+    
     resumen_data = [
-        ['CONCEPTO', 'MONTO'],
-        ['Total Salarios Base', f"${total_salarios_base:,.2f}"],
-        ['Total Anticipos Pendientes', f"${total_anticipos_pendientes:,.2f}"],
-        ['Total Anticipos Liquidados', f"${total_anticipos_liquidados:,.2f}"],
-        ['Total Anticipos General', f"${total_anticipos_general:,.2f}"],
-        ['Total Salarios Netos', f"${total_salarios_netos:,.2f}"],
+        [Paragraph('<b>CONCEPTO</b>', styles['Normal']), Paragraph('<b>MONTO QUINCENAL</b>', styles['Normal'])],
+        ['Salarios Base (Quincenal)', f"${float(total_salarios_quincenal):,.2f}"],
+        ['(+) Bonos Totales', f"${float(total_bonos_quincenal):,.2f}"],
+        ['', ''],
+        [Paragraph('<b>Salario Bruto Quincenal</b>', styles['Normal']), Paragraph(f'<b>${float(total_bruto_quincenal):,.2f}</b>', styles['Normal'])],
+        ['', ''],
+        ['(-) Retenciones Totales', f"${float(total_retenciones_quincenal):,.2f}"],
+        ['(-) Anticipos Aplicados', f"${float(total_anticipos_aplicados):,.2f}"],
+        ['', ''],
+        [Paragraph('<b>TOTAL NETO A PAGAR</b>', ParagraphStyle('TotalStyle', parent=styles['Normal'], fontSize=12, fontName='Helvetica-Bold')), 
+         Paragraph(f'<b>${float(total_neto_pagar):,.2f}</b>', ParagraphStyle('TotalValueStyle', parent=styles['Normal'], fontSize=12, fontName='Helvetica-Bold', textColor=colors.HexColor('#059669')))],
     ]
     
-    resumen_table = Table(resumen_data, colWidths=[4*inch, 2*inch])
+    resumen_table = Table(resumen_data, colWidths=[5*inch, 2.5*inch])
     resumen_table.setStyle(TableStyle([
-        ('BACKGROUND', (0, 0), (0, -1), colors.lightblue),
-        ('TEXTCOLOR', (0, 0), (0, -1), colors.black),
+        # Encabezado
+        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#e0e7ff')),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.HexColor('#1e3a8a')),
         ('ALIGN', (0, 0), (0, -1), 'LEFT'),
-        ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
-        ('FONTSIZE', (0, 0), (0, -1), 10),
-        ('BOTTOMPADDING', (0, 0), (0, -1), 12),
-        ('BACKGROUND', (1, 0), (1, -1), colors.white),
         ('ALIGN', (1, 0), (1, -1), 'RIGHT'),
-        ('GRID', (0, 0), (-1, -1), 1, colors.black),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, -1), 10),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
+        ('TOPPADDING', (0, 0), (-1, -1), 8),
+        ('LEFTPADDING', (0, 0), (-1, -1), 10),
+        ('RIGHTPADDING', (0, 0), (-1, -1), 10),
+        
+        # Fila de salario bruto (índice 4)
+        ('BACKGROUND', (0, 4), (-1, 4), colors.HexColor('#dbeafe')),
+        
+        # Fila de total neto (última fila)
+        ('BACKGROUND', (0, -1), (-1, -1), colors.HexColor('#1e3a8a')),
+        ('TEXTCOLOR', (0, -1), (-1, -1), colors.white),
+        
+        # Bordes
+        ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#d1d5db')),
+        ('BOX', (0, 0), (-1, -1), 1.5, colors.HexColor('#1e3a8a')),
     ]))
     
     elements.append(resumen_table)
     
-    # Pie de página
+    # Pie de página con información corporativa
     elements.append(Spacer(1, 30))
-    fecha_generacion = timezone.now().strftime('%d/%m/%Y %H:%M')
-    elements.append(Paragraph(f"Reporte generado el: {fecha_generacion}", styles['Normal']))
-    elements.append(Paragraph(f"Sistema ARCA Construcción", styles['Normal']))
+    
+    # Configuración del sistema
+    config = ConfiguracionSistema.get_config()
+    
+    footer_text = f"""
+    <para align="center">
+        <b>{config.nombre_empresa}</b><br/>
+        Technology Panama INC.<br/>
+        <font size="8">Correo: info@telecompanama.com | Tel: +507 206-3456</font><br/>
+        <font size="7" color="#9ca3af">Documento generado electrónicamente el {fecha_generacion}</font>
+    </para>
+    """
+    
+    elements.append(Paragraph(footer_text, styles['Normal']))
     
     # Generar PDF
     doc.build(elements)
@@ -5823,31 +6316,43 @@ def crear_anticipo_individual(request, proyecto_id):
         concepto = request.POST.get('concepto', 'Anticipo individual')
         observaciones = request.POST.get('observaciones', '')
         
-        if colaborador_id and monto and monto.isdigit():
-            colaborador = get_object_or_404(Colaborador, id=colaborador_id)
-            monto = Decimal(monto)
-            
-            # Verificar que el colaborador esté asignado al proyecto
-            if colaborador in proyecto.colaboradores.all():
-                anticipo = AnticipoProyecto.objects.create(
-                    proyecto=proyecto,
-                    colaborador=colaborador,
-                    monto=monto,
-                    tipo='individual',
-                    concepto=concepto,
-                    observaciones=observaciones
-                )
-                
-                messages.success(
-                    request, 
-                    f'✅ Anticipo creado exitosamente: ${monto:,.2f} para {colaborador.nombre} en el proyecto "{proyecto.nombre}". Concepto: {concepto}'
-                )
-                
-                return redirect('planilla_proyecto', proyecto_id=proyecto.id)
+        try:
+            # Validar que todos los campos requeridos estén presentes
+            if not colaborador_id:
+                messages.error(request, '❌ Error: Debes seleccionar un colaborador.')
+            elif not monto:
+                messages.error(request, '❌ Error: Debes ingresar un monto.')
             else:
-                messages.error(request, '❌ Error: El colaborador seleccionado no está asignado a este proyecto. Por favor verifica la selección.')
-        else:
-            messages.error(request, '❌ Error: Por favor complete todos los campos requeridos (colaborador y monto) para crear el anticipo.')
+                # Intentar convertir el monto a Decimal
+                monto_decimal = Decimal(str(monto))
+                
+                if monto_decimal <= 0:
+                    messages.error(request, '❌ Error: El monto debe ser mayor a cero.')
+                else:
+                    colaborador = get_object_or_404(Colaborador, id=colaborador_id)
+                    
+                    # Verificar que el colaborador esté asignado al proyecto
+                    if colaborador in proyecto.colaboradores.all():
+                        anticipo = AnticipoProyecto.objects.create(
+                            proyecto=proyecto,
+                            colaborador=colaborador,
+                            monto=monto_decimal,
+                            tipo='individual',
+                            concepto=concepto,
+                            observaciones=observaciones
+                        )
+                        
+                        messages.success(
+                            request, 
+                            f'✅ Anticipo creado exitosamente: ${monto_decimal:,.2f} para {colaborador.nombre} en el proyecto "{proyecto.nombre}". Concepto: {concepto}'
+                        )
+                        
+                        return redirect('planilla_proyecto', proyecto_id=proyecto.id)
+                    else:
+                        messages.error(request, '❌ Error: El colaborador seleccionado no está asignado a este proyecto. Por favor verifica la selección.')
+        except (ValueError, InvalidOperation) as e:
+            logger.error(f"Error al crear anticipo individual: {e}")
+            messages.error(request, '❌ Error: El monto ingresado no es válido. Por favor ingresa un número válido.')
     
     context = {
         'proyecto': proyecto,
@@ -5909,12 +6414,25 @@ def calendario_pagos_proyecto(request, proyecto_id):
     # Crear eventos del calendario
     eventos_calendario = {}
     
-    # Agregar día de pago (último día del mes)
+    # Agregar días de pago (quincenales: día 15 y último día del mes)
     ultimo_dia = calendar.monthrange(año, mes)[1]
+    total_salarios = sum(c.salario or 0 for c in colaboradores)
+    pago_quincenal = total_salarios / 2
+    
+    # Primera quincena (día 15)
+    eventos_calendario[15] = {
+        'tipo': 'pago_salario',
+        'titulo': '1ra Quincena',
+        'descripcion': f'Pago primera quincena - Total: ${pago_quincenal:.2f}',
+        'color': 'success',
+        'icono': 'fas fa-money-bill-wave'
+    }
+    
+    # Segunda quincena (último día del mes)
     eventos_calendario[ultimo_dia] = {
         'tipo': 'pago_salario',
-        'titulo': 'Pago de Salarios',
-        'descripcion': f'Pago mensual de salarios - Total: ${sum(c.salario or 0 for c in colaboradores):.2f}',
+        'titulo': '2da Quincena',
+        'descripcion': f'Pago segunda quincena - Total: ${pago_quincenal:.2f}',
         'color': 'success',
         'icono': 'fas fa-money-bill-wave'
     }
@@ -8454,16 +8972,86 @@ def cotizaciones_list(request):
 @login_required
 def cotizacion_create(request):
     """Crear nueva cotización"""
+    logger = logging.getLogger(__name__)
+    
     if request.method == 'POST':
+        logger.info('📝 POST recibido para crear cotización')
+        logger.info(f'📝 Datos POST: {request.POST}')
         form = CotizacionForm(request.POST, request.FILES)
         if form.is_valid():
+            logger.info('✅ Formulario válido, guardando cotización')
             cotizacion = form.save(commit=False)
             cotizacion.creado_por = request.user
             cotizacion.save()
+            logger.info(f'✅ Cotización {cotizacion.numero_cotizacion} guardada')
+            
+            # Guardar items de la cotización
+            items = []
+            for i in range(1000):  # Loop para buscar todos los items
+                if f'items[{i}][descripcion]' in request.POST:
+                    items.append({
+                        'descripcion': request.POST[f'items[{i}][descripcion]'],
+                        'cantidad': Decimal(request.POST.get(f'items[{i}][cantidad]', '1')),
+                        'precio_unitario': Decimal(request.POST.get(f'items[{i}][precio_unitario]', '0')),
+                        'precio_costo': Decimal(request.POST.get(f'items[{i}][precio_costo]', '0')),
+                        'orden': int(request.POST.get(f'items[{i}][orden]', i)),
+                    })
+                else:
+                    break  # No hay más items
+            
+            logger.info(f'📦 Items encontrados en POST: {len(items)}')
+            
+            # Guardar items en la base de datos
+            for item_data in items:
+                ItemCotizacion.objects.create(
+                    cotizacion=cotizacion,
+                    descripcion=item_data['descripcion'],
+                    cantidad=item_data['cantidad'],
+                    precio_unitario=item_data['precio_unitario'],
+                    precio_costo=item_data['precio_costo'],
+                    orden=item_data['orden']
+                )
+                
+                # Crear o actualizar item reutilizable si no existe
+                if item_data['descripcion']:
+                    try:
+                        ItemReutilizable.objects.get(descripcion=item_data['descripcion'])
+                    except ItemReutilizable.DoesNotExist:
+                        # Crear nuevo item reutilizable
+                        ItemReutilizable.objects.create(
+                            descripcion=item_data['descripcion'],
+                            precio_unitario=item_data['precio_unitario'],
+                            precio_costo=item_data['precio_costo'],
+                            creado_por=request.user,
+                            activo=True
+                        )
+            
+            logger.info('✅ Items guardados exitosamente')
             messages.success(request, f'Cotización {cotizacion.numero_cotizacion} creada exitosamente.')
             return redirect('cotizaciones_list')
+        else:
+            logger.error(f'❌ Errores en formulario: {form.errors}')
+            for field, errors in form.errors.items():
+                for error in errors:
+                    logger.error(f'❌ Campo {field}: {error}')
+            messages.error(request, f'Por favor corrige los errores en el formulario. Errores: {form.errors}')
     else:
         form = CotizacionForm()
+        
+        # Generar número de cotización automáticamente
+        ultima_cotizacion = Cotizacion.objects.all().order_by('-id').first()
+        if ultima_cotizacion and ultima_cotizacion.numero_cotizacion:
+            try:
+                ultimo_numero = int(ultima_cotizacion.numero_cotizacion.split('-')[-1])
+                nuevo_numero = ultimo_numero + 1
+            except (ValueError, IndexError):
+                nuevo_numero = 1
+        else:
+            nuevo_numero = 1
+        
+        año_actual = timezone.now().year
+        numero_generado = f"COT-{año_actual}-{nuevo_numero:04d}"
+        form.initial['numero_cotizacion'] = numero_generado
     
     # Datos para el formulario
     proyectos = Proyecto.objects.filter(activo=True).order_by('nombre')
@@ -8488,6 +9076,219 @@ def cotizacion_detail(request, cotizacion_id):
     }
     
     return render(request, 'core/cotizaciones/detail.html', context)
+
+
+@login_required
+def cotizacion_pdf(request, cotizacion_id):
+    """Generar PDF de una cotización"""
+    cotizacion = get_object_or_404(Cotizacion, id=cotizacion_id)
+    
+    # Obtener items de la cotización
+    items = ItemCotizacion.objects.filter(cotizacion=cotizacion).order_by('orden')
+    
+    # Crear PDF
+    buffer = BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=A4)
+    elements = []
+    
+    # Estilos
+    styles = getSampleStyleSheet()
+    
+    # Header con logo a la izquierda y número a la derecha
+    header_data = []
+    
+    # Logo
+    try:
+        logo_path = os.path.join(settings.BASE_DIR, 'static', 'images', 'LOGO-TELECOM-small.png')
+        if os.path.exists(logo_path):
+            logo_cell = Image(logo_path, width=100, height=50)
+        else:
+            logo_cell = Paragraph("TELECOM<br/>Technology Panama INC.", styles['Heading3'])
+    except:
+        logo_cell = Paragraph("TELECOM<br/>Technology Panama INC.", styles['Heading3'])
+    
+    # Número de cotización
+    number_cell = Paragraph(
+        f'<b>COTIZACIÓN NO.</b><br/><font color="red">{cotizacion.numero_cotizacion}</font>',
+        ParagraphStyle('Number', parent=styles['Normal'], fontSize=10, alignment=TA_RIGHT)
+    )
+    
+    header_table = Table([[logo_cell, number_cell]], colWidths=[4*inch, 2*inch])
+    header_table.setStyle(TableStyle([
+        ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+        ('TEXTCOLOR', (0, 0), (0, 0), colors.black),
+        ('FONTSIZE', (0, 0), (-1, -1), 9),
+    ]))
+    elements.append(header_table)
+    elements.append(Spacer(1, 20))
+    
+    # Título principal
+    title_style = ParagraphStyle(
+        'CustomTitle',
+        parent=styles['Heading1'],
+        fontSize=32,
+        spaceAfter=15,
+        alignment=TA_CENTER,
+        textColor=colors.HexColor('#000000'),
+        fontName='Helvetica-Bold',
+        leading=36
+    )
+    elements.append(Paragraph("COTIZACIÓN", title_style))
+    elements.append(Spacer(1, 5))
+    
+    # Fecha
+    fecha_style = ParagraphStyle(
+        'FechaStyle',
+        parent=styles['Normal'],
+        fontSize=10,
+        alignment=TA_CENTER,
+        textColor=colors.black,
+        spaceAfter=20
+    )
+    elements.append(Paragraph(f'<b>FECHA:</b> {cotizacion.fecha_emision.strftime("%d/%m/%Y")}', fecha_style))
+    elements.append(Spacer(1, 15))
+    
+    # Sección "COTIZACIÓN PARA" con barra azul
+    cliente_bar_data = [
+        [Paragraph(f'<font color="white"><b>COTIZACIÓN PARA</b></font>', ParagraphStyle('Bar', fontSize=12, textColor=colors.white, alignment=TA_CENTER, fontName='Helvetica-Bold'))]
+    ]
+    cliente_bar_table = Table(cliente_bar_data, colWidths=[6*inch])
+    cliente_bar_table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, -1), colors.HexColor('#007bff')),
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+        ('TOPPADDING', (0, 0), (-1, -1), 8),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
+    ]))
+    elements.append(cliente_bar_table)
+    elements.append(Spacer(1, 10))
+    
+    # Información del cliente
+    info_data = [
+        ['CLIENTE:', cotizacion.cliente.razon_social],
+        ['PROYECTO:', cotizacion.proyecto.nombre],
+    ]
+    
+    info_table = Table(info_data, colWidths=[1.5*inch, 4.5*inch])
+    info_table.setStyle(TableStyle([
+        ('ALIGN', (0, 0), (0, -1), 'LEFT'),
+        ('ALIGN', (1, 0), (1, -1), 'LEFT'),
+        ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (0, -1), 10),
+        ('FONTSIZE', (1, 0), (1, -1), 10),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
+        ('TOPPADDING', (0, 0), (-1, -1), 8),
+        ('GRID', (0, 0), (-1, -1), 0.5, colors.black),
+    ]))
+    
+    elements.append(info_table)
+    elements.append(Spacer(1, 10))
+    
+    # Título en negrita sin label
+    title_paragraph = Paragraph(
+        f'<b>{cotizacion.titulo}</b>',
+        ParagraphStyle('TitleOnly', parent=styles['Normal'], fontSize=12, fontName='Helvetica-Bold', spaceAfter=15)
+    )
+    elements.append(title_paragraph)
+    elements.append(Spacer(1, 5))
+    
+    # Tabla de items
+    if items:
+        headers = ['DESCRIPCIÓN', 'CANTIDAD', 'PRECIO', 'TOTAL']
+        data = [headers]
+        
+        for item in items:
+            data.append([
+                item.descripcion,
+                str(item.cantidad),
+                f"${item.precio_unitario:,.2f}",
+                f"${item.total:,.2f}"
+            ])
+        
+        # Totales
+        data.append(['', '', 'Subtotal:', f"${cotizacion.monto_subtotal:,.2f}"])
+        data.append(['', '', 'ITBMS (7%):', f"${cotizacion.monto_iva:,.2f}"])
+        data.append(['', '', 'TOTAL:', f"${cotizacion.monto_total:,.2f}"])
+        
+        items_table = Table(data, colWidths=[3.5*inch, 0.8*inch, 0.9*inch, 0.8*inch])
+        items_table.setStyle(TableStyle([
+            # Header
+            ('BACKGROUND', (0, 0), (-1, 0), colors.black),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+            ('ALIGN', (0, 0), (1, 0), 'CENTER'),
+            ('ALIGN', (2, 0), (-1, 0), 'RIGHT'),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, 0), 11),
+            ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+            ('TOPPADDING', (0, 0), (-1, 0), 12),
+            # Body
+            ('BACKGROUND', (0, 1), (-1, -4), colors.white),
+            ('TEXTCOLOR', (0, 1), (-1, -4), colors.black),
+            ('FONTSIZE', (0, 1), (-1, -4), 10),
+            ('ALIGN', (0, 1), (0, -4), 'LEFT'),
+            ('ALIGN', (1, 1), (1, -4), 'CENTER'),
+            ('ALIGN', (2, 1), (-1, -4), 'RIGHT'),
+            ('GRID', (0, 0), (-1, -4), 0.5, colors.black),
+            ('ROWBACKGROUNDS', (0, 1), (-1, -4), [colors.white, colors.HexColor('#f8f9fa')]),
+            # Totales
+            ('BACKGROUND', (2, -3), (-1, -2), colors.white),
+            ('FONTNAME', (2, -3), (-1, -2), 'Helvetica-Bold'),
+            ('FONTSIZE', (2, -3), (-1, -2), 10),
+            ('ALIGN', (2, -3), (-1, -2), 'RIGHT'),
+            ('GRID', (2, -3), (-1, -2), 0.5, colors.black),
+            # TOTAL final
+            ('BACKGROUND', (2, -1), (-1, -1), colors.black),
+            ('TEXTCOLOR', (2, -1), (-1, -1), colors.white),
+            ('FONTNAME', (2, -1), (-1, -1), 'Helvetica-Bold'),
+            ('FONTSIZE', (2, -1), (-1, -1), 14),
+            ('ALIGN', (2, -1), (-1, -1), 'RIGHT'),
+            ('BOTTOMPADDING', (2, -1), (-1, -1), 10),
+            ('TOPPADDING', (2, -1), (-1, -1), 10),
+        ]))
+        
+        elements.append(items_table)
+        elements.append(Spacer(1, 20))
+    
+    # Términos y condiciones
+    if cotizacion.terminos_condiciones:
+        elements.append(Spacer(1, 10))
+        elements.append(Paragraph("<b>TÉRMINOS Y CONDICIONES</b>", ParagraphStyle('TermsHeader', parent=styles['Normal'], fontSize=11, fontName='Helvetica-Bold', spaceAfter=5)))
+        elements.append(Paragraph(cotizacion.terminos_condiciones, ParagraphStyle('TermsBody', parent=styles['Normal'], fontSize=9, spaceAfter=15)))
+    
+    # Información de la empresa
+    config = ConfiguracionSistema.get_config()
+    company_info = Paragraph(
+        f'<b>{config.nombre_empresa}</b><br/>'
+        'Technology Panama INC.<br/>'
+        'Correo: info@telecompanama.com<br/>'
+        'Tel: +507 206-3456',
+        ParagraphStyle('CompanyInfo', parent=styles['Normal'], fontSize=8, alignment=TA_CENTER, textColor=colors.HexColor('#6c757d'))
+    )
+    elements.append(Spacer(1, 20))
+    elements.append(company_info)
+    
+    # Pie de página
+    footer_style = ParagraphStyle(
+        'Footer',
+        parent=styles['Normal'],
+        fontSize=7,
+        alignment=TA_CENTER,
+        textColor=colors.HexColor('#9ca3af')
+    )
+    elements.append(Spacer(1, 5))
+    elements.append(Paragraph("Documento generado electrónicamente", footer_style))
+    
+    # Generar PDF
+    doc.build(elements)
+    buffer.seek(0)
+    
+    # Crear respuesta
+    response = HttpResponse(buffer, content_type='application/pdf')
+    filename = f"Cotizacion_{cotizacion.numero_cotizacion}.pdf"
+    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+    
+    return response
 
 
 @login_required
@@ -8530,6 +9331,51 @@ def cotizacion_delete(request, cotizacion_id):
     }
     
     return render(request, 'core/cotizaciones/delete.html', context)
+
+
+@login_required
+def cotizacion_aprobar(request, cotizacion_id):
+    """Aprobar cotización"""
+    cotizacion = get_object_or_404(Cotizacion, id=cotizacion_id)
+    
+    if request.method == 'POST':
+        cotizacion.estado = 'aceptada'
+        cotizacion.fecha_aceptacion = timezone.now().date()
+        cotizacion.modificado_por = request.user
+        cotizacion.save()
+        
+        messages.success(request, f'✅ Cotización {cotizacion.numero_cotizacion} aprobada exitosamente.')
+        return redirect('cotizacion_detail', cotizacion_id=cotizacion.id)
+    
+    context = {
+        'cotizacion': cotizacion,
+    }
+    
+    return render(request, 'core/cotizaciones/aprobar.html', context)
+
+
+@login_required
+def cotizacion_rechazar(request, cotizacion_id):
+    """Rechazar cotización"""
+    cotizacion = get_object_or_404(Cotizacion, id=cotizacion_id)
+    
+    if request.method == 'POST':
+        motivo_rechazo = request.POST.get('motivo_rechazo', '')
+        
+        cotizacion.estado = 'rechazada'
+        if motivo_rechazo:
+            cotizacion.observaciones = f"Motivo de rechazo: {motivo_rechazo}\n\n{cotizacion.observaciones}"
+        cotizacion.modificado_por = request.user
+        cotizacion.save()
+        
+        messages.warning(request, f'❌ Cotización {cotizacion.numero_cotizacion} rechazada.')
+        return redirect('cotizacion_detail', cotizacion_id=cotizacion.id)
+    
+    context = {
+        'cotizacion': cotizacion,
+    }
+    
+    return render(request, 'core/cotizaciones/rechazar.html', context)
 
 
 @login_required
@@ -8599,3 +9445,65 @@ def cotizaciones_proyecto(request, proyecto_id):
     }
     
     return render(request, 'core/cotizaciones/proyecto.html', context)
+
+
+@login_required
+def items_reutilizables_list(request):
+    """Listar items reutilizables para AJAX"""
+    logger = logging.getLogger(__name__)
+    logger.info(f"📦 Petición para listar items reutilizables - Método: {request.method}")
+    
+    if request.method == 'GET':
+        try:
+            items = ItemReutilizable.objects.filter(activo=True).order_by('categoria', 'descripcion')
+            logger.info(f"📦 Items encontrados: {items.count()}")
+            items_data = []
+            for item in items:
+                items_data.append({
+                    'id': item.id,
+                    'descripcion': item.descripcion,
+                    'categoria': item.categoria,
+                    'precio_unitario': str(item.precio_unitario),
+                    'precio_costo': str(item.precio_costo),
+                })
+            logger.info(f"✅ Retornando {len(items_data)} items")
+            return JsonResponse({'items': items_data})
+        except Exception as e:
+            logger.error(f"❌ Error al obtener items: {str(e)}")
+            return JsonResponse({'error': str(e)}, status=500)
+    logger.warning(f"⚠️ Método no permitido: {request.method}")
+    return JsonResponse({'error': 'Método no permitido'}, status=405)
+
+
+@login_required
+def item_reutilizable_create(request):
+    """Crear un item reutilizable desde AJAX"""
+    if request.method == 'POST':
+        try:
+            descripcion = request.POST.get('descripcion')
+            categoria = request.POST.get('categoria', '')
+            precio_unitario = Decimal(request.POST.get('precio_unitario', '0'))
+            precio_costo = Decimal(request.POST.get('precio_costo', '0'))
+            
+            item = ItemReutilizable.objects.create(
+                descripcion=descripcion,
+                categoria=categoria,
+                precio_unitario=precio_unitario,
+                precio_costo=precio_costo,
+                creado_por=request.user
+            )
+            
+            return JsonResponse({
+                'success': True,
+                'item': {
+                    'id': item.id,
+                    'descripcion': item.descripcion,
+                    'categoria': item.categoria,
+                    'precio_unitario': str(item.precio_unitario),
+                    'precio_costo': str(item.precio_costo),
+                }
+            })
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)}, status=400)
+    
+    return JsonResponse({'error': 'Método no permitido'}, status=405)

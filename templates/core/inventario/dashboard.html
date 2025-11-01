@@ -1,305 +1,515 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Dashboard de Inventario - Sistema Arca{% endblock %}
+{% block title %}Inventario - Sistema Arca{% endblock %}
 
 {% block extra_css %}
 <style>
-    .inventario-hero {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        padding: 3rem 2rem;
+    /* ===== INVENTARIO MODERNO ===== */
+    .inventario-container {
+        padding: 2rem 1.5rem;
+        background: #f8fafc;
+        min-height: 100vh;
+    }
+    
+    /* Header Ejecutivo */
+    .inventario-header {
+        background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
         border-radius: 20px;
+        padding: 2.5rem 2rem;
         margin-bottom: 2rem;
-        text-align: center;
+        box-shadow: 0 10px 40px rgba(30, 58, 138, 0.3);
         position: relative;
         overflow: hidden;
     }
     
-    .inventario-hero::before {
+    .inventario-header::before {
         content: '';
         position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="white" opacity="0.1"/><circle cx="75" cy="75" r="1" fill="white" opacity="0.1"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
-        opacity: 0.3;
+        top: -50%;
+        right: -20%;
+        width: 400px;
+        height: 400px;
+        background: radial-gradient(circle, rgba(96, 165, 250, 0.2) 0%, transparent 70%);
+        animation: pulse 4s ease-in-out infinite;
     }
     
-    .inventario-hero-content {
+    @keyframes pulse {
+        0%, 100% { transform: scale(1); opacity: 0.5; }
+        50% { transform: scale(1.1); opacity: 0.8; }
+    }
+    
+    .inventario-header h1 {
+        color: #ffffff;
+        font-weight: 700;
+        font-size: 2rem;
+        margin-bottom: 0.5rem;
+        position: relative;
+        z-index: 2;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+    
+    .inventario-header h1 i {
+        font-size: 2.2rem;
+        color: #ffffff;
+        filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.3));
+    }
+    
+    .inventario-header p {
+        color: rgba(255, 255, 255, 0.95);
+        font-size: 1rem;
+        margin: 0;
         position: relative;
         z-index: 2;
     }
     
-    .stats-card {
-        background: white;
-        border-radius: 15px;
-        padding: 2rem;
-        box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+    /* Cards de Estadísticas Modernas */
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1.5rem;
         margin-bottom: 2rem;
+    }
+    
+    .stat-card {
+        background: #ffffff;
+        border-radius: 16px;
+        padding: 1.8rem;
+        border: 1px solid #e2e8f0;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .stat-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 4px;
+        background: linear-gradient(90deg, #3b82f6, #1e40af);
+        transform: scaleX(0);
         transition: transform 0.3s ease;
     }
     
-    .stats-card:hover {
-        transform: translateY(-5px);
+    .stat-card:hover::before {
+        transform: scaleX(1);
     }
     
-    .stats-number {
-        font-size: 3rem;
-        font-weight: bold;
-        color: #667eea;
-        margin-bottom: 0.5rem;
+    .stat-card:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 12px 24px rgba(59, 130, 246, 0.15);
+        border-color: rgba(59, 130, 246, 0.3);
     }
     
-    .stats-label {
-        color: #6c757d;
-        font-size: 1.1rem;
-        font-weight: 600;
-    }
-    
-    .stats-icon {
-        font-size: 2.5rem;
-        color: #667eea;
+    .stat-icon {
+        width: 60px;
+        height: 60px;
+        border-radius: 12px;
+        background: linear-gradient(135deg, #3b82f6, #1e40af);
+        display: flex;
+        align-items: center;
+        justify-content: center;
         margin-bottom: 1rem;
+        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
     }
     
+    .stat-icon i {
+        font-size: 1.8rem;
+        color: #ffffff;
+        filter: drop-shadow(0 0 6px rgba(255, 255, 255, 0.3));
+    }
+    
+    .stat-number {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: #1e293b;
+        margin-bottom: 0.5rem;
+        line-height: 1;
+    }
+    
+    .stat-label {
+        color: #475569;
+        font-size: 0.9rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    /* Acciones Rápidas Modernas */
     .quick-actions {
-        background: #f8f9fa;
-        border-radius: 15px;
+        background: #ffffff;
+        border-radius: 16px;
         padding: 2rem;
         margin-bottom: 2rem;
+        border: 1px solid #e2e8f0;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    }
+    
+    .quick-actions h5 {
+        color: #1e293b;
+        font-weight: 700;
+        margin-bottom: 1.5rem;
+        font-size: 1.2rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+    
+    .quick-actions h5 i {
+        color: #3b82f6;
+    }
+    
+    .actions-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 1rem;
     }
     
     .action-btn {
-        background: linear-gradient(45deg, #667eea, #764ba2);
-        color: white;
+        background: linear-gradient(135deg, #3b82f6, #1e40af);
         border: none;
-        border-radius: 25px;
-        padding: 1rem 2rem;
-        font-weight: 600;
+        border-radius: 12px;
+        padding: 1.2rem 1.5rem;
+        color: #ffffff;
         text-decoration: none;
-        display: inline-block;
-        margin: 0.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        font-weight: 600;
         transition: all 0.3s ease;
+        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .action-btn::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+        transition: left 0.5s ease;
+    }
+    
+    .action-btn:hover::before {
+        left: 100%;
     }
     
     .action-btn:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
-        color: white;
-        text-decoration: none;
+        transform: translateY(-4px);
+        box-shadow: 0 8px 24px rgba(59, 130, 246, 0.4);
+        color: #ffffff;
+        background: linear-gradient(135deg, #2563eb, #1e3a8a);
     }
     
-    .action-btn.secondary {
-        background: linear-gradient(45deg, #6c757d, #495057);
+    .action-btn i {
+        font-size: 1.3rem;
+        color: #ffffff;
     }
     
-    .action-btn.success {
-        background: linear-gradient(45deg, #28a745, #20c997);
+    /* Sección de Contenido Principal */
+    .content-grid {
+        display: grid;
+        grid-template-columns: 2fr 1fr;
+        gap: 2rem;
+        margin-bottom: 2rem;
     }
     
-    .action-btn.warning {
-        background: linear-gradient(45deg, #ffc107, #e0a800);
+    @media (max-width: 1200px) {
+        .content-grid {
+            grid-template-columns: 1fr;
+        }
     }
     
-    .action-btn.danger {
-        background: linear-gradient(45deg, #dc3545, #c82333);
-    }
-    
-    .recent-items {
-        background: white;
-        border-radius: 15px;
+    .content-card {
+        background: #ffffff;
+        border-radius: 16px;
         padding: 2rem;
-        box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        border: 1px solid #e2e8f0;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
     }
     
-    .item-card {
-        background: #f8f9fa;
-        border-radius: 10px;
-        padding: 1.5rem;
+    .content-card h5 {
+        color: #1e293b;
+        font-weight: 700;
+        margin-bottom: 1.5rem;
+        font-size: 1.2rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding-bottom: 1rem;
+        border-bottom: 2px solid #f1f5f9;
+    }
+    
+    .content-card h5 i {
+        color: #3b82f6;
+    }
+    
+    /* Items List Moderna */
+    .item-row {
+        background: #f8fafc;
+        border-radius: 12px;
+        padding: 1.2rem;
         margin-bottom: 1rem;
-        border-left: 4px solid #667eea;
+        border: 1px solid #e2e8f0;
         transition: all 0.3s ease;
+        position: relative;
     }
     
-    .item-card:hover {
-        background: #e9ecef;
-        transform: translateX(5px);
+    .item-row:hover {
+        background: #f1f5f9;
+        border-color: rgba(59, 130, 246, 0.3);
+        transform: translateX(8px);
+        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.1);
     }
     
     .item-name {
+        color: #1e293b;
         font-weight: 600;
-        color: #495057;
+        font-size: 1.05rem;
         margin-bottom: 0.5rem;
     }
     
+    .item-meta {
+        display: flex;
+        align-items: center;
+        gap: 1.5rem;
+        flex-wrap: wrap;
+    }
+    
     .item-stock {
-        color: #6c757d;
+        color: #475569;
         font-size: 0.9rem;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .stock-badge {
+        padding: 0.3rem 0.8rem;
+        border-radius: 8px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        display: inline-block;
     }
     
     .stock-low {
-        color: #dc3545;
-        font-weight: 600;
+        background: linear-gradient(135deg, #fee2e2, #fecaca);
+        color: #991b1b;
+        border: 1px solid #fca5a5;
     }
     
     .stock-ok {
-        color: #28a745;
-        font-weight: 600;
+        background: linear-gradient(135deg, #dcfce7, #bbf7d0);
+        color: #15803d;
+        border: 1px solid #86efac;
     }
     
     .category-badge {
-        background: #667eea;
-        color: white;
-        padding: 0.25rem 0.75rem;
-        border-radius: 15px;
-        font-size: 0.8rem;
+        background: linear-gradient(135deg, #dbeafe, #bfdbfe);
+        color: #1e40af;
+        padding: 0.3rem 0.8rem;
+        border-radius: 8px;
+        font-size: 0.85rem;
         font-weight: 600;
+        border: 1px solid #93c5fd;
     }
+    
+    /* Empty State */
+    .empty-state {
+        text-align: center;
+        padding: 3rem 2rem;
+    }
+    
+    .empty-state i {
+        font-size: 4rem;
+        color: #cbd5e1;
+        margin-bottom: 1.5rem;
+        display: block;
+    }
+    
+    .empty-state h5 {
+        color: #64748b;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        border: none;
+        padding: 0;
+    }
+    
+    .empty-state p {
+        color: #94a3b8;
+        margin-bottom: 1.5rem;
+    }
+    
+    /* Animaciones de entrada */
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    .stat-card {
+        animation: fadeInUp 0.5s ease forwards;
+        opacity: 0;
+    }
+    
+    .stat-card:nth-child(1) { animation-delay: 0.1s; }
+    .stat-card:nth-child(2) { animation-delay: 0.2s; }
+    .stat-card:nth-child(3) { animation-delay: 0.3s; }
+    .stat-card:nth-child(4) { animation-delay: 0.4s; }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="container-fluid">
-    <!-- Header -->
-    <div class="inventario-hero">
-        <div class="inventario-hero-content">
-            <h2><i class="fas fa-boxes me-3"></i>Dashboard de Inventario</h2>
-            <p class="mb-0">Gestiona tu inventario de forma inteligente y eficiente</p>
-        </div>
+<div class="inventario-container">
+    <!-- Header Ejecutivo -->
+    <div class="inventario-header">
+        <h1>
+            <i class="fas fa-boxes"></i>
+            Gestión de Inventario
+        </h1>
+        <p>Control inteligente y automatizado de tus recursos</p>
     </div>
 
     <!-- Estadísticas -->
-    <div class="row mb-4">
-        <div class="col-lg-3 col-md-6 mb-3">
-            <div class="stats-card text-center">
-                <div class="stats-icon">
-                    <i class="fas fa-boxes"></i>
-                </div>
-                <div class="stats-number">{{ total_items }}</div>
-                <div class="stats-label">Total Items</div>
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-icon">
+                <i class="fas fa-boxes"></i>
             </div>
+            <div class="stat-number">{{ total_items }}</div>
+            <div class="stat-label">Items Totales</div>
         </div>
-        <div class="col-lg-3 col-md-6 mb-3">
-            <div class="stats-card text-center">
-                <div class="stats-icon">
-                    <i class="fas fa-tags"></i>
-                </div>
-                <div class="stats-number">{{ total_categorias }}</div>
-                <div class="stats-label">Categorías</div>
+        
+        <div class="stat-card">
+            <div class="stat-icon">
+                <i class="fas fa-tags"></i>
             </div>
+            <div class="stat-number">{{ total_categorias }}</div>
+            <div class="stat-label">Categorías</div>
         </div>
-        <div class="col-lg-3 col-md-6 mb-3">
-            <div class="stats-card text-center">
-                <div class="stats-icon">
-                    <i class="fas fa-hand-holding"></i>
-                </div>
-                <div class="stats-number">{{ total_asignaciones }}</div>
-                <div class="stats-label">Asignaciones</div>
+        
+        <div class="stat-card">
+            <div class="stat-icon">
+                <i class="fas fa-hand-holding"></i>
             </div>
+            <div class="stat-number">{{ total_asignaciones }}</div>
+            <div class="stat-label">Asignaciones</div>
         </div>
-        <div class="col-lg-3 col-md-6 mb-3">
-            <div class="stats-card text-center">
-                <div class="stats-icon">
-                    <i class="fas fa-exclamation-triangle"></i>
-                </div>
-                <div class="stats-number">{{ items_bajo_stock }}</div>
-                <div class="stats-label">Stock Bajo</div>
+        
+        <div class="stat-card">
+            <div class="stat-icon">
+                <i class="fas fa-exclamation-triangle"></i>
             </div>
+            <div class="stat-number">{{ items_bajo_stock }}</div>
+            <div class="stat-label">Stock Crítico</div>
         </div>
     </div>
 
     <!-- Acciones Rápidas -->
     <div class="quick-actions">
-        <h5 class="mb-3"><i class="fas fa-bolt me-2"></i>Acciones Rápidas</h5>
-        <div class="d-flex flex-wrap">
+        <h5><i class="fas fa-bolt"></i>Acciones Rápidas</h5>
+        <div class="actions-grid">
             <a href="{% url 'item_create' %}" class="action-btn">
-                <i class="fas fa-plus me-2"></i>Nuevo Item
+                <i class="fas fa-plus-circle"></i>
+                <span>Nuevo Item</span>
             </a>
-            <a href="{% url 'categoria_create' %}" class="action-btn secondary">
-                <i class="fas fa-tag me-2"></i>Nueva Categoría
+            <a href="{% url 'categoria_create' %}" class="action-btn">
+                <i class="fas fa-tag"></i>
+                <span>Nueva Categoría</span>
             </a>
-            <a href="{% url 'asignacion_create' %}" class="action-btn success">
-                <i class="fas fa-hand-holding me-2"></i>Asignar Item
+            <a href="{% url 'asignacion_create' %}" class="action-btn">
+                <i class="fas fa-hand-holding"></i>
+                <span>Asignar Item</span>
             </a>
-            <a href="{% url 'item_list' %}" class="action-btn warning">
-                <i class="fas fa-list me-2"></i>Ver Todos los Items
+            <a href="{% url 'item_list' %}" class="action-btn">
+                <i class="fas fa-list-alt"></i>
+                <span>Ver Todos</span>
             </a>
-            <a href="{% url 'asignacion_list' %}" class="action-btn danger">
-                <i class="fas fa-clipboard-list me-2"></i>Ver Asignaciones
+            <a href="{% url 'asignacion_list' %}" class="action-btn">
+                <i class="fas fa-clipboard-list"></i>
+                <span>Historial</span>
             </a>
         </div>
     </div>
 
-    <!-- Items Recientes -->
-    <div class="row">
-        <div class="col-lg-8">
-            <div class="recent-items">
-                <h5 class="mb-3"><i class="fas fa-clock me-2"></i>Items Recientes</h5>
-                {% if items_recientes %}
-                    {% for item in items_recientes %}
-                    <div class="item-card">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div>
-                                <div class="item-name">{{ item.nombre }}</div>
-                                <div class="item-stock">
-                                    Stock: 
-                                    <span class="{% if item.stock_actual <= item.stock_minimo %}stock-low{% else %}stock-ok{% endif %}">
-                                        {{ item.stock_actual }}
-                                    </span>
-                                    {% if item.stock_minimo %}
-                                        / Mín: {{ item.stock_minimo }}
-                                    {% endif %}
-                                </div>
-                            </div>
-                            <div>
-                                <span class="category-badge">{{ item.categoria.nombre }}</span>
-                            </div>
+    <!-- Contenido Principal -->
+    <div class="content-grid">
+        <!-- Items Recientes -->
+        <div class="content-card">
+            <h5><i class="fas fa-clock"></i>Items Recientes</h5>
+            {% if items_recientes %}
+                {% for item in items_recientes %}
+                <div class="item-row">
+                    <div class="item-name">{{ item.nombre }}</div>
+                    <div class="item-meta">
+                        <div class="item-stock">
+                            <i class="fas fa-cubes"></i>
+                            Stock: 
+                            <span class="stock-badge {% if item.stock_actual <= item.stock_minimo %}stock-low{% else %}stock-ok{% endif %}">
+                                {{ item.stock_actual }}
+                            </span>
+                            {% if item.stock_minimo %}
+                                / Mín: {{ item.stock_minimo }}
+                            {% endif %}
                         </div>
+                        <span class="category-badge">
+                            <i class="fas fa-tag"></i> {{ item.categoria.nombre }}
+                        </span>
                     </div>
-                    {% endfor %}
-                {% else %}
-                    <div class="text-center py-4">
-                        <i class="fas fa-boxes fa-3x text-muted mb-3"></i>
-                        <h5 class="text-muted">No hay items en el inventario</h5>
-                        <p class="text-muted">Comienza agregando tu primer item</p>
-                        <a href="{% url 'item_create' %}" class="action-btn">
-                            <i class="fas fa-plus me-2"></i>Agregar Primer Item
-                        </a>
-                    </div>
-                {% endif %}
-            </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="empty-state">
+                    <i class="fas fa-boxes"></i>
+                    <h5>Sin items registrados</h5>
+                    <p>Comienza agregando tu primer item al inventario</p>
+                    <a href="{% url 'item_create' %}" class="action-btn" style="display: inline-flex; margin: 0 auto;">
+                        <i class="fas fa-plus-circle"></i>
+                        <span>Agregar Primer Item</span>
+                    </a>
+                </div>
+            {% endif %}
         </div>
         
-        <div class="col-lg-4">
-            <div class="recent-items">
-                <h5 class="mb-3"><i class="fas fa-chart-pie me-2"></i>Resumen por Categoría</h5>
-                {% if categorias_con_items %}
-                    {% for categoria in categorias_con_items %}
-                    <div class="item-card">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div>
-                                <div class="item-name">{{ categoria.nombre }}</div>
-                                <div class="item-stock">{{ categoria.items_count }} items</div>
-                            </div>
-                            <div>
-                                <span class="category-badge">{{ categoria.items_count }}</span>
-                            </div>
-                        </div>
+        <!-- Categorías -->
+        <div class="content-card">
+            <h5><i class="fas fa-chart-pie"></i>Por Categoría</h5>
+            {% if categorias_con_items %}
+                {% for categoria in categorias_con_items %}
+                <div class="item-row">
+                    <div class="item-name">{{ categoria.nombre }}</div>
+                    <div class="item-meta">
+                        <span class="stock-badge stock-ok">
+                            {{ categoria.items_count }} items
+                        </span>
                     </div>
-                    {% endfor %}
-                {% else %}
-                    <div class="text-center py-4">
-                        <i class="fas fa-tags fa-3x text-muted mb-3"></i>
-                        <h5 class="text-muted">No hay categorías</h5>
-                        <p class="text-muted">Crea tu primera categoría</p>
-                        <a href="{% url 'categoria_create' %}" class="action-btn">
-                            <i class="fas fa-plus me-2"></i>Crear Categoría
-                        </a>
-                    </div>
-                {% endif %}
-            </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="empty-state">
+                    <i class="fas fa-tags"></i>
+                    <h5>Sin categorías</h5>
+                    <p>Crea tu primera categoría</p>
+                    <a href="{% url 'categoria_create' %}" class="action-btn" style="display: inline-flex; margin: 0 auto;">
+                        <i class="fas fa-plus-circle"></i>
+                        <span>Crear Categoría</span>
+                    </a>
+                </div>
+            {% endif %}
         </div>
     </div>
 </div>

@@ -1,177 +1,475 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Gestión de Archivos por Proyecto{% endblock %}
+{% block title %}Archivos - Sistema de Construcción{% endblock %}
 
-{% block content %}
-<div class="container-fluid">
-    <!-- Header -->
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <div>
-            <h1 class="h3 mb-0 text-gray-800">
-                <i class="fas fa-folder-open text-primary me-2"></i>
-                Gestión de Archivos por Proyecto
-            </h1>
-            <p class="text-muted">Selecciona un proyecto para gestionar sus archivos</p>
-        </div>
-        <div class="d-flex gap-2">
-            <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary">
-                <i class="fas fa-arrow-left me-2"></i>
-                Volver al Dashboard
-            </a>
-        </div>
-    </div>
-
-    <!-- Estadísticas -->
-    <div class="row mb-4">
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card border-left-primary shadow h-100 py-2">
-                <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
-                                Total de Proyectos
-                            </div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_proyectos }}</div>
-                        </div>
-                        <div class="col-auto">
-                            <i class="fas fa-project-diagram fa-2x text-gray-300"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Lista de Proyectos -->
-    <div class="row">
-        {% for proyecto in proyectos %}
-        <div class="col-xl-4 col-md-6 mb-4">
-            <div class="card border-left-success shadow h-100 py-2">
-                <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
-                                {{ proyecto.estado|title }}
-                            </div>
-                            <div class="h6 mb-0 font-weight-bold text-gray-800">
-                                {{ proyecto.nombre }}
-                            </div>
-                            <div class="text-xs text-muted mb-2">
-                                Cliente: {{ proyecto.cliente.razon_social }}
-                            </div>
-                            <div class="d-flex align-items-center mb-2">
-                                <span class="badge bg-info me-2">
-                                    <i class="fas fa-file me-1"></i>
-                                    {{ proyecto.total_archivos }} archivos
-                                </span>
-                                <span class="badge bg-{{ proyecto.estado|yesno:'success,warning' }}">
-                                    {{ proyecto.estado|title }}
-                                </span>
-                            </div>
-                        </div>
-                        <div class="col-auto">
-                            <i class="fas fa-folder fa-2x text-gray-300"></i>
-                        </div>
-                    </div>
-                    
-                    <div class="mt-3">
-                        <div class="d-flex gap-2">
-                            <a href="{% url 'archivos_proyecto_list' proyecto.id %}" 
-                               class="btn btn-primary btn-sm flex-fill">
-                                <i class="fas fa-folder-open me-1"></i>
-                                Ver Archivos
-                            </a>
-                            <a href="{% url 'proyecto_dashboard' proyecto.id %}" 
-                               class="btn btn-outline-secondary btn-sm">
-                                <i class="fas fa-chart-bar me-1"></i>
-                                Dashboard
-                            </a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        {% empty %}
-        <div class="col-12">
-            <div class="text-center py-5">
-                <i class="fas fa-folder-open fa-3x text-gray-300 mb-3"></i>
-                <h4 class="text-gray-500">No hay proyectos disponibles</h4>
-                <p class="text-muted">No se encontraron proyectos activos para gestionar archivos.</p>
-                <a href="{% url 'proyecto_create' %}" class="btn btn-primary">
-                    <i class="fas fa-plus me-2"></i>
-                    Crear Proyecto
-                </a>
-            </div>
-        </div>
-        {% endfor %}
-    </div>
-
-    <!-- Información adicional -->
-    <div class="row mt-5">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-header">
-                    <h6 class="mb-0">
-                        <i class="fas fa-info-circle me-2"></i>
-                        Información sobre la Gestión de Archivos
-                    </h6>
-                </div>
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-4">
-                            <h6 class="text-primary">
-                                <i class="fas fa-upload me-2"></i>
-                                Subir Archivos
-                            </h6>
-                            <p class="text-muted small">
-                                Puedes subir planos, documentos, imágenes y otros archivos relacionados con cada proyecto.
-                            </p>
-                        </div>
-                        <div class="col-md-4">
-                            <h6 class="text-success">
-                                <i class="fas fa-download me-2"></i>
-                                Descargar Archivos
-                            </h6>
-                            <p class="text-muted small">
-                                Accede y descarga todos los archivos del proyecto cuando los necesites.
-                            </p>
-                        </div>
-                        <div class="col-md-4">
-                            <h6 class="text-warning">
-                                <i class="fas fa-eye me-2"></i>
-                                Vista Previa
-                            </h6>
-                            <p class="text-muted small">
-                                Visualiza imágenes y PDFs directamente desde el navegador.
-                            </p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
+{% block extra_css %}
+<style>
+    /* ===== ESTILO GOOGLE DRIVE / DROPBOX ===== */
+    body {
+        background: #f8f9fa !important;
+    }
+    
+    .archivos-wrapper {
+        padding: 0;
+        margin: 0;
+        background: #f8f9fa;
+    }
+    
+    /* Top Bar Compacto */
+    .archivos-topbar {
+        background: white;
+        border-bottom: 1px solid #e1e4e8;
+        padding: 1rem 1.5rem;
+        position: sticky;
+        top: 0;
+        z-index: 100;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+    }
+    
+    .topbar-content {
+        max-width: 1400px;
+        margin: 0 auto;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 2rem;
+    }
+    
+    .topbar-title {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        margin: 0;
+    }
+    
+    .topbar-icon {
+        width: 36px;
+        height: 36px;
+        background: linear-gradient(135deg, #4285f4, #1967d2);
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1.1rem;
+    }
+    
+    .topbar-text h1 {
+        font-size: 1.3rem;
+        font-weight: 600;
+        color: #202124;
+        margin: 0;
+    }
+    
+    .topbar-text p {
+        font-size: 0.8rem;
+        color: #5f6368;
+        margin: 0;
+    }
+    
+    .topbar-search {
+        flex: 1;
+        max-width: 500px;
+    }
+    
+    .search-box {
+        position: relative;
+    }
+    
+    .search-box input {
+        width: 100%;
+        padding: 0.65rem 1rem 0.65rem 2.5rem;
+        border: 1px solid #dadce0;
+        border-radius: 8px;
+        font-size: 0.9rem;
+        background: #f1f3f4;
+        transition: all 0.2s ease;
+    }
+    
+    .search-box input:focus {
+        background: white;
+        border-color: #4285f4;
+        outline: none;
+        box-shadow: 0 1px 6px rgba(32, 33, 36, 0.1);
+    }
+    
+    .search-box i {
+        position: absolute;
+        left: 0.85rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #5f6368;
+        font-size: 0.9rem;
+    }
+    
+    .topbar-stats {
+        display: flex;
+        align-items: center;
+        gap: 1.5rem;
+    }
+    
+    .stat-chip {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 1rem;
+        background: #f1f3f4;
+        border-radius: 16px;
+        font-size: 0.85rem;
+        color: #5f6368;
+        font-weight: 500;
+    }
+    
+    .stat-chip i {
+        color: #4285f4;
+    }
+    
+    .stat-chip strong {
+        color: #202124;
+    }
+    
+    /* Main Content */
+    .archivos-main {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 2rem 1.5rem;
+    }
+    
+    /* Projects Grid - Compacto tipo Google Drive */
+    .projects-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 1rem;
+    }
+    
+    .project-card {
+        background: white;
+        border: 1px solid #dadce0;
+        border-radius: 12px;
+        overflow: hidden;
+        transition: all 0.2s ease;
+        cursor: pointer;
+        position: relative;
+    }
+    
+    .project-card:hover {
+        border-color: #4285f4;
+        box-shadow: 0 4px 12px rgba(60, 64, 67, 0.15);
+        transform: translateY(-2px);
+    }
+    
+    .project-card:hover .project-preview {
+        background: linear-gradient(135deg, #4285f4 0%, #1967d2 100%);
+    }
+    
+    .project-preview {
+        height: 100px;
+        background: linear-gradient(135deg, #5f6368 0%, #3c4043 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        transition: all 0.3s ease;
+    }
+    
+    .project-preview-icon {
+        font-size: 2.5rem;
+        color: rgba(255, 255, 255, 0.9);
+    }
+    
+    .project-status-badge {
+        position: absolute;
+        top: 0.75rem;
+        right: 0.75rem;
+        padding: 0.35rem 0.75rem;
+        border-radius: 12px;
+        font-size: 0.7rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+    }
+    
+    .badge-active {
+        background: #0f9d58;
+        color: #ffffff;
+        border: none;
+        font-weight: 700;
+    }
+    
+    .badge-inactive {
+        background: #f9ab00;
+        color: #ffffff;
+        border: none;
+        font-weight: 700;
+    }
+    
+    .project-info {
+        padding: 1rem 1.25rem;
+    }
+    
+    .project-name {
+        font-size: 0.95rem;
+        font-weight: 600;
+        color: #202124;
+        margin-bottom: 0.4rem;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    
+    .project-client {
+        font-size: 0.8rem;
+        color: #5f6368;
+        margin-bottom: 0.75rem;
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    
+    .project-client i {
+        font-size: 0.75rem;
+        color: #80868b;
+    }
+    
+    .project-meta {
+        display: flex;
+        gap: 1rem;
+        padding-top: 0.75rem;
+        border-top: 1px solid #f1f3f4;
+    }
+    
+    .meta-item {
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+        font-size: 0.8rem;
+        color: #5f6368;
+    }
+    
+    .meta-item i {
+        font-size: 0.75rem;
+        color: #80868b;
+    }
+    
+    .meta-item strong {
+        color: #202124;
+        font-weight: 600;
+    }
+    
+    .project-action {
+        padding: 0.85rem 1.25rem;
+        background: #f8f9fa;
+        border-top: 1px solid #f1f3f4;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        font-size: 0.85rem;
+        font-weight: 500;
+        color: #1967d2;
+        transition: all 0.2s ease;
+        text-decoration: none;
+    }
+    
+    .project-action:hover {
+        background: #e8f0fe;
+        color: #1967d2;
+    }
+    
+    .project-action i {
+        font-size: 0.9rem;
+    }
+    
+    /* Empty State Compacto */
+    .empty-state {
+        text-align: center;
+        padding: 4rem 2rem;
+        background: white;
+        border: 1px solid #dadce0;
+        border-radius: 12px;
+        max-width: 500px;
+        margin: 4rem auto;
+    }
+    
+    .empty-state-icon {
+        width: 80px;
+        height: 80px;
+        background: #f1f3f4;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 1.5rem;
+    }
+    
+    .empty-state-icon i {
+        font-size: 2.5rem;
+        color: #80868b;
+    }
+    
+    .empty-state h3 {
+        font-size: 1.2rem;
+        font-weight: 500;
+        color: #202124;
+        margin-bottom: 0.5rem;
+    }
+    
+    .empty-state p {
+        font-size: 0.9rem;
+        color: #5f6368;
+        margin-bottom: 2rem;
+    }
+    
+    .btn-create {
+        background: #1a73e8;
+        color: white;
+        padding: 0.75rem 1.5rem;
+        border-radius: 8px;
+        border: none;
+        font-weight: 500;
+        font-size: 0.9rem;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: all 0.2s ease;
+        text-decoration: none;
+    }
+    
+    .btn-create:hover {
+        background: #1967d2;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+        color: white;
+    }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+        .topbar-content {
+            flex-direction: column;
+            gap: 1rem;
+        }
+        
+        .topbar-search {
+            max-width: 100%;
+            order: 3;
+        }
+        
+        .topbar-stats {
+            order: 2;
+            width: 100%;
+            justify-content: space-between;
+        }
+        
+        .projects-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
 {% endblock %}
 
-{% block extra_js %}
+{% block content %}
+<div class="archivos-wrapper">
+    <!-- Top Bar -->
+    <div class="archivos-topbar">
+        <div class="topbar-content">
+            <div class="topbar-title">
+                <div class="topbar-icon">
+                    <i class="fas fa-folder"></i>
+                </div>
+                <div class="topbar-text">
+                    <h1>Mis Archivos</h1>
+                    <p>Gestión de documentos</p>
+                </div>
+            </div>
+            
+            <div class="topbar-search">
+                <div class="search-box">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="searchProjects" placeholder="Buscar en proyectos...">
+                </div>
+            </div>
+            
+            <div class="topbar-stats">
+                <div class="stat-chip">
+                    <i class="fas fa-folder-open"></i>
+                    <strong>{{ total_proyectos }}</strong> proyectos
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="archivos-main">
+        {% if proyectos %}
+        <div class="projects-grid">
+            {% for proyecto in proyectos %}
+            <div class="project-card" data-name="{{ proyecto.nombre|lower }}">
+                <div class="project-preview">
+                    <div class="project-preview-icon">
+                        <i class="fas fa-briefcase"></i>
+                    </div>
+                    <span class="project-status-badge {% if proyecto.activo %}badge-active{% else %}badge-inactive{% endif %}">
+                        {% if proyecto.activo %}Activo{% else %}Pausado{% endif %}
+                    </span>
+                </div>
+                
+                <div class="project-info">
+                    <div class="project-name" title="{{ proyecto.nombre }}">
+                        {{ proyecto.nombre }}
+                    </div>
+                    <div class="project-client" title="{{ proyecto.cliente.razon_social }}">
+                        <i class="fas fa-building"></i>
+                        {{ proyecto.cliente.razon_social }}
+                    </div>
+                    
+                    <div class="project-meta">
+                        <div class="meta-item">
+                            <i class="fas fa-file"></i>
+                            <strong>{{ proyecto.total_archivos|default:"0" }}</strong> archivos
+                        </div>
+                        <div class="meta-item">
+                            <i class="fas fa-folder"></i>
+                            <strong>{{ proyecto.total_carpetas|default:"0" }}</strong> carpetas
+                        </div>
+                    </div>
+                </div>
+                
+                <a href="{% url 'archivos_proyecto_list' proyecto.id %}" class="project-action">
+                    <i class="fas fa-folder-open"></i>
+                    Abrir archivos
+                </a>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <div class="empty-state-icon">
+                <i class="fas fa-folder-open"></i>
+            </div>
+            <h3>No hay proyectos</h3>
+            <p>Crea tu primer proyecto para comenzar a gestionar archivos</p>
+            <a href="{% url 'proyecto_create' %}" class="btn-create">
+                <i class="fas fa-plus"></i>
+                Crear proyecto
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
 <script>
-$(document).ready(function() {
-    // Animaciones de entrada
-    $('.card').addClass('fade-in');
+// Search functionality
+document.getElementById('searchProjects').addEventListener('input', function() {
+    const searchValue = this.value.toLowerCase();
+    const projectCards = document.querySelectorAll('.project-card');
     
-    // Tooltips
-    $('[data-toggle="tooltip"]').tooltip();
-    
-    // Efectos hover en las tarjetas
-    $('.card').hover(
-        function() {
-            $(this).addClass('shadow-lg').removeClass('shadow');
-        },
-        function() {
-            $(this).removeClass('shadow-lg').addClass('shadow');
-        }
-    );
+    projectCards.forEach(card => {
+        const projectName = card.dataset.name;
+        card.style.display = projectName.includes(searchValue) ? '' : 'none';
+    });
 });
 </script>
 {% endblock %}

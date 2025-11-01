@@ -1,0 +1,319 @@
+/* ===== SIDEBAR FUTURISTA Y PROFESIONAL ===== */
+/* Versión 2025-11-02 - Diseño Glassmorphism Ejecutivo */
+
+/* Sidebar principal - Efecto glassmorphism oscuro */
+.sidebar {
+    position: fixed !important;
+    left: 0 !important;
+    top: 0 !important;
+    height: 100vh !important;
+    width: 280px !important;
+    z-index: 1000 !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    
+    /* Glassmorphism oscuro */
+    background: rgba(15, 23, 42, 0.95) !important;
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    
+    /* Borde sutil */
+    border-right: 1px solid rgba(148, 163, 184, 0.1);
+    
+    /* Sombra profunda */
+    box-shadow: 4px 0 24px rgba(0, 0, 0, 0.3);
+    
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Header del sidebar */
+.sidebar-header {
+    padding: 1.5rem 1rem;
+    border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+    background: linear-gradient(135deg, rgba(30, 58, 138, 0.2) 0%, rgba(30, 64, 175, 0.1) 100%);
+}
+
+.sidebar-logo {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.5rem;
+}
+
+.logo-image {
+    height: 45px;
+    width: auto;
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+    transition: transform 0.3s ease;
+}
+
+.logo-image:hover {
+    transform: scale(1.05);
+}
+
+/* Toggle button moderno */
+.sidebar-toggle {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.8);
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+}
+
+.sidebar-toggle:hover {
+    background: rgba(255, 255, 255, 0.15);
+    border-color: rgba(255, 255, 255, 0.2);
+    color: white;
+    transform: rotate(90deg);
+}
+
+/* Navegación */
+.sidebar-nav {
+    padding: 1rem 0;
+}
+
+.sidebar-nav .nav {
+    gap: 0.3rem;
+    padding: 0 0.75rem;
+}
+
+.sidebar-nav .nav-item {
+    margin: 0;
+}
+
+/* Items de navegación - Diseño futurista */
+.sidebar-nav .nav-link {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.85rem 1rem;
+    color: rgba(226, 232, 240, 0.85) !important;
+    border-radius: 10px;
+    font-size: 0.95rem;
+    font-weight: 500;
+    letter-spacing: 0.3px;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    border: 1px solid transparent;
+}
+
+/* Efecto de brillo al hover */
+.sidebar-nav .nav-link::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+    transition: left 0.5s ease;
+}
+
+.sidebar-nav .nav-link:hover::before {
+    left: 100%;
+}
+
+.sidebar-nav .nav-link:hover {
+    background: rgba(30, 64, 175, 0.15);
+    border-color: rgba(59, 130, 246, 0.3);
+    color: white !important;
+    transform: translateX(5px);
+    box-shadow: 0 4px 12px rgba(30, 64, 175, 0.2);
+}
+
+/* Item activo - Efecto neón sutil */
+.sidebar-nav .nav-link.active {
+    background: linear-gradient(135deg, rgba(30, 58, 138, 0.3) 0%, rgba(30, 64, 175, 0.2) 100%);
+    border-left: 3px solid #3b82f6;
+    color: white !important;
+    font-weight: 600;
+    box-shadow: 0 0 20px rgba(59, 130, 246, 0.3), inset 0 0 20px rgba(59, 130, 246, 0.1);
+}
+
+/* Iconos con efecto glow */
+.sidebar-nav .nav-link i {
+    font-size: 1.1rem;
+    width: 24px;
+    text-align: center;
+    transition: all 0.3s ease;
+    filter: drop-shadow(0 0 2px rgba(59, 130, 246, 0.5));
+}
+
+.sidebar-nav .nav-link:hover i {
+    transform: scale(1.1);
+    filter: drop-shadow(0 0 6px rgba(59, 130, 246, 0.8));
+}
+
+.sidebar-nav .nav-link.active i {
+    color: #60a5fa;
+    filter: drop-shadow(0 0 8px rgba(96, 165, 250, 0.8));
+}
+
+/* Texto del sidebar */
+.sidebar-nav .nav-link span {
+    flex: 1;
+    transition: opacity 0.3s ease;
+}
+
+/* Footer del sidebar - Usuario */
+.sidebar-footer {
+    padding: 1.5rem 1rem;
+    border-top: 1px solid rgba(148, 163, 184, 0.1);
+    background: linear-gradient(135deg, rgba(15, 23, 42, 0.5) 0%, rgba(30, 41, 59, 0.3) 100%);
+    position: sticky;
+    bottom: 0;
+}
+
+.user-info {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    transition: all 0.3s ease;
+}
+
+.user-info:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(59, 130, 246, 0.3);
+    transform: translateY(-2px);
+}
+
+.user-avatar {
+    width: 42px;
+    height: 42px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 600;
+    font-size: 1.1rem;
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+}
+
+.user-details {
+    flex: 1;
+    min-width: 0;
+}
+
+.user-name {
+    color: white;
+    font-weight: 600;
+    font-size: 0.95rem;
+    margin-bottom: 0.2rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.user-role {
+    color: rgba(226, 232, 240, 0.7);
+    font-size: 0.8rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Scrollbar personalizado */
+.sidebar::-webkit-scrollbar {
+    width: 6px;
+}
+
+.sidebar::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.1);
+}
+
+.sidebar::-webkit-scrollbar-thumb {
+    background: rgba(59, 130, 246, 0.5);
+    border-radius: 10px;
+}
+
+.sidebar::-webkit-scrollbar-thumb:hover {
+    background: rgba(59, 130, 246, 0.7);
+}
+
+/* Main content - Ajustes */
+.main-content {
+    margin-left: 280px !important;
+    min-height: 100vh !important;
+    background: #f8fafc;
+    transition: margin-left 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Responsive */
+@media (max-width: 991.98px) {
+    .sidebar {
+        transform: translateX(-100%);
+    }
+    
+    .sidebar.show {
+        transform: translateX(0);
+    }
+    
+    .main-content {
+        margin-left: 0 !important;
+    }
+}
+
+/* Animación de entrada */
+@keyframes slideInLeft {
+    from {
+        opacity: 0;
+        transform: translateX(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+.sidebar-nav .nav-item {
+    animation: slideInLeft 0.3s ease forwards;
+    opacity: 0;
+}
+
+.sidebar-nav .nav-item:nth-child(1) { animation-delay: 0.05s; }
+.sidebar-nav .nav-item:nth-child(2) { animation-delay: 0.1s; }
+.sidebar-nav .nav-item:nth-child(3) { animation-delay: 0.15s; }
+.sidebar-nav .nav-item:nth-child(4) { animation-delay: 0.2s; }
+.sidebar-nav .nav-item:nth-child(5) { animation-delay: 0.25s; }
+.sidebar-nav .nav-item:nth-child(6) { animation-delay: 0.3s; }
+.sidebar-nav .nav-item:nth-child(7) { animation-delay: 0.35s; }
+.sidebar-nav .nav-item:nth-child(8) { animation-delay: 0.4s; }
+.sidebar-nav .nav-item:nth-child(9) { animation-delay: 0.45s; }
+.sidebar-nav .nav-item:nth-child(10) { animation-delay: 0.5s; }
+.sidebar-nav .nav-item:nth-child(11) { animation-delay: 0.55s; }
+.sidebar-nav .nav-item:nth-child(12) { animation-delay: 0.6s; }
+.sidebar-nav .nav-item:nth-child(13) { animation-delay: 0.65s; }
+.sidebar-nav .nav-item:nth-child(14) { animation-delay: 0.7s; }
+
+/* Efecto de partículas en el fondo (opcional) */
+.sidebar::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image: 
+        radial-gradient(circle at 20% 30%, rgba(59, 130, 246, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 80% 70%, rgba(30, 64, 175, 0.08) 0%, transparent 50%);
+    pointer-events: none;
+    z-index: 0;
+}
+
+.sidebar-nav, .sidebar-header, .sidebar-footer {
+    position: relative;
+    z-index: 1;
+}
+

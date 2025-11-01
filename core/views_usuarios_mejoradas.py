@@ -567,6 +567,30 @@ def usuarios_dashboard(request):
         messages.error(request, 'No tienes permisos para acceder a esta sección')
         return redirect('dashboard')
     
+    # Búsqueda y filtros
+    search = request.GET.get('search', '')
+    rol_filter = request.GET.get('rol', '')
+    estado_filter = request.GET.get('estado', '')
+    
+    # Obtener TODOS los usuarios
+    usuarios = User.objects.all().order_by('-date_joined')
+    
+    if search:
+        usuarios = usuarios.filter(
+            Q(username__icontains=search) |
+            Q(first_name__icontains=search) |
+            Q(last_name__icontains=search) |
+            Q(email__icontains=search)
+        )
+    
+    if rol_filter:
+        usuarios = usuarios.filter(perfilusuario__rol_id=rol_filter)
+    
+    if estado_filter == 'activo':
+        usuarios = usuarios.filter(is_active=True)
+    elif estado_filter == 'inactivo':
+        usuarios = usuarios.filter(is_active=False)
+    
     # Estadísticas generales
     total_usuarios = User.objects.count()
     usuarios_activos = User.objects.filter(is_active=True).count()
@@ -585,6 +609,12 @@ def usuarios_dashboard(request):
                 'porcentaje': round((count / total_usuarios) * 100, 1) if total_usuarios > 0 else 0
             })
     
+    # Paginación
+    from django.core.paginator import Paginator
+    paginator = Paginator(usuarios, 15)  # 15 usuarios por página
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    
     # Usuarios recientes
     usuarios_recientes = User.objects.order_by('-date_joined')[:5]
     
@@ -593,7 +623,15 @@ def usuarios_dashboard(request):
         modulo__in=['Usuarios', 'Roles', 'Permisos']
     ).order_by('-fecha_actividad')[:10]
     
+    # Obtener roles para filtros
+    roles = Rol.objects.all().order_by('nombre')
+    
     context = {
+        'page_obj': page_obj,  # ¡AGREGADO! Lista completa de usuarios con paginación
+        'search': search,
+        'rol_filter': rol_filter,
+        'estado_filter': estado_filter,
+        'roles': roles,
         'total_usuarios': total_usuarios,
         'usuarios_activos': usuarios_activos,
         'superusuarios': superusuarios,

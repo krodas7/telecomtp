@@ -8,6 +8,9 @@ class PWARegister {
 
     // Registrar Service Worker
     async registerServiceWorker() {
+        console.log('⚠️ Service Worker DESACTIVADO temporalmente para desarrollo');
+        return false;
+        
         if (!('serviceWorker' in navigator)) {
             console.error('❌ Service Worker no soportado en este navegador');
             return false;

@@ -6,7 +6,8 @@ from .models import (
     Factura, Pago, CategoriaGasto, Gasto, GastoFijoMensual,
     LogActividad, ArchivoAdjunto, Anticipo, AplicacionAnticipo,
     ArchivoProyecto, CarpetaProyecto, ConfiguracionSistema,
-    Cotizacion, ItemCotizacion
+    Cotizacion, ItemCotizacion, ItemReutilizable, ConfiguracionPlanilla, PlanillaLiquidada,
+    EventoCalendario, NotaPostit
 )
 
 
@@ -349,3 +350,73 @@ class ItemCotizacionAdmin(admin.ModelAdmin):
     search_fields = ['descripcion', 'cotizacion__numero_cotizacion']
     readonly_fields = ['total', 'creado_en', 'modificado_en']
     list_per_page = 25
+
+
+@admin.register(ItemReutilizable)
+class ItemReutilizableAdmin(admin.ModelAdmin):
+    list_display = ['descripcion', 'categoria', 'precio_unitario', 'precio_costo', 'margen_ganancia', 'activo', 'fecha_creacion']
+    list_filter = ['categoria', 'activo', 'fecha_creacion']
+    search_fields = ['descripcion', 'categoria']
+    readonly_fields = ['margen_ganancia', 'fecha_creacion', 'fecha_modificacion', 'creado_por', 'modificado_por']
+    list_editable = ['activo']
+    list_per_page = 25
+    
+    fieldsets = (
+        ('Información del Item', {
+            'fields': ('descripcion', 'categoria', 'activo')
+        }),
+        ('Precios', {
+            'fields': ('precio_unitario', 'precio_costo', 'margen_ganancia')
+        }),
+        ('Información Adicional', {
+            'fields': ('notas',)
+        }),
+        ('Auditoría', {
+            'fields': ('creado_por', 'fecha_creacion', 'modificado_por', 'fecha_modificacion'),
+            'classes': ('collapse',)
+        }),
+    )
+    
+    def save_model(self, request, obj, form, change):
+        if not change:
+            obj.creado_por = request.user
+        obj.modificado_por = request.user
+        super().save_model(request, obj, form, change)
+
+
+# ===== EVENTOS Y NOTAS POST-IT =====
+
+class NotaPostitInline(admin.TabularInline):
+    model = NotaPostit
+    extra = 0
+    fields = ['contenido', 'color', 'creado_por', 'creado_en']
+    readonly_fields = ['creado_por', 'creado_en']
+
+@admin.register(EventoCalendario)
+class EventoCalendarioAdmin(admin.ModelAdmin):
+    list_display = ['titulo', 'fecha_inicio', 'tipo', 'creado_por', 'creado_en']
+    list_filter = ['tipo', 'fecha_inicio', 'creado_por']
+    search_fields = ['titulo', 'descripcion']
+    readonly_fields = ['creado_en', 'actualizado_en']
+    inlines = [NotaPostitInline]
+    
+    def save_model(self, request, obj, form, change):
+        if not change:
+            obj.creado_por = request.user
+        super().save_model(request, obj, form, change)
+
+@admin.register(NotaPostit)
+class NotaPostitAdmin(admin.ModelAdmin):
+    list_display = ['evento', 'contenido_truncado', 'color', 'creado_por', 'creado_en']
+    list_filter = ['color', 'creado_por', 'creado_en']
+    search_fields = ['contenido', 'evento__titulo']
+    readonly_fields = ['creado_por', 'creado_en']
+    
+    def contenido_truncado(self, obj):
+        return obj.contenido[:50] + '...' if len(obj.contenido) > 50 else obj.contenido
+    contenido_truncado.short_description = 'Contenido'
+    
+    def save_model(self, request, obj, form, change):
+        if not change:
+            obj.creado_por = request.user
+        super().save_model(request, obj, form, change)

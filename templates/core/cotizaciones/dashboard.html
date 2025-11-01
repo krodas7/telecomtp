@@ -3,269 +3,664 @@
 
 {% block title %}Dashboard de Cotizaciones - Sistema de Construcción{% endblock %}
 
+{% block extra_css %}
+<style>
+    /* ===== DASHBOARD COTIZACIONES MODERNO ===== */
+    .cotizaciones-dashboard-container {
+        padding: 2rem 1.5rem;
+        background: #f8fafc;
+        min-height: 100vh;
+    }
+    
+    /* Header Ejecutivo */
+    .dashboard-header {
+        background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
+        border-radius: 20px;
+        padding: 2.5rem 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 10px 40px rgba(30, 58, 138, 0.3);
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .dashboard-header::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -20%;
+        width: 400px;
+        height: 400px;
+        background: radial-gradient(circle, rgba(96, 165, 250, 0.2) 0%, transparent 70%);
+        animation: pulse 4s ease-in-out infinite;
+    }
+    
+    @keyframes pulse {
+        0%, 100% { transform: scale(1); opacity: 0.5; }
+        50% { transform: scale(1.1); opacity: 0.8; }
+    }
+    
+    .dashboard-header-content {
+        position: relative;
+        z-index: 2;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 1.5rem;
+    }
+    
+    .dashboard-header h1 {
+        color: #ffffff;
+        font-weight: 700;
+        font-size: 2rem;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+    
+    .dashboard-header h1 i {
+        font-size: 2.2rem;
+        filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.3));
+    }
+    
+    .header-actions {
+        display: flex;
+        gap: 1rem;
+    }
+    
+    .btn-header {
+        background: rgba(255, 255, 255, 0.2);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        color: white;
+        padding: 0.75rem 1.5rem;
+        border-radius: 10px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-header:hover {
+        background: rgba(255, 255, 255, 0.3);
+        border-color: rgba(255, 255, 255, 0.5);
+        color: white;
+        transform: translateY(-2px);
+    }
+    
+    .btn-header-primary {
+        background: white;
+        color: #1e40af;
+        border-color: white;
+    }
+    
+    .btn-header-primary:hover {
+        background: #f8fafc;
+        color: #1e3a8a;
+        transform: translateY(-2px);
+    }
+    
+    /* Stats Grid */
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    
+    .stat-card {
+        background: white;
+        border-radius: 16px;
+        padding: 1.8rem;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        transition: all 0.3s ease;
+        border: 1px solid #e2e8f0;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .stat-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 4px;
+        transform: scaleX(0);
+        transition: transform 0.3s ease;
+    }
+    
+    .stat-card:hover::before {
+        transform: scaleX(1);
+    }
+    
+    .stat-card:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 12px 24px rgba(0, 0, 0, 0.12);
+    }
+    
+    .stat-card-primary::before {
+        background: linear-gradient(90deg, #3b82f6, #1e40af);
+    }
+    
+    .stat-card-success::before {
+        background: linear-gradient(90deg, #22c55e, #16a34a);
+    }
+    
+    .stat-card-warning::before {
+        background: linear-gradient(90deg, #f59e0b, #d97706);
+    }
+    
+    .stat-card-danger::before {
+        background: linear-gradient(90deg, #ef4444, #dc2626);
+    }
+    
+    .stat-card-info::before {
+        background: linear-gradient(90deg, #06b6d4, #0891b2);
+    }
+    
+    .stat-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 1rem;
+    }
+    
+    .stat-icon {
+        width: 56px;
+        height: 56px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        color: white;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+    
+    .stat-card-primary .stat-icon {
+        background: linear-gradient(135deg, #3b82f6, #1e40af);
+    }
+    
+    .stat-card-success .stat-icon {
+        background: linear-gradient(135deg, #22c55e, #16a34a);
+    }
+    
+    .stat-card-warning .stat-icon {
+        background: linear-gradient(135deg, #f59e0b, #d97706);
+    }
+    
+    .stat-card-danger .stat-icon {
+        background: linear-gradient(135deg, #ef4444, #dc2626);
+    }
+    
+    .stat-card-info .stat-icon {
+        background: linear-gradient(135deg, #06b6d4, #0891b2);
+    }
+    
+    .stat-label {
+        color: #64748b;
+        font-size: 0.85rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 0.5rem;
+    }
+    
+    .stat-number {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: #1e293b;
+        line-height: 1;
+    }
+    
+    /* Content Grid */
+    .content-grid {
+        display: grid;
+        grid-template-columns: 2fr 1fr;
+        gap: 2rem;
+        margin-bottom: 2rem;
+    }
+    
+    @media (max-width: 1200px) {
+        .content-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+    
+    .content-card {
+        background: white;
+        border-radius: 16px;
+        border: 1px solid #e2e8f0;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        overflow: hidden;
+    }
+    
+    .content-card-header {
+        background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+        padding: 1.5rem 2rem;
+        border-bottom: 2px solid #e2e8f0;
+    }
+    
+    .content-card-header h5 {
+        color: #1e293b;
+        font-weight: 700;
+        font-size: 1.2rem;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+    
+    .content-card-header h5 i {
+        color: #3b82f6;
+    }
+    
+    .content-card-body {
+        padding: 1.5rem 2rem;
+    }
+    
+    /* Table Styles */
+    .table {
+        margin: 0;
+    }
+    
+    .table thead th {
+        background: #f8fafc;
+        color: #475569;
+        font-weight: 600;
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        border-bottom: 2px solid #e2e8f0;
+        padding: 1rem 1.2rem;
+    }
+    
+    .table tbody tr {
+        transition: all 0.2s ease;
+        border-bottom: 1px solid #f1f5f9;
+    }
+    
+    .table tbody tr:hover {
+        background: #f8fafc;
+    }
+    
+    .table tbody td {
+        padding: 1rem 1.2rem;
+        vertical-align: middle;
+        color: #334155;
+    }
+    
+    /* Badges Modernos */
+    .badge {
+        padding: 0.5rem 1rem;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 0.8rem;
+        letter-spacing: 0.3px;
+    }
+    
+    .badge.bg-success {
+        background: linear-gradient(135deg, #dcfce7, #bbf7d0) !important;
+        color: #15803d;
+        border: 1px solid #86efac;
+    }
+    
+    .badge.bg-primary {
+        background: linear-gradient(135deg, #dbeafe, #bfdbfe) !important;
+        color: #1e40af;
+        border: 1px solid #93c5fd;
+    }
+    
+    .badge.bg-secondary {
+        background: linear-gradient(135deg, #f1f5f9, #e2e8f0) !important;
+        color: #475569;
+        border: 1px solid #cbd5e1;
+    }
+    
+    .badge.bg-danger {
+        background: linear-gradient(135deg, #fee2e2, #fecaca) !important;
+        color: #991b1b;
+        border: 1px solid #fca5a5;
+    }
+    
+    .badge.bg-warning {
+        background: linear-gradient(135deg, #fef3c7, #fde68a) !important;
+        color: #92400e;
+        border: 1px solid #fcd34d;
+    }
+    
+    .badge.bg-info {
+        background: linear-gradient(135deg, #e0f2fe, #bae6fd) !important;
+        color: #075985;
+        border: 1px solid #7dd3fc;
+    }
+    
+    /* Empty State */
+    .empty-state {
+        text-align: center;
+        padding: 3rem 2rem;
+    }
+    
+    .empty-state i {
+        font-size: 4rem;
+        color: #cbd5e1;
+        margin-bottom: 1.5rem;
+        display: block;
+    }
+    
+    .empty-state h6 {
+        color: #64748b;
+        font-weight: 600;
+        margin-bottom: 1rem;
+    }
+    
+    .empty-state .btn {
+        background: linear-gradient(135deg, #3b82f6, #1e40af);
+        border: none;
+        color: white;
+        padding: 0.75rem 1.5rem;
+        border-radius: 10px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+    }
+    
+    .empty-state .btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+        background: linear-gradient(135deg, #2563eb, #1e3a8a);
+    }
+    
+    /* Summary List */
+    .summary-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1rem 0;
+        border-bottom: 1px solid #f1f5f9;
+    }
+    
+    .summary-item:last-child {
+        border-bottom: none;
+    }
+    
+    .summary-item-label {
+        color: #475569;
+        font-size: 0.95rem;
+        font-weight: 500;
+    }
+    
+    .summary-item-value {
+        color: #1e293b;
+        font-weight: 700;
+        font-size: 1.1rem;
+    }
+    
+    /* Animaciones */
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    .stat-card {
+        animation: fadeInUp 0.5s ease forwards;
+        opacity: 0;
+    }
+    
+    .stat-card:nth-child(1) { animation-delay: 0.1s; }
+    .stat-card:nth-child(2) { animation-delay: 0.2s; }
+    .stat-card:nth-child(3) { animation-delay: 0.3s; }
+    .stat-card:nth-child(4) { animation-delay: 0.4s; }
+    .stat-card:nth-child(5) { animation-delay: 0.5s; }
+    .stat-card:nth-child(6) { animation-delay: 0.6s; }
+    .stat-card:nth-child(7) { animation-delay: 0.7s; }
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-    <h1 class="h2">
-        <i class="fas fa-chart-bar me-2"></i>Dashboard de Cotizaciones
-    </h1>
-    <div class="btn-toolbar mb-2 mb-md-0">
-        <a href="{% url 'cotizaciones_list' %}" class="btn btn-outline-primary me-2">
-            <i class="fas fa-list me-1"></i>Ver Todas
-        </a>
-        <a href="{% url 'cotizacion_create' %}" class="btn btn-primary">
-            <i class="fas fa-plus me-1"></i>Nueva Cotización
-        </a>
+<div class="cotizaciones-dashboard-container">
+    <!-- Header -->
+    <div class="dashboard-header">
+        <div class="dashboard-header-content">
+            <h1>
+                <i class="fas fa-chart-line"></i>
+                Dashboard de Cotizaciones
+            </h1>
+            <div class="header-actions">
+                <a href="{% url 'cotizaciones_list' %}" class="btn-header">
+                    <i class="fas fa-list me-2"></i>Ver Todas
+                </a>
+                <a href="{% url 'cotizacion_create' %}" class="btn-header btn-header-primary">
+                    <i class="fas fa-plus me-2"></i>Nueva Cotización
+                </a>
+            </div>
+        </div>
     </div>
-</div>
 
-<!-- Estadísticas Principales -->
-<div class="row mb-4">
-    <div class="col-md-3">
-        <div class="card bg-primary text-white">
-            <div class="card-body">
-                <div class="d-flex justify-content-between">
-                    <div>
-                        <h6 class="card-title">Total Cotizaciones</h6>
-                        <h3 class="mb-0">{{ total_cotizaciones }}</h3>
-                    </div>
-                    <div class="align-self-center">
-                        <i class="fas fa-file-invoice fa-2x opacity-75"></i>
-                    </div>
+    <!-- Estadísticas Principales -->
+    <div class="stats-grid">
+        <div class="stat-card stat-card-primary">
+            <div class="stat-header">
+                <div>
+                    <div class="stat-label">Total Cotizaciones</div>
+                    <div class="stat-number">{{ total_cotizaciones }}</div>
+                </div>
+                <div class="stat-icon">
+                    <i class="fas fa-file-invoice"></i>
+                </div>
+            </div>
+        </div>
+        
+        <div class="stat-card stat-card-success">
+            <div class="stat-header">
+                <div>
+                    <div class="stat-label">Aceptadas</div>
+                    <div class="stat-number">{{ cotizaciones_aceptadas }}</div>
+                </div>
+                <div class="stat-icon">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+            </div>
+        </div>
+        
+        <div class="stat-card stat-card-warning">
+            <div class="stat-header">
+                <div>
+                    <div class="stat-label">Pendientes</div>
+                    <div class="stat-number">{{ cotizaciones_pendientes }}</div>
+                </div>
+                <div class="stat-icon">
+                    <i class="fas fa-clock"></i>
+                </div>
+            </div>
+        </div>
+        
+        <div class="stat-card stat-card-danger">
+            <div class="stat-header">
+                <div>
+                    <div class="stat-label">Vencidas</div>
+                    <div class="stat-number">{{ cotizaciones_vencidas }}</div>
+                </div>
+                <div class="stat-icon">
+                    <i class="fas fa-exclamation-triangle"></i>
                 </div>
             </div>
         </div>
     </div>
-    <div class="col-md-3">
-        <div class="card bg-success text-white">
-            <div class="card-body">
-                <div class="d-flex justify-content-between">
-                    <div>
-                        <h6 class="card-title">Aceptadas</h6>
-                        <h3 class="mb-0">{{ cotizaciones_aceptadas }}</h3>
-                    </div>
-                    <div class="align-self-center">
-                        <i class="fas fa-check-circle fa-2x opacity-75"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-3">
-        <div class="card bg-warning text-white">
-            <div class="card-body">
-                <div class="d-flex justify-content-between">
-                    <div>
-                        <h6 class="card-title">Pendientes</h6>
-                        <h3 class="mb-0">{{ cotizaciones_pendientes }}</h3>
-                    </div>
-                    <div class="align-self-center">
-                        <i class="fas fa-clock fa-2x opacity-75"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-3">
-        <div class="card bg-danger text-white">
-            <div class="card-body">
-                <div class="d-flex justify-content-between">
-                    <div>
-                        <h6 class="card-title">Vencidas</h6>
-                        <h3 class="mb-0">{{ cotizaciones_vencidas }}</h3>
-                    </div>
-                    <div class="align-self-center">
-                        <i class="fas fa-exclamation-triangle fa-2x opacity-75"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
 
-<!-- Montos -->
-<div class="row mb-4">
-    <div class="col-md-4">
-        <div class="card bg-info text-white">
-            <div class="card-body">
-                <div class="d-flex justify-content-between">
-                    <div>
-                        <h6 class="card-title">Total Cotizado</h6>
-                        <h3 class="mb-0">${{ monto_total_cotizado|floatformat:2 }}</h3>
-                    </div>
-                    <div class="align-self-center">
-                        <i class="fas fa-dollar-sign fa-2x opacity-75"></i>
-                    </div>
+    <!-- Montos -->
+    <div class="stats-grid">
+        <div class="stat-card stat-card-info">
+            <div class="stat-header">
+                <div>
+                    <div class="stat-label">Total Cotizado</div>
+                    <div class="stat-number">${{ monto_total_cotizado|floatformat:2 }}</div>
+                </div>
+                <div class="stat-icon">
+                    <i class="fas fa-dollar-sign"></i>
+                </div>
+            </div>
+        </div>
+        
+        <div class="stat-card stat-card-success">
+            <div class="stat-header">
+                <div>
+                    <div class="stat-label">Monto Aceptado</div>
+                    <div class="stat-number">${{ monto_aceptado|floatformat:2 }}</div>
+                </div>
+                <div class="stat-icon">
+                    <i class="fas fa-handshake"></i>
+                </div>
+            </div>
+        </div>
+        
+        <div class="stat-card stat-card-warning">
+            <div class="stat-header">
+                <div>
+                    <div class="stat-label">Monto Pendiente</div>
+                    <div class="stat-number">${{ monto_pendiente|floatformat:2 }}</div>
+                </div>
+                <div class="stat-icon">
+                    <i class="fas fa-hourglass-half"></i>
                 </div>
             </div>
         </div>
     </div>
-    <div class="col-md-4">
-        <div class="card bg-success text-white">
-            <div class="card-body">
-                <div class="d-flex justify-content-between">
-                    <div>
-                        <h6 class="card-title">Monto Aceptado</h6>
-                        <h3 class="mb-0">${{ monto_aceptado|floatformat:2 }}</h3>
-                    </div>
-                    <div class="align-self-center">
-                        <i class="fas fa-handshake fa-2x opacity-75"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-4">
-        <div class="card bg-warning text-white">
-            <div class="card-body">
-                <div class="d-flex justify-content-between">
-                    <div>
-                        <h6 class="card-title">Monto Pendiente</h6>
-                        <h3 class="mb-0">${{ monto_pendiente|floatformat:2 }}</h3>
-                    </div>
-                    <div class="align-self-center">
-                        <i class="fas fa-hourglass-half fa-2x opacity-75"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
 
-<div class="row">
-    <!-- Cotizaciones Recientes -->
-    <div class="col-md-8">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="mb-0">
-                    <i class="fas fa-history me-2"></i>Cotizaciones Recientes
+    <!-- Content Grid -->
+    <div class="content-grid">
+        <!-- Cotizaciones Recientes -->
+        <div class="content-card">
+            <div class="content-card-header">
+                <h5>
+                    <i class="fas fa-history"></i>
+                    Cotizaciones Recientes
                 </h5>
             </div>
-            <div class="card-body">
+            <div class="content-card-body">
                 {% if cotizaciones_recientes %}
-                    <div class="table-responsive">
-                        <table class="table table-hover">
-                            <thead>
-                                <tr>
-                                    <th>Número</th>
-                                    <th>Título</th>
-                                    <th>Proyecto</th>
-                                    <th>Cliente</th>
-                                    <th>Monto</th>
-                                    <th>Estado</th>
-                                    <th>Fecha</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for cotizacion in cotizaciones_recientes %}
-                                <tr>
-                                    <td>
-                                        <strong>{{ cotizacion.numero_cotizacion }}</strong>
-                                    </td>
-                                    <td>
-                                        <div class="text-truncate" style="max-width: 150px;" title="{{ cotizacion.titulo }}">
-                                            {{ cotizacion.titulo }}
-                                        </div>
-                                    </td>
-                                    <td>
-                                        <a href="{% url 'proyecto_dashboard' cotizacion.proyecto.id %}" class="text-decoration-none">
-                                            {{ cotizacion.proyecto.nombre }}
-                                        </a>
-                                    </td>
-                                    <td>{{ cotizacion.cliente.razon_social }}</td>
-                                    <td>
-                                        <strong>${{ cotizacion.monto_total|floatformat:2 }}</strong>
-                                    </td>
-                                    <td>
-                                        {% if cotizacion.estado == 'aceptada' %}
-                                            <span class="badge bg-success">{{ cotizacion.get_estado_display }}</span>
-                                        {% elif cotizacion.estado == 'enviada' %}
-                                            <span class="badge bg-primary">{{ cotizacion.get_estado_display }}</span>
-                                        {% elif cotizacion.estado == 'borrador' %}
-                                            <span class="badge bg-secondary">{{ cotizacion.get_estado_display }}</span>
-                                        {% elif cotizacion.estado == 'rechazada' %}
-                                            <span class="badge bg-danger">{{ cotizacion.get_estado_display }}</span>
-                                        {% elif cotizacion.estado == 'vencida' %}
-                                            <span class="badge bg-warning">{{ cotizacion.get_estado_display }}</span>
-                                        {% else %}
-                                            <span class="badge bg-dark">{{ cotizacion.get_estado_display }}</span>
-                                        {% endif %}
-                                    </td>
-                                    <td>{{ cotizacion.fecha_emision|date:"d/m/Y" }}</td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Número</th>
+                                <th>Cliente</th>
+                                <th>Monto</th>
+                                <th>Estado</th>
+                                <th>Fecha</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for cotizacion in cotizaciones_recientes %}
+                            <tr>
+                                <td><strong>{{ cotizacion.numero_cotizacion }}</strong></td>
+                                <td>{{ cotizacion.cliente.razon_social }}</td>
+                                <td><strong>${{ cotizacion.monto_total|floatformat:2 }}</strong></td>
+                                <td>
+                                    {% if cotizacion.estado == 'aceptada' %}
+                                        <span class="badge bg-success">
+                                            <i class="fas fa-check-circle"></i> {{ cotizacion.get_estado_display }}
+                                        </span>
+                                    {% elif cotizacion.estado == 'enviada' %}
+                                        <span class="badge bg-primary">
+                                            <i class="fas fa-paper-plane"></i> {{ cotizacion.get_estado_display }}
+                                        </span>
+                                    {% elif cotizacion.estado == 'borrador' %}
+                                        <span class="badge bg-secondary">
+                                            <i class="fas fa-edit"></i> {{ cotizacion.get_estado_display }}
+                                        </span>
+                                    {% elif cotizacion.estado == 'rechazada' %}
+                                        <span class="badge bg-danger">
+                                            <i class="fas fa-times-circle"></i> {{ cotizacion.get_estado_display }}
+                                        </span>
+                                    {% else %}
+                                        <span class="badge bg-warning">
+                                            <i class="fas fa-clock"></i> {{ cotizacion.get_estado_display }}
+                                        </span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ cotizacion.fecha_emision|date:"d/m/Y" }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
                 {% else %}
-                    <div class="text-center py-4">
-                        <i class="fas fa-file-invoice fa-2x text-muted mb-3"></i>
-                        <h6 class="text-muted">No hay cotizaciones registradas</h6>
-                        <a href="{% url 'cotizacion_create' %}" class="btn btn-primary btn-sm">
-                            <i class="fas fa-plus me-1"></i>Crear Primera Cotización
-                        </a>
-                    </div>
-                {% endif %}
-            </div>
-        </div>
-    </div>
-
-    <!-- Estadísticas por Estado y Proyecto -->
-    <div class="col-md-4">
-        <!-- Cotizaciones por Estado -->
-        <div class="card mb-4">
-            <div class="card-header">
-                <h6 class="mb-0">
-                    <i class="fas fa-chart-pie me-2"></i>Por Estado
-                </h6>
-            </div>
-            <div class="card-body">
-                {% if cotizaciones_por_estado %}
-                    {% for item in cotizaciones_por_estado %}
-                    <div class="d-flex justify-content-between align-items-center mb-2">
-                        <span>
-                            {% if item.estado == 'aceptada' %}
-                                <span class="badge bg-success">{{ item.get_estado_display }}</span>
-                            {% elif item.estado == 'enviada' %}
-                                <span class="badge bg-primary">{{ item.get_estado_display }}</span>
-                            {% elif item.estado == 'borrador' %}
-                                <span class="badge bg-secondary">{{ item.get_estado_display }}</span>
-                            {% elif item.estado == 'rechazada' %}
-                                <span class="badge bg-danger">{{ item.get_estado_display }}</span>
-                            {% elif item.estado == 'vencida' %}
-                                <span class="badge bg-warning">{{ item.get_estado_display }}</span>
-                            {% else %}
-                                <span class="badge bg-dark">{{ item.get_estado_display }}</span>
-                            {% endif %}
-                        </span>
-                        <strong>${{ item.monto_total|floatformat:2 }}</strong>
-                    </div>
-                    {% endfor %}
-                {% else %}
-                    <p class="text-muted mb-0">No hay datos disponibles</p>
+                <div class="empty-state">
+                    <i class="fas fa-file-invoice-dollar"></i>
+                    <h6>No hay cotizaciones registradas</h6>
+                    <a href="{% url 'cotizacion_create' %}" class="btn">
+                        <i class="fas fa-plus me-2"></i>Crear Primera Cotización
+                    </a>
+                </div>
                 {% endif %}
             </div>
         </div>
 
-        <!-- Cotizaciones por Proyecto -->
-        <div class="card">
-            <div class="card-header">
-                <h6 class="mb-0">
-                    <i class="fas fa-chart-bar me-2"></i>Por Proyecto
-                </h6>
+        <!-- Sidebar -->
+        <div>
+            <!-- Por Estado -->
+            <div class="content-card mb-4">
+                <div class="content-card-header">
+                    <h5>
+                        <i class="fas fa-chart-pie"></i>
+                        Por Estado
+                    </h5>
+                </div>
+                <div class="content-card-body">
+                    {% if cotizaciones_por_estado %}
+                        {% for item in cotizaciones_por_estado %}
+                        <div class="summary-item">
+                            <span class="summary-item-label">
+                                {% if item.estado == 'aceptada' %}
+                                    <span class="badge bg-success">{{ item.get_estado_display }}</span>
+                                {% elif item.estado == 'enviada' %}
+                                    <span class="badge bg-primary">{{ item.get_estado_display }}</span>
+                                {% elif item.estado == 'borrador' %}
+                                    <span class="badge bg-secondary">{{ item.get_estado_display }}</span>
+                                {% elif item.estado == 'rechazada' %}
+                                    <span class="badge bg-danger">{{ item.get_estado_display }}</span>
+                                {% else %}
+                                    <span class="badge bg-warning">{{ item.get_estado_display }}</span>
+                                {% endif %}
+                            </span>
+                            <span class="summary-item-value">${{ item.monto_total|floatformat:2 }}</span>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <p class="text-muted text-center mb-0">No hay datos disponibles</p>
+                    {% endif %}
+                </div>
             </div>
-            <div class="card-body">
-                {% if cotizaciones_por_proyecto %}
-                    {% for item in cotizaciones_por_proyecto %}
-                    <div class="d-flex justify-content-between align-items-center mb-2">
-                        <span class="text-truncate" style="max-width: 120px;" title="{{ item.proyecto__nombre }}">
-                            {{ item.proyecto__nombre }}
-                        </span>
-                        <strong>${{ item.monto_total|floatformat:2 }}</strong>
-                    </div>
-                    {% endfor %}
-                {% else %}
-                    <p class="text-muted mb-0">No hay datos disponibles</p>
-                {% endif %}
+
+            <!-- Por Proyecto -->
+            <div class="content-card">
+                <div class="content-card-header">
+                    <h5>
+                        <i class="fas fa-project-diagram"></i>
+                        Por Proyecto
+                    </h5>
+                </div>
+                <div class="content-card-body">
+                    {% if cotizaciones_por_proyecto %}
+                        {% for item in cotizaciones_por_proyecto %}
+                        <div class="summary-item">
+                            <span class="summary-item-label" style="max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="{{ item.proyecto__nombre }}">
+                                {{ item.proyecto__nombre }}
+                            </span>
+                            <span class="summary-item-value">${{ item.monto_total|floatformat:2 }}</span>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <p class="text-muted text-center mb-0">No hay datos disponibles</p>
+                    {% endif %}
+                </div>
             </div>
         </div>
     </div>

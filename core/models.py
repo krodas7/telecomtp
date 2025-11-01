@@ -156,6 +156,12 @@ class Colaborador(models.Model):
     salario = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     fecha_contratacion = models.DateField(null=True, blank=True)
     fecha_vencimiento_contrato = models.DateField(null=True, blank=True)
+    
+    # Bonos y retenciones individuales
+    aplica_bono_general = models.BooleanField(default=True, verbose_name="Aplica Bono General", help_text="Si este colaborador recibe el bono general")
+    aplica_bono_produccion = models.BooleanField(default=True, verbose_name="Aplica Bono de Producción", help_text="Si este colaborador recibe bono de producción")
+    aplica_retenciones = models.BooleanField(default=True, verbose_name="Aplica Retenciones", help_text="Si este colaborador tiene retenciones de ley")
+    
     activo = models.BooleanField(default=True)
     creado_en = models.DateTimeField(auto_now_add=True)
     
@@ -1482,6 +1488,25 @@ class EventoCalendario(models.Model):
         return event_data
 
 
+# ===== MODELO PARA NOTAS POST-IT =====
+
+class NotaPostit(models.Model):
+    """Modelo para notas tipo post-it asociadas a eventos"""
+    evento = models.ForeignKey(EventoCalendario, on_delete=models.CASCADE, related_name='notas_postit', verbose_name="Evento")
+    contenido = models.TextField(verbose_name="Contenido de la nota")
+    color = models.CharField(max_length=7, default='#fef3c7', verbose_name="Color del post-it")
+    creado_por = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name="Creado por")
+    creado_en = models.DateTimeField(auto_now_add=True, verbose_name="Creado en")
+    
+    class Meta:
+        verbose_name = 'Nota Post-it'
+        verbose_name_plural = 'Notas Post-it'
+        ordering = ['creado_en']
+    
+    def __str__(self):
+        return f"Nota para {self.evento.titulo} - {self.contenido[:30]}"
+
+
 # ===== MODELOS PARA TRABAJADORES DIARIOS =====
 
 class TrabajadorDiario(models.Model):
@@ -1636,8 +1661,23 @@ class PlanillaTrabajadoresDiarios(models.Model):
 
 
 class PlanillaLiquidada(models.Model):
-    """Modelo para registrar planillas de personal liquidadas"""
+    """Modelo para registrar planillas de personal liquidadas por mes"""
+    
+    MESES_CHOICES = [
+        (1, 'Enero'), (2, 'Febrero'), (3, 'Marzo'), (4, 'Abril'),
+        (5, 'Mayo'), (6, 'Junio'), (7, 'Julio'), (8, 'Agosto'),
+        (9, 'Septiembre'), (10, 'Octubre'), (11, 'Noviembre'), (12, 'Diciembre')
+    ]
+    
+    QUINCENA_CHOICES = [
+        (1, 'Primera Quincena (1-15)'),
+        (2, 'Segunda Quincena (16-fin)'),
+    ]
+    
     proyecto = models.ForeignKey(Proyecto, on_delete=models.CASCADE, related_name='planillas_liquidadas', verbose_name="Proyecto")
+    mes = models.IntegerField(choices=MESES_CHOICES, verbose_name="Mes", default=1)
+    año = models.IntegerField(verbose_name="Año", help_text="Ej: 2025", default=2025)
+    quincena = models.IntegerField(choices=QUINCENA_CHOICES, verbose_name="Quincena", default=1, help_text="Quincena del pago")
     fecha_liquidacion = models.DateTimeField(auto_now_add=True, verbose_name="Fecha de liquidación")
     total_salarios = models.DecimalField(max_digits=12, decimal_places=2, verbose_name="Total Salarios", default=0)
     total_anticipos = models.DecimalField(max_digits=12, decimal_places=2, verbose_name="Total Anticipos Liquidados", default=0)
@@ -1649,10 +1689,65 @@ class PlanillaLiquidada(models.Model):
     class Meta:
         verbose_name = 'Planilla Liquidada'
         verbose_name_plural = 'Planillas Liquidadas'
-        ordering = ['-fecha_liquidacion']
+        ordering = ['-año', '-mes', '-quincena', '-fecha_liquidacion']
+        unique_together = ['proyecto', 'mes', 'año', 'quincena']
     
     def __str__(self):
-        return f"Planilla {self.proyecto.nombre} - {self.fecha_liquidacion.strftime('%d/%m/%Y')} - ${self.total_planilla}"
+        mes_nombre = dict(self.MESES_CHOICES).get(self.mes, '')
+        quincena_nombre = dict(self.QUINCENA_CHOICES).get(self.quincena, '')
+        return f"Planilla {mes_nombre} {self.año} - {quincena_nombre} - {self.proyecto.nombre} - ${self.total_planilla}"
+
+
+class ConfiguracionPlanilla(models.Model):
+    """Modelo para configurar retenciones y bonos de planilla"""
+    
+    proyecto = models.OneToOneField(Proyecto, on_delete=models.CASCADE, related_name='configuracion_planilla', verbose_name="Proyecto")
+    
+    # Retenciones (montos fijos en dólares)
+    retencion_seguro_social = models.DecimalField(max_digits=10, decimal_places=2, default=0, verbose_name="Seguro Social ($)", help_text="Monto fijo mensual de retención del seguro social")
+    retencion_seguro_educativo = models.DecimalField(max_digits=10, decimal_places=2, default=0, verbose_name="Seguro Educativo ($)", help_text="Monto fijo mensual de retención del seguro educativo")
+    
+    # Bonos
+    bono_general = models.DecimalField(max_digits=10, decimal_places=2, default=0, verbose_name="Bono General", help_text="Monto fijo mensual")
+    bono_produccion = models.DecimalField(max_digits=5, decimal_places=2, default=0, verbose_name="Bono de Producción (%)", help_text="Porcentaje sobre el salario")
+    
+    # Configuración
+    aplicar_retenciones = models.BooleanField(default=True, verbose_name="Aplicar Retenciones")
+    aplicar_bonos = models.BooleanField(default=True, verbose_name="Aplicar Bonos")
+    
+    # Auditoría
+    creado_en = models.DateTimeField(auto_now_add=True)
+    modificado_en = models.DateTimeField(auto_now=True)
+    modificado_por = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+    
+    class Meta:
+        verbose_name = 'Configuración de Planilla'
+        verbose_name_plural = 'Configuraciones de Planilla'
+    
+    def __str__(self):
+        return f"Configuración de Planilla - {self.proyecto.nombre}"
+    
+    @property
+    def total_retenciones_monto(self):
+        """Retorna el total de retenciones en dólares"""
+        if self.aplicar_retenciones:
+            return self.retencion_seguro_social + self.retencion_seguro_educativo
+        return 0
+    
+    def calcular_retenciones(self, salario_bruto=None):
+        """Retorna el monto total de retenciones (montos fijos, no depende del salario)"""
+        if not self.aplicar_retenciones:
+            return 0
+        return self.total_retenciones_monto
+    
+    def calcular_bonos(self, salario_base):
+        """Calcula el monto total de bonos"""
+        if not self.aplicar_bonos:
+            return 0
+        
+        bono_fijo = self.bono_general
+        bono_porcentaje = (salario_base * self.bono_produccion) / 100
+        return bono_fijo + bono_porcentaje
 
 
 class IngresoProyecto(models.Model):
@@ -1781,7 +1876,7 @@ class Cotizacion(models.Model):
     
     # Fechas importantes
     fecha_emision = models.DateField(help_text="Fecha de emisión de la cotización")
-    fecha_vencimiento = models.DateField(help_text="Fecha límite de validez de la cotización")
+    fecha_vencimiento = models.DateField(null=True, blank=True, help_text="Fecha límite de validez de la cotización")
     fecha_aceptacion = models.DateField(null=True, blank=True, help_text="Fecha de aceptación por el cliente")
     
     # Condiciones y términos
@@ -1820,12 +1915,16 @@ class Cotizacion(models.Model):
     def esta_vencida(self):
         """Verifica si la cotización está vencida"""
         from django.utils import timezone
+        if not self.fecha_vencimiento:
+            return False
         return timezone.now().date() > self.fecha_vencimiento and self.estado not in ['aceptada', 'rechazada', 'cancelada']
     
     @property
     def dias_para_vencer(self):
         """Calcula los días restantes para vencer"""
         from django.utils import timezone
+        if not self.fecha_vencimiento:
+            return None
         if self.esta_vencida:
             return 0
         delta = self.fecha_vencimiento - timezone.now().date()
@@ -1836,8 +1935,29 @@ class Cotizacion(models.Model):
         self.monto_iva = self.monto_subtotal * Decimal('0.07')  # 7% ITBMS
         self.monto_total = self.monto_subtotal + self.monto_iva
     
+    def generar_numero_cotizacion(self):
+        """Genera un número de cotización automáticamente"""
+        if not self.numero_cotizacion:
+            # Obtener el último número de cotización
+            ultima_cotizacion = Cotizacion.objects.all().order_by('-id').first()
+            if ultima_cotizacion and ultima_cotizacion.numero_cotizacion:
+                try:
+                    # Intentar extraer el número de la última cotización
+                    ultimo_numero = int(ultima_cotizacion.numero_cotizacion.split('-')[-1])
+                    nuevo_numero = ultimo_numero + 1
+                except (ValueError, IndexError):
+                    nuevo_numero = 1
+            else:
+                nuevo_numero = 1
+            
+            # Obtener año actual
+            from django.utils import timezone
+            año_actual = timezone.now().year
+            self.numero_cotizacion = f"COT-{año_actual}-{nuevo_numero:04d}"
+    
     def save(self, *args, **kwargs):
-        """Override save para calcular totales automáticamente"""
+        """Override save para generar número y calcular totales automáticamente"""
+        self.generar_numero_cotizacion()
         self.calcular_totales()
         super().save(*args, **kwargs)
 
@@ -1890,5 +2010,46 @@ class ItemCotizacion(models.Model):
         """Override save para calcular total automáticamente"""
         self.calcular_total()
         super().save(*args, **kwargs)
+
+
+class ItemReutilizable(models.Model):
+    """Modelo para items de cotización reutilizables"""
+    
+    # Descripción y cantidad
+    descripcion = models.CharField(max_length=500, unique=True, help_text="Descripción del item")
+    categoria = models.CharField(max_length=100, blank=True, help_text="Categoría del item para organizarlos")
+    
+    # Precios
+    precio_unitario = models.DecimalField(max_digits=12, decimal_places=2, help_text="Precio unitario de venta")
+    precio_costo = models.DecimalField(max_digits=12, decimal_places=2, default=0, help_text="Precio de costo del item")
+    
+    # Campos adicionales
+    activo = models.BooleanField(default=True, help_text="Si el item está activo y disponible")
+    notas = models.TextField(blank=True, help_text="Notas adicionales sobre el item")
+    
+    # Campos de auditoría
+    creado_por = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='items_reutilizables_creados')
+    fecha_creacion = models.DateTimeField(auto_now_add=True)
+    modificado_por = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='items_reutilizables_modificados')
+    fecha_modificacion = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        verbose_name = 'Item Reutilizable'
+        verbose_name_plural = 'Items Reutilizables'
+        ordering = ['categoria', 'descripcion']
+        indexes = [
+            models.Index(fields=['categoria', 'activo']),
+        ]
+    
+    def __str__(self):
+        return f"{self.descripcion[:50]} - ${self.precio_unitario}"
+    
+    @property
+    def margen_ganancia(self):
+        """Calcula el margen de ganancia del item"""
+        if self.precio_costo > 0:
+            ganancia = self.precio_unitario - self.precio_costo
+            return (ganancia / self.precio_costo) * 100
+        return 0
 
 

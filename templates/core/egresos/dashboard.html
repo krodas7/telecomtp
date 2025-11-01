@@ -4,16 +4,18 @@
 {% block title %}Dashboard de Egresos - Sistema de Construcción{% endblock %}
 
 {% block extra_css %}
+<!-- VERSIÓN 2025-11-02-00:50 DISEÑO MINIMALISTA EJECUTIVO -->
 <style>
     /* Hero Section con gradiente */
     .egresos-hero {
-        background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+        background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
         color: white;
-        padding: 60px 0;
-        margin-bottom: 40px;
-        border-radius: 0 0 30px 30px;
+        padding: 2.5rem 2rem;
+        margin-bottom: 2rem;
+        border-radius: 12px;
         position: relative;
         overflow: hidden;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
     }
     
     .egresos-hero::before {
@@ -40,10 +42,11 @@
     }
     
     .egresos-hero-title {
-        font-size: 3rem;
-        font-weight: 900;
-        margin-bottom: 20px;
-        text-shadow: 0 4px 8px rgba(0,0,0,0.3);
+        font-size: 2rem;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        color: white !important;
+        letter-spacing: 0.5px;
     }
     
     .egresos-hero-subtitle {

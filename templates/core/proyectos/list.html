@@ -5,16 +5,18 @@
 {% block title %}Proyectos - Sistema de Construcción{% endblock %}
 
 {% block extra_css %}
+<!-- VERSIÓN 2025-11-02-00:40 DISEÑO MINIMALISTA EJECUTIVO -->
 <style>
     .proyectos-hero {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
         color: white;
-        padding: 3rem 2rem;
-        border-radius: 20px;
+        padding: 2.5rem 2rem;
+        border-radius: 12px;
         margin-bottom: 2rem;
         text-align: center;
         position: relative;
         overflow: hidden;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
     }
     
     .proyectos-hero::before {
@@ -34,10 +36,11 @@
     }
     
     .proyectos-hero-title {
-        font-size: 2.5rem;
-        font-weight: 700;
-        margin-bottom: 1rem;
-        text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        font-size: 2rem;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        color: white !important;
+        letter-spacing: 0.5px;
     }
     
     .proyectos-hero-subtitle {
@@ -54,17 +57,18 @@
     }
     
     .proyectos-stat {
-        background: rgba(255,255,255,0.1);
+        background: rgba(255,255,255,0.15);
         backdrop-filter: blur(10px);
-        padding: 1rem 1.5rem;
-        border-radius: 15px;
-        border: 1px solid rgba(255,255,255,0.2);
+        padding: 1.2rem 1.8rem;
+        border-radius: 8px;
+        border: 1px solid rgba(255,255,255,0.25);
         transition: all 0.3s ease;
     }
     
     .proyectos-stat:hover {
-        transform: translateY(-5px);
+        transform: translateY(-3px);
         background: rgba(255,255,255,0.2);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
     }
     
     .proyectos-stat-number {
@@ -102,19 +106,18 @@
     }
     
     .btn-neostructure {
-        background: linear-gradient(135deg, #667eea, #764ba2);
+        background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
         color: white;
         border: none;
-        border-radius: 12px;
-        padding: 12px 24px;
+        border-radius: 8px;
+        padding: 0.6rem 1.5rem;
         font-weight: 600;
         transition: all 0.3s ease;
-        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
     }
     
     .btn-neostructure:hover {
         transform: translateY(-2px);
-        box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        box-shadow: 0 6px 20px rgba(30, 58, 138, 0.3);
         color: white;
     }
     
@@ -300,8 +303,12 @@
     <!-- Hero Banner -->
     <div class="proyectos-hero">
         <div class="proyectos-hero-content">
-            <h1 class="proyectos-hero-title">📋 Gestión de Proyectos</h1>
-            <p class="proyectos-hero-subtitle">Administra y da seguimiento a todos tus proyectos de construcción</p>
+            <h1 class="proyectos-hero-title">
+                <i class="fas fa-project-diagram me-2"></i>Gestión de Proyectos
+            </h1>
+            <p class="proyectos-hero-subtitle" style="font-size: 0.95rem; opacity: 0.85;">
+                Administración y seguimiento de proyectos de construcción
+            </p>
             
             <!-- Estadísticas -->
             <div class="proyectos-stats">

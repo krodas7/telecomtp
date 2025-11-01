@@ -4,16 +4,32 @@
 {% block title %}Gestor de Permisos Intuitivo - Sistema Arca{% endblock %}
 
 {% block extra_css %}
+<!-- VERSIÓN 2025-11-02-01:40 GESTOR UNIFICADO OPTIMIZADO -->
 <style>
     .gestor-hero {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
         color: white;
-        padding: 3rem 2rem;
-        border-radius: 20px;
+        padding: 2.5rem 2rem;
+        border-radius: 12px;
         margin-bottom: 2rem;
         text-align: center;
         position: relative;
         overflow: hidden;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+    
+    .gestor-hero h1 {
+        font-size: 2rem;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        letter-spacing: 0.5px;
+        color: white !important;
+    }
+    
+    .gestor-hero p {
+        font-size: 0.95rem;
+        opacity: 0.85;
+        color: white !important;
     }
     
     .gestor-hero::before {
@@ -43,12 +59,12 @@
     }
     
     .rol-selector-card:hover {
-        border-color: #667eea;
+        border-color: #1e40af;
         transform: translateY(-2px);
     }
     
     .rol-selector-card h5 {
-        color: #667eea;
+        color: #1e3a8a;
         font-weight: 600;
         margin-bottom: 1rem;
         display: flex;
@@ -65,7 +81,7 @@
         border-radius: 12px;
         padding: 1.5rem;
         margin-bottom: 1.5rem;
-        border-left: 4px solid #667eea;
+        border-left: 4px solid #1e40af;
         transition: all 0.3s ease;
     }
     

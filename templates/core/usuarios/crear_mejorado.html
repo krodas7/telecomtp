@@ -4,9 +4,10 @@
 {% block title %}Crear Usuario - Sistema Arca{% endblock %}
 
 {% block extra_css %}
+<!-- VERSIÓN 2025-11-02-01:25 DISEÑO EJECUTIVO PROFESIONAL -->
 <style>
     .form-container {
-        background: #f8f9fa;
+        background: #f1f5f9;
         min-height: 100vh;
         padding: 2rem 0;
     }
@@ -14,15 +15,29 @@
     .form-card {
         background: white;
         border-radius: 12px;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        box-shadow: 0 2px 4px rgba(0,0,0,0.08);
         margin-bottom: 2rem;
     }
     
     .form-header {
-        background: #f8f9fa;
-        border-bottom: 1px solid #e9ecef;
+        background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
+        color: white;
+        border-bottom: none;
         padding: 1.5rem;
         border-radius: 12px 12px 0 0;
+    }
+    
+    .form-header h4 {
+        color: white !important;
+        font-weight: 600;
+        margin: 0;
+    }
+    
+    .form-header p {
+        color: white !important;
+        opacity: 0.85;
+        margin: 0;
+        font-size: 0.9rem;
     }
     
     .form-body {
@@ -50,8 +65,8 @@
     }
     
     .form-control:focus {
-        border-color: #667eea;
-        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+        border-color: #1e40af;
+        box-shadow: 0 0 0 3px rgba(30, 64, 175, 0.1);
     }
     
     .form-select {
@@ -63,8 +78,8 @@
     }
     
     .form-select:focus {
-        border-color: #667eea;
-        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+        border-color: #1e40af;
+        box-shadow: 0 0 0 3px rgba(30, 64, 175, 0.1);
     }
     
     .form-check {
@@ -76,27 +91,34 @@
     }
     
     .form-check:hover {
-        border-color: #667eea;
-        background: #f0f2ff;
+        border-color: #1e40af;
+        background: #eff6ff;
+    }
+    
+    .form-check-input:checked {
+        background-color: #1e40af;
+        border-color: #1e40af;
     }
     
     .form-check-input:checked + .form-check-label {
-        color: #667eea;
+        color: #1e3a8a;
         font-weight: 600;
     }
     
     .btn-primary-custom {
-        background: linear-gradient(45deg, #28a745, #20c997);
+        background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
         border: none;
         border-radius: 8px;
-        padding: 12px 30px;
+        padding: 0.75rem 2rem;
         font-weight: 600;
         transition: all 0.3s ease;
+        color: white;
     }
     
     .btn-primary-custom:hover {
         transform: translateY(-2px);
-        box-shadow: 0 5px 15px rgba(40, 167, 69, 0.4);
+        box-shadow: 0 4px 12px rgba(30, 58, 138, 0.3);
+        color: white;
     }
     
     .btn-secondary-custom {

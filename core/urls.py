@@ -29,6 +29,7 @@ urlpatterns = [
     path('proyectos/<int:proyecto_id>/planilla/', views.planilla_proyecto, name='planilla_proyecto'),
     path('proyecto/<int:proyecto_id>/planilla/liquidar/', views.liquidar_y_generar_planilla, name='liquidar_y_generar_planilla'),
     path('proyecto/<int:proyecto_id>/planilla/pdf/', views.planilla_proyecto_pdf, name='planilla_proyecto_pdf'),
+    path('proyecto/<int:proyecto_id>/planilla/configurar/', views.configurar_planilla_proyecto, name='configurar_planilla_proyecto'),
     path('proyecto/<int:proyecto_id>/historico-nomina/reset/', views.resetear_historico_nomina, name='resetear_historico_nomina'),
     path('proyectos/<int:proyecto_id>/administrar-anticipos/', views.administrar_anticipos_proyecto, name='administrar_anticipos_proyecto'),
     path('anticipos/<int:anticipo_id>/editar/', views.editar_anticipo, name='editar_anticipo'),
@@ -117,6 +118,7 @@ urlpatterns = [
     
     # Rentabilidad
     path('rentabilidad/', views.rentabilidad_view, name='rentabilidad'),
+    path('analisis-financiero/', views.rentabilidad_view, name='analisis_financiero'),  # URL alternativa sin cache
     path('rentabilidad/exportar/pdf/', views.rentabilidad_exportar_pdf, name='rentabilidad_exportar_pdf'),
     path('rentabilidad/exportar/excel/', views.rentabilidad_exportar_excel, name='rentabilidad_exportar_excel'),
     
@@ -162,6 +164,10 @@ urlpatterns = [
     path('eventos/<int:evento_id>/eliminar/', views.evento_calendario_delete, name='evento_calendario_delete'),
     path('api/eventos/', views.eventos_calendario_json, name='eventos_calendario_json'),
     path('api/eventos/crear/', views.evento_calendario_create_ajax, name='evento_calendario_create_ajax'),
+    
+    # ==================== NOTAS POST-IT ====================
+    path('api/postits/crear/', views.nota_postit_create, name='nota_postit_create'),
+    path('api/postits/<int:nota_id>/eliminar/', views.nota_postit_delete, name='nota_postit_delete'),
     path('api/eventos/<int:evento_id>/actualizar/', views.evento_calendario_update_ajax, name='evento_calendario_update_ajax'),
     path('api/eventos/<int:evento_id>/eliminar/', views.evento_calendario_delete_ajax, name='evento_calendario_delete_ajax'),
 
@@ -301,7 +307,14 @@ urlpatterns = [
     path('cotizaciones/dashboard/', views.cotizaciones_dashboard, name='cotizaciones_dashboard'),
     path('cotizaciones/crear/', views.cotizacion_create, name='cotizacion_create'),
     path('cotizaciones/<int:cotizacion_id>/', views.cotizacion_detail, name='cotizacion_detail'),
+    path('cotizaciones/<int:cotizacion_id>/pdf/', views.cotizacion_pdf, name='cotizacion_pdf'),
     path('cotizaciones/<int:cotizacion_id>/editar/', views.cotizacion_edit, name='cotizacion_edit'),
     path('cotizaciones/<int:cotizacion_id>/eliminar/', views.cotizacion_delete, name='cotizacion_delete'),
+    path('cotizaciones/<int:cotizacion_id>/aprobar/', views.cotizacion_aprobar, name='cotizacion_aprobar'),
+    path('cotizaciones/<int:cotizacion_id>/rechazar/', views.cotizacion_rechazar, name='cotizacion_rechazar'),
     path('proyectos/<int:proyecto_id>/cotizaciones/', views.cotizaciones_proyecto, name='cotizaciones_proyecto'),
+    
+    # ==================== ITEMS REUTILIZABLES ====================
+    path('items-reutilizables/listar/', views.items_reutilizables_list, name='items_reutilizables_list'),
+    path('items-reutilizables/crear/', views.item_reutilizable_create, name='item_reutilizable_create'),
 ]

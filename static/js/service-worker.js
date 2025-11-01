@@ -2,9 +2,9 @@
 // Versión: 2.0.0
 // Fecha: 2024
 
-const CACHE_NAME = 'arca-construccion-v2.0.0';
-const STATIC_CACHE = 'arca-static-v2.0.0';
-const DYNAMIC_CACHE = 'arca-dynamic-v2.0.0';
+const CACHE_NAME = 'arca-construccion-v3.0.0';
+const STATIC_CACHE = 'arca-static-v3.0.0';
+const DYNAMIC_CACHE = 'arca-dynamic-v3.0.0';
 
 // Archivos estáticos para cachear
 const STATIC_FILES = [
@@ -90,9 +90,9 @@ self.addEventListener('fetch', (event) => {
         else if (API_URLS.some(apiUrl => url.pathname.startsWith(apiUrl))) {
             event.respondWith(networkFirst(request, DYNAMIC_CACHE));
         }
-        // Páginas HTML - Network First con fallback
+        // Páginas HTML - NUNCA CACHEAR (siempre de la red)
         else if (request.headers.get('accept').includes('text/html')) {
-            event.respondWith(networkFirstWithFallback(request, DYNAMIC_CACHE));
+            event.respondWith(fetch(request));
         }
         // Otros recursos - Stale While Revalidate
         else {

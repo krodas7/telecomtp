@@ -4,13 +4,30 @@
 {% block title %}Gestión de Usuarios - Sistema Arca{% endblock %}
 
 {% block extra_css %}
+<!-- VERSIÓN 2025-11-02-01:15 DISEÑO EJECUTIVO PROFESIONAL -->
 <style>
     .dashboard-header {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
         color: white;
-        border-radius: 15px;
+        border-radius: 12px;
         padding: 2rem;
         margin-bottom: 2rem;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+    
+    .dashboard-header h1 {
+        font-size: 2rem;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        letter-spacing: 0.5px;
+        color: white !important;
+    }
+    
+    .dashboard-header p {
+        font-size: 0.95rem;
+        opacity: 0.85;
+        margin: 0;
+        color: white !important;
     }
     
     .stat-card {
@@ -29,7 +46,7 @@
     .stat-number {
         font-size: 2.5rem;
         font-weight: bold;
-        color: #667eea;
+        color: #1e3a8a;
         margin-bottom: 0.5rem;
     }
     
@@ -59,17 +76,19 @@
     }
     
     .btn-primary-custom {
-        background: linear-gradient(45deg, #667eea, #764ba2);
+        background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
         border: none;
-        border-radius: 25px;
-        padding: 12px 24px;
+        border-radius: 8px;
+        padding: 0.6rem 1.5rem;
         font-weight: 600;
         transition: all 0.3s ease;
+        color: white;
     }
     
     .btn-primary-custom:hover {
         transform: translateY(-2px);
-        box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        box-shadow: 0 4px 12px rgba(30, 58, 138, 0.3);
+        color: white;
     }
     
     .btn-secondary-custom {
@@ -212,11 +231,11 @@
     <div class="dashboard-header">
         <div class="row align-items-center">
             <div class="col-md-8">
-                <h1 class="h3 mb-2">
-                    <i class="fas fa-users me-3"></i>Gestión de Usuarios
+                <h1 class="mb-2" style="font-size: 2rem; font-weight: 600;">
+                    <i class="fas fa-users me-2"></i>Gestión de Usuarios
                 </h1>
-                <p class="mb-0 opacity-75">
-                    Administra los usuarios del sistema de construcción
+                <p class="mb-0" style="opacity: 0.85; font-size: 0.95rem;">
+                    Administración de usuarios, roles y permisos
                 </p>
             </div>
             <div class="col-md-4 text-end">
@@ -321,14 +340,11 @@
                         <a href="{% url 'usuario_crear_mejorado' %}" class="btn btn-primary-custom">
                             <i class="fas fa-user-plus me-2"></i>Nuevo Usuario
                         </a>
-                        <a href="{% url 'roles_lista_mejorada' %}" class="btn btn-success">
+                        <a href="{% url 'roles_lista_mejorada' %}" class="btn btn-success" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); border: none; border-radius: 8px; padding: 0.6rem 1.5rem;">
                             <i class="fas fa-user-tag me-2"></i>Gestionar Roles
                         </a>
-                        <a href="{% url 'usuarios_gestor_permisos_intuitivo' %}" class="btn btn-info">
-                            <i class="fas fa-magic me-2"></i>Gestor Intuitivo
-                        </a>
-                        <a href="{% url 'usuarios_gestor_permisos' %}" class="btn btn-secondary-custom">
-                            <i class="fas fa-key me-2"></i>Gestor Avanzado
+                        <a href="{% url 'usuarios_gestor_permisos_intuitivo' %}" class="btn btn-info" style="background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); border: none; border-radius: 8px; padding: 0.6rem 1.5rem; color: white;">
+                            <i class="fas fa-shield-alt me-2"></i>Gestor de Permisos
                         </a>
                     </div>
                 </div>

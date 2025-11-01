@@ -89,7 +89,8 @@ class ColaboradorForm(forms.ModelForm):
         model = Colaborador
         fields = [
             'nombre', 'dpi', 'direccion', 'telefono', 'email', 
-            'salario', 'fecha_contratacion', 'fecha_vencimiento_contrato', 'activo'
+            'salario', 'fecha_contratacion', 'fecha_vencimiento_contrato',
+            'aplica_bono_general', 'aplica_bono_produccion', 'aplica_retenciones', 'activo'
         ]
         widgets = {
             'nombre': forms.TextInput(attrs={
@@ -125,6 +126,15 @@ class ColaboradorForm(forms.ModelForm):
             'fecha_vencimiento_contrato': forms.DateInput(attrs={
                 'class': 'form-control',
                 'type': 'date'
+            }),
+            'aplica_bono_general': forms.CheckboxInput(attrs={
+                'class': 'form-check-input'
+            }),
+            'aplica_bono_produccion': forms.CheckboxInput(attrs={
+                'class': 'form-check-input'
+            }),
+            'aplica_retenciones': forms.CheckboxInput(attrs={
+                'class': 'form-check-input'
             }),
             'activo': forms.CheckboxInput(attrs={
                 'class': 'form-check-input'
@@ -1083,8 +1093,8 @@ class CotizacionForm(forms.ModelForm):
         fields = [
             'proyecto', 'cliente', 'numero_cotizacion', 'titulo', 'descripcion',
             'tipo_cotizacion', 'estado', 'monto_subtotal', 'monto_iva', 'monto_total',
-            'fecha_emision', 'fecha_vencimiento', 'validez_dias', 'condiciones_pago',
-            'terminos_condiciones', 'archivo_cotizacion', 'observaciones', 'notas_cliente'
+            'fecha_emision', 'fecha_vencimiento', 'condiciones_pago', 'validez_dias',
+            'terminos_condiciones'
         ]
         widgets = {
             'proyecto': forms.Select(attrs={
@@ -1097,8 +1107,9 @@ class CotizacionForm(forms.ModelForm):
             }),
             'numero_cotizacion': forms.TextInput(attrs={
                 'class': 'form-control',
-                'placeholder': 'COT-001',
-                'required': True
+                'placeholder': 'Se generará automáticamente',
+                'readonly': True,
+                'style': 'background-color: #f8f9fa;'
             }),
             'titulo': forms.TextInput(attrs={
                 'class': 'form-control',
@@ -1109,7 +1120,7 @@ class CotizacionForm(forms.ModelForm):
                 'class': 'form-control',
                 'rows': 4,
                 'placeholder': 'Descripción detallada de los servicios',
-                'required': True
+                'required': False
             }),
             'tipo_cotizacion': forms.Select(attrs={
                 'class': 'form-select'
@@ -1148,49 +1159,43 @@ class CotizacionForm(forms.ModelForm):
             'fecha_vencimiento': forms.DateInput(attrs={
                 'class': 'form-control',
                 'type': 'date',
-                'required': True
+                'required': False
             }),
             'validez_dias': forms.NumberInput(attrs={
                 'class': 'form-control',
                 'min': '1',
-                'value': '30'
+                'value': '30',
+                'required': False
             }),
             'condiciones_pago': forms.Textarea(attrs={
                 'class': 'form-control',
                 'rows': 3,
-                'placeholder': 'Ej: 50% al inicio, 50% al finalizar'
+                'placeholder': 'Ej: 50% al inicio, 50% al finalizar',
+                'required': False
             }),
             'terminos_condiciones': forms.Textarea(attrs={
                 'class': 'form-control',
                 'rows': 4,
-                'placeholder': 'Términos y condiciones generales'
-            }),
-            'archivo_cotizacion': forms.FileInput(attrs={
-                'class': 'form-control',
-                'accept': '.pdf,.doc,.docx'
-            }),
-            'observaciones': forms.Textarea(attrs={
-                'class': 'form-control',
-                'rows': 3,
-                'placeholder': 'Observaciones internas'
-            }),
-            'notas_cliente': forms.Textarea(attrs={
-                'class': 'form-control',
-                'rows': 3,
-                'placeholder': 'Notas o comentarios del cliente'
+                'placeholder': 'Términos y condiciones generales',
+                'required': False
             })
         }
     
-    def clean_numero_cotizacion(self):
-        numero_cotizacion = self.cleaned_data.get('numero_cotizacion')
-        if numero_cotizacion:
-            # Verificar que el número de cotización sea único
-            queryset = Cotizacion.objects.filter(numero_cotizacion=numero_cotizacion)
-            if self.instance.pk:
-                queryset = queryset.exclude(pk=self.instance.pk)
-            if queryset.exists():
-                raise forms.ValidationError('Ya existe una cotización con este número.')
-        return numero_cotizacion
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # El número de cotización se genera automáticamente
+        self.fields['numero_cotizacion'].required = False
+        # La fecha de vencimiento no es obligatoria
+        self.fields['fecha_vencimiento'].required = False
+        # Campos que ya no están en el template
+        self.fields['descripcion'].required = False
+        self.fields['validez_dias'].required = False
+        self.fields['condiciones_pago'].required = False
+        self.fields['terminos_condiciones'].required = False
+        # Estado por defecto enviada y ocultar el campo
+        self.fields['estado'].widget = forms.HiddenInput()
+        if not self.instance.pk:
+            self.fields['estado'].initial = 'enviada'
     
     def clean(self):
         cleaned_data = super().clean()
@@ -1202,3 +1207,48 @@ class CotizacionForm(forms.ModelForm):
                 raise forms.ValidationError('La fecha de vencimiento debe ser posterior a la fecha de emisión.')
         
         return cleaned_data
+
+
+class ConfiguracionPlanillaForm(forms.ModelForm):
+    """Formulario para configurar retenciones y bonos de planilla"""
+    
+    class Meta:
+        model = ConfiguracionPlanilla
+        fields = [
+            'retencion_seguro_social', 'retencion_seguro_educativo',
+            'bono_general', 'bono_produccion',
+            'aplicar_retenciones', 'aplicar_bonos'
+        ]
+        widgets = {
+            'retencion_seguro_social': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'step': '0.01',
+                'min': '0',
+                'placeholder': '0.00'
+            }),
+            'retencion_seguro_educativo': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'step': '0.01',
+                'min': '0',
+                'placeholder': '0.00'
+            }),
+            'bono_general': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'step': '0.01',
+                'min': '0',
+                'placeholder': '0.00'
+            }),
+            'bono_produccion': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'step': '0.01',
+                'min': '0',
+                'max': '100',
+                'placeholder': '0.00'
+            }),
+            'aplicar_retenciones': forms.CheckboxInput(attrs={
+                'class': 'form-check-input'
+            }),
+            'aplicar_bonos': forms.CheckboxInput(attrs={
+                'class': 'form-check-input'
+            })
+        }

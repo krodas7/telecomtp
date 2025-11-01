@@ -5,24 +5,70 @@
 
 {% block extra_css %}
 <style>
+    /* ===== FORMULARIO COTIZACIÓN MODERNO ===== */
+    body {
+        background: #f8fafc;
+    }
+    
+    .create-container {
+        padding: 2rem 1.5rem;
+        max-width: 1400px;
+        margin: 0 auto;
+    }
+    
     .create-hero {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
         color: white;
-        padding: 3rem 2rem;
+        padding: 2.5rem 2rem;
         border-radius: 20px;
         margin-bottom: 2rem;
-        text-align: center;
+        box-shadow: 0 10px 40px rgba(30, 58, 138, 0.3);
         position: relative;
         overflow: hidden;
+    }
+    
+    .create-hero::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -20%;
+        width: 400px;
+        height: 400px;
+        background: radial-gradient(circle, rgba(96, 165, 250, 0.2) 0%, transparent 70%);
+        animation: pulse 4s ease-in-out infinite;
+    }
+    
+    @keyframes pulse {
+        0%, 100% { transform: scale(1); opacity: 0.5; }
+        50% { transform: scale(1.1); opacity: 0.8; }
+    }
+    
+    .create-hero h2 {
+        position: relative;
+        z-index: 2;
+        margin: 0;
+        font-weight: 700;
+        font-size: 2rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 1rem;
+        color: #ffffff !important;
+    }
+    
+    .create-hero h2 i {
+        font-size: 2.2rem;
+        color: #ffffff !important;
+        filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.3));
     }
     
     .form-container {
         background: white;
         border-radius: 20px;
         padding: 2.5rem;
-        box-shadow: 0 8px 30px rgba(44, 62, 80, 0.1);
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
         margin-bottom: 2rem;
-        border: none;
+        border: 1px solid #e2e8f0;
         position: relative;
         overflow: hidden;
     }
@@ -34,7 +80,7 @@
         left: 0;
         right: 0;
         height: 4px;
-        background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+        background: linear-gradient(90deg, #3b82f6 0%, #1e40af 100%);
     }
     
     .form-group {
@@ -44,32 +90,34 @@
     
     .form-label {
         font-weight: 600;
-        color: #2c3e50;
-        margin-bottom: 0.8rem;
+        color: #1e293b;
+        margin-bottom: 0.75rem;
         display: flex;
         align-items: center;
         gap: 0.5rem;
+        font-size: 0.95rem;
     }
     
     .form-label i {
-        color: #667eea;
-        font-size: 1.1rem;
+        color: #3b82f6;
+        font-size: 1rem;
     }
     
     .form-control, .form-select {
-        border: 2px solid #e0e0e0 !important;
+        border: 2px solid #e2e8f0 !important;
         border-radius: 12px !important;
-        padding: 1rem 1.2rem !important;
-        font-size: 1rem !important;
+        padding: 0.85rem 1.1rem !important;
+        font-size: 0.95rem !important;
         transition: all 0.3s ease !important;
         background: white !important;
         width: 100% !important;
         box-sizing: border-box !important;
+        color: #334155 !important;
     }
     
     .form-control:focus, .form-select:focus {
-        border-color: #667eea !important;
-        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25) !important;
+        border-color: #3b82f6 !important;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1) !important;
         outline: none !important;
     }
     
@@ -80,8 +128,8 @@
     }
     
     .btn {
-        padding: 1rem 2rem;
-        border-radius: 25px;
+        padding: 0.85rem 1.8rem;
+        border-radius: 12px;
         font-weight: 600;
         text-decoration: none;
         transition: all 0.3s ease;
@@ -89,30 +137,34 @@
         display: inline-flex;
         align-items: center;
         gap: 0.5rem;
-        font-size: 1rem;
+        font-size: 0.95rem;
         cursor: pointer;
     }
     
     .btn-primary {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: linear-gradient(135deg, #3b82f6, #1e40af);
         color: white;
+        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
     }
     
     .btn-primary:hover {
-        background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
-        transform: translateY(-3px);
-        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
-    }
-    
-    .btn-secondary {
-        background: #6c757d;
+        background: linear-gradient(135deg, #2563eb, #1e3a8a);
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
         color: white;
     }
     
+    .btn-secondary {
+        background: #64748b;
+        color: white;
+        box-shadow: 0 4px 12px rgba(100, 116, 139, 0.3);
+    }
+    
     .btn-secondary:hover {
-        background: #5a6268;
-        transform: translateY(-3px);
-        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+        background: #475569;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(100, 116, 139, 0.4);
+        color: white;
     }
     
     .total-preview {
@@ -141,75 +193,211 @@
         }
     }
     
-    /* Items Table Styles */
+    /* Items Table Styles - Modernizado */
     .items-table-container {
-        margin-top: 1rem;
-        border-radius: 12px;
+        margin-top: 1.5rem;
+        border-radius: 16px;
         overflow: hidden;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+        background: white;
+        border: 1px solid #e2e8f0;
+    }
+    
+    .items-header {
+        background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
+        padding: 1.25rem 1.5rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    
+    .items-header h5 {
+        margin: 0;
+        color: white;
+        font-weight: 600;
+        font-size: 1.05rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+    
+    .items-header h5 i {
+        font-size: 1.15rem;
+    }
+    
+    .select-items-btn {
+        background: rgba(255, 255, 255, 0.2);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        color: white;
+        border-radius: 6px;
+        padding: 0.55rem 1.1rem;
+        font-weight: 500;
+        font-size: 0.9rem;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .select-items-btn:hover {
+        background: white;
+        border-color: white;
+        color: #667eea;
+        transform: translateY(-1px);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    }
+    
+    .select-items-btn i {
+        font-size: 0.9rem;
     }
     
     #itemsTable {
         margin-bottom: 0;
+        border-collapse: separate;
+        border-spacing: 0;
+        width: 100%;
     }
     
     #itemsTable thead th {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
+        background-color: #f5f5f5;
+        color: #424242;
         font-weight: 600;
-        padding: 1rem;
-        text-align: center;
-        border: none;
+        padding: 1rem 0.75rem;
+        text-align: left;
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        border-bottom: 2px solid #e0e0e0;
+    }
+    
+    #itemsTable thead th:first-child {
+        padding-left: 1.25rem;
+    }
+    
+    #itemsTable thead th:last-child {
+        padding-right: 1.25rem;
     }
     
     #itemsTable tbody td {
-        padding: 0.75rem;
+        padding: 1.25rem 0.75rem;
         vertical-align: middle;
-        border-bottom: 1px solid #e9ecef;
+        border-bottom: 1px solid #f0f0f0;
+        background: white;
+    }
+    
+    #itemsTable tbody td:first-child {
+        padding-left: 1.25rem;
+        font-weight: 500;
+    }
+    
+    #itemsTable tbody td:last-child {
+        padding-right: 1.25rem;
+    }
+    
+    #itemsTable tbody tr {
+        transition: all 0.2s ease;
+    }
+    
+    #itemsTable tbody tr:hover {
+        background-color: #fafafa !important;
+        box-shadow: inset 4px 0 0 #667eea;
+    }
+    
+    #itemsTable tbody tr:last-child td {
+        border-bottom: none;
     }
     
     #itemsTable tfoot {
-        background-color: #f8f9fa;
-        font-weight: 600;
+        background-color: #fafafa;
+        border-top: 2px solid #e0e0e0;
     }
     
     #itemsTable tfoot td {
-        padding: 1rem;
-        border-top: 2px solid #667eea;
+        padding: 1.5rem 0.75rem;
+        font-weight: 600;
+    }
+    
+    #itemsTable tfoot td:first-child {
+        padding-left: 1.25rem;
+    }
+    
+    #itemsTable tfoot td:last-child {
+        padding-right: 1.25rem;
+    }
+    
+    #itemsTable tfoot strong {
+        color: #667eea;
+        font-size: 1.2rem;
+        letter-spacing: 0.5px;
     }
     
     .item-row input {
-        border: 1px solid #dee2e6;
-        border-radius: 8px;
-        transition: all 0.3s ease;
+        border: 1px solid #e0e0e0;
+        border-radius: 4px;
+        padding: 0.6rem 0.75rem;
+        width: 100%;
+        font-size: 0.95rem;
+        transition: all 0.2s ease;
+        background: white;
     }
     
     .item-row input:focus {
         border-color: #667eea;
-        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
         outline: none;
     }
     
-    .item-total {
-        background-color: #f8f9fa;
-        font-weight: 600;
-        color: #667eea;
+    .item-row input:hover:not(:disabled) {
+        border-color: #bdbdbd;
     }
     
-    .add-item, .remove-item {
-        border-radius: 8px;
+    .item-total {
+        background-color: #f5f5f5 !important;
+        font-weight: 700;
+        color: #667eea;
+        border: 1px solid #e0e0e0 !important;
+        text-align: center;
+        cursor: not-allowed;
+    }
+    
+    .add-item {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border: none;
+        color: white;
+        border-radius: 6px;
+        padding: 0.6rem 1.2rem;
+        font-weight: 600;
         transition: all 0.3s ease;
+        box-shadow: 0 2px 4px rgba(102, 126, 234, 0.3);
     }
     
     .add-item:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        transform: translateY(-1px);
+        box-shadow: 0 4px 8px rgba(102, 126, 234, 0.4);
+    }
+    
+    .add-item i {
+        margin-right: 0.25rem;
+    }
+    
+    .remove-item {
+        background-color: #f44336;
+        border: none;
+        color: white;
+        border-radius: 6px;
+        padding: 0.6rem 0.85rem;
+        transition: all 0.3s ease;
+        width: 100%;
+        box-shadow: 0 2px 4px rgba(244, 67, 54, 0.3);
     }
     
     .remove-item:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 8px rgba(220, 53, 69, 0.3);
+        background-color: #d32f2f;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 8px rgba(244, 67, 54, 0.4);
     }
+    
 </style>
 {% endblock %}
 
@@ -228,7 +416,7 @@
 
 <div class="row">
     <!-- Formulario Principal -->
-    <div class="col-lg-8">
+    <div class="col-12">
         <div class="form-container">
             <form method="post" enctype="multipart/form-data" id="createForm">
                 {% csrf_token %}
@@ -297,12 +485,47 @@
 
                 <!-- Items de Cotización -->
                 <div class="form-group">
-                    <label class="form-label">
-                        <i class="fas fa-list"></i>Items de la Cotización
-                    </label>
                     <div class="items-table-container">
+                        <div class="items-header">
+                            <h5>
+                                <i class="fas fa-list"></i>Items de la Cotización
+                            </h5>
+                            <button type="button" class="btn btn-info btn-sm" id="toggleItemsSaved" onclick="toggleItemsPanel()">
+                                <i class="fas fa-box-open"></i> Cargar Items Guardados
+                            </button>
+                        </div>
+                        
+                        <!-- Panel de Items Guardados (Colapsable) -->
+                        <div id="itemsSavedPanel" style="display: none; margin-bottom: 1rem; padding: 1.5rem; background: #f8f9fa; border-radius: 8px; border: 1px solid #dee2e6;">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h6 class="mb-0"><i class="fas fa-database"></i> Items Guardados</h6>
+                                <button type="button" class="btn btn-sm btn-secondary" onclick="toggleItemsPanel()">
+                                    <i class="fas fa-times"></i> Cerrar
+                                </button>
+                            </div>
+                            
+                            <!-- Buscador Inteligente -->
+                            <div class="mb-3">
+                                <div class="input-group">
+                                    <span class="input-group-text">
+                                        <i class="fas fa-search"></i>
+                                    </span>
+                                    <input type="text" class="form-control" id="buscadorItems" placeholder="Buscar por descripción, precio, categoría..." onkeyup="filtrarItems()">
+                                </div>
+                                <small class="text-muted">
+                                    <i class="fas fa-lightbulb"></i> Tip: Busca por nombre o precio para encontrar rápidamente
+                                </small>
+                            </div>
+                            
+                            <!-- Tabla Compacta de Items -->
+                            <div id="savedItemsContainer" style="max-height: 400px; overflow-y: auto;">
+                                <p class="text-muted text-center">
+                                    <i class="fas fa-spinner fa-spin"></i> Cargando items guardados...
+                                </p>
+                            </div>
+                        </div>
                         <table class="table table-bordered" id="itemsTable">
-                            <thead class="table-light">
+                            <thead>
                                 <tr>
                                     <th style="width: 40%;">Descripción</th>
                                     <th style="width: 12%;">Cantidad</th>
@@ -353,21 +576,6 @@
                             </tfoot>
                         </table>
                     </div>
-                </div>
-
-                <!-- Descripción -->
-                <div class="form-group">
-                    <label for="descripcion" class="form-label">
-                        <i class="fas fa-align-left"></i>Descripción de Servicios *
-                    </label>
-                    {{ form.descripcion }}
-                    {% if form.descripcion.errors %}
-                        <div class="text-danger small mt-1">
-                            {% for error in form.descripcion.errors %}
-                                {{ error }}
-                            {% endfor %}
-                        </div>
-                    {% endif %}
                 </div>
 
                 <!-- Montos -->
@@ -439,6 +647,9 @@
                             </div>
                         {% endif %}
                     </div>
+                    
+                    <!-- Estado oculto - se genera automáticamente como "enviada" -->
+                    {{ form.estado }}
                 </div>
 
                 <!-- Fechas -->
@@ -459,43 +670,12 @@
                     
                     <div class="form-group">
                         <label for="fecha_vencimiento" class="form-label">
-                            <i class="fas fa-clock"></i>Fecha de Vencimiento *
+                            <i class="fas fa-clock"></i>Fecha de Vencimiento
                         </label>
                         {{ form.fecha_vencimiento }}
                         {% if form.fecha_vencimiento.errors %}
                             <div class="text-danger small mt-1">
                                 {% for error in form.fecha_vencimiento.errors %}
-                                    {{ error }}
-                                {% endfor %}
-                            </div>
-                        {% endif %}
-                    </div>
-                </div>
-
-                <!-- Condiciones -->
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="condiciones_pago" class="form-label">
-                            <i class="fas fa-credit-card"></i>Condiciones de Pago
-                        </label>
-                        {{ form.condiciones_pago }}
-                        {% if form.condiciones_pago.errors %}
-                            <div class="text-danger small mt-1">
-                                {% for error in form.condiciones_pago.errors %}
-                                    {{ error }}
-                                {% endfor %}
-                            </div>
-                        {% endif %}
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="validez_dias" class="form-label">
-                            <i class="fas fa-calendar-check"></i>Validez (días)
-                        </label>
-                        {{ form.validez_dias }}
-                        {% if form.validez_dias.errors %}
-                            <div class="text-danger small mt-1">
-                                {% for error in form.validez_dias.errors %}
                                     {{ error }}
                                 {% endfor %}
                             </div>
@@ -518,52 +698,6 @@
                     {% endif %}
                 </div>
 
-                <!-- Archivo -->
-                <div class="form-group">
-                    <label for="archivo_cotizacion" class="form-label">
-                        <i class="fas fa-file-upload"></i>Archivo de Cotización
-                    </label>
-                    {{ form.archivo_cotizacion }}
-                    {% if form.archivo_cotizacion.errors %}
-                        <div class="text-danger small mt-1">
-                            {% for error in form.archivo_cotizacion.errors %}
-                                {{ error }}
-                            {% endfor %}
-                        </div>
-                    {% endif %}
-                </div>
-
-                <!-- Observaciones -->
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="observaciones" class="form-label">
-                            <i class="fas fa-sticky-note"></i>Observaciones Internas
-                        </label>
-                        {{ form.observaciones }}
-                        {% if form.observaciones.errors %}
-                            <div class="text-danger small mt-1">
-                                {% for error in form.observaciones.errors %}
-                                    {{ error }}
-                                {% endfor %}
-                            </div>
-                        {% endif %}
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="notas_cliente" class="form-label">
-                            <i class="fas fa-comment"></i>Notas del Cliente
-                        </label>
-                        {{ form.notas_cliente }}
-                        {% if form.notas_cliente.errors %}
-                            <div class="text-danger small mt-1">
-                                {% for error in form.notas_cliente.errors %}
-                                    {{ error }}
-                                {% endfor %}
-                            </div>
-                        {% endif %}
-                    </div>
-                </div>
-
                 <!-- Acciones del Formulario -->
                 <div class="d-flex gap-2 justify-content-end mt-4">
                     <a href="{% url 'cotizaciones_list' %}" class="btn btn-secondary">
@@ -574,37 +708,6 @@
                     </button>
                 </div>
             </form>
-        </div>
-    </div>
-
-    <!-- Sidebar de Información -->
-    <div class="col-lg-4">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="mb-0">
-                    <i class="fas fa-info-circle me-2"></i>Información Útil
-                </h5>
-            </div>
-            <div class="card-body">
-                <div class="mb-3">
-                    <strong>Proyectos Activos:</strong>
-                    <span class="badge bg-primary">{{ proyectos.count }}</span>
-                </div>
-                <div class="mb-3">
-                    <strong>Clientes Activos:</strong>
-                    <span class="badge bg-success">{{ clientes.count }}</span>
-                </div>
-                <div class="alert alert-info">
-                    <i class="fas fa-lightbulb me-2"></i>
-                    <strong>Consejos:</strong>
-                    <ul class="mb-0 mt-2">
-                        <li>Usa números únicos para las cotizaciones</li>
-                        <li>El ITBMS se calcula automáticamente al 7%</li>
-                        <li>Establece fechas de vencimiento realistas</li>
-                        <li>Adjunta archivos PDF cuando sea posible</li>
-                    </ul>
-                </div>
-            </div>
         </div>
     </div>
 </div>
@@ -661,33 +764,81 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
-    // Agregar event listeners
+    // Agregar event listeners (reducidos para evitar loops)
     if (montoSubtotalInput) {
         montoSubtotalInput.addEventListener('input', calcularCotizacion);
-        montoSubtotalInput.addEventListener('change', calcularCotizacion);
-        montoSubtotalInput.addEventListener('keyup', calcularCotizacion);
-        console.log('✅ Event listeners agregados al campo subtotal');
+        console.log('✅ Event listener agregado al campo subtotal');
     }
     
     // Establecer fecha de emisión por defecto
     const fechaEmisionInput = document.getElementById('id_fecha_emision');
-    if (fechaEmisionInput) {
+    if (fechaEmisionInput && !fechaEmisionInput.value) {
         const today = new Date().toISOString().split('T')[0];
         fechaEmisionInput.value = today;
-    }
-    
-    // Establecer fecha de vencimiento por defecto (30 días después)
-    const fechaVencimientoInput = document.getElementById('id_fecha_vencimiento');
-    if (fechaVencimientoInput) {
-        const today = new Date();
-        const futureDate = new Date(today.getTime() + (30 * 24 * 60 * 60 * 1000)); // 30 días después
-        fechaVencimientoInput.value = futureDate.toISOString().split('T')[0];
     }
     
     // Hacer función disponible globalmente
     window.calcularCotizacion = calcularCotizacion;
     
     console.log('✅ JavaScript de cotización cargado correctamente');
+    
+    // ===========================
+    // Manejo del formulario
+    // ===========================
+    const createForm = document.getElementById('createForm');
+    if (createForm) {
+        createForm.addEventListener('submit', function(e) {
+            // Serializar items antes de enviar
+            serializarItems();
+        });
+    }
+    
+    // Función para serializar items en campos ocultos
+    function serializarItems() {
+        // Limpiar campos ocultos previos si existen
+        document.querySelectorAll('input[name^="items["]').forEach(el => el.remove());
+        
+        const rows = document.querySelectorAll('.item-row');
+        const items = [];
+        
+        console.log('🔄 Serializando items... Total rows:', rows.length);
+        
+        rows.forEach((row, index) => {
+            const descripcion = row.querySelector('.item-descripcion').value.trim();
+            const cantidad = row.querySelector('.item-cantidad').value;
+            const precioUnitario = row.querySelector('.item-precio-unitario').value;
+            const precioCosto = row.querySelector('.item-precio-costo').value;
+            
+            console.log(`📝 Row ${index}:`, {descripcion, cantidad, precioUnitario, precioCosto});
+            
+            // Solo agregar si tiene descripción
+            if (descripcion) {
+                items.push({
+                    descripcion: descripcion,
+                    cantidad: cantidad || '1',
+                    precio_unitario: precioUnitario || '0',
+                    precio_costo: precioCosto || '0',
+                    orden: index
+                });
+            }
+        });
+        
+        console.log('📦 Items a guardar:', items);
+        
+        // Agregar campos ocultos al formulario
+        items.forEach((item, index) => {
+            Object.keys(item).forEach(key => {
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = `items[${index}][${key}]`;
+                input.value = item[key];
+                createForm.appendChild(input);
+                console.log(`✅ Agregando campo: items[${index}][${key}]=${item[key]}`);
+            });
+        });
+        
+        console.log('✅ Serialización completa. Total campos ocultos:', document.querySelectorAll('input[name^="items["]').length);
+    }
     
     // ===========================
     // Funciones para Items
@@ -780,6 +931,219 @@ document.addEventListener('DOMContentLoaded', function() {
     document.querySelector('.add-item').addEventListener('click', agregarItem);
     
     console.log('✅ JavaScript de items de cotización cargado correctamente');
+    
+    // ===========================
+    // Items Reutilizables (Panel Colapsable)
+    // ===========================
+    
+    // Función global para toggle del panel
+    window.toggleItemsPanel = function() {
+        const panel = document.getElementById('itemsSavedPanel');
+        if (panel) {
+            const isVisible = panel.style.display !== 'none';
+            panel.style.display = isVisible ? 'none' : 'block';
+            
+            if (!isVisible) {
+                // Cargar items cuando se abre
+                cargarItemsGuardados();
+            }
+        }
+    };
+    
+    function cargarItemsGuardados() {
+        console.log('🔄 Cargando items guardados...');
+        const container = document.getElementById('savedItemsContainer');
+        container.innerHTML = '<p class="text-muted text-center"><i class="fas fa-spinner fa-spin"></i> Cargando...</p>';
+        
+        fetch('{% url "items_reutilizables_list" %}')
+            .then(response => {
+                console.log('✅ Respuesta recibida:', response.status);
+                return response.json();
+            })
+            .then(data => {
+                console.log('📦 Items recibidos:', data);
+                if (data.items && data.items.length > 0) {
+                    renderizarItemsGuardados(data.items);
+                } else {
+                    container.innerHTML = '<p class="text-muted text-center">No hay items guardados aún. Los items que agregues se guardarán automáticamente.</p>';
+                }
+            })
+            .catch(error => {
+                console.error('❌ Error cargando items:', error);
+                container.innerHTML = '<p class="text-danger text-center">Error al cargar items guardados.</p>';
+            });
+    }
+    
+    function renderizarItemsGuardados(items) {
+        console.log('🎨 Renderizando items:', items.length);
+        const container = document.getElementById('savedItemsContainer');
+        
+        if (items.length === 0) {
+            container.innerHTML = '<p class="text-muted text-center py-3">No hay items guardados</p>';
+            return;
+        }
+        
+        let html = `
+            <table class="table table-hover table-sm mb-0" id="tablaItemsGuardados">
+                <thead style="background: #e9ecef; position: sticky; top: 0; z-index: 10;">
+                    <tr>
+                        <th style="width: 45%;">Descripción</th>
+                        <th style="width: 18%;" class="text-end">Precio</th>
+                        <th style="width: 18%;" class="text-end">Costo</th>
+                        <th style="width: 14%;" class="text-end">Margen</th>
+                        <th style="width: 5%;"></th>
+                    </tr>
+                </thead>
+                <tbody>
+        `;
+        
+        items.forEach(item => {
+            const margen = calcularMargen(item.precio_unitario, item.precio_costo);
+            const margenColor = margen > 50 ? 'success' : margen > 25 ? 'warning' : 'danger';
+            
+            html += `
+                <tr class="item-guardado-row" style="cursor: pointer;" 
+                    data-descripcion="${escapeHtml(item.descripcion)}" 
+                    data-precio-unitario="${item.precio_unitario}" 
+                    data-precio-costo="${item.precio_costo}">
+                    <td>
+                        <strong>${escapeHtml(item.descripcion)}</strong>
+                        ${item.categoria ? `<br><small class="text-muted"><i class="fas fa-tag"></i> ${escapeHtml(item.categoria)}</small>` : ''}
+                    </td>
+                    <td class="text-end">
+                        <span class="text-primary fw-bold">$${parseFloat(item.precio_unitario).toFixed(2)}</span>
+                    </td>
+                    <td class="text-end">
+                        <span class="text-muted">$${parseFloat(item.precio_costo).toFixed(2)}</span>
+                    </td>
+                    <td class="text-end">
+                        <span class="badge bg-${margenColor}">${margen.toFixed(1)}%</span>
+                    </td>
+                    <td class="text-center">
+                        <i class="fas fa-plus-circle text-primary" style="cursor: pointer;"></i>
+                    </td>
+                </tr>
+            `;
+        });
+        
+        html += `
+                </tbody>
+            </table>
+        `;
+        
+        container.innerHTML = html;
+        
+        // Agregar event listeners a las filas
+        container.querySelectorAll('.item-guardado-row').forEach(row => {
+            row.addEventListener('click', function() {
+                agregarItemGuardado({
+                    descripcion: this.dataset.descripcion,
+                    precio_unitario: this.dataset.precioUnitario,
+                    precio_costo: this.dataset.precioCosto
+                });
+            });
+        });
+    }
+    
+    // Filtro inteligente de items
+    function filtrarItems() {
+        const buscador = document.getElementById('buscadorItems');
+        const filtro = buscador.value.toLowerCase().trim();
+        const tabla = document.getElementById('tablaItemsGuardados');
+        
+        if (!tabla) return;
+        
+        const filas = tabla.getElementsByTagName('tr');
+        let visibles = 0;
+        
+        for (let i = 0; i < filas.length; i++) {
+            const fila = filas[i];
+            if (fila.parentElement.tagName === 'TBODY') {
+                const descripcion = fila.dataset.descripcion || '';
+                const precio = fila.dataset.precioUnitario || '';
+                const costo = fila.dataset.precioCosto || '';
+                
+                const textoCompleto = `${descripcion} ${precio} ${costo}`.toLowerCase();
+                
+                if (textoCompleto.includes(filtro) || filtro === '') {
+                    fila.style.display = '';
+                    visibles++;
+                } else {
+                    fila.style.display = 'none';
+                }
+            }
+        }
+        
+        // Mostrar mensaje si no hay resultados
+        const tbody = tabla.querySelector('tbody');
+        const mensajeNoResultados = tbody.querySelector('.no-resultados');
+        
+        if (visibles === 0 && filtro !== '') {
+            if (!mensajeNoResultados) {
+                tbody.insertAdjacentHTML('beforeend', `
+                    <tr class="no-resultados">
+                        <td colspan="5" class="text-center text-muted py-3">
+                            <i class="fas fa-search"></i> No se encontraron items con "${filtro}"
+                        </td>
+                    </tr>
+                `);
+            }
+        } else if (mensajeNoResultados) {
+            mensajeNoResultados.remove();
+        }
+    }
+    
+    function escapeHtml(text) {
+        const map = {'&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#039;'};
+        return text.replace(/[&<>"']/g, m => map[m]);
+    }
+    
+    function calcularMargen(precio_unitario, precio_costo) {
+        const pu = parseFloat(precio_unitario);
+        const pc = parseFloat(precio_costo);
+        if (pc > 0) return ((pu - pc) / pc) * 100;
+        return 0;
+    }
+    
+    function agregarItemGuardado(item) {
+        console.log('➕ Agregando item a la tabla:', item);
+        const tbody = document.getElementById('itemsTableBody');
+        const newRow = document.createElement('tr');
+        newRow.className = 'item-row';
+        newRow.innerHTML = `
+            <td>
+                <input type="text" class="form-control item-descripcion" value="${escapeHtml(item.descripcion)}" placeholder="Descripción">
+            </td>
+            <td>
+                <input type="number" class="form-control item-cantidad" step="0.01" min="0" value="1" placeholder="1">
+            </td>
+            <td>
+                <input type="number" class="form-control item-precio-unitario" step="0.01" min="0" value="${item.precio_unitario}" placeholder="0.00">
+            </td>
+            <td>
+                <input type="number" class="form-control item-precio-costo" step="0.01" min="0" value="${item.precio_costo}" placeholder="0.00">
+            </td>
+            <td>
+                <input type="text" class="form-control item-total" readonly placeholder="0.00">
+            </td>
+            <td>
+                <button type="button" class="btn btn-danger btn-sm remove-item" title="Eliminar">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </td>
+        `;
+        tbody.appendChild(newRow);
+        
+        // Agregar event listeners
+        agregarEventListenersItem(newRow);
+        calcularItemTotal(newRow);
+        
+        // Cerrar panel después de agregar
+        const panel = document.getElementById('itemsSavedPanel');
+        if (panel) {
+            panel.style.display = 'none';
+        }
+    }
 });
 </script>
 {% endblock %}

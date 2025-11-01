@@ -107,3 +107,11 @@ def add_class(field, css_class):
     if hasattr(field, 'field') and hasattr(field.field, 'widget'):
         field.field.widget.attrs['class'] = field.field.widget.attrs.get('class', '') + ' ' + css_class
     return field
+
+@register.filter
+def basename(path):
+    """Obtiene el nombre del archivo de una ruta"""
+    import os
+    if path:
+        return os.path.basename(path)
+    return ''
