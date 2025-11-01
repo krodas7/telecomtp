@@ -342,6 +342,9 @@ def dashboard(request):
         elif periodo == '3':
             # 3 meses
             meses_grafico = []
+            ingresos_mensuales = []
+            gastos_mensuales = []
+            evolucion_proyectos = []
             for i in range(3):
                 fecha = hoy - timedelta(days=30*i)
                 meses_grafico.insert(0, fecha.strftime('%b'))
@@ -384,6 +387,9 @@ def dashboard(request):
         else:
             # 6 meses (por defecto)
             meses_grafico = []
+            ingresos_mensuales = []
+            gastos_mensuales = []
+            evolucion_proyectos = []
             for i in range(6):
                 fecha = hoy - timedelta(days=30*i)
                 meses_grafico.insert(0, fecha.strftime('%b'))
