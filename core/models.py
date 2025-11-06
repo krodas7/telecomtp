@@ -2053,3 +2053,36 @@ class ItemReutilizable(models.Model):
         return 0
 
 
+class CajaMenuda(models.Model):
+    """
+    Modelo para Caja Menuda (Petty Cash)
+    Sistema para gestionar gastos menores y efectivo en caja
+    """
+    # Campos básicos (ajustables según necesidad)
+    folio = models.CharField(max_length=50, unique=True, help_text="Número de folio único")
+    fecha = models.DateField(default=timezone.now)
+    descripcion = models.TextField(blank=True)
+    monto = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    
+    # Relaciones opcionales
+    proyecto = models.ForeignKey('Proyecto', on_delete=models.SET_NULL, null=True, blank=True, related_name='movimientos_caja_menuda')
+    creado_por = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='movimientos_caja_menuda_creados')
+    
+    # Metadatos
+    activo = models.BooleanField(default=True)
+    creado_en = models.DateTimeField(auto_now_add=True)
+    actualizado_en = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        verbose_name = 'Caja Menuda'
+        verbose_name_plural = 'Caja Menuda'
+        ordering = ['-fecha', '-creado_en']
+        indexes = [
+            models.Index(fields=['fecha', 'activo']),
+            models.Index(fields=['folio']),
+        ]
+    
+    def __str__(self):
+        return f"{self.folio} - ${self.monto} ({self.fecha})"
+
+

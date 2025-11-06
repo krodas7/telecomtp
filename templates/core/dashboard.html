@@ -843,13 +843,13 @@
                 <div class="section-header">
                     <h3 class="section-title">
                         <div class="section-title-icon">
-                            <i class="fas fa-chart-pie"></i>
+                            <i class="fas fa-heartbeat"></i>
                 </div>
-                        Proyectos por Estado
+                        Salud Financiera de Proyectos
                     </h3>
                 </div>
                 <div class="section-body">
-                    <canvas id="evolucionChart" height="300"></canvas>
+                    <div id="saludProyectos" style="max-height: 400px; overflow-y: auto;"></div>
                 </div>
             </div>
         </div>
@@ -860,11 +860,30 @@
                         <div class="section-title-icon">
                             <i class="fas fa-chart-bar"></i>
                 </div>
-                        Gastos por Categoría (Este Mes)
+                        Gastos por Categoría - Total Acumulado
                     </h3>
                 </div>
                 <div class="section-body">
-                    <canvas id="gastosChart" height="300"></canvas>
+                    <div id="gastosTreemap" style="max-height: 400px; overflow-y: auto;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Gráfico de Tendencia Financiera -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="dashboard-section">
+                <div class="section-header">
+                    <h3 class="section-title">
+                        <div class="section-title-icon">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                        Tendencia Financiera - Últimos 6 Meses
+                    </h3>
+                </div>
+                <div class="section-body">
+                    <canvas id="tendenciaFinanciera" height="120"></canvas>
                 </div>
             </div>
         </div>
@@ -1043,7 +1062,7 @@
 
 {% block extra_js %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script src="{% static 'js/dashboard-charts.js' %}"></script>
+<script src="{% static 'js/dashboard-charts.js' %}?v=20251101-03"></script>
 <script>
 // ===== NOTIFICACIONES =====
     function mostrarNotificacion(mensaje, tipo = 'info') {
@@ -1101,9 +1120,9 @@ function agregarPostit(eventoId) {
     const notaTexto = document.getElementById(`nota-${eventoId}`).value.trim();
     if (!notaTexto) {
         mostrarNotificacion('⚠️ Escribe una nota antes de agregar el post-it', 'warning');
-        return;
-    }
-    
+            return;
+        }
+        
     // Obtener color seleccionado
     const colorSeleccionado = document.querySelector(`input[name="color-${eventoId}"]:checked`);
     const color = colorSeleccionado ? colorSeleccionado.value : '#fef3c7';
@@ -1158,26 +1177,26 @@ function eliminarPostitDB(notaId, eventoId) {
     if (!confirm('¿Eliminar este post-it?')) return;
     
     fetch(`/api/postits/${notaId}/eliminar/`, {
-        method: 'POST',
-        headers: {
-            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
-        }
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
             const postit = document.getElementById(`postit-${notaId}`);
             if (postit) {
                 postit.style.transform = 'scale(0)';
                 setTimeout(() => postit.remove(), 300);
             }
             mostrarNotificacion('✅ Post-it eliminado', 'success');
-        } else {
+            } else {
             mostrarNotificacion('❌ Error al eliminar', 'error');
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
         mostrarNotificacion('❌ Error de conexión', 'error');
     });
 }
@@ -1236,9 +1255,34 @@ document.addEventListener('DOMContentLoaded', function() {
         const cantidadProyectos = JSON.parse('{{ cantidad_proyectos|escapejs }}');
         const categoriasGastos = JSON.parse('{{ categorias_gastos|escapejs }}');
         const montosGastos = JSON.parse('{{ montos_gastos|escapejs }}');
+        const ingresosM = JSON.parse('{{ ingresos_mensuales|escapejs }}');
+        const gastosM = JSON.parse('{{ gastos_mensuales|escapejs }}');
+        const mesesG = JSON.parse('{{ meses_grafico|escapejs }}');
+        
+        console.log('📊 Datos para gráficos:');
+        console.log('Categorías Gastos:', categoriasGastos);
+        console.log('Montos Gastos:', montosGastos);
+        console.log('Meses:', mesesG);
+        console.log('Ingresos:', ingresosM);
+        console.log('Gastos:', gastosM);
         
         if (typeof initializeDashboardCharts === 'function') {
             initializeDashboardCharts(estadosProyectos, cantidadProyectos, categoriasGastos, montosGastos);
+        }
+        
+        // Inicializar gráfico de tendencia financiera
+        if (typeof initializeTendenciaFinanciera === 'function') {
+            initializeTendenciaFinanciera(mesesG, ingresosM, gastosM);
+        }
+        
+        // Inicializar salud financiera de proyectos
+        if (typeof initializeSaludProyectos === 'function') {
+            const proyectosRentables = JSON.parse('{{ proyectos_rentables|escapejs }}');
+            console.log('🔍 Proyectos Rentables recibidos:', proyectosRentables);
+            console.log('🔍 Tipo:', typeof proyectosRentables);
+            console.log('🔍 Es array?', Array.isArray(proyectosRentables));
+            console.log('🔍 Longitud:', proyectosRentables?.length);
+            initializeSaludProyectos(proyectosRentables);
         }
     }, 500);
 });

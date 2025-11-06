@@ -102,6 +102,13 @@
                 </li>
                 
                 <li class="nav-item">
+                    <a class="nav-link {% if 'caja_menuda' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'caja_menuda_dashboard' %}">
+                        <i class="fas fa-wallet"></i>
+                        <span>Caja Menuda</span>
+                    </a>
+                </li>
+                
+                <li class="nav-item">
                     <a class="nav-link {% if 'clientes' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'clientes_list' %}">
                         <i class="fas fa-users"></i>
                         <span>Clientes</span>

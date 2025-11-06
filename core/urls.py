@@ -40,6 +40,13 @@ urlpatterns = [
     path('anticipos/<int:anticipo_id>/liquidar/', views.liquidar_anticipo, name='liquidar_anticipo'),
     path('proyectos/<int:proyecto_id>/calendario-pagos/', views.calendario_pagos_proyecto, name='calendario_pagos_proyecto'),
     
+    # Caja Menuda
+    path('caja-menuda/', views.caja_menuda_dashboard, name='caja_menuda_dashboard'),
+    path('caja-menuda/lista/', views.caja_menuda_list, name='caja_menuda_list'),
+    path('caja-menuda/crear/', views.caja_menuda_create, name='caja_menuda_create'),
+    path('caja-menuda/<int:pk>/editar/', views.caja_menuda_edit, name='caja_menuda_edit'),
+    path('caja-menuda/<int:pk>/eliminar/', views.caja_menuda_delete, name='caja_menuda_delete'),
+    
     # Trabajadores Diarios
     path('proyectos/<int:proyecto_id>/trabajadores-diarios/', views.trabajadores_diarios_list, name='trabajadores_diarios_list'),
     path('proyectos/<int:proyecto_id>/trabajadores-diarios/crear/', views.trabajador_diario_create, name='trabajador_diario_create'),

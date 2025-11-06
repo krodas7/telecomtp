@@ -7,7 +7,7 @@ from .models import (
     LogActividad, ArchivoAdjunto, Anticipo, AplicacionAnticipo,
     ArchivoProyecto, CarpetaProyecto, ConfiguracionSistema,
     Cotizacion, ItemCotizacion, ItemReutilizable, ConfiguracionPlanilla, PlanillaLiquidada,
-    EventoCalendario, NotaPostit
+    EventoCalendario, NotaPostit, CajaMenuda
 )
 
 
@@ -415,6 +415,32 @@ class NotaPostitAdmin(admin.ModelAdmin):
     def contenido_truncado(self, obj):
         return obj.contenido[:50] + '...' if len(obj.contenido) > 50 else obj.contenido
     contenido_truncado.short_description = 'Contenido'
+    
+    def save_model(self, request, obj, form, change):
+        if not change:
+            obj.creado_por = request.user
+        super().save_model(request, obj, form, change)
+
+
+@admin.register(CajaMenuda)
+class CajaMenudaAdmin(admin.ModelAdmin):
+    list_display = ['folio', 'fecha', 'monto', 'proyecto', 'activo', 'creado_en']
+    list_filter = ['activo', 'fecha', 'proyecto']
+    search_fields = ['folio', 'descripcion']
+    readonly_fields = ['creado_por', 'creado_en', 'actualizado_en']
+    
+    fieldsets = (
+        ('Información Básica', {
+            'fields': ('folio', 'fecha', 'descripcion', 'monto')
+        }),
+        ('Relaciones', {
+            'fields': ('proyecto', 'creado_por')
+        }),
+        ('Metadatos', {
+            'fields': ('activo', 'creado_en', 'actualizado_en'),
+            'classes': ('collapse',)
+        }),
+    )
     
     def save_model(self, request, obj, form, change):
         if not change:

@@ -1,0 +1,117 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load custom_filters %}
+
+{% block title %}Caja Menuda - Dashboard{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="mb-0"><i class="fas fa-wallet me-2"></i>Caja Menuda</h2>
+            <p class="text-muted mb-0">Gestión de gastos menores</p>
+        </div>
+        <div>
+            <a href="{% url 'caja_menuda_create' %}" class="btn btn-primary">
+                <i class="fas fa-plus me-2"></i>Nuevo Movimiento
+            </a>
+            <a href="{% url 'caja_menuda_list' %}" class="btn btn-outline-secondary">
+                <i class="fas fa-list me-2"></i>Ver Todos
+            </a>
+        </div>
+    </div>
+
+    <!-- Estadísticas -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-muted mb-2">Total Movimientos</h6>
+                            <h3 class="mb-0">{{ total_movimientos }}</h3>
+                        </div>
+                        <div class="text-primary" style="font-size: 2.5rem;">
+                            <i class="fas fa-file-invoice-dollar"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-muted mb-2">Monto Total</h6>
+                            <h3 class="mb-0">{{ total_monto|currency_gtq }}</h3>
+                        </div>
+                        <div class="text-success" style="font-size: 2.5rem;">
+                            <i class="fas fa-money-bill-wave"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Movimientos Recientes -->
+    <div class="card shadow-sm">
+        <div class="card-header bg-white">
+            <h5 class="mb-0"><i class="fas fa-history me-2"></i>Movimientos Recientes</h5>
+        </div>
+        <div class="card-body">
+            {% if movimientos_recientes %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Folio</th>
+                                <th>Fecha</th>
+                                <th>Descripción</th>
+                                <th>Proyecto</th>
+                                <th>Monto</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for movimiento in movimientos_recientes %}
+                            <tr>
+                                <td><strong>{{ movimiento.folio }}</strong></td>
+                                <td>{{ movimiento.fecha|date:"d/m/Y" }}</td>
+                                <td>{{ movimiento.descripcion|truncatewords:10 }}</td>
+                                <td>
+                                    {% if movimiento.proyecto %}
+                                        <span class="badge bg-info">{{ movimiento.proyecto.nombre }}</span>
+                                    {% else %}
+                                        <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                                <td><strong>{{ movimiento.monto|currency_gtq }}</strong></td>
+                                <td>
+                                    <a href="{% url 'caja_menuda_edit' movimiento.pk %}" class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                    <p class="text-muted">No hay movimientos registrados</p>
+                    <a href="{% url 'caja_menuda_create' %}" class="btn btn-primary">
+                        <i class="fas fa-plus me-2"></i>Crear Primer Movimiento
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+
+

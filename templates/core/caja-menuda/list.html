@@ -1,0 +1,70 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load custom_filters %}
+
+{% block title %}Caja Menuda - Lista{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="fas fa-wallet me-2"></i>Todos los Movimientos</h2>
+        <a href="{% url 'caja_menuda_create' %}" class="btn btn-primary">
+            <i class="fas fa-plus me-2"></i>Nuevo Movimiento
+        </a>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body">
+            {% if movimientos %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Folio</th>
+                                <th>Fecha</th>
+                                <th>Descripción</th>
+                                <th>Proyecto</th>
+                                <th>Monto</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for movimiento in movimientos %}
+                            <tr>
+                                <td><strong>{{ movimiento.folio }}</strong></td>
+                                <td>{{ movimiento.fecha|date:"d/m/Y" }}</td>
+                                <td>{{ movimiento.descripcion|truncatewords:15 }}</td>
+                                <td>
+                                    {% if movimiento.proyecto %}
+                                        <span class="badge bg-info">{{ movimiento.proyecto.nombre }}</span>
+                                    {% else %}
+                                        <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                                <td><strong>{{ movimiento.monto|currency_gtq }}</strong></td>
+                                <td>
+                                    <a href="{% url 'caja_menuda_edit' movimiento.pk %}" class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <a href="{% url 'caja_menuda_delete' movimiento.pk %}" class="btn btn-sm btn-outline-danger">
+                                        <i class="fas fa-trash"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                    <p class="text-muted">No hay movimientos registrados</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+
+

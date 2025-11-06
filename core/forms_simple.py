@@ -1252,3 +1252,35 @@ class ConfiguracionPlanillaForm(forms.ModelForm):
                 'class': 'form-check-input'
             })
         }
+
+
+class CajaMenudaForm(forms.ModelForm):
+    """Formulario para Caja Menuda"""
+    
+    class Meta:
+        model = CajaMenuda
+        fields = ['folio', 'fecha', 'descripcion', 'monto', 'proyecto']
+        widgets = {
+            'folio': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'CM-001'
+            }),
+            'fecha': forms.DateInput(attrs={
+                'class': 'form-control',
+                'type': 'date'
+            }),
+            'descripcion': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 3,
+                'placeholder': 'Descripción del movimiento...'
+            }),
+            'monto': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'step': '0.01',
+                'min': '0',
+                'placeholder': '0.00'
+            }),
+            'proyecto': forms.Select(attrs={
+                'class': 'form-select'
+            })
+        }

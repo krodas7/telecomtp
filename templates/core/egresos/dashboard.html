@@ -528,6 +528,90 @@
         margin-bottom: 30px;
     }
     
+    /* Botones de acción en la tabla */
+    .btn-group-sm .btn {
+        padding: 0.4rem 0.75rem;
+        font-size: 0.875rem;
+        border-radius: 8px;
+        transition: all 0.2s ease;
+    }
+    
+    .btn-outline-primary {
+        color: #667eea;
+        border-color: #667eea;
+    }
+    
+    .btn-outline-primary:hover {
+        background: #667eea;
+        border-color: #667eea;
+        color: white;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    }
+    
+    .btn-outline-danger {
+        color: #e74c3c;
+        border-color: #e74c3c;
+    }
+    
+    .btn-outline-danger:hover {
+        background: #e74c3c;
+        border-color: #e74c3c;
+        color: white;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(231, 76, 60, 0.3);
+    }
+    
+    .btn-outline-success {
+        color: #28a745;
+        border-color: #28a745;
+    }
+    
+    .btn-outline-success:hover {
+        background: #28a745;
+        border-color: #28a745;
+        color: white;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+    }
+    
+    .btn-outline-warning {
+        color: #ffc107;
+        border-color: #ffc107;
+    }
+    
+    .btn-outline-warning:hover {
+        background: #ffc107;
+        border-color: #ffc107;
+        color: #212529;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(255, 193, 7, 0.3);
+    }
+    
+    .table > :not(caption) > * > * {
+        padding: 1rem 0.75rem;
+        vertical-align: middle;
+    }
+    
+    .table thead th {
+        background: #f8f9fa;
+        color: #2c3e50;
+        font-weight: 600;
+        text-transform: uppercase;
+        font-size: 0.85rem;
+        letter-spacing: 0.5px;
+        border-bottom: 2px solid #e9ecef;
+    }
+    
+    .table tbody tr {
+        transition: all 0.2s ease;
+    }
+    
+    .table tbody tr:hover {
+        background: #f8f9fa;
+        transform: scale(1.01);
+    }
+    
     /* Responsive */
     @media (max-width: 768px) {
         .egresos-header h1 {
@@ -672,6 +756,7 @@
                             <th>Monto</th>
                             <th>Fecha</th>
                             <th>Estado</th>
+                            <th class="text-center">Acciones</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -699,16 +784,29 @@
                                     </span>
                                 {% endif %}
                             </td>
+                            <td class="text-center">
+                                <div class="btn-group btn-group-sm" role="group">
+                                    {% if egreso.aprobado %}
+                                        <button type="button" class="btn btn-outline-warning" title="Desaprobar" onclick="cambiarEstadoEgreso({{ egreso.id }}, false)">
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                    {% else %}
+                                        <button type="button" class="btn btn-outline-success" title="Aprobar" onclick="cambiarEstadoEgreso({{ egreso.id }}, true)">
+                                            <i class="fas fa-check"></i>
+                                        </button>
+                                    {% endif %}
+                                    <a href="{% url 'egreso_edit' egreso.id %}" class="btn btn-outline-primary" title="Editar">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <a href="{% url 'egreso_delete' egreso.id %}" class="btn btn-outline-danger" title="Eliminar">
+                                        <i class="fas fa-trash"></i>
+                                    </a>
+                                </div>
+                            </td>
                         </tr>
                         {% endfor %}
                     </tbody>
                 </table>
-            </div>
-            
-            <div class="egresos-recientes-footer">
-                <a href="{% url 'egresos_list' %}" class="ver-todos-btn">
-                    <i class="fas fa-list"></i>Ver Todos los Egresos
-                </a>
             </div>
         {% else %}
             <div class="empty-state">
@@ -723,4 +821,106 @@
     </div>
 
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- SweetAlert2 para confirmaciones elegantes -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script>
+// Función para obtener el token CSRF
+function getCSRFToken() {
+    const name = 'csrftoken';
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+// Función para cambiar el estado del egreso
+function cambiarEstadoEgreso(egresoId, aprobar) {
+    const accion = aprobar ? 'aprobar' : 'desaprobar';
+    const titulo = aprobar ? '¿Aprobar Egreso?' : '¿Desaprobar Egreso?';
+    const icono = aprobar ? 'fa-check-circle text-success' : 'fa-exclamation-triangle text-warning';
+    const confirmText = aprobar ? '<i class="fas fa-check"></i> Sí, Aprobar' : '<i class="fas fa-times"></i> Sí, Desaprobar';
+    const confirmColor = aprobar ? '#28a745' : '#ffc107';
+    
+    Swal.fire({
+        title: titulo,
+        html: `
+            <div class="text-center">
+                <i class="fas ${icono}" style="font-size: 3rem; margin-bottom: 1rem;"></i>
+                <p class="text-muted">Esta acción cambiará el estado de aprobación del egreso.</p>
+            </div>
+        `,
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: confirmColor,
+        cancelButtonColor: '#6c757d',
+        confirmButtonText: confirmText,
+        cancelButtonText: '<i class="fas fa-arrow-left"></i> Cancelar',
+        reverseButtons: true,
+        customClass: {
+            popup: 'rounded-4',
+            confirmButton: 'rounded-3',
+            cancelButton: 'rounded-3'
+        }
+    }).then((result) => {
+        if (result.isConfirmed) {
+            // Mostrar loading
+            Swal.fire({
+                title: 'Procesando...',
+                html: `${aprobar ? 'Aprobando' : 'Desaprobando'} el egreso...`,
+                allowOutsideClick: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+            
+            // Enviar petición
+            fetch(`/egresos/${egresoId}/aprobar/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCSRFToken(),
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                }
+            }).then(response => {
+                if (response.ok) {
+                    Swal.fire({
+                        title: `¡Egreso ${aprobar ? 'Aprobado' : 'Desaprobado'}!`,
+                        html: `
+                            <div class="text-center">
+                                <i class="fas ${aprobar ? 'fa-check-circle text-success' : 'fa-times-circle text-warning'}" style="font-size: 3rem; margin-bottom: 1rem;"></i>
+                                <p>El egreso ha sido ${aprobar ? 'aprobado' : 'desaprobado'} exitosamente</p>
+                            </div>
+                        `,
+                        icon: 'success',
+                        timer: 2000,
+                        showConfirmButton: false
+                    }).then(() => {
+                        location.reload();
+                    });
+                } else {
+                    throw new Error(`Error al ${accion} el egreso`);
+                }
+            }).catch(error => {
+                Swal.fire({
+                    title: 'Error',
+                    text: `No se pudo ${accion} el egreso. Inténtalo de nuevo.`,
+                    icon: 'error',
+                    confirmButtonColor: '#dc3545'
+                });
+            });
+        }
+    });
+}
+</script>
 {% endblock %}

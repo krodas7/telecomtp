@@ -3,6 +3,311 @@
 
 {% block title %}Editar Egreso - Sistema de Construcción{% endblock %}
 
+{% block extra_css %}
+<style>
+    /* Hero Section con gradiente */
+    .hero-section {
+        background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
+        color: white;
+        padding: 2.5rem 2rem;
+        margin-bottom: 2rem;
+        border-radius: 12px;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+    
+    .hero-section::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="50" cy="50" r="1" fill="white" opacity="0.1"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+        opacity: 0.3;
+    }
+    
+    .hero-content {
+        position: relative;
+        z-index: 2;
+    }
+    
+    .hero-title {
+        font-size: 2rem;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        color: white !important;
+        letter-spacing: 0.5px;
+    }
+    
+    .hero-subtitle {
+        font-size: 1.1rem;
+        margin-bottom: 0;
+        opacity: 0.9;
+    }
+    
+    /* Form Container */
+    .form-container {
+        background: white;
+        border-radius: 20px;
+        padding: 2rem;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        border: 1px solid rgba(255,255,255,0.2);
+        margin-bottom: 2rem;
+    }
+    
+    .form-header {
+        display: flex;
+        align-items: center;
+        margin-bottom: 2rem;
+        padding-bottom: 1rem;
+        border-bottom: 2px solid #f8f9fa;
+    }
+    
+    .form-header-icon {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        width: 50px;
+        height: 50px;
+        border-radius: 15px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 1rem;
+        font-size: 1.2rem;
+    }
+    
+    .form-header-title {
+        margin: 0;
+        color: #2c3e50;
+        font-weight: 600;
+        font-size: 1.3rem;
+    }
+    
+    /* Card Modern */
+    .card-modern {
+        background: #f8f9fa;
+        border-radius: 15px;
+        padding: 1.5rem;
+        border: 1px solid #e9ecef;
+    }
+    
+    .card-header-modern {
+        display: flex;
+        align-items: center;
+        margin-bottom: 1.5rem;
+    }
+    
+    .card-header-icon {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        width: 40px;
+        height: 40px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 1rem;
+        font-size: 1rem;
+    }
+    
+    .card-header-title {
+        margin: 0;
+        color: #2c3e50;
+        font-weight: 600;
+        font-size: 1.1rem;
+    }
+    
+    /* Form Fields */
+    .form-row {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+    
+    .form-label {
+        display: block;
+        margin-bottom: 0.5rem;
+        color: #2c3e50;
+        font-weight: 600;
+        font-size: 0.95rem;
+    }
+    
+    .form-control {
+        width: 100%;
+        padding: 0.75rem 1rem;
+        border: 2px solid #e9ecef;
+        border-radius: 12px;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+        background: white;
+    }
+    
+    .form-control:focus {
+        outline: none;
+        border-color: #667eea;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+    
+    .form-control.is-invalid {
+        border-color: #dc3545;
+    }
+    
+    .form-control.is-valid {
+        border-color: #28a745;
+    }
+    
+    .invalid-feedback {
+        color: #dc3545;
+        font-size: 0.875rem;
+        margin-top: 0.25rem;
+    }
+    
+    /* Buttons */
+    .btn {
+        padding: 0.75rem 1.5rem;
+        border-radius: 12px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        border: none;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        cursor: pointer;
+    }
+    
+    .btn-success {
+        background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%);
+        color: white;
+        box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
+    }
+    
+    .btn-success:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(40, 167, 69, 0.4);
+        color: white;
+    }
+    
+    .btn-warning {
+        background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%);
+        color: #212529;
+        box-shadow: 0 4px 15px rgba(255, 193, 7, 0.3);
+    }
+    
+    .btn-warning:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(255, 193, 7, 0.4);
+        color: #212529;
+    }
+    
+    .btn-outline {
+        background: white;
+        color: #6c757d;
+        border: 2px solid #e9ecef;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+    
+    .btn-outline:hover {
+        background: #f8f9fa;
+        border-color: #dee2e6;
+        transform: translateY(-2px);
+        color: #495057;
+    }
+    
+    /* Info Sidebar */
+    .info-sidebar {
+        position: sticky;
+        top: 2rem;
+    }
+    
+    .info-section {
+        background: white;
+        border-radius: 15px;
+        padding: 1.5rem;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+        border-left: 4px solid #667eea;
+    }
+    
+    .info-section.info {
+        border-left-color: #17a2b8;
+    }
+    
+    .info-section.warning {
+        border-left-color: #ffc107;
+    }
+    
+    .info-section i {
+        font-size: 1.5rem;
+        color: #667eea;
+        margin-bottom: 0.75rem;
+    }
+    
+    .info-section.info i {
+        color: #17a2b8;
+    }
+    
+    .info-section.warning i {
+        color: #ffc107;
+    }
+    
+    .info-section h6 {
+        font-weight: 600;
+        color: #2c3e50;
+        margin-bottom: 1rem;
+        font-size: 1.1rem;
+    }
+    
+    .info-section ul {
+        padding-left: 1.25rem;
+        margin-bottom: 0;
+    }
+    
+    .info-section li {
+        margin-bottom: 0.5rem;
+        color: #6c757d;
+        font-size: 0.9rem;
+    }
+    
+    .badge-modern {
+        padding: 0.35rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .badge-modern.success {
+        background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%);
+        color: white;
+    }
+    
+    .badge-modern.warning {
+        background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%);
+        color: #212529;
+    }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+        .form-row {
+            grid-template-columns: 1fr;
+        }
+        
+        .hero-title {
+            font-size: 1.5rem;
+        }
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 <!-- Hero Section -->
 <div class="hero-section">
@@ -127,12 +432,23 @@
                     </div>
                 </div>
                 
-                <div class="d-flex gap-3">
+                <div class="d-flex gap-3 flex-wrap">
                     <button type="submit" class="btn btn-success">
                         <i class="fas fa-save me-2"></i>Guardar Cambios
                     </button>
-                    <a href="{% url 'egresos_list' %}" class="btn btn-outline">
-                        <i class="fas fa-arrow-left me-2"></i>Volver
+                    
+                    {% if egreso.aprobado %}
+                        <button type="button" class="btn btn-warning" onclick="cambiarEstadoEgreso({{ egreso.id }}, false)">
+                            <i class="fas fa-times me-2"></i>Desaprobar Egreso
+                        </button>
+                    {% else %}
+                        <button type="button" class="btn btn-success" onclick="cambiarEstadoEgreso({{ egreso.id }}, true)" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%);">
+                            <i class="fas fa-check me-2"></i>Aprobar Egreso
+                        </button>
+                    {% endif %}
+                    
+                    <a href="{% url 'gastos_dashboard' %}" class="btn btn-outline">
+                        <i class="fas fa-arrow-left me-2"></i>Volver al Dashboard
                     </a>
                 </div>
             </form>
@@ -188,6 +504,9 @@
 {% endblock %}
 
 {% block extra_js %}
+<!-- SweetAlert2 para confirmaciones elegantes -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     // Aplicar estilos a los campos del formulario
@@ -212,5 +531,95 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 });
+
+// Función para obtener el token CSRF
+function getCSRFToken() {
+    const name = 'csrftoken';
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+// Función para cambiar el estado del egreso
+function cambiarEstadoEgreso(egresoId, aprobar) {
+    const accion = aprobar ? 'aprobar' : 'desaprobar';
+    const titulo = aprobar ? '¿Aprobar Egreso?' : '¿Desaprobar Egreso?';
+    const icono = aprobar ? 'fa-check-circle text-success' : 'fa-exclamation-triangle text-warning';
+    const confirmText = aprobar ? '<i class="fas fa-check"></i> Sí, Aprobar' : '<i class="fas fa-times"></i> Sí, Desaprobar';
+    const confirmColor = aprobar ? '#28a745' : '#ffc107';
+    
+    Swal.fire({
+        title: titulo,
+        html: `
+            <div class="text-center">
+                <i class="fas ${icono}" style="font-size: 3rem; margin-bottom: 1rem;"></i>
+                <p class="text-muted">Esta acción cambiará el estado de aprobación del egreso.</p>
+            </div>
+        `,
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: confirmColor,
+        cancelButtonColor: '#6c757d',
+        confirmButtonText: confirmText,
+        cancelButtonText: '<i class="fas fa-arrow-left"></i> Cancelar',
+        reverseButtons: true
+    }).then((result) => {
+        if (result.isConfirmed) {
+            // Mostrar loading
+            Swal.fire({
+                title: 'Procesando...',
+                html: `${aprobar ? 'Aprobando' : 'Desaprobando'} el egreso...`,
+                allowOutsideClick: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+            
+            // Enviar petición
+            fetch(`/egresos/${egresoId}/aprobar/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCSRFToken(),
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                }
+            }).then(response => {
+                if (response.ok) {
+                    Swal.fire({
+                        title: `¡Egreso ${aprobar ? 'Aprobado' : 'Desaprobado'}!`,
+                        html: `
+                            <div class="text-center">
+                                <i class="fas ${aprobar ? 'fa-check-circle text-success' : 'fa-times-circle text-warning'}" style="font-size: 3rem; margin-bottom: 1rem;"></i>
+                                <p>El egreso ha sido ${aprobar ? 'aprobado' : 'desaprobado'} exitosamente</p>
+                            </div>
+                        `,
+                        icon: 'success',
+                        timer: 2000,
+                        showConfirmButton: false
+                    }).then(() => {
+                        location.reload();
+                    });
+                } else {
+                    throw new Error(`Error al ${accion} el egreso`);
+                }
+            }).catch(error => {
+                Swal.fire({
+                    title: 'Error',
+                    text: `No se pudo ${accion} el egreso. Inténtalo de nuevo.`,
+                    icon: 'error',
+                    confirmButtonColor: '#dc3545'
+                });
+            });
+        }
+    });
+}
 </script>
 {% endblock %}

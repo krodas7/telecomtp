@@ -173,18 +173,14 @@ def dashboard(request):
         proyectos_activos = Proyecto.objects.filter(activo=True)
         
         for proyecto in proyectos_activos:
-            # Ingresos del proyecto = Facturas pagadas + Anticipos aplicados
+            # Ingresos del proyecto = Facturas pagadas + Anticipos aplicados (TODOS LOS TIEMPOS)
             facturas_pagadas_proyecto = Factura.objects.filter(
                 proyecto=proyecto,
-                fecha_emision__month=mes_actual,
-                fecha_emision__year=año_actual,
                 monto_pagado__gt=0
             ).aggregate(total=Sum('monto_pagado'))['total'] or Decimal('0.00')
             
             anticipos_aplicados_proyecto = Anticipo.objects.filter(
                 proyecto=proyecto,
-                fecha_aplicacion__month=mes_actual,
-                fecha_aplicacion__year=año_actual,
                 aplicado_al_proyecto=True
             ).aggregate(total=Sum('monto_aplicado_proyecto'))['total'] or Decimal('0.00')
             
@@ -192,15 +188,14 @@ def dashboard(request):
             
             gastos_proyecto_raw = Gasto.objects.filter(
                 proyecto=proyecto,
-                fecha_gasto__month=mes_actual,
-                fecha_gasto__year=año_actual,
                 aprobado=True
             ).aggregate(total=Sum('monto'))['total'] or 0
             gastos_proyecto = Decimal(str(gastos_proyecto_raw))
             
             rentabilidad_proyecto = ingresos_proyecto - gastos_proyecto
             
-            if rentabilidad_proyecto > 0:  # Solo proyectos rentables
+            # Mostrar todos los proyectos, no solo rentables
+            if ingresos_proyecto > 0 or gastos_proyecto > 0:  # Proyectos con actividad
                 proyectos_rentables.append({
                     'nombre': proyecto.nombre,
                     'rentabilidad': rentabilidad_proyecto,
@@ -211,6 +206,22 @@ def dashboard(request):
         # Ordenar por rentabilidad
         proyectos_rentables.sort(key=lambda x: x['rentabilidad'], reverse=True)
         proyectos_rentables = proyectos_rentables[:5]  # Top 5
+        
+        # Convertir Decimals a float para JSON (y calcular margen)
+        proyectos_rentables_json = []
+        for p in proyectos_rentables:
+            ingresos = float(p['ingresos'])
+            gastos = float(p['gastos'])
+            rentabilidad = float(p['rentabilidad'])
+            margen = (rentabilidad / ingresos * 100) if ingresos > 0 else 0
+            
+            proyectos_rentables_json.append({
+                'nombre': p['nombre'],
+                'rentabilidad': rentabilidad,
+                'ingresos': ingresos,
+                'gastos': gastos,
+                'margen': round(margen, 2)
+            })
         
         # Eventos del calendario (para la agenda)
         eventos_agenda = EventoCalendario.objects.filter(
@@ -270,11 +281,10 @@ def dashboard(request):
             'Completado': Proyecto.objects.filter(activo=True, estado='completado').count(),
         }
         
-        # Datos para gráfico de gastos por categoría (top 8)
+        # Datos para gráfico de gastos por categoría (top 8) - TODOS LOS TIEMPOS
+        # Cambiado para mostrar todos los gastos, no solo del mes actual
         gastos_por_categoria = Gasto.objects.filter(
-            aprobado=True,
-            fecha_gasto__month=mes_actual,
-            fecha_gasto__year=año_actual
+            aprobado=True
         ).values('categoria__nombre').annotate(
             total=Sum('monto')
         ).order_by('-total')[:8]
@@ -463,7 +473,7 @@ def dashboard(request):
             'rentabilidad_mes': rentabilidad_mes,
             'margen_rentabilidad': margen_rentabilidad,
             'gastos_categoria_mes': gastos_categoria_mes,
-            'proyectos_rentables': proyectos_rentables,
+            'proyectos_rentables': json.dumps(proyectos_rentables_json),
         }
         
         # Log información del contexto para debugging
@@ -1464,13 +1474,30 @@ def gasto_create(request):
 
 @login_required
 def gasto_aprobar(request, gasto_id):
-    """Aprobar un gasto pendiente"""
+    """Aprobar o desaprobar un gasto (toggle)"""
     try:
         gasto = Gasto.objects.get(id=gasto_id)
         
+        # Toggle del estado de aprobación
         if gasto.aprobado:
-            messages.warning(request, 'Este gasto ya está aprobado')
+            # DESAPROBAR
+            proyecto = gasto.proyecto
+            if proyecto:
+                # Registrar actividad
+                LogActividad.objects.create(
+                    usuario=request.user,
+                    accion='Desaprobar',
+                    modulo='Gastos',
+                    descripcion=f'Gasto desaprobado para el proyecto {proyecto.nombre}: {gasto.descripcion} - ${gasto.monto}',
+                    ip_address=request.META.get('REMOTE_ADDR')
+                )
+            
+            gasto.aprobado = False
+            gasto.aprobado_por = None
+            gasto.save()
+            messages.success(request, f'Gasto "{gasto.descripcion}" desaprobado exitosamente')
         else:
+            # APROBAR
             gasto.aprobado = True
             gasto.aprobado_por = request.user
             gasto.save()
@@ -1492,18 +1519,28 @@ def gasto_aprobar(request, gasto_id):
                 total_gastos = proyecto.get_total_gastos_aprobados()
                 print(f"✅ Total gastos aprobados del proyecto: ${total_gastos}")
                 print(f"✅ Presupuesto eliminado del sistema - ya no se usa")
-                print(f"✅ Presupuesto eliminado del sistema - ya no se usa")
             
             messages.success(request, f'Gasto "{gasto.descripcion}" aprobado y aplicado al proyecto exitosamente')
+        
+        # Retornar respuesta JSON para AJAX o redirigir si es petición normal
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest' or request.content_type == 'application/json':
+            from django.http import JsonResponse
+            return JsonResponse({'success': True, 'aprobado': gasto.aprobado})
         
         return redirect('egresos_list')
         
     except Gasto.DoesNotExist:
         messages.error(request, 'Gasto no encontrado')
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            from django.http import JsonResponse
+            return JsonResponse({'success': False, 'error': 'Gasto no encontrado'}, status=404)
         return redirect('egresos_list')
     except Exception as e:
-        logger.error(f'Error aprobando gasto {gasto_id}: {e}')
-        messages.error(request, 'Error al aprobar el gasto')
+        logger.error(f'Error aprobando/desaprobando gasto {gasto_id}: {e}')
+        messages.error(request, 'Error al procesar el gasto')
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            from django.http import JsonResponse
+            return JsonResponse({'success': False, 'error': str(e)}, status=500)
         return redirect('egresos_list')
 
 
@@ -9513,3 +9550,125 @@ def item_reutilizable_create(request):
             return JsonResponse({'success': False, 'error': str(e)}, status=400)
     
     return JsonResponse({'error': 'Método no permitido'}, status=405)
+
+
+# ============================================================================
+# VISTAS DE CAJA MENUDA
+# ============================================================================
+
+@login_required
+def caja_menuda_dashboard(request):
+    """Dashboard principal de Caja Menuda"""
+    try:
+        # Estadísticas básicas
+        total_movimientos = CajaMenuda.objects.filter(activo=True).count()
+        total_monto = CajaMenuda.objects.filter(activo=True).aggregate(
+            total=Sum('monto')
+        )['total'] or Decimal('0.00')
+        
+        # Movimientos recientes
+        movimientos_recientes = CajaMenuda.objects.filter(activo=True).order_by('-fecha', '-creado_en')[:10]
+        
+        context = {
+            'total_movimientos': total_movimientos,
+            'total_monto': total_monto,
+            'movimientos_recientes': movimientos_recientes,
+        }
+        
+        return render(request, 'core/caja-menuda/dashboard.html', context)
+    except Exception as e:
+        logger.error(f"Error en caja_menuda_dashboard: {str(e)}")
+        messages.error(request, f'Error al cargar el dashboard: {str(e)}')
+        return redirect('dashboard')
+
+
+@login_required
+def caja_menuda_list(request):
+    """Lista todos los movimientos de caja menuda"""
+    movimientos = CajaMenuda.objects.filter(activo=True).order_by('-fecha', '-creado_en')
+    
+    context = {
+        'movimientos': movimientos,
+    }
+    
+    return render(request, 'core/caja-menuda/list.html', context)
+
+
+@login_required
+def caja_menuda_create(request):
+    """Crear nuevo movimiento de caja menuda"""
+    if request.method == 'POST':
+        form = CajaMenudaForm(request.POST)
+        if form.is_valid():
+            try:
+                movimiento = form.save(commit=False)
+                movimiento.creado_por = request.user
+                movimiento.save()
+                
+                messages.success(request, '✅ Movimiento de caja menuda registrado exitosamente')
+                return redirect('caja_menuda_list')
+            except Exception as e:
+                logger.error(f"Error al crear movimiento de caja menuda: {str(e)}")
+                messages.error(request, f'❌ Error al registrar movimiento: {str(e)}')
+        else:
+            messages.error(request, '❌ Por favor corrige los errores en el formulario.')
+    else:
+        form = CajaMenudaForm()
+    
+    context = {
+        'form': form,
+        'accion': 'Crear'
+    }
+    
+    return render(request, 'core/caja-menuda/create.html', context)
+
+
+@login_required
+def caja_menuda_edit(request, pk):
+    """Editar movimiento de caja menuda"""
+    movimiento = get_object_or_404(CajaMenuda, pk=pk)
+    
+    if request.method == 'POST':
+        form = CajaMenudaForm(request.POST, instance=movimiento)
+        if form.is_valid():
+            try:
+                form.save()
+                messages.success(request, '✅ Movimiento actualizado exitosamente')
+                return redirect('caja_menuda_list')
+            except Exception as e:
+                logger.error(f"Error al actualizar movimiento: {str(e)}")
+                messages.error(request, f'❌ Error al actualizar: {str(e)}')
+        else:
+            messages.error(request, '❌ Por favor corrige los errores en el formulario.')
+    else:
+        form = CajaMenudaForm(instance=movimiento)
+    
+    context = {
+        'form': form,
+        'movimiento': movimiento,
+        'accion': 'Editar'
+    }
+    
+    return render(request, 'core/caja-menuda/edit.html', context)
+
+
+@login_required
+def caja_menuda_delete(request, pk):
+    """Eliminar (desactivar) movimiento de caja menuda"""
+    movimiento = get_object_or_404(CajaMenuda, pk=pk)
+    
+    if request.method == 'POST':
+        try:
+            movimiento.activo = False
+            movimiento.save()
+            messages.success(request, '✅ Movimiento eliminado exitosamente')
+            return redirect('caja_menuda_list')
+        except Exception as e:
+            logger.error(f"Error al eliminar movimiento: {str(e)}")
+            messages.error(request, f'❌ Error al eliminar: {str(e)}')
+    
+    context = {
+        'movimiento': movimiento
+    }
+    
+    return render(request, 'core/caja-menuda/delete.html', context)
