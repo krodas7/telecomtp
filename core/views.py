@@ -1355,7 +1355,7 @@ def gastos_list(request):
         
         context = {
             'page_obj': page_obj,
-            'gastos': page_obj,
+            'egresos': page_obj,  # Cambiado de 'gastos' a 'egresos' para coincidir con el template
             'categorias': categorias,
             'proyectos': proyectos,
             'filtro_estado': filtro_estado,
@@ -1365,11 +1365,11 @@ def gastos_list(request):
             'filtro_fecha_hasta': filtro_fecha_hasta,
             'total_gastos': total_gastos,
             'total_monto': total_monto,
-            'gastos_aprobados': gastos_aprobados,
-            'gastos_pendientes': gastos_pendientes,
+            'egresos_aprobados': gastos_aprobados,  # Cambiado para consistencia
+            'egresos_pendientes': gastos_pendientes,  # Cambiado para consistencia
         }
         
-        return render(request, 'core/egresos/list_moderno.html', context)
+        return render(request, 'core/egresos/list.html', context)  # Cambiado de list_moderno.html a list.html
         
     except Exception as e:
         logger.error(f'Error en gastos_list: {e}')
