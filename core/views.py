@@ -3,6 +3,7 @@ from django.urls import reverse
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import authenticate, login, logout
 from django.contrib import messages
+from django.http import JsonResponse
 from django.db import models, IntegrityError
 from django.db.models import Sum, Count, Q, F, Avg
 from django.db.models.functions import Extract
@@ -22,7 +23,9 @@ from .models import (
     Rol, PerfilUsuario, Modulo, Permiso, RolPermiso, AnticipoProyecto,
     CarpetaProyecto, ConfiguracionSistema, EventoCalendario,
     TrabajadorDiario, RegistroTrabajo, AnticipoTrabajadorDiario, PlanillaLiquidada, PlanillaTrabajadoresDiarios,
-    ItemCotizacion, ItemReutilizable, ConfiguracionPlanilla
+    ItemCotizacion, ItemReutilizable, ConfiguracionPlanilla,
+    ServicioTorrero, RegistroDiasTrabajados, PagoServicioTorrero, Torrero, AsignacionTorrero,
+    Subproyecto
 )
 from .forms_simple import (
     ClienteForm, ProyectoForm, ColaboradorForm, FacturaForm, 
@@ -32,7 +35,8 @@ from .forms_simple import (
     CategoriaInventarioForm, ItemInventarioForm,
     AsignacionInventarioForm, TrabajadorDiarioForm, RegistroTrabajoForm,
     AnticipoTrabajadorDiarioForm, PlanillaTrabajadoresDiariosForm, IngresoProyectoForm, CotizacionForm,
-    ConfiguracionPlanillaForm
+    ConfiguracionPlanillaForm, ServicioTorreroForm, RegistroDiasTrabajarForm, PagoServicioTorreroForm,
+    TorreroForm, SubproyectoForm
 )
 from django.contrib.auth.models import User
 from django.contrib.auth.forms import UserCreationForm, UserChangeForm
@@ -7162,51 +7166,86 @@ def facturas_reporte_detallado(request):
 
 @login_required
 def trabajadores_diarios_list(request, proyecto_id):
-    """Lista de trabajadores diarios de un proyecto"""
+    """Lista de trabajadores diarios de un proyecto - SIGUIENDO DOCUMENTACIÓN COMPLETA"""
     proyecto = get_object_or_404(Proyecto, id=proyecto_id)
     
-    # Obtener planillas del proyecto
-    planillas = PlanillaTrabajadoresDiarios.objects.filter(proyecto=proyecto).order_by('-fecha_creacion')
+    # IMPORTANTE: Obtener SOLO las planillas ACTIVAS para el selector (máximo 2)
+    planillas_activas = PlanillaTrabajadoresDiarios.objects.filter(
+        proyecto=proyecto,
+        estado__in=['activa', 'pendiente']
+    ).order_by('-fecha_creacion').distinct()[:2]
     
-    # Obtener planilla seleccionada
+    # Obtener todas las planillas para histórico
+    planillas_todas = PlanillaTrabajadoresDiarios.objects.filter(
+        proyecto=proyecto
+    ).order_by('-fecha_creacion')
+    
+    # Obtener planilla seleccionada desde la URL
     planilla_id = request.GET.get('planilla_id')
     planilla_seleccionada = None
     if planilla_id:
         try:
-            planilla_seleccionada = PlanillaTrabajadoresDiarios.objects.get(id=planilla_id, proyecto=proyecto)
+            planilla_seleccionada = PlanillaTrabajadoresDiarios.objects.get(
+                id=planilla_id, 
+                proyecto=proyecto
+            )
         except PlanillaTrabajadoresDiarios.DoesNotExist:
             pass
     
-    # Si no hay planilla seleccionada, usar la primera activa o la primera disponible
+    # Si no hay planilla seleccionada, usar la primera activa
     if not planilla_seleccionada:
-        planilla_seleccionada = planillas.filter(estado='activa').first()
-        if not planilla_seleccionada:
-            planilla_seleccionada = planillas.first()
+        planilla_seleccionada = planillas_activas.first()
     
-    # Filtrar trabajadores por planilla seleccionada (TODOS: activos e inactivos)
+    # Filtrar trabajadores por planilla seleccionada
     if planilla_seleccionada:
-        trabajadores = TrabajadorDiario.objects.filter(proyecto=proyecto, planilla=planilla_seleccionada).order_by('nombre')
+        if planilla_seleccionada.estado == 'finalizada':
+            # Si está finalizada, mostrar trabajadores archivados (para historial)
+            trabajadores = TrabajadorDiario.objects.filter(
+                proyecto=proyecto, 
+                planilla=planilla_seleccionada
+            ).order_by('nombre')
+        else:
+            # Si está activa, mostrar solo trabajadores activos
+            trabajadores = TrabajadorDiario.objects.filter(
+                proyecto=proyecto, 
+                planilla=planilla_seleccionada, 
+                activo=True
+            ).order_by('nombre')
     else:
-        # Mostrar trabajadores sin planilla asignada (solo activos)
-        trabajadores = TrabajadorDiario.objects.filter(proyecto=proyecto, planilla__isnull=True, activo=True).order_by('nombre')
+        # Mostrar trabajadores sin planilla asignada
+        trabajadores = TrabajadorDiario.objects.filter(
+            proyecto=proyecto, 
+            planilla__isnull=True, 
+            activo=True
+        ).order_by('nombre')
     
-    # Calcular totales
-    total_trabajadores = trabajadores.count()
-    total_a_pagar = sum(t.total_a_pagar for t in trabajadores)
+    # Calcular anticipos aplicados y total bruto para cada trabajador
+    for trabajador in trabajadores:
+        anticipos_qs = AnticipoTrabajadorDiario.objects.filter(
+            trabajador=trabajador,
+            estado='aplicado'
+        )
+        total_anticipos = sum(anticipo.monto for anticipo in anticipos_qs)
+        trabajador.anticipos_monto = Decimal(str(total_anticipos))
+        trabajador.anticipos_count = anticipos_qs.count()
+        
+        # Calcular total bruto (días trabajados * pago diario)
+        dias_trabajados = Decimal(str(trabajador.total_dias_trabajados)) if trabajador.total_dias_trabajados else Decimal('0')
+        pago_diario = Decimal(str(trabajador.pago_diario))
+        trabajador.total_bruto = dias_trabajados * pago_diario
+        
+        # Calcular total a pagar (total bruto - anticipos)
+        trabajador.total_a_pagar_calculado = trabajador.total_bruto - trabajador.anticipos_monto
+    
+    # Calcular totales generales según documentación
+    total_bruto_general = sum(t.total_dias_trabajados * t.pago_diario for t in trabajadores)
+    total_anticipos_general = sum(t.anticipos_monto for t in trabajadores)
+    total_neto_general = total_bruto_general - total_anticipos_general
     
     # Contar trabajadores liquidados
     trabajadores_liquidados_count = trabajadores.filter(activo=False).count()
     
-    # Calcular totales de anticipos específicos de trabajadores diarios
-    anticipos_trabajadores = AnticipoTrabajadorDiario.objects.filter(
-        trabajador__proyecto=proyecto
-    )
-    total_anticipos = anticipos_trabajadores.aggregate(total=Sum('monto'))['total'] or 0
-    total_aplicado = sum(t.total_anticipos_aplicados for t in trabajadores)
-    saldo_pendiente = total_a_pagar - total_aplicado
-    
-    # Calcular histórico de planillas finalizadas usando PlanillaLiquidada
-    # Solo planillas de trabajadores diarios (con observaciones que contengan 'trabajadores diarios')
+    # Calcular histórico de planillas finalizadas
     planillas_liquidadas = PlanillaLiquidada.objects.filter(
         proyecto=proyecto,
         observaciones__icontains='trabajadores diarios'
@@ -7218,17 +7257,17 @@ def trabajadores_diarios_list(request, proyecto_id):
     context = {
         'proyecto': proyecto,
         'trabajadores': trabajadores,
-        'planillas': planillas,
+        'planillas_activas': planillas_activas,  # Máximo 2 para selector
+        'planillas_todas': planillas_todas,  # Todas para histórico
         'planilla_seleccionada': planilla_seleccionada,
-        'total_trabajadores': total_trabajadores,
-        'total_a_pagar': total_a_pagar,
-        'total_anticipos': total_anticipos,
-        'total_aplicado': total_aplicado,
-        'saldo_pendiente': saldo_pendiente,
+        'total_bruto_general': total_bruto_general,
+        'total_anticipos_general': total_anticipos_general,
+        'total_neto_general': total_neto_general,
+        'total_trabajadores': trabajadores.count(),
+        'trabajadores_liquidados_count': trabajadores_liquidados_count,
         'total_planillas_finalizadas': total_planillas_finalizadas,
         'total_historico_gastos': total_historico_gastos,
         'promedio_por_planilla': promedio_por_planilla,
-        'trabajadores_liquidados_count': trabajadores_liquidados_count,
     }
     
     return render(request, 'core/trabajadores_diarios/list.html', context)
@@ -7555,8 +7594,46 @@ def finalizar_planilla_trabajadores(request, proyecto_id):
 
 
 @login_required
+def reabrir_planilla_trabajadores(request, proyecto_id, planilla_id):
+    """Reabrir una planilla finalizada para continuar editando - SIGUIENDO DOCUMENTACIÓN"""
+    proyecto = get_object_or_404(Proyecto, id=proyecto_id)
+    planilla = get_object_or_404(PlanillaTrabajadoresDiarios, id=planilla_id, proyecto=proyecto)
+    
+    if request.method != 'POST':
+        messages.error(request, 'Método no permitido.')
+        return redirect(f'{reverse("trabajadores_diarios_list", args=[proyecto_id])}?planilla_id={planilla.id}')
+    
+    if planilla.estado != 'finalizada':
+        messages.info(request, f'La planilla "{planilla.nombre}" ya está activa.')
+        return redirect(f'{reverse("trabajadores_diarios_list", args=[proyecto_id])}?planilla_id={planilla.id}')
+    
+    # Reabrir planilla
+    planilla.estado = 'activa'
+    planilla.fecha_finalizacion = None
+    planilla.finalizada_por = None
+    planilla.save()
+    
+    # Reactivar trabajadores
+    trabajadores_reactivados = planilla.trabajadores.update(activo=True)
+    
+    LogActividad.objects.create(
+        usuario=request.user,
+        accion='Reabrir Planilla',
+        modulo='Trabajadores Diarios',
+        descripcion=f'Planilla "{planilla.nombre}" reabierta. Trabajadores reactivados: {trabajadores_reactivados}',
+        ip_address=request.META.get('REMOTE_ADDR')
+    )
+    
+    messages.success(request, 
+        f'✅ Planilla "{planilla.nombre}" reabierta. Puedes continuar editando y registrando días.'
+    )
+    
+    return redirect(f'{reverse("trabajadores_diarios_list", args=[proyecto_id])}?planilla_id={planilla.id}')
+
+
+@login_required
 def trabajador_diario_create(request, proyecto_id):
-    """Crear trabajador diario"""
+    """Crear trabajador diario - SIGUIENDO DOCUMENTACIÓN COMPLETA"""
     proyecto = get_object_or_404(Proyecto, id=proyecto_id)
     
     # Obtener planilla_id de la URL si existe
@@ -7569,44 +7646,50 @@ def trabajador_diario_create(request, proyecto_id):
             pass
     
     if request.method == 'POST':
-        print(f"🔍 DEBUG: planilla_id={planilla_id}, planilla_seleccionada={planilla_seleccionada}")
-        form = TrabajadorDiarioForm(request.POST, planilla=planilla_seleccionada, proyecto=proyecto)
-        print(f"🔍 DEBUG: form.is_valid()={form.is_valid()}, form.errors={form.errors}")
+        form = TrabajadorDiarioForm(
+            request.POST, 
+            planilla=planilla_seleccionada, 
+            proyecto=proyecto
+        )
         if form.is_valid():
-            try:
+            # Validar que no exista el mismo nombre en otras planillas ACTIVAS
+            nombre_trabajador = form.cleaned_data.get('nombre')
+            trabajadores_duplicados = TrabajadorDiario.objects.filter(
+                proyecto=proyecto,
+                nombre__iexact=nombre_trabajador,
+                activo=True,
+                planilla__estado__in=['activa', 'pendiente']
+            ).exclude(planilla=planilla_seleccionada)
+            
+            if trabajadores_duplicados.exists():
+                planilla_duplicada = trabajadores_duplicados.first().planilla
+                messages.error(
+                    request,
+                    f'❌ El trabajador "{nombre_trabajador}" ya existe en la planilla activa "{planilla_duplicada.nombre}". '
+                    f'No se permiten trabajadores duplicados entre planillas activas.'
+                )
+            else:
                 trabajador = form.save(commit=False)
                 trabajador.proyecto = proyecto
                 trabajador.planilla = planilla_seleccionada
                 trabajador.creado_por = request.user
                 trabajador.save()
                 
-                messages.success(request, 'Trabajador diario creado correctamente.')
-                # Redirigir con planilla_id si existe
+                messages.success(request, 
+                    f'✅ Trabajador "{nombre_trabajador}" agregado a la planilla "{planilla_seleccionada.nombre if planilla_seleccionada else "sin planilla"}".'
+                )
                 if planilla_id:
-                    return redirect(f'{reverse("trabajadores_diarios_list", args=[proyecto_id])}?planilla_id={planilla_id}')
-                else:
-                    return redirect('trabajadores_diarios_list', proyecto_id=proyecto_id)
-            except IntegrityError as e:
-                if 'UNIQUE constraint failed: core_trabajadordiario.planilla_id, core_trabajadordiario.nombre' in str(e):
-                    messages.error(
-                        request, 
-                        f'❌ <strong>Error:</strong> Ya existe un trabajador con el nombre "<strong>{form.cleaned_data.get("nombre", "")}</strong>" en esta planilla.<br>'
-                        f'💡 <strong>Sugerencia:</strong> Usa un nombre diferente o edita el trabajador existente.',
-                        extra_tags='html'
+                    return redirect(
+                        f'{reverse("trabajadores_diarios_list", args=[proyecto_id])}?planilla_id={planilla_id}'
                     )
-                else:
-                    messages.error(request, f'Error al crear el trabajador: {str(e)}')
-                # No redirigir, mostrar el formulario con el error
-        else:
-            # Agregar logging para debug
-            print(f"❌ Formulario inválido: {form.errors}")
-            messages.error(request, 'Por favor corrige los errores en el formulario.')
+                return redirect('trabajadores_diarios_list', proyecto_id=proyecto_id)
     else:
         form = TrabajadorDiarioForm(planilla=planilla_seleccionada, proyecto=proyecto)
     
     return render(request, 'core/trabajadores_diarios/create.html', {
         'form': form,
-        'proyecto': proyecto
+        'proyecto': proyecto,
+        'planilla_seleccionada': planilla_seleccionada
     })
 
 
@@ -7626,23 +7709,47 @@ def trabajador_diario_detail(request, proyecto_id, trabajador_id):
 
 @login_required
 def trabajador_diario_edit(request, proyecto_id, trabajador_id):
-    """Editar trabajador diario"""
+    """Editar trabajador diario - SIGUIENDO DOCUMENTACIÓN: Preservar planilla original"""
     proyecto = get_object_or_404(Proyecto, id=proyecto_id)
     trabajador = get_object_or_404(TrabajadorDiario, id=trabajador_id, proyecto=proyecto)
     
+    planilla_id = request.GET.get('planilla_id')
+    
+    # IMPORTANTE: Preservar la planilla original
+    planilla_original = trabajador.planilla
+    
     if request.method == 'POST':
-        form = TrabajadorDiarioForm(request.POST, instance=trabajador)
+        form = TrabajadorDiarioForm(request.POST, instance=trabajador, proyecto=proyecto)
         if form.is_valid():
-            form.save()
-            messages.success(request, 'Trabajador diario actualizado correctamente.')
+            trabajador_editado = form.save(commit=False)
+            trabajador_editado.proyecto = proyecto
+            
+            # Preservar la planilla original (no debe cambiar)
+            if planilla_original:
+                trabajador_editado.planilla = planilla_original
+            elif trabajador.planilla:
+                trabajador_editado.planilla = trabajador.planilla
+            
+            trabajador_editado.save()
+            
+            messages.success(request, 
+                f'✅ Trabajador "{trabajador_editado.nombre}" actualizado correctamente.'
+            )
+            
+            planilla_redirect = planilla_id or (planilla_original.id if planilla_original else None)
+            if planilla_redirect:
+                return redirect(
+                    f'{reverse("trabajadores_diarios_list", args=[proyecto_id])}?planilla_id={planilla_redirect}'
+                )
             return redirect('trabajadores_diarios_list', proyecto_id=proyecto_id)
     else:
-        form = TrabajadorDiarioForm(instance=trabajador)
+        form = TrabajadorDiarioForm(instance=trabajador, proyecto=proyecto)
     
     return render(request, 'core/trabajadores_diarios/edit.html', {
         'form': form,
         'proyecto': proyecto,
-        'trabajador': trabajador
+        'trabajador': trabajador,
+        'planilla_id': planilla_id or (planilla_original.id if planilla_original else None)
     })
 
 
@@ -7733,33 +7840,51 @@ def registro_trabajo_delete(request, proyecto_id, trabajador_id, registro_id):
 
 
 @login_required
+@login_required
 def actualizar_dias_trabajados(request, proyecto_id, trabajador_id):
-    """Actualizar días trabajados via AJAX"""
-    if request.method == 'POST':
-        try:
-            trabajador = get_object_or_404(TrabajadorDiario, id=trabajador_id, proyecto_id=proyecto_id)
-            dias_trabajados = int(request.POST.get('dias_trabajados', 0))
-            
-            # Actualizar o crear registro de trabajo
-            registro, created = RegistroTrabajo.objects.get_or_create(
-                trabajador=trabajador,
-                defaults={
-                    'fecha_inicio': timezone.now().date(),
-                    'fecha_fin': timezone.now().date(),
-                    'dias_trabajados': dias_trabajados,
-                    'registrado_por': request.user
-                }
-            )
-            
-            if not created:
-                registro.dias_trabajados = dias_trabajados
-                registro.save()
-            
-            return JsonResponse({'success': True, 'total_a_pagar': float(trabajador.total_a_pagar)})
-        except Exception as e:
-            return JsonResponse({'success': False, 'error': str(e)})
+    """Actualizar días trabajados de un trabajador (AJAX) - SIGUIENDO DOCUMENTACIÓN"""
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'error': 'Método no permitido'})
     
-    return JsonResponse({'success': False, 'error': 'Método no permitido'})
+    trabajador = get_object_or_404(TrabajadorDiario, id=trabajador_id, proyecto_id=proyecto_id)
+    
+    try:
+        dias_trabajados = int(request.POST.get('dias_trabajados', 0))
+        
+        if dias_trabajados < 0:
+            return JsonResponse({'success': False, 'error': 'Los días no pueden ser negativos'})
+        
+        # Actualizar o crear registro de trabajo
+        registro, created = RegistroTrabajo.objects.get_or_create(
+            trabajador=trabajador,
+            defaults={
+                'fecha_inicio': timezone.now().date(),
+                'fecha_fin': timezone.now().date(),
+                'dias_trabajados': dias_trabajados,
+                'registrado_por': request.user
+            }
+        )
+        
+        if not created:
+            registro.dias_trabajados = dias_trabajados
+            registro.fecha_fin = timezone.now().date()
+            registro.save()
+        
+        # Calcular totales según documentación
+        total_bruto = trabajador.total_dias_trabajados * trabajador.pago_diario
+        total_anticipos = trabajador.total_anticipos_aplicados
+        total_neto = total_bruto - total_anticipos
+        
+        return JsonResponse({
+            'success': True,
+            'total_bruto': float(total_bruto),
+            'total_anticipos': float(total_anticipos),
+            'total_neto': float(total_neto),
+            'dias_trabajados': trabajador.total_dias_trabajados
+        })
+    
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)})
 
 
 @login_required
@@ -8125,63 +8250,106 @@ def anticipo_trabajador_diario_list(request, proyecto_id):
 
 @login_required
 def anticipo_trabajador_diario_create(request, proyecto_id):
-    """Crear anticipo de trabajador diario"""
+    """Crear anticipo de trabajador diario - SIGUIENDO DOCUMENTACIÓN"""
     proyecto = get_object_or_404(Proyecto, id=proyecto_id)
     
+    planilla_id = request.GET.get('planilla_id') or request.POST.get('planilla_id')
+    trabajador_id = request.GET.get('trabajador_id') or request.POST.get('trabajador_id')
+    
+    planilla_seleccionada = None
+    if planilla_id:
+        try:
+            planilla_seleccionada = PlanillaTrabajadoresDiarios.objects.get(
+                id=planilla_id, 
+                proyecto=proyecto
+            )
+        except PlanillaTrabajadoresDiarios.DoesNotExist:
+            planilla_seleccionada = None
+    
     if request.method == 'POST':
-        logger.info(f"📝 POST recibido para crear anticipo de trabajador diario")
-        logger.info(f"📝 Datos POST: {request.POST}")
+        form = AnticipoTrabajadorDiarioForm(
+            request.POST, 
+            proyecto_id=proyecto_id,
+            trabajador_id=trabajador_id
+        )
         
-        form = AnticipoTrabajadorDiarioForm(request.POST, proyecto_id=proyecto_id)
-        logger.info(f"📝 Formulario creado: {form}")
+        # Filtrar trabajadores por planilla seleccionada
+        if planilla_seleccionada:
+            form.fields['trabajador'].queryset = TrabajadorDiario.objects.filter(
+                proyecto=proyecto,
+                planilla=planilla_seleccionada,
+                activo=True
+            ).order_by('nombre')
         
         if form.is_valid():
-            logger.info("✅ Formulario es válido, guardando anticipo...")
+            trabajador_seleccionado = form.cleaned_data.get('trabajador')
+            monto_ingresado = form.cleaned_data.get('monto')
+            
+            # Crear el anticipo
             anticipo = form.save(commit=False)
             anticipo.creado_por = request.user
-            # Los anticipos de trabajadores diarios se aplican directamente (no necesitan aprobación)
+            # Los anticipos se aplican directamente (estado='aplicado')
             anticipo.estado = 'aplicado'
             anticipo.save()
-            logger.info(f"✅ Anticipo guardado con ID: {anticipo.id}")
-            
-            # Aplicar el anticipo al trabajador (restar del total a pagar)
-            trabajador = anticipo.trabajador
-            # El anticipo se resta del total a pagar (saldo negativo)
-            logger.info(f"💰 Aplicando anticipo de ${anticipo.monto} al trabajador {trabajador.nombre}")
-            logger.info(f"💰 Total a pagar antes: ${trabajador.total_a_pagar}")
-            # No modificamos directamente el total_a_pagar, se calcula dinámicamente
-            logger.info(f"✅ Anticipo aplicado exitosamente")
-            
-            # Registrar actividad
-            LogActividad.objects.create(
-                usuario=request.user,
-                accion='Crear',
-                modulo='Anticipos Trabajadores Diarios',
-                descripcion=f'Anticipo creado y aplicado: {anticipo.trabajador.nombre} - ${anticipo.monto}',
-                ip_address=request.META.get('REMOTE_ADDR')
-            )
             
             messages.success(request, 
-                f'✅ <strong>Anticipo creado y aplicado exitosamente</strong><br>'
+                f'✅ Anticipo creado y aplicado exitosamente<br>'
                 f'👤 Trabajador: <strong>{anticipo.trabajador.nombre}</strong><br>'
-                f'💰 Monto: <strong>${anticipo.monto:,.2f}</strong><br>'
-                f'🏗️ Proyecto: <strong>{proyecto.nombre}</strong>',
+                f'💰 Monto: <strong>${anticipo.monto:,.2f}</strong>',
                 extra_tags='html'
             )
-            logger.info("✅ Redirigiendo a anticipo_trabajador_diario_list")
+            
+            if planilla_id:
+                return redirect(
+                    f'{reverse("anticipo_trabajador_diario_list", args=[proyecto_id])}?planilla_id={planilla_id}'
+                )
             return redirect('anticipo_trabajador_diario_list', proyecto_id=proyecto_id)
-        else:
-            logger.error(f"❌ Formulario no es válido. Errores: {form.errors}")
-            # Agregar los errores del formulario a los mensajes
-            for field, errors in form.errors.items():
-                for error in errors:
-                    messages.error(request, f"{field}: {error}")
     else:
-        form = AnticipoTrabajadorDiarioForm(proyecto_id=proyecto_id)
+        form = AnticipoTrabajadorDiarioForm(
+            proyecto_id=proyecto_id,
+            trabajador_id=trabajador_id
+        )
+        
+        # Filtrar trabajadores por planilla seleccionada
+        if planilla_seleccionada:
+            form.fields['trabajador'].queryset = TrabajadorDiario.objects.filter(
+                proyecto=proyecto,
+                planilla=planilla_seleccionada,
+                activo=True
+            ).order_by('nombre')
     
     return render(request, 'core/anticipos_trabajadores_diarios/create.html', {
         'form': form,
-        'proyecto': proyecto
+        'proyecto': proyecto,
+        'planilla_seleccionada': planilla_seleccionada,
+        'trabajador_id': trabajador_id
+    })
+
+
+@login_required
+def anticipos_trabajador_diario_list(request, proyecto_id, trabajador_id):
+    """Lista de anticipos de un trabajador diario específico"""
+    proyecto = get_object_or_404(Proyecto, id=proyecto_id)
+    trabajador = get_object_or_404(TrabajadorDiario, id=trabajador_id, proyecto=proyecto)
+    
+    anticipos = AnticipoTrabajadorDiario.objects.filter(
+        trabajador=trabajador
+    ).select_related('creado_por').order_by('-fecha_creacion')
+    
+    # Calcular totales
+    total_anticipos = sum(anticipo.monto for anticipo in anticipos)
+    total_aplicado = sum(anticipo.monto for anticipo in anticipos.filter(estado='aplicado'))
+    
+    # Obtener planilla_id de la URL si existe
+    planilla_id = request.GET.get('planilla_id')
+    
+    return render(request, 'core/anticipos_trabajadores_diarios/trabajador_list.html', {
+        'proyecto': proyecto,
+        'trabajador': trabajador,
+        'anticipos': anticipos,
+        'total_anticipos': total_anticipos,
+        'total_aplicado': total_aplicado,
+        'planilla_id': planilla_id
     })
 
 
@@ -8202,20 +8370,30 @@ def anticipo_trabajador_diario_edit(request, proyecto_id, anticipo_id):
     """Editar anticipo de trabajador diario"""
     proyecto = get_object_or_404(Proyecto, id=proyecto_id)
     anticipo = get_object_or_404(AnticipoTrabajadorDiario, id=anticipo_id, trabajador__proyecto=proyecto)
+    trabajador = anticipo.trabajador
+    
+    planilla_id = request.GET.get('planilla_id')
     
     if request.method == 'POST':
         form = AnticipoTrabajadorDiarioForm(request.POST, instance=anticipo, proyecto_id=proyecto_id)
         if form.is_valid():
             form.save()
-            messages.success(request, 'Anticipo actualizado correctamente.')
-            return redirect('anticipo_trabajador_diario_list', proyecto_id=proyecto_id)
+            messages.success(request, '✅ Anticipo actualizado correctamente.')
+            
+            # Redirigir a la lista del trabajador si es posible
+            redirect_url = reverse('anticipos_trabajador_diario_list', args=[proyecto_id, trabajador.id])
+            if planilla_id:
+                redirect_url += f'?planilla_id={planilla_id}'
+            return redirect(redirect_url)
     else:
         form = AnticipoTrabajadorDiarioForm(instance=anticipo, proyecto_id=proyecto_id)
     
     return render(request, 'core/anticipos_trabajadores_diarios/edit.html', {
         'form': form,
         'proyecto': proyecto,
-        'anticipo': anticipo
+        'anticipo': anticipo,
+        'trabajador': trabajador,
+        'planilla_id': planilla_id
     })
 
 
@@ -8224,6 +8402,9 @@ def anticipo_trabajador_diario_delete(request, proyecto_id, anticipo_id):
     """Eliminar anticipo de trabajador diario"""
     proyecto = get_object_or_404(Proyecto, id=proyecto_id)
     anticipo = get_object_or_404(AnticipoTrabajadorDiario, id=anticipo_id, trabajador__proyecto=proyecto)
+    trabajador = anticipo.trabajador
+    
+    planilla_id = request.GET.get('planilla_id')
     
     if request.method == 'POST':
         trabajador_nombre = anticipo.trabajador.nombre
@@ -8239,12 +8420,19 @@ def anticipo_trabajador_diario_delete(request, proyecto_id, anticipo_id):
             ip_address=request.META.get('REMOTE_ADDR')
         )
         
-        messages.success(request, 'Anticipo eliminado correctamente')
-        return redirect('anticipo_trabajador_diario_list', proyecto_id=proyecto_id)
+        messages.success(request, '✅ Anticipo eliminado correctamente')
+        
+        # Redirigir a la lista del trabajador si es posible
+        redirect_url = reverse('anticipos_trabajador_diario_list', args=[proyecto_id, trabajador.id])
+        if planilla_id:
+            redirect_url += f'?planilla_id={planilla_id}'
+        return redirect(redirect_url)
     
     return render(request, 'core/anticipos_trabajadores_diarios/delete.html', {
         'proyecto': proyecto,
-        'anticipo': anticipo
+        'anticipo': anticipo,
+        'trabajador': trabajador,
+        'planilla_id': planilla_id
     })
 
 
@@ -9672,3 +9860,1217 @@ def caja_menuda_delete(request, pk):
     }
     
     return render(request, 'core/caja-menuda/delete.html', context)
+
+
+# ============================================================================
+# MÓDULO DE TORREROS
+# ============================================================================
+
+@login_required
+def torreros_dashboard(request):
+    """Dashboard principal del módulo de torreros"""
+    try:
+        # Servicios activos
+        servicios_activos = ServicioTorrero.objects.filter(
+            estado='activo',
+            activo=True
+        ).select_related('cliente', 'proyecto').order_by('-fecha_inicio')
+        
+        # Estadísticas generales
+        total_servicios_activos = servicios_activos.count()
+        total_servicios = ServicioTorrero.objects.filter(activo=True).count()
+        
+        # Ingresos y pagos
+        ingresos_totales = ServicioTorrero.objects.filter(
+            activo=True
+        ).aggregate(total=Sum('monto_total'))['total'] or Decimal('0.00')
+        
+        pagos_recibidos = ServicioTorrero.objects.filter(
+            activo=True
+        ).aggregate(total=Sum('monto_pagado'))['total'] or Decimal('0.00')
+        
+        saldo_pendiente = ingresos_totales - pagos_recibidos
+        
+        # Servicios por completar pronto (menos del 30% de días restantes)
+        servicios_por_completar = []
+        for servicio in servicios_activos:
+            if servicio.porcentaje_completado >= 70:
+                servicios_por_completar.append(servicio)
+        
+        # Servicios con pagos pendientes
+        servicios_pago_pendiente = servicios_activos.filter(
+            monto_pagado__lt=models.F('monto_total')
+        ).order_by('cliente__nombre')[:5]
+        
+        # Últimos registros de días trabajados
+        ultimos_registros = RegistroDiasTrabajados.objects.select_related(
+            'servicio__cliente', 'registrado_por'
+        ).order_by('-fecha_registro')[:10]
+        
+        # Últimos pagos
+        ultimos_pagos = PagoServicioTorrero.objects.select_related(
+            'servicio__cliente', 'registrado_por'
+        ).order_by('-fecha_pago')[:10]
+        
+        context = {
+            'servicios_activos': servicios_activos[:10],
+            'total_servicios_activos': total_servicios_activos,
+            'total_servicios': total_servicios,
+            'ingresos_totales': ingresos_totales,
+            'pagos_recibidos': pagos_recibidos,
+            'saldo_pendiente': saldo_pendiente,
+            'servicios_por_completar': servicios_por_completar[:5],
+            'servicios_pago_pendiente': servicios_pago_pendiente,
+            'ultimos_registros': ultimos_registros,
+            'ultimos_pagos': ultimos_pagos,
+        }
+        
+        return render(request, 'core/torreros/dashboard.html', context)
+        
+    except Exception as e:
+        logger.error(f'Error en torreros_dashboard: {e}')
+        messages.error(request, 'Error al cargar el dashboard de torreros')
+        return redirect('dashboard')
+
+
+@login_required
+def servicio_torrero_list(request):
+    """Lista completa de servicios de torreros"""
+    try:
+        servicios = ServicioTorrero.objects.filter(
+            activo=True
+        ).select_related('cliente', 'proyecto', 'creado_por').order_by('-fecha_inicio')
+        
+        # Filtros
+        filtro_estado = request.GET.get('estado', '')
+        filtro_cliente = request.GET.get('cliente', '')
+        
+        if filtro_estado:
+            servicios = servicios.filter(estado=filtro_estado)
+        
+        if filtro_cliente:
+            servicios = servicios.filter(cliente_id=filtro_cliente)
+        
+        # Paginación
+        from django.core.paginator import Paginator
+        paginator = Paginator(servicios, 20)
+        page_number = request.GET.get('page')
+        page_obj = paginator.get_page(page_number)
+        
+        # Opciones para filtros
+        clientes = Cliente.objects.filter(activo=True).order_by('razon_social')
+        
+        context = {
+            'page_obj': page_obj,
+            'servicios': page_obj,
+            'clientes': clientes,
+            'filtro_estado': filtro_estado,
+            'filtro_cliente': filtro_cliente,
+        }
+        
+        return render(request, 'core/torreros/servicio_list.html', context)
+        
+    except Exception as e:
+        logger.error(f'Error en servicio_torrero_list: {e}')
+        messages.error(request, 'Error al cargar la lista de servicios')
+        return redirect('torreros_dashboard')
+
+
+@login_required
+def servicio_torrero_create(request):
+    """Crear nuevo servicio de torrero"""
+    if request.method == 'POST':
+        form = ServicioTorreroForm(request.POST)
+        if form.is_valid():
+            try:
+                servicio = form.save(commit=False)
+                servicio.creado_por = request.user
+                
+                # Calcular monto total
+                servicio.calcular_monto_total()
+                
+                servicio.save()
+                
+                # Asignar torreros seleccionados
+                torreros_ids = request.POST.get('torreros_ids', '')
+                if torreros_ids:
+                    for torrero_id in torreros_ids.split(','):
+                        if torrero_id.strip():
+                            torrero = Torrero.objects.get(id=int(torrero_id))
+                            AsignacionTorrero.objects.create(
+                                servicio=servicio,
+                                torrero=torrero,
+                                tarifa_acordada=torrero.tarifa_diaria,
+                                asignado_por=request.user
+                            )
+                
+                # Log de actividad
+                LogActividad.objects.create(
+                    usuario=request.user,
+                    accion='crear',
+                    modulo='Servicios Torreros',
+                    descripcion=f'Creó servicio de torrero para {servicio.cliente.razon_social} (ID: {servicio.id})'
+                )
+                
+                messages.success(request, '✅ Servicio de torrero creado exitosamente')
+                return redirect('servicio_torrero_detail', pk=servicio.id)
+                
+            except Exception as e:
+                logger.error(f"Error al crear servicio: {str(e)}")
+                messages.error(request, f'❌ Error al crear servicio: {str(e)}')
+        else:
+            messages.error(request, '❌ Por favor corrige los errores del formulario')
+    else:
+        form = ServicioTorreroForm()
+    
+    # Obtener torreros disponibles
+    torreros_disponibles = Torrero.objects.filter(activo=True).order_by('nombre')
+    
+    context = {
+        'form': form,
+        'titulo': 'Nuevo Servicio de Torrero',
+        'torreros_disponibles': torreros_disponibles
+    }
+    
+    return render(request, 'core/torreros/servicio_form.html', context)
+
+
+@login_required
+def servicio_torrero_detail(request, pk):
+    """Detalle de un servicio de torrero"""
+    try:
+        servicio = get_object_or_404(
+            ServicioTorrero.objects.select_related('cliente', 'proyecto', 'creado_por'),
+            pk=pk
+        )
+        
+        # Registros de días trabajados
+        registros = servicio.registros_dias.select_related(
+            'registrado_por', 'aprobado_por'
+        ).order_by('-fecha_registro')
+        
+        # Pagos
+        pagos = servicio.pagos.select_related('registrado_por').order_by('-fecha_pago')
+        
+        # Formularios para agregar registros y pagos
+        form_registro = RegistroDiasTrabajarForm()
+        form_pago = PagoServicioTorreroForm()
+        
+        context = {
+            'servicio': servicio,
+            'registros': registros,
+            'pagos': pagos,
+            'form_registro': form_registro,
+            'form_pago': form_pago,
+        }
+        
+        return render(request, 'core/torreros/servicio_detail.html', context)
+        
+    except Exception as e:
+        logger.error(f'Error en servicio_torrero_detail: {e}')
+        messages.error(request, 'Error al cargar el detalle del servicio')
+        return redirect('torreros_dashboard')
+
+
+@login_required
+def servicio_torrero_edit(request, pk):
+    """Editar servicio de torrero"""
+    servicio = get_object_or_404(ServicioTorrero, pk=pk)
+    
+    if request.method == 'POST':
+        form = ServicioTorreroForm(request.POST, instance=servicio)
+        if form.is_valid():
+            try:
+                servicio = form.save(commit=False)
+                servicio.calcular_monto_total()
+                servicio.save()
+                
+                # Log de actividad
+                LogActividad.objects.create(
+                    usuario=request.user,
+                    accion='editar',
+                    modelo='ServicioTorrero',
+                    objeto_id=servicio.id,
+                    descripcion=f'Editó servicio de torrero para {servicio.cliente.razon_social}'
+                )
+                
+                messages.success(request, '✅ Servicio actualizado exitosamente')
+                return redirect('servicio_torrero_detail', pk=servicio.id)
+                
+            except Exception as e:
+                logger.error(f"Error al editar servicio: {str(e)}")
+                messages.error(request, f'❌ Error al editar servicio: {str(e)}')
+        else:
+            messages.error(request, '❌ Por favor corrige los errores del formulario')
+    else:
+        form = ServicioTorreroForm(instance=servicio)
+    
+    context = {
+        'form': form,
+        'servicio': servicio,
+        'titulo': f'Editar Servicio - {servicio.cliente.razon_social}'
+    }
+    
+    return render(request, 'core/torreros/servicio_form.html', context)
+
+
+@login_required
+def servicio_torrero_delete(request, pk):
+    """Eliminar (desactivar) servicio de torrero"""
+    servicio = get_object_or_404(ServicioTorrero, pk=pk)
+    
+    if request.method == 'POST':
+        try:
+            servicio.activo = False
+            servicio.estado = 'cancelado'
+            servicio.save()
+            
+            # Log de actividad
+            LogActividad.objects.create(
+                usuario=request.user,
+                accion='eliminar',
+                modulo='Servicios Torreros',
+                descripcion=f'Eliminó servicio de torrero para {servicio.cliente.razon_social}'
+            )
+            
+            messages.success(request, '✅ Servicio eliminado exitosamente')
+            return redirect('servicio_torrero_list')
+            
+        except Exception as e:
+            logger.error(f"Error al eliminar servicio: {str(e)}")
+            messages.error(request, f'❌ Error al eliminar: {str(e)}')
+    
+    context = {
+        'servicio': servicio
+    }
+    
+    return render(request, 'core/torreros/servicio_delete.html', context)
+
+
+@login_required
+def registro_dias_create(request, servicio_id):
+    """Crear registro de días trabajados"""
+    servicio = get_object_or_404(ServicioTorrero, pk=servicio_id)
+    
+    if request.method == 'POST':
+        form = RegistroDiasTrabajarForm(request.POST)
+        if form.is_valid():
+            try:
+                registro = form.save(commit=False)
+                registro.servicio = servicio
+                registro.registrado_por = request.user
+                registro.save()
+                
+                # Log de actividad
+                LogActividad.objects.create(
+                    usuario=request.user,
+                    accion='crear',
+                    modelo='RegistroDiasTrabajados',
+                    objeto_id=registro.id,
+                    descripcion=f'Registró {registro.dias_trabajados} día(s) para {servicio.cliente.razon_social}'
+                )
+                
+                messages.success(request, '✅ Días trabajados registrados exitosamente')
+                return redirect('servicio_torrero_detail', pk=servicio.id)
+                
+            except Exception as e:
+                logger.error(f"Error al registrar días: {str(e)}")
+                messages.error(request, f'❌ Error al registrar días: {str(e)}')
+        else:
+            messages.error(request, '❌ Por favor corrige los errores del formulario')
+    
+    return redirect('servicio_torrero_detail', pk=servicio.id)
+
+
+@login_required
+def registro_dias_quick(request, servicio_id):
+    """Registro rápido de días trabajados (AJAX)"""
+    if request.method == 'POST':
+        try:
+            import json
+            data = json.loads(request.body)
+            
+            servicio = get_object_or_404(ServicioTorrero, pk=servicio_id)
+            
+            # Crear registro
+            from decimal import Decimal
+            registro = RegistroDiasTrabajados.objects.create(
+                servicio=servicio,
+                fecha_registro=data.get('fecha_registro'),
+                dias_trabajados=Decimal(str(data.get('dias_trabajados', 1))),
+                torreros_presentes=servicio.cantidad_torreros,  # Cantidad de torreros del servicio
+                observaciones=data.get('observaciones', ''),
+                registrado_por=request.user,
+                aprobado=True,  # Auto-aprobar registros rápidos
+                aprobado_por=request.user
+            )
+            # Nota: El método save() del modelo RegistroDiasTrabajados ya actualiza 
+            # automáticamente servicio.dias_trabajados, no es necesario hacerlo aquí
+            
+            # Log de actividad
+            LogActividad.objects.create(
+                usuario=request.user,
+                accion='crear',
+                modulo='Servicios Torreros',
+                descripcion=f'Registró {registro.dias_trabajados} día(s) para {servicio.cliente.razon_social}'
+            )
+            
+            return JsonResponse({
+                'success': True,
+                'message': f'✅ {registro.dias_trabajados} día(s) registrado(s) exitosamente'
+            })
+            
+        except Exception as e:
+            logger.error(f"Error en registro rápido: {str(e)}")
+            return JsonResponse({
+                'success': False,
+                'message': f'Error: {str(e)}'
+            }, status=400)
+    
+    return JsonResponse({'success': False, 'message': 'Método no permitido'}, status=405)
+
+
+@login_required
+def registro_dias_aprobar(request, pk):
+    """Aprobar registro de días trabajados"""
+    if request.method == 'POST':
+        try:
+            registro = get_object_or_404(RegistroDiasTrabajados, pk=pk)
+            registro.aprobado = not registro.aprobado  # Toggle
+            registro.aprobado_por = request.user if registro.aprobado else None
+            registro.save()
+            
+            # Log de actividad
+            accion = 'aprobó' if registro.aprobado else 'desaprobó'
+            LogActividad.objects.create(
+                usuario=request.user,
+                accion='aprobar' if registro.aprobado else 'desaprobar',
+                modelo='RegistroDiasTrabajados',
+                objeto_id=registro.id,
+                descripcion=f'{accion.capitalize()} registro de {registro.dias_trabajados} día(s)'
+            )
+            
+            estado = 'aprobado' if registro.aprobado else 'desaprobado'
+            messages.success(request, f'✅ Registro {estado} exitosamente')
+            
+            return JsonResponse({
+                'success': True,
+                'aprobado': registro.aprobado,
+                'message': f'Registro {estado} exitosamente'
+            })
+            
+        except Exception as e:
+            logger.error(f"Error al aprobar registro: {str(e)}")
+            return JsonResponse({
+                'success': False,
+                'message': f'Error: {str(e)}'
+            }, status=400)
+    
+    return JsonResponse({'success': False, 'message': 'Método no permitido'}, status=405)
+
+
+@login_required
+def pago_servicio_create(request, servicio_id):
+    """Crear pago de servicio de torrero"""
+    servicio = get_object_or_404(ServicioTorrero, pk=servicio_id)
+    
+    if request.method == 'POST':
+        form = PagoServicioTorreroForm(request.POST, request.FILES)
+        if form.is_valid():
+            try:
+                pago = form.save(commit=False)
+                pago.servicio = servicio
+                pago.registrado_por = request.user
+                pago.save()
+                
+                # Log de actividad
+                LogActividad.objects.create(
+                    usuario=request.user,
+                    accion='crear',
+                    modelo='PagoServicioTorrero',
+                    objeto_id=pago.id,
+                    descripcion=f'Registró pago de ${pago.monto} para {servicio.cliente.razon_social}'
+                )
+                
+                messages.success(request, '✅ Pago registrado exitosamente')
+                return redirect('servicio_torrero_detail', pk=servicio.id)
+                
+            except Exception as e:
+                logger.error(f"Error al registrar pago: {str(e)}")
+                messages.error(request, f'❌ Error al registrar pago: {str(e)}')
+        else:
+            messages.error(request, '❌ Por favor corrige los errores del formulario')
+    
+    return redirect('servicio_torrero_detail', pk=servicio.id)
+
+
+# ============================================================================
+# CRUD DE TORREROS (CATÁLOGO)
+# ============================================================================
+
+@login_required
+def torreros_list(request):
+    """Lista de torreros registrados"""
+    try:
+        torreros = Torrero.objects.filter(activo=True).order_by('nombre')
+        
+        # Filtros
+        busqueda = request.GET.get('q', '')
+        if busqueda:
+            torreros = torreros.filter(
+                Q(nombre__icontains=busqueda) |
+                Q(cedula__icontains=busqueda) |
+                Q(especialidad__icontains=busqueda)
+            )
+        
+        context = {
+            'torreros': torreros,
+            'busqueda': busqueda,
+        }
+        
+        return render(request, 'core/torreros/torreros_list.html', context)
+        
+    except Exception as e:
+        logger.error(f'Error en torreros_list: {e}')
+        messages.error(request, 'Error al cargar la lista de torreros')
+        return redirect('torreros_dashboard')
+
+
+@login_required
+def torrero_create(request):
+    """Crear nuevo torrero"""
+    if request.method == 'POST':
+        form = TorreroForm(request.POST, request.FILES)
+        if form.is_valid():
+            try:
+                torrero = form.save(commit=False)
+                torrero.creado_por = request.user
+                torrero.save()
+                
+                LogActividad.objects.create(
+                    usuario=request.user,
+                    accion='crear',
+                    modulo='Torreros',
+                    descripcion=f'Creó torrero: {torrero.nombre} (ID: {torrero.id})'
+                )
+                
+                messages.success(request, f'✅ Torrero {torrero.nombre} creado exitosamente')
+                return redirect('torreros_list')
+                
+            except Exception as e:
+                logger.error(f"Error al crear torrero: {str(e)}")
+                messages.error(request, f'❌ Error al crear torrero: {str(e)}')
+        else:
+            messages.error(request, '❌ Por favor corrige los errores del formulario')
+    else:
+        form = TorreroForm()
+    
+    context = {
+        'form': form,
+        'titulo': 'Nuevo Torrero'
+    }
+    
+    return render(request, 'core/torreros/torrero_form.html', context)
+
+
+@login_required
+def torrero_edit(request, pk):
+    """Editar torrero"""
+    torrero = get_object_or_404(Torrero, pk=pk)
+    
+    if request.method == 'POST':
+        form = TorreroForm(request.POST, request.FILES, instance=torrero)
+        if form.is_valid():
+            try:
+                torrero = form.save()
+                
+                LogActividad.objects.create(
+                    usuario=request.user,
+                    accion='editar',
+                    modulo='Torreros',
+                    descripcion=f'Editó torrero: {torrero.nombre} (ID: {torrero.id})'
+                )
+                
+                messages.success(request, f'✅ Torrero {torrero.nombre} actualizado exitosamente')
+                return redirect('torreros_list')
+                
+            except Exception as e:
+                logger.error(f"Error al editar torrero: {str(e)}")
+                messages.error(request, f'❌ Error al editar torrero: {str(e)}')
+        else:
+            messages.error(request, '❌ Por favor corrige los errores del formulario')
+    else:
+        form = TorreroForm(instance=torrero)
+    
+    context = {
+        'form': form,
+        'torrero': torrero,
+        'titulo': f'Editar Torrero - {torrero.nombre}'
+    }
+    
+    return render(request, 'core/torreros/torrero_form.html', context)
+
+
+@login_required
+def torrero_delete(request, pk):
+    """Eliminar (desactivar) torrero"""
+    torrero = get_object_or_404(Torrero, pk=pk)
+    
+    if request.method == 'POST':
+        try:
+            torrero.activo = False
+            torrero.save()
+            
+            LogActividad.objects.create(
+                usuario=request.user,
+                accion='eliminar',
+                modulo='Torreros',
+                descripcion=f'Eliminó torrero: {torrero.nombre} (ID: {torrero.id})'
+            )
+            
+            messages.success(request, f'✅ Torrero {torrero.nombre} eliminado exitosamente')
+            return redirect('torreros_list')
+            
+        except Exception as e:
+            logger.error(f"Error al eliminar torrero: {str(e)}")
+            messages.error(request, f'❌ Error al eliminar: {str(e)}')
+    
+    context = {
+        'torrero': torrero
+    }
+    
+    return render(request, 'core/torreros/torrero_delete.html', context)
+
+
+@login_required
+def torrero_registro_rapido(request):
+    """Registro rápido de torrero (solo datos esenciales)"""
+    if request.method == 'POST':
+        try:
+            nombre = request.POST.get('nombre', '').strip()
+            tarifa_diaria = request.POST.get('tarifa_diaria', '0')
+            
+            if not nombre:
+                return JsonResponse({
+                    'success': False,
+                    'message': 'El nombre es obligatorio'
+                }, status=400)
+            
+            # Generar cédula automática única (basada en timestamp)
+            import time
+            cedula = f"T-{int(time.time())}"
+            
+            # Verificar que no exista (muy improbable)
+            while Torrero.objects.filter(cedula=cedula).exists():
+                cedula = f"T-{int(time.time())}-{Torrero.objects.count()}"
+            
+            # Crear torrero
+            torrero = Torrero.objects.create(
+                nombre=nombre,
+                cedula=cedula,
+                tarifa_diaria=Decimal(tarifa_diaria) if tarifa_diaria else Decimal('0.00'),
+                fecha_ingreso=timezone.now().date(),
+                creado_por=request.user
+            )
+            
+            # Log de actividad
+            LogActividad.objects.create(
+                usuario=request.user,
+                accion='crear',
+                modulo='Torreros',
+                descripcion=f'Registro rápido de torrero: {torrero.nombre} (ID: {torrero.id})'
+            )
+            
+            return JsonResponse({
+                'success': True,
+                'message': f'Torrero {nombre} registrado exitosamente',
+                'torrero_id': torrero.id
+            })
+            
+        except Exception as e:
+            logger.error(f"Error en registro rápido de torrero: {str(e)}")
+            return JsonResponse({
+                'success': False,
+                'message': f'Error al registrar: {str(e)}'
+            }, status=500)
+    
+    return JsonResponse({
+        'success': False,
+        'message': 'Método no permitido'
+    }, status=405)
+
+
+@login_required
+def servicio_torrero_pdf(request, pk):
+    """Generar PDF de respaldo del servicio de torrero"""
+    from reportlab.lib import colors
+    from reportlab.lib.pagesizes import letter
+    from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+    from reportlab.lib.units import inch
+    from reportlab.lib.enums import TA_CENTER, TA_RIGHT, TA_LEFT
+    from io import BytesIO
+    
+    servicio = get_object_or_404(ServicioTorrero, pk=pk)
+    registros = RegistroDiasTrabajados.objects.filter(servicio=servicio).order_by('fecha_registro')
+    pagos = PagoServicioTorrero.objects.filter(servicio=servicio).order_by('fecha_pago')
+    # Obtener torreros asignados a través de AsignacionTorrero
+    asignaciones = AsignacionTorrero.objects.filter(servicio=servicio, activo=True).select_related('torrero')
+    torreros = [asignacion.torrero for asignacion in asignaciones]
+    
+    # Crear el PDF en memoria
+    buffer = BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=letter, topMargin=0.5*inch, bottomMargin=0.5*inch)
+    elements = []
+    styles = getSampleStyleSheet()
+    
+    # Estilos personalizados
+    title_style = ParagraphStyle(
+        'CustomTitle',
+        parent=styles['Heading1'],
+        fontSize=24,
+        textColor=colors.HexColor('#1f2937'),
+        spaceAfter=12,
+        alignment=TA_CENTER,
+        fontName='Helvetica-Bold'
+    )
+    
+    subtitle_style = ParagraphStyle(
+        'CustomSubtitle',
+        parent=styles['Normal'],
+        fontSize=12,
+        textColor=colors.HexColor('#6b7280'),
+        spaceAfter=20,
+        alignment=TA_CENTER
+    )
+    
+    heading_style = ParagraphStyle(
+        'CustomHeading',
+        parent=styles['Heading2'],
+        fontSize=14,
+        textColor=colors.HexColor('#111827'),
+        spaceAfter=10,
+        spaceBefore=15,
+        fontName='Helvetica-Bold'
+    )
+    
+    # Título
+    from django.utils import timezone
+    fecha_actual = timezone.localtime(timezone.now())
+    elements.append(Paragraph("REPORTE DE SERVICIO DE TORREROS", title_style))
+    elements.append(Paragraph(f"Sistema ARCA - {fecha_actual.strftime('%d/%m/%Y %I:%M %p')}", subtitle_style))
+    elements.append(Spacer(1, 0.3*inch))
+    
+    # Información del Servicio
+    elements.append(Paragraph("INFORMACIÓN DEL SERVICIO", heading_style))
+    
+    info_data = [
+        ['Cliente:', servicio.cliente.razon_social],
+        ['Proyecto:', servicio.proyecto.nombre if servicio.proyecto else 'N/A'],
+        ['Descripción:', servicio.descripcion or 'N/A'],
+        ['Días Solicitados:', str(servicio.dias_solicitados)],
+        ['Días Trabajados:', str(servicio.dias_trabajados)],
+        ['Progreso:', f"{servicio.porcentaje_completado}%"],
+        ['Tarifa Diaria:', f"${servicio.tarifa_por_dia:,.2f}"],
+        ['Monto Total:', f"${servicio.monto_total:,.2f}"],
+        ['Total Pagado:', f"${servicio.monto_pagado:,.2f}"],
+        ['Saldo Pendiente:', f"${servicio.saldo_pendiente:,.2f}"],
+        ['Estado:', 'PAGADO' if servicio.esta_pagado else 'PENDIENTE'],
+    ]
+    
+    info_table = Table(info_data, colWidths=[2*inch, 4.5*inch])
+    info_table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (0, -1), colors.HexColor('#f3f4f6')),
+        ('TEXTCOLOR', (0, 0), (-1, -1), colors.HexColor('#1f2937')),
+        ('ALIGN', (0, 0), (0, -1), 'RIGHT'),
+        ('ALIGN', (1, 0), (1, -1), 'LEFT'),
+        ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
+        ('FONTNAME', (1, 0), (1, -1), 'Helvetica'),
+        ('FONTSIZE', (0, 0), (-1, -1), 10),
+        ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#e5e7eb')),
+        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+        ('TOPPADDING', (0, 0), (-1, -1), 8),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
+    ]))
+    elements.append(info_table)
+    elements.append(Spacer(1, 0.3*inch))
+    
+    # Torreros Asignados
+    if torreros:
+        elements.append(Paragraph("TORREROS ASIGNADOS", heading_style))
+        
+        torreros_data = [['Nombre', 'Cédula', 'Teléfono', 'Especialidad']]
+        for torrero in torreros:
+            torreros_data.append([
+                torrero.nombre,
+                torrero.cedula or 'N/A',
+                torrero.telefono or 'N/A',
+                torrero.especialidad or 'N/A'
+            ])
+        
+        torreros_table = Table(torreros_data, colWidths=[2*inch, 1.5*inch, 1.5*inch, 1.5*inch])
+        torreros_table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#6366f1')),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, 0), 10),
+            ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
+            ('FONTSIZE', (0, 1), (-1, -1), 9),
+            ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#e5e7eb')),
+            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+            ('TOPPADDING', (0, 0), (-1, -1), 6),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
+            ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#f9fafb')]),
+        ]))
+        elements.append(torreros_table)
+        elements.append(Spacer(1, 0.3*inch))
+    
+    # Registro de Días Trabajados
+    if registros.exists():
+        elements.append(Paragraph("REGISTRO DE DÍAS TRABAJADOS", heading_style))
+        
+        registros_data = [['Fecha', 'Días', 'Observaciones', 'Registrado Por', 'Estado']]
+        for registro in registros:
+            registros_data.append([
+                registro.fecha_registro.strftime('%d/%m/%Y'),
+                str(registro.dias_trabajados),
+                registro.observaciones[:30] + '...' if len(registro.observaciones) > 30 else registro.observaciones or '-',
+                registro.registrado_por.get_full_name() or registro.registrado_por.username,
+                'Aprobado' if registro.aprobado else 'Pendiente'
+            ])
+        
+        registros_table = Table(registros_data, colWidths=[1.2*inch, 0.8*inch, 2.2*inch, 1.5*inch, 1*inch])
+        registros_table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#10b981')),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, 0), 10),
+            ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
+            ('FONTSIZE', (0, 1), (-1, -1), 9),
+            ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#e5e7eb')),
+            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+            ('TOPPADDING', (0, 0), (-1, -1), 6),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
+            ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#f9fafb')]),
+        ]))
+        elements.append(registros_table)
+        elements.append(Spacer(1, 0.3*inch))
+    
+    # Historial de Pagos
+    if pagos.exists():
+        elements.append(Paragraph("HISTORIAL DE PAGOS", heading_style))
+        
+        pagos_data = [['Fecha', 'Monto', 'Método', 'Referencia', 'Registrado Por']]
+        for pago in pagos:
+            pagos_data.append([
+                pago.fecha_pago.strftime('%d/%m/%Y'),
+                f"${pago.monto:,.2f}",
+                pago.metodo_pago,
+                pago.numero_referencia or '-',
+                pago.registrado_por.get_full_name() or pago.registrado_por.username
+            ])
+        
+        pagos_table = Table(pagos_data, colWidths=[1.2*inch, 1.2*inch, 1.5*inch, 1.5*inch, 1.5*inch])
+        pagos_table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#f59e0b')),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, 0), 10),
+            ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
+            ('FONTSIZE', (0, 1), (-1, -1), 9),
+            ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#e5e7eb')),
+            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+            ('TOPPADDING', (0, 0), (-1, -1), 6),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
+            ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#f9fafb')]),
+        ]))
+        elements.append(pagos_table)
+        elements.append(Spacer(1, 0.3*inch))
+    
+    # Pie de página
+    elements.append(Spacer(1, 0.5*inch))
+    footer_style = ParagraphStyle(
+        'Footer',
+        parent=styles['Normal'],
+        fontSize=8,
+        textColor=colors.HexColor('#9ca3af'),
+        alignment=TA_CENTER
+    )
+    elements.append(Paragraph(
+        f"Este documento fue generado automáticamente por el Sistema ARCA<br/>"
+        f"Generado por: {request.user.get_full_name() or request.user.username}<br/>"
+        f"Fecha: {fecha_actual.strftime('%d/%m/%Y %I:%M:%S %p')}",
+        footer_style
+    ))
+    
+    # Construir PDF
+    doc.build(elements)
+    
+    # Preparar respuesta
+    buffer.seek(0)
+    response = HttpResponse(buffer.getvalue(), content_type='application/pdf')
+    filename = f"Servicio_Torrero_{servicio.cliente.razon_social.replace(' ', '_')}_{servicio.id}.pdf"
+    response['Content-Disposition'] = f'inline; filename="{filename}"'
+    
+    # Log de actividad
+    LogActividad.objects.create(
+        usuario=request.user,
+        accion='generar_pdf',
+        modulo='Servicios Torreros',
+        descripcion=f'Generó PDF de servicio para {servicio.cliente.razon_social}'
+    )
+    
+    return response
+
+
+# ============================================
+# VISTAS DE SUBPROYECTOS
+# ============================================
+
+@login_required
+def subproyecto_create(request, proyecto_id):
+    """Crear subproyecto dentro de un proyecto"""
+    from .forms_simple import SubproyectoForm
+    
+    proyecto = get_object_or_404(Proyecto, pk=proyecto_id)
+    
+    if request.method == 'POST':
+        form = SubproyectoForm(request.POST, proyecto=proyecto)
+        if form.is_valid():
+            try:
+                subproyecto = form.save(commit=False)
+                subproyecto.proyecto = proyecto
+                subproyecto.creado_por = request.user
+                subproyecto.save()
+                
+                # Log de actividad
+                LogActividad.objects.create(
+                    usuario=request.user,
+                    accion='crear',
+                    modulo='Subproyectos',
+                    descripcion=f'Creó subproyecto {subproyecto.codigo} en {proyecto.nombre}'
+                )
+                
+                messages.success(request, '✅ Subproyecto creado exitosamente')
+                return redirect('proyectos_list')  # Cambiar a proyecto_detail cuando exista
+                
+            except Exception as e:
+                logger.error(f"Error al crear subproyecto: {str(e)}")
+                messages.error(request, f'❌ Error al crear: {str(e)}')
+    else:
+        form = SubproyectoForm(proyecto=proyecto)
+    
+    context = {
+        'form': form,
+        'proyecto': proyecto,
+        'titulo': f'Nuevo Subproyecto - {proyecto.nombre}'
+    }
+    
+    return render(request, 'core/subproyectos/form.html', context)
+
+
+@login_required
+def subproyecto_edit(request, pk):
+    """Editar subproyecto"""
+    from .forms_simple import SubproyectoForm
+    
+    subproyecto = get_object_or_404(Subproyecto, pk=pk)
+    proyecto = subproyecto.proyecto
+    
+    if request.method == 'POST':
+        form = SubproyectoForm(request.POST, instance=subproyecto, proyecto=proyecto)
+        if form.is_valid():
+            try:
+                subproyecto = form.save()
+                
+                # Log de actividad
+                LogActividad.objects.create(
+                    usuario=request.user,
+                    accion='editar',
+                    modulo='Subproyectos',
+                    descripcion=f'Editó subproyecto {subproyecto.codigo}'
+                )
+                
+                messages.success(request, '✅ Subproyecto actualizado exitosamente')
+                return redirect('proyectos_list')  # Cambiar a proyecto_detail cuando exista
+                
+            except Exception as e:
+                logger.error(f"Error al editar subproyecto: {str(e)}")
+                messages.error(request, f'❌ Error al editar: {str(e)}')
+    else:
+        form = SubproyectoForm(instance=subproyecto, proyecto=proyecto)
+    
+    context = {
+        'form': form,
+        'subproyecto': subproyecto,
+        'proyecto': proyecto,
+        'titulo': f'Editar Subproyecto - {subproyecto.nombre}'
+    }
+    
+    return render(request, 'core/subproyectos/form.html', context)
+
+
+@login_required
+def subproyecto_delete(request, pk):
+    """Eliminar (desactivar) subproyecto"""
+    subproyecto = get_object_or_404(Subproyecto, pk=pk)
+    proyecto = subproyecto.proyecto
+    
+    if request.method == 'POST':
+        try:
+            subproyecto.activo = False
+            subproyecto.estado = 'cancelado'
+            subproyecto.save()
+            
+            # Log de actividad
+            LogActividad.objects.create(
+                usuario=request.user,
+                accion='eliminar',
+                modulo='Subproyectos',
+                descripcion=f'Eliminó subproyecto {subproyecto.codigo}'
+            )
+            
+            messages.success(request, '✅ Subproyecto eliminado exitosamente')
+            return redirect('proyectos_list')  # Cambiar a proyecto_detail cuando exista
+            
+        except Exception as e:
+            logger.error(f"Error al eliminar subproyecto: {str(e)}")
+            messages.error(request, f'❌ Error al eliminar: {str(e)}')
+    
+    context = {
+        'subproyecto': subproyecto,
+        'proyecto': proyecto
+    }
+    
+    return render(request, 'core/subproyectos/delete.html', context)
+
+
+@login_required
+def subproyectos_dashboard(request, proyecto_id):
+    """Dashboard de rentabilidad de subproyectos"""
+    proyecto = get_object_or_404(Proyecto, pk=proyecto_id)
+    
+    # Obtener subproyectos activos
+    subproyectos = Subproyecto.objects.filter(
+        proyecto=proyecto,
+        activo=True
+    ).select_related('cotizacion', 'creado_por').order_by('-creado_en')
+    
+    # Calcular totales
+    total_cotizado = sum(sub.monto_cotizado for sub in subproyectos)
+    total_ingresos = sum(sub.total_ingresos for sub in subproyectos)
+    total_gastos = sum(sub.total_gastos for sub in subproyectos)
+    rentabilidad_total = total_ingresos - total_gastos
+    
+    # Preparar datos para gráficos
+    subproyectos_data = []
+    for sub in subproyectos:
+        subproyectos_data.append({
+            'id': sub.id,
+            'codigo': sub.codigo,
+            'nombre': sub.nombre,
+            'monto_cotizado': float(sub.monto_cotizado),
+            'total_ingresos': float(sub.total_ingresos),
+            'total_gastos': float(sub.total_gastos),
+            'rentabilidad': float(sub.rentabilidad),
+            'margen_rentabilidad': float(sub.margen_rentabilidad),
+            'estado': sub.estado,
+            'porcentaje_avance': float(sub.porcentaje_avance),
+        })
+    
+    import json
+    subproyectos_json = json.dumps(subproyectos_data)
+    
+    context = {
+        'proyecto': proyecto,
+        'subproyectos': subproyectos,
+        'total_cotizado': total_cotizado,
+        'total_ingresos': total_ingresos,
+        'total_gastos': total_gastos,
+        'rentabilidad_total': rentabilidad_total,
+        'subproyectos_json': subproyectos_json,
+        'titulo': f'Dashboard de Subproyectos - {proyecto.nombre}'
+    }
+    
+    return render(request, 'core/subproyectos/dashboard.html', context)
+
+
+@login_required
+def planillas_liquidadas_historial(request):
+    """Vista completa para consultar todas las planillas liquidadas pasadas"""
+    from django.db.models import Q, Sum
+    from django.core.paginator import Paginator
+    
+    # Obtener parámetros de búsqueda
+    proyecto_id = request.GET.get('proyecto')
+    año = request.GET.get('año')
+    mes = request.GET.get('mes')
+    search = request.GET.get('search', '')
+    
+    # Query inicial
+    planillas = PlanillaLiquidada.objects.select_related(
+        'proyecto', 'liquidada_por'
+    ).order_by('-año', '-mes', '-quincena', '-fecha_liquidacion')
+    
+    # Filtros
+    if proyecto_id:
+        planillas = planillas.filter(proyecto_id=proyecto_id)
+    
+    if año:
+        planillas = planillas.filter(año=año)
+    
+    if mes:
+        planillas = planillas.filter(mes=mes)
+    
+    if search:
+        planillas = planillas.filter(
+            Q(proyecto__nombre__icontains=search) |
+            Q(observaciones__icontains=search)
+        )
+    
+    # Paginación
+    paginator = Paginator(planillas, 25)  # 25 por página
+    page = request.GET.get('page')
+    planillas_page = paginator.get_page(page)
+    
+    # Calcular totales
+    total_planillas = planillas.count()
+    total_general = planillas.aggregate(
+        total=Sum('total_planilla')
+    )['total'] or Decimal('0.00')
+    
+    total_salarios_general = planillas.aggregate(
+        total=Sum('total_salarios')
+    )['total'] or Decimal('0.00')
+    
+    total_anticipos_general = planillas.aggregate(
+        total=Sum('total_anticipos')
+    )['total'] or Decimal('0.00')
+    
+    # Obtener proyectos para el filtro
+    proyectos = Proyecto.objects.filter(
+        planillas_liquidadas__isnull=False
+    ).distinct().order_by('nombre')
+    
+    # Obtener años disponibles
+    años = PlanillaLiquidada.objects.values_list('año', flat=True).distinct().order_by('-año')
+    
+    context = {
+        'planillas': planillas_page,
+        'total_planillas': total_planillas,
+        'total_general': total_general,
+        'total_salarios_general': total_salarios_general,
+        'total_anticipos_general': total_anticipos_general,
+        'proyectos': proyectos,
+        'años': años,
+        'proyecto_selected': proyecto_id,
+        'año_selected': año,
+        'mes_selected': mes,
+        'search': search,
+        'meses_choices': PlanillaLiquidada.MESES_CHOICES,
+    }
+    
+    return render(request, 'core/planillas/historial.html', context)
+
+
+@login_required
+def trabajadores_diarios_dashboard(request):
+    """Dashboard principal del módulo de Trabajadores Diarios"""
+    from django.db.models import Sum, Count, Q
+    
+    # Obtener todos los trabajadores diarios activos
+    trabajadores = TrabajadorDiario.objects.select_related(
+        'proyecto', 'planilla', 'creado_por'
+    ).filter(
+        activo=True
+    ).order_by('-fecha_registro')
+    
+    # Estadísticas generales
+    total_trabajadores = trabajadores.count()
+    
+    # Obtener proyectos con trabajadores diarios
+    proyectos_con_trabajadores = Proyecto.objects.filter(
+        trabajadores_diarios__activo=True
+    ).distinct().order_by('nombre')
+    
+    # Calcular totales (usando propiedades del modelo)
+    total_a_pagar = sum(t.total_a_pagar for t in trabajadores)
+    total_dias_trabajados = sum(t.total_dias_trabajados for t in trabajadores)
+    total_anticipos = sum(t.total_anticipos_aplicados for t in trabajadores)
+    
+    # Obtener trabajadores recientes (últimos 10)
+    trabajadores_recientes = trabajadores[:10]
+    
+    # Obtener proyectos más activos (con más trabajadores diarios)
+    proyectos_mas_activos = Proyecto.objects.filter(
+        trabajadores_diarios__activo=True
+    ).annotate(
+        num_trabajadores=Count('trabajadores_diarios', filter=Q(trabajadores_diarios__activo=True))
+    ).order_by('-num_trabajadores')[:5]
+    
+    # Obtener TODOS los proyectos activos para el selector
+    todos_proyectos = Proyecto.objects.filter(activo=True).order_by('nombre')
+    
+    context = {
+        'total_trabajadores': total_trabajadores,
+        'total_a_pagar': total_a_pagar,
+        'total_dias_trabajados': total_dias_trabajados,
+        'total_anticipos': total_anticipos,
+        'trabajadores_recientes': trabajadores_recientes,
+        'proyectos_con_trabajadores': proyectos_con_trabajadores,
+        'proyectos_mas_activos': proyectos_mas_activos,
+        'todos_proyectos': todos_proyectos,
+        'titulo': 'Dashboard de Trabajadores Diarios'
+    }
+    
+    return render(request, 'core/trabajadores-diarios/dashboard.html', context)
+
+
+@login_required
+def planillas_trabajadores_diarios_gestor(request):
+    """Gestor de planillas de trabajadores diarios - Vista general de todas las planillas"""
+    from django.db.models import Count, Q
+    
+    # Filtros
+    proyecto_id = request.GET.get('proyecto')
+    estado_filter = request.GET.get('estado')
+    
+    # Obtener todas las planillas
+    planillas = PlanillaTrabajadoresDiarios.objects.select_related(
+        'proyecto', 'creada_por', 'finalizada_por'
+    ).annotate(
+        num_trabajadores=Count('trabajadores', filter=Q(trabajadores__activo=True))
+    ).order_by('-fecha_creacion')
+    
+    # Obtener proyectos para el filtro
+    proyectos = Proyecto.objects.filter(
+        planillas_trabajadores_diarios__isnull=False
+    ).distinct().order_by('nombre')
+    
+    # Estadísticas sobre TODAS las planillas (no filtradas)
+    todas_planillas = PlanillaTrabajadoresDiarios.objects.all()
+    total_planillas = todas_planillas.count()
+    planillas_activas = todas_planillas.filter(estado='activa').count()
+    planillas_finalizadas = todas_planillas.filter(estado='finalizada').count()
+    
+    # Aplicar filtros
+    if proyecto_id:
+        planillas = planillas.filter(proyecto_id=proyecto_id)
+    
+    if estado_filter:
+        planillas = planillas.filter(estado=estado_filter)
+    
+    context = {
+        'planillas': planillas,
+        'proyectos': proyectos,
+        'total_planillas': total_planillas,
+        'planillas_activas': planillas_activas,
+        'planillas_finalizadas': planillas_finalizadas,
+        'proyecto_selected': proyecto_id,
+        'estado_selected': estado_filter,
+    }
+    
+    return render(request, 'core/trabajadores_diarios/gestor_planillas.html', context)

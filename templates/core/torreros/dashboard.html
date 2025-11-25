@@ -1,0 +1,528 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load custom_filters %}
+
+{% block title %}Dashboard Torreros - Sistema ARCA{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Hero Section con Gradiente */
+    .hero-section {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 3rem 0;
+        margin: -2rem -2rem 2rem -2rem;
+        border-radius: 0 0 20px 20px;
+        box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+    }
+    
+    .hero-content h1 {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+    }
+    
+    .hero-content p {
+        font-size: 1.1rem;
+        opacity: 0.95;
+        margin-bottom: 1.5rem;
+    }
+    
+    .btn-hero {
+        background: white;
+        color: #667eea;
+        padding: 12px 30px;
+        border-radius: 50px;
+        font-weight: 600;
+        border: none;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        transition: all 0.3s ease;
+    }
+    
+    .btn-hero:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+        color: #667eea;
+    }
+    
+    /* Stats Cards Modernos */
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    
+    .stat-card {
+        background: white;
+        border-radius: 15px;
+        padding: 1.5rem;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+        transition: all 0.3s ease;
+        border-left: 4px solid;
+    }
+    
+    .stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+    }
+    
+    .stat-card.primary { border-left-color: #667eea; }
+    .stat-card.success { border-left-color: #10b981; }
+    .stat-card.warning { border-left-color: #f59e0b; }
+    .stat-card.danger { border-left-color: #ef4444; }
+    
+    .stat-icon {
+        width: 50px;
+        height: 50px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        margin-bottom: 1rem;
+    }
+    
+    .stat-card.primary .stat-icon { background: #eef2ff; color: #667eea; }
+    .stat-card.success .stat-icon { background: #d1fae5; color: #10b981; }
+    .stat-card.warning .stat-icon { background: #fef3c7; color: #f59e0b; }
+    .stat-card.danger .stat-icon { background: #fee2e2; color: #ef4444; }
+    
+    .stat-value {
+        font-size: 2rem;
+        font-weight: 700;
+        margin-bottom: 0.25rem;
+        color: #1f2937;
+    }
+    
+    .stat-label {
+        color: #6b7280;
+        font-size: 0.9rem;
+        font-weight: 500;
+    }
+    
+    /* Tabla Moderna */
+    .table-modern {
+        background: white;
+        border-radius: 15px;
+        overflow: hidden;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+    }
+    
+    .table-modern thead {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+    }
+    
+    .table-modern thead th {
+        padding: 1rem;
+        font-weight: 600;
+        border: none;
+        text-transform: uppercase;
+        font-size: 0.85rem;
+        letter-spacing: 0.5px;
+    }
+    
+    .table-modern tbody tr {
+        border-bottom: 1px solid #f3f4f6;
+        transition: all 0.2s ease;
+    }
+    
+    .table-modern tbody tr:hover {
+        background: #f9fafb;
+        transform: scale(1.01);
+    }
+    
+    .table-modern tbody td {
+        padding: 1rem;
+        vertical-align: middle;
+    }
+    
+    /* Badges Modernos */
+    .badge-modern {
+        padding: 0.5rem 1rem;
+        border-radius: 50px;
+        font-weight: 600;
+        font-size: 0.85rem;
+        display: inline-block;
+    }
+    
+    .badge-modern.success {
+        background: #d1fae5;
+        color: #065f46;
+    }
+    
+    .badge-modern.warning {
+        background: #fef3c7;
+        color: #92400e;
+    }
+    
+    .badge-modern.danger {
+        background: #fee2e2;
+        color: #991b1b;
+    }
+    
+    .badge-modern.info {
+        background: #dbeafe;
+        color: #1e40af;
+    }
+    
+    /* Progress Bar */
+    .progress-modern {
+        height: 8px;
+        border-radius: 50px;
+        background: #e5e7eb;
+        overflow: hidden;
+    }
+    
+    .progress-bar-modern {
+        height: 100%;
+        border-radius: 50px;
+        transition: width 0.3s ease;
+    }
+    
+    .progress-bar-modern.success { background: linear-gradient(90deg, #10b981, #059669); }
+    .progress-bar-modern.warning { background: linear-gradient(90deg, #f59e0b, #d97706); }
+    .progress-bar-modern.danger { background: linear-gradient(90deg, #ef4444, #dc2626); }
+    
+    /* Section Card */
+    .section-card {
+        background: white;
+        border-radius: 15px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+    }
+    
+    .section-title {
+        font-size: 1.3rem;
+        font-weight: 700;
+        color: #1f2937;
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .section-title i {
+        color: #667eea;
+    }
+    
+    /* Empty State */
+    .empty-state {
+        text-align: center;
+        padding: 3rem;
+        color: #9ca3af;
+    }
+    
+    .empty-state i {
+        font-size: 4rem;
+        margin-bottom: 1rem;
+        opacity: 0.3;
+    }
+    
+    .empty-state h5 {
+        color: #6b7280;
+        margin-bottom: 0.5rem;
+    }
+    
+    /* Botones de Acción */
+    .btn-action-group {
+        display: flex;
+        gap: 0.5rem;
+    }
+    
+    .btn-action {
+        padding: 0.5rem 1rem;
+        border-radius: 8px;
+        border: none;
+        font-weight: 600;
+        transition: all 0.2s ease;
+        cursor: pointer;
+    }
+    
+    .btn-action:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+    
+    .btn-action.primary {
+        background: #667eea;
+        color: white;
+    }
+    
+    .btn-action.success {
+        background: #10b981;
+        color: white;
+    }
+    
+    .btn-action.warning {
+        background: #f59e0b;
+        color: white;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<div class="hero-section">
+    <div class="container">
+        <div class="hero-content">
+            <h1><i class="fas fa-hard-hat me-2"></i>Gestión de Servicios de Torreros</h1>
+            <p>Control completo de servicios, días trabajados y pagos</p>
+            <a href="{% url 'servicio_torrero_create' %}" class="btn btn-hero">
+                <i class="fas fa-plus me-2"></i>Nuevo Servicio
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="container mt-4">
+    <!-- Stats Grid -->
+    <div class="stats-grid">
+        <div class="stat-card primary">
+            <div class="stat-icon">
+                <i class="fas fa-briefcase"></i>
+            </div>
+            <div class="stat-value">{{ total_servicios_activos }}</div>
+            <div class="stat-label">Servicios Activos</div>
+        </div>
+        
+        <div class="stat-card success">
+            <div class="stat-icon">
+                <i class="fas fa-dollar-sign"></i>
+            </div>
+            <div class="stat-value">{{ ingresos_totales|currency_gtq }}</div>
+            <div class="stat-label">Ingresos Totales</div>
+        </div>
+        
+        <div class="stat-card warning">
+            <div class="stat-icon">
+                <i class="fas fa-money-bill-wave"></i>
+            </div>
+            <div class="stat-value">{{ pagos_recibidos|currency_gtq }}</div>
+            <div class="stat-label">Pagos Recibidos</div>
+        </div>
+        
+        <div class="stat-card danger">
+            <div class="stat-icon">
+                <i class="fas fa-exclamation-triangle"></i>
+            </div>
+            <div class="stat-value">{{ saldo_pendiente|currency_gtq }}</div>
+            <div class="stat-label">Saldo Pendiente</div>
+        </div>
+    </div>
+    
+    <!-- Servicios Activos -->
+    <div class="section-card">
+        <h2 class="section-title">
+            <i class="fas fa-list"></i>
+            Servicios Activos
+        </h2>
+        
+        {% if servicios_activos %}
+        <div class="table-responsive">
+            <table class="table table-modern">
+                <thead>
+                    <tr>
+                        <th>Cliente</th>
+                        <th>Torreros</th>
+                        <th>Días Solicitados</th>
+                        <th>Días Trabajados</th>
+                        <th>Progreso</th>
+                        <th>Monto Total</th>
+                        <th>Estado Pago</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for servicio in servicios_activos %}
+                    <tr>
+                        <td>
+                            <div class="fw-bold">{{ servicio.cliente.nombre }}</div>
+                            {% if servicio.proyecto %}
+                                <div class="text-muted small">{{ servicio.proyecto.nombre }}</div>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <span class="badge-modern info">
+                                {{ servicio.cantidad_torreros }} torrero{{ servicio.cantidad_torreros|pluralize }}
+                            </span>
+                        </td>
+                        <td class="text-center">{{ servicio.dias_solicitados }}</td>
+                        <td class="text-center">{{ servicio.dias_trabajados }}</td>
+                        <td style="min-width: 150px;">
+                            <div class="d-flex align-items-center gap-2">
+                                <div class="progress-modern flex-grow-1">
+                                    <div class="progress-bar-modern {% if servicio.porcentaje_completado >= 100 %}success{% elif servicio.porcentaje_completado >= 70 %}warning{% else %}danger{% endif %}" 
+                                         style="width: {{ servicio.porcentaje_completado }}%"></div>
+                                </div>
+                                <span class="small fw-bold">{{ servicio.porcentaje_completado }}%</span>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="fw-bold text-success">{{ servicio.monto_total|currency_gtq }}</span>
+                        </td>
+                        <td>
+                            {% if servicio.esta_pagado %}
+                                <span class="badge-modern success">Pagado</span>
+                            {% else %}
+                                <span class="badge-modern warning">Pendiente</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="btn-action-group">
+                                <a href="{% url 'servicio_torrero_detail' servicio.id %}" class="btn-action primary btn-sm" title="Ver Detalle">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                <a href="{% url 'servicio_torrero_edit' servicio.id %}" class="btn-action warning btn-sm" title="Editar">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        <div class="text-center mt-3">
+            <a href="{% url 'servicio_torrero_list' %}" class="btn btn-outline-primary">
+                <i class="fas fa-list me-2"></i>Ver Todos los Servicios
+            </a>
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <i class="fas fa-hard-hat"></i>
+            <h5>No hay servicios activos</h5>
+            <p>Comienza agregando el primer servicio de torrero</p>
+            <a href="{% url 'servicio_torrero_create' %}" class="btn btn-primary">
+                <i class="fas fa-plus me-2"></i>Agregar Primer Servicio
+            </a>
+        </div>
+        {% endif %}
+    </div>
+    
+    <!-- Últimos Registros de Días -->
+    <div class="section-card">
+        <h2 class="section-title">
+            <i class="fas fa-calendar-check"></i>
+            Últimos Registros de Días Trabajados
+        </h2>
+        
+        {% if ultimos_registros %}
+        <div class="table-responsive">
+            <table class="table table-modern">
+                <thead>
+                    <tr>
+                        <th>Fecha</th>
+                        <th>Cliente</th>
+                        <th>Días Trabajados</th>
+                        <th>Torreros Presentes</th>
+                        <th>Estado</th>
+                        <th>Registrado Por</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for registro in ultimos_registros %}
+                    <tr>
+                        <td>{{ registro.fecha_registro|date:"d/m/Y" }}</td>
+                        <td>{{ registro.servicio.cliente.nombre }}</td>
+                        <td class="text-center">
+                            <span class="badge-modern info">{{ registro.dias_trabajados }} día{{ registro.dias_trabajados|pluralize }}</span>
+                        </td>
+                        <td class="text-center">{{ registro.torreros_presentes }}</td>
+                        <td>
+                            {% if registro.aprobado %}
+                                <span class="badge-modern success">Aprobado</span>
+                            {% else %}
+                                <span class="badge-modern warning">Pendiente</span>
+                            {% endif %}
+                            {% if registro.es_dia_extra %}
+                                <span class="badge-modern danger ms-1">Extra</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ registro.registrado_por.get_full_name|default:registro.registrado_por.username }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <i class="fas fa-calendar-times"></i>
+            <h5>No hay registros de días trabajados</h5>
+        </div>
+        {% endif %}
+    </div>
+    
+    <!-- Últimos Pagos -->
+    <div class="section-card">
+        <h2 class="section-title">
+            <i class="fas fa-receipt"></i>
+            Últimos Pagos Recibidos
+        </h2>
+        
+        {% if ultimos_pagos %}
+        <div class="table-responsive">
+            <table class="table table-modern">
+                <thead>
+                    <tr>
+                        <th>Fecha</th>
+                        <th>Cliente</th>
+                        <th>Monto</th>
+                        <th>Método</th>
+                        <th>Concepto</th>
+                        <th>Registrado Por</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for pago in ultimos_pagos %}
+                    <tr>
+                        <td>{{ pago.fecha_pago|date:"d/m/Y" }}</td>
+                        <td>{{ pago.servicio.cliente.nombre }}</td>
+                        <td>
+                            <span class="fw-bold text-success">{{ pago.monto|currency_gtq }}</span>
+                        </td>
+                        <td>
+                            <span class="badge-modern info">{{ pago.get_metodo_pago_display }}</span>
+                        </td>
+                        <td>{{ pago.concepto|truncatechars:40 }}</td>
+                        <td>{{ pago.registrado_por.get_full_name|default:pago.registrado_por.username }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <i class="fas fa-money-bill-wave"></i>
+            <h5>No hay pagos registrados</h5>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Animación de entrada para las cards
+    document.addEventListener('DOMContentLoaded', function() {
+        const cards = document.querySelectorAll('.stat-card, .section-card');
+        cards.forEach((card, index) => {
+            setTimeout(() => {
+                card.style.opacity = '0';
+                card.style.transform = 'translateY(20px)';
+                card.style.transition = 'all 0.5s ease';
+                
+                setTimeout(() => {
+                    card.style.opacity = '1';
+                    card.style.transform = 'translateY(0)';
+                }, 50);
+            }, index * 100);
+        });
+    });
+</script>
+{% endblock %}
+

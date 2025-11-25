@@ -1,0 +1,209 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load custom_filters %}
+
+{% block title %}Eliminar Servicio - Torreros{% endblock %}
+
+{% block extra_css %}
+<style>
+    .delete-container {
+        max-width: 600px;
+        margin: 3rem auto;
+        background: white;
+        border-radius: 15px;
+        padding: 2rem;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    }
+    
+    .delete-icon {
+        width: 80px;
+        height: 80px;
+        background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 1.5rem;
+        color: white;
+        font-size: 2.5rem;
+    }
+    
+    .delete-title {
+        text-align: center;
+        font-size: 1.8rem;
+        font-weight: 700;
+        color: #1f2937;
+        margin-bottom: 1rem;
+    }
+    
+    .delete-warning {
+        background: #fef3c7;
+        border-left: 4px solid #f59e0b;
+        padding: 1rem;
+        border-radius: 8px;
+        margin-bottom: 1.5rem;
+    }
+    
+    .delete-warning i {
+        color: #f59e0b;
+        margin-right: 0.5rem;
+    }
+    
+    .service-info {
+        background: #f9fafb;
+        border-radius: 10px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .info-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 0.75rem 0;
+        border-bottom: 1px solid #e5e7eb;
+    }
+    
+    .info-row:last-child {
+        border-bottom: none;
+    }
+    
+    .info-label {
+        font-weight: 600;
+        color: #6b7280;
+    }
+    
+    .info-value {
+        color: #1f2937;
+        font-weight: 500;
+    }
+    
+    .btn-delete {
+        background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        border: none;
+        color: white;
+        padding: 0.75rem 2rem;
+        border-radius: 10px;
+        font-weight: 600;
+        width: 100%;
+        margin-bottom: 0.75rem;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-delete:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(239, 68, 68, 0.4);
+        color: white;
+    }
+    
+    .btn-cancel {
+        background: white;
+        border: 2px solid #e5e7eb;
+        color: #6b7280;
+        padding: 0.75rem 2rem;
+        border-radius: 10px;
+        font-weight: 600;
+        width: 100%;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-cancel:hover {
+        border-color: #667eea;
+        color: #667eea;
+        background: #f9fafb;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="delete-container">
+        <div class="delete-icon">
+            <i class="fas fa-exclamation-triangle"></i>
+        </div>
+        
+        <h1 class="delete-title">¿Eliminar este servicio?</h1>
+        
+        <p class="text-center text-muted mb-4">
+            Esta acción marcará el servicio como cancelado y lo desactivará del sistema.
+        </p>
+        
+        <div class="delete-warning">
+            <i class="fas fa-info-circle"></i>
+            <strong>Importante:</strong> El servicio no se eliminará permanentemente, pero quedará marcado como cancelado y no aparecerá en las listas activas.
+        </div>
+        
+        <div class="service-info">
+            <h5 class="mb-3 fw-bold">Información del Servicio</h5>
+            
+            <div class="info-row">
+                <span class="info-label">Cliente:</span>
+                <span class="info-value">{{ servicio.cliente.nombre }}</span>
+            </div>
+            
+            {% if servicio.proyecto %}
+            <div class="info-row">
+                <span class="info-label">Proyecto:</span>
+                <span class="info-value">{{ servicio.proyecto.nombre }}</span>
+            </div>
+            {% endif %}
+            
+            <div class="info-row">
+                <span class="info-label">Cantidad de Torreros:</span>
+                <span class="info-value">{{ servicio.cantidad_torreros }}</span>
+            </div>
+            
+            <div class="info-row">
+                <span class="info-label">Días Solicitados:</span>
+                <span class="info-value">{{ servicio.dias_solicitados }}</span>
+            </div>
+            
+            <div class="info-row">
+                <span class="info-label">Días Trabajados:</span>
+                <span class="info-value">{{ servicio.dias_trabajados }}</span>
+            </div>
+            
+            <div class="info-row">
+                <span class="info-label">Monto Total:</span>
+                <span class="info-value text-success fw-bold">{{ servicio.monto_total|currency_gtq }}</span>
+            </div>
+            
+            <div class="info-row">
+                <span class="info-label">Monto Pagado:</span>
+                <span class="info-value text-primary fw-bold">{{ servicio.monto_pagado|currency_gtq }}</span>
+            </div>
+            
+            <div class="info-row">
+                <span class="info-label">Estado Actual:</span>
+                <span class="info-value">
+                    <span class="badge {% if servicio.estado == 'activo' %}bg-success{% elif servicio.estado == 'completado' %}bg-primary{% elif servicio.estado == 'pausado' %}bg-warning{% else %}bg-danger{% endif %}">
+                        {{ servicio.get_estado_display }}
+                    </span>
+                </span>
+            </div>
+        </div>
+        
+        <form method="post">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-delete">
+                <i class="fas fa-trash me-2"></i>Sí, Eliminar Servicio
+            </button>
+        </form>
+        
+        <a href="{% url 'servicio_torrero_detail' servicio.id %}" class="btn btn-cancel">
+            <i class="fas fa-times me-2"></i>Cancelar
+        </a>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Confirmación adicional antes de eliminar
+    document.querySelector('form').addEventListener('submit', function(e) {
+        if (!confirm('¿Está completamente seguro de que desea eliminar este servicio?')) {
+            e.preventDefault();
+        }
+    });
+</script>
+{% endblock %}
+

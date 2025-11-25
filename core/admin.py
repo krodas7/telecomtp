@@ -7,7 +7,8 @@ from .models import (
     LogActividad, ArchivoAdjunto, Anticipo, AplicacionAnticipo,
     ArchivoProyecto, CarpetaProyecto, ConfiguracionSistema,
     Cotizacion, ItemCotizacion, ItemReutilizable, ConfiguracionPlanilla, PlanillaLiquidada,
-    EventoCalendario, NotaPostit, CajaMenuda
+    EventoCalendario, NotaPostit, CajaMenuda, ServicioTorrero, RegistroDiasTrabajados, 
+    PagoServicioTorrero
 )
 
 
@@ -445,4 +446,99 @@ class CajaMenudaAdmin(admin.ModelAdmin):
     def save_model(self, request, obj, form, change):
         if not change:
             obj.creado_por = request.user
+        super().save_model(request, obj, form, change)
+
+
+@admin.register(ServicioTorrero)
+class ServicioTorreroAdmin(admin.ModelAdmin):
+    list_display = ('cliente', 'cantidad_torreros', 'dias_solicitados', 'dias_trabajados', 
+                   'porcentaje_completado', 'tarifa_por_dia', 'monto_total', 'estado', 
+                   'fecha_inicio', 'activo')
+    list_filter = ('estado', 'activo', 'periodo', 'fecha_inicio')
+    search_fields = ('cliente__nombre', 'descripcion', 'observaciones')
+    readonly_fields = ('dias_trabajados', 'monto_pagado', 'creado_por', 'creado_en', 'actualizado_en')
+    
+    fieldsets = (
+        ('Información Básica', {
+            'fields': ('cliente', 'proyecto', 'descripcion', 'cantidad_torreros')
+        }),
+        ('Periodo y Tiempo', {
+            'fields': ('periodo', 'dias_solicitados', 'dias_trabajados', 'fecha_inicio', 
+                      'fecha_fin_estimada', 'fecha_fin_real')
+        }),
+        ('Tarifas y Pagos', {
+            'fields': ('tarifa_por_dia', 'monto_total', 'monto_pagado')
+        }),
+        ('Estado', {
+            'fields': ('estado', 'activo', 'observaciones')
+        }),
+        ('Auditoría', {
+            'fields': ('creado_por', 'creado_en', 'actualizado_en'),
+            'classes': ('collapse',)
+        }),
+    )
+    
+    def save_model(self, request, obj, form, change):
+        if not change:
+            obj.creado_por = request.user
+        obj.calcular_monto_total()
+        super().save_model(request, obj, form, change)
+
+
+@admin.register(RegistroDiasTrabajados)
+class RegistroDiasTrabajarAdmin(admin.ModelAdmin):
+    list_display = ('servicio', 'fecha_registro', 'dias_trabajados', 'torreros_presentes', 
+                   'es_dia_extra', 'aprobado', 'registrado_por')
+    list_filter = ('aprobado', 'es_dia_extra', 'fecha_registro')
+    search_fields = ('servicio__cliente__nombre', 'descripcion', 'observaciones')
+    readonly_fields = ('es_dia_extra', 'registrado_por', 'aprobado_por', 'creado_en', 'actualizado_en')
+    
+    fieldsets = (
+        ('Servicio', {
+            'fields': ('servicio',)
+        }),
+        ('Información del Registro', {
+            'fields': ('fecha_registro', 'dias_trabajados', 'torreros_presentes', 
+                      'descripcion', 'observaciones')
+        }),
+        ('Validación', {
+            'fields': ('es_dia_extra', 'aprobado', 'aprobado_por')
+        }),
+        ('Auditoría', {
+            'fields': ('registrado_por', 'creado_en', 'actualizado_en'),
+            'classes': ('collapse',)
+        }),
+    )
+    
+    def save_model(self, request, obj, form, change):
+        if not change:
+            obj.registrado_por = request.user
+        super().save_model(request, obj, form, change)
+
+
+@admin.register(PagoServicioTorrero)
+class PagoServicioTorreroAdmin(admin.ModelAdmin):
+    list_display = ('servicio', 'fecha_pago', 'monto', 'metodo_pago', 'numero_referencia', 
+                   'registrado_por', 'creado_en')
+    list_filter = ('metodo_pago', 'fecha_pago')
+    search_fields = ('servicio__cliente__nombre', 'concepto', 'numero_referencia', 'observaciones')
+    readonly_fields = ('registrado_por', 'creado_en', 'actualizado_en')
+    
+    fieldsets = (
+        ('Servicio', {
+            'fields': ('servicio',)
+        }),
+        ('Información del Pago', {
+            'fields': ('fecha_pago', 'monto', 'metodo_pago', 'numero_referencia', 
+                      'comprobante', 'concepto', 'observaciones')
+        }),
+        ('Auditoría', {
+            'fields': ('registrado_por', 'creado_en', 'actualizado_en'),
+            'classes': ('collapse',)
+        }),
+    )
+    
+    def save_model(self, request, obj, form, change):
+        if not change:
+            obj.registrado_por = request.user
         super().save_model(request, obj, form, change)

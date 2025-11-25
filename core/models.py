@@ -240,6 +240,114 @@ class Proyecto(models.Model):
         return self.presupuesto - self.get_total_gastos_aprobados()
 
 
+class Subproyecto(models.Model):
+    """Modelo para subproyectos dentro de un proyecto principal"""
+    ESTADO_CHOICES = [
+        ('pendiente', 'Pendiente'),
+        ('en_progreso', 'En Progreso'),
+        ('completado', 'Completado'),
+        ('pausado', 'Pausado'),
+        ('cancelado', 'Cancelado'),
+    ]
+    
+    # Relaciones
+    proyecto = models.ForeignKey(Proyecto, on_delete=models.CASCADE, 
+                                related_name='subproyectos',
+                                help_text="Proyecto principal al que pertenece")
+    cotizacion = models.ForeignKey('Cotizacion', on_delete=models.SET_NULL, 
+                                  null=True, blank=True,
+                                  related_name='subproyectos',
+                                  help_text="Cotización asociada a este subproyecto")
+    
+    # Información básica
+    nombre = models.CharField(max_length=200, help_text="Nombre del subproyecto")
+    codigo = models.CharField(max_length=50, unique=True, 
+                             help_text="Código único del subproyecto (ej: PROJ-001-SUB-001)")
+    descripcion = models.TextField(blank=True, help_text="Descripción detallada del subproyecto")
+    
+    # Fechas
+    fecha_inicio = models.DateField(help_text="Fecha de inicio del subproyecto")
+    fecha_fin_estimada = models.DateField(help_text="Fecha estimada de finalización")
+    fecha_fin_real = models.DateField(null=True, blank=True, 
+                                     help_text="Fecha real de finalización")
+    
+    # Financiero
+    monto_cotizado = models.DecimalField(max_digits=12, decimal_places=2, default=0,
+                                        help_text="Monto de la cotización asociada")
+    
+    # Estado
+    estado = models.CharField(max_length=20, choices=ESTADO_CHOICES, default='pendiente')
+    porcentaje_avance = models.DecimalField(max_digits=5, decimal_places=2, default=0,
+                                           help_text="Porcentaje de avance del subproyecto")
+    activo = models.BooleanField(default=True)
+    
+    # Auditoría
+    creado_por = models.ForeignKey(User, on_delete=models.SET_NULL, null=True,
+                                  related_name='subproyectos_creados')
+    creado_en = models.DateTimeField(auto_now_add=True)
+    actualizado_en = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        verbose_name = 'Subproyecto'
+        verbose_name_plural = 'Subproyectos'
+        ordering = ['proyecto', 'codigo']
+        indexes = [
+            models.Index(fields=['proyecto', 'estado']),
+            models.Index(fields=['cotizacion']),
+        ]
+    
+    def __str__(self):
+        return f"{self.codigo} - {self.nombre}"
+    
+    def save(self, *args, **kwargs):
+        # Si hay cotización asociada, actualizar monto_cotizado
+        if self.cotizacion:
+            self.monto_cotizado = self.cotizacion.monto_total
+        super().save(*args, **kwargs)
+    
+    @property
+    def monto_cotizado(self):
+        """Retorna el monto de la cotización asociada"""
+        if self.cotizacion:
+            return self.cotizacion.monto_total
+        return Decimal('0.00')
+    
+    @property
+    def total_ingresos(self):
+        """Calcular total de ingresos (facturas pagadas)"""
+        from django.db.models import Sum
+        total = self.facturas.filter(estado='pagada').aggregate(
+            total=Sum('monto_total')
+        )['total']
+        return Decimal(str(total)) if total else Decimal('0.00')
+    
+    @property
+    def total_gastos(self):
+        """Calcular total de gastos del subproyecto"""
+        from django.db.models import Sum
+        total = self.gastos.filter(aprobado=True).aggregate(
+            total=Sum('monto')
+        )['total']
+        return Decimal(str(total)) if total else Decimal('0.00')
+    
+    @property
+    def rentabilidad(self):
+        """Calcular rentabilidad del subproyecto"""
+        return self.total_ingresos - self.total_gastos
+    
+    @property
+    def margen_rentabilidad(self):
+        """Calcular margen de rentabilidad en porcentaje"""
+        if self.total_ingresos > 0:
+            return (self.rentabilidad / self.total_ingresos) * 100
+        return Decimal('0.00')
+    
+    @property
+    def esta_completado(self):
+        """Verificar si el subproyecto está completado"""
+        return self.estado == 'completado' and self.fecha_fin_real is not None
+
+
 class ArchivoAdjunto(models.Model):
     """Modelo para archivos adjuntos"""
     TIPO_CHOICES = [
@@ -289,6 +397,10 @@ class Factura(models.Model):
     
     numero_factura = models.CharField(max_length=20, unique=True, help_text="Número único de la factura")
     proyecto = models.ForeignKey(Proyecto, on_delete=models.CASCADE, related_name='facturas')
+    subproyecto = models.ForeignKey('Subproyecto', on_delete=models.SET_NULL, 
+                                   null=True, blank=True,
+                                   related_name='facturas',
+                                   help_text="Subproyecto asociado (opcional)")
     cliente = models.ForeignKey(Cliente, on_delete=models.CASCADE, related_name='facturas')
     
     tipo = models.CharField(max_length=20, choices=TIPO_CHOICES, default='progreso')
@@ -506,6 +618,10 @@ class CategoriaGasto(models.Model):
 class Gasto(models.Model):
     """Modelo para gastos"""
     proyecto = models.ForeignKey(Proyecto, on_delete=models.CASCADE)
+    subproyecto = models.ForeignKey('Subproyecto', on_delete=models.SET_NULL,
+                                   null=True, blank=True,
+                                   related_name='gastos',
+                                   help_text="Subproyecto asociado (opcional)")
     categoria = models.ForeignKey(CategoriaGasto, on_delete=models.CASCADE)
     descripcion = models.TextField()
     monto = models.FloatField()
@@ -1514,7 +1630,7 @@ class TrabajadorDiario(models.Model):
     proyecto = models.ForeignKey(Proyecto, on_delete=models.CASCADE, related_name='trabajadores_diarios', verbose_name="Proyecto")
     planilla = models.ForeignKey('PlanillaTrabajadoresDiarios', on_delete=models.CASCADE, related_name='trabajadores', null=True, blank=True, verbose_name="Planilla")
     nombre = models.CharField(max_length=100, verbose_name="Nombre del trabajador")
-    pago_diario = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Pago diario (Q)")
+    pago_diario = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Pago diario ($)")
     activo = models.BooleanField(default=True, verbose_name="Activo")
     fecha_registro = models.DateTimeField(auto_now_add=True, verbose_name="Fecha de registro")
     creado_por = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name="Creado por")
@@ -1545,7 +1661,7 @@ class TrabajadorDiario(models.Model):
     @property
     def total_anticipos_aplicados(self):
         """Calcula el total de anticipos aplicados para este trabajador"""
-        return sum(anticipo.monto_aplicado for anticipo in self.anticipos.filter(estado='aplicado'))
+        return sum(anticipo.monto for anticipo in self.anticipos.filter(estado='aplicado'))
     
     @property
     def saldo_pendiente(self):
@@ -2084,5 +2200,289 @@ class CajaMenuda(models.Model):
     
     def __str__(self):
         return f"{self.folio} - ${self.monto} ({self.fecha})"
+
+
+class Torrero(models.Model):
+    """Modelo para el catálogo de torreros"""
+    # Información personal
+    nombre = models.CharField(max_length=200, help_text="Nombre completo del torrero")
+    cedula = models.CharField(max_length=50, unique=True, help_text="Cédula o documento de identidad")
+    telefono = models.CharField(max_length=20, blank=True, help_text="Número de teléfono")
+    email = models.EmailField(blank=True, help_text="Correo electrónico")
+    direccion = models.TextField(blank=True, help_text="Dirección de residencia")
+    
+    # Información laboral
+    fecha_ingreso = models.DateField(help_text="Fecha de ingreso")
+    especialidad = models.CharField(max_length=100, blank=True, 
+                                   help_text="Especialidad o habilidad principal")
+    tarifa_diaria = models.DecimalField(max_digits=10, decimal_places=2, 
+                                       help_text="Tarifa diaria estándar")
+    
+    # Documentos
+    foto = models.ImageField(upload_to='torreros/fotos/', blank=True, 
+                            help_text="Foto del torrero")
+    
+    # Estado
+    activo = models.BooleanField(default=True, help_text="Torrero activo en el sistema")
+    observaciones = models.TextField(blank=True, help_text="Observaciones adicionales")
+    
+    # Auditoría
+    creado_por = models.ForeignKey(User, on_delete=models.SET_NULL, null=True,
+                                  related_name='torreros_creados')
+    creado_en = models.DateTimeField(auto_now_add=True)
+    actualizado_en = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        verbose_name = 'Torrero'
+        verbose_name_plural = 'Torreros'
+        ordering = ['nombre']
+        indexes = [
+            models.Index(fields=['cedula']),
+            models.Index(fields=['activo', 'nombre']),
+        ]
+    
+    def __str__(self):
+        return f"{self.nombre} - {self.cedula}"
+    
+    @property
+    def servicios_activos(self):
+        """Retorna los servicios activos donde está asignado este torrero"""
+        return self.asignaciones_torrero.filter(
+            servicio__estado='activo',
+            servicio__activo=True
+        ).count()
+
+
+class ServicioTorrero(models.Model):
+    """Modelo para servicios de torreros contratados por clientes"""
+    ESTADO_CHOICES = [
+        ('activo', 'Activo'),
+        ('completado', 'Completado'),
+        ('cancelado', 'Cancelado'),
+        ('pausado', 'Pausado'),
+    ]
+    
+    PERIODO_CHOICES = [
+        ('dias', 'Por Días'),
+        ('semanas', 'Por Semanas'),
+        ('meses', 'Por Meses'),
+    ]
+    
+    # Información básica
+    cliente = models.ForeignKey(Cliente, on_delete=models.CASCADE, related_name='servicios_torreros')
+    proyecto = models.ForeignKey(Proyecto, on_delete=models.SET_NULL, null=True, blank=True, 
+                                help_text="Proyecto asociado (opcional)")
+    
+    # Detalles del servicio
+    descripcion = models.TextField(help_text="Descripción del servicio solicitado")
+    cantidad_torreros = models.PositiveIntegerField(default=1, help_text="Cantidad de torreros requeridos")
+    
+    # Periodo y tiempo
+    periodo = models.CharField(max_length=20, choices=PERIODO_CHOICES, default='dias')
+    dias_solicitados = models.DecimalField(max_digits=6, decimal_places=1, help_text="Total de días solicitados por el cliente")
+    dias_trabajados = models.DecimalField(max_digits=6, decimal_places=1, default=0, help_text="Días efectivamente trabajados")
+    
+    # Fechas
+    fecha_inicio = models.DateField(help_text="Fecha de inicio del servicio")
+    fecha_fin_estimada = models.DateField(help_text="Fecha estimada de finalización")
+    fecha_fin_real = models.DateField(null=True, blank=True, help_text="Fecha real de finalización")
+    
+    # Tarifas
+    tarifa_por_dia = models.DecimalField(max_digits=10, decimal_places=2, 
+                                        help_text="Tarifa por día por torrero")
+    monto_total = models.DecimalField(max_digits=10, decimal_places=2, 
+                                     help_text="Monto total del servicio")
+    monto_pagado = models.DecimalField(max_digits=10, decimal_places=2, default=0,
+                                      help_text="Monto total pagado hasta el momento")
+    
+    # Estado
+    estado = models.CharField(max_length=20, choices=ESTADO_CHOICES, default='activo')
+    activo = models.BooleanField(default=True)
+    
+    # Observaciones
+    observaciones = models.TextField(blank=True, help_text="Observaciones adicionales del servicio")
+    
+    # Auditoría
+    creado_por = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, 
+                                  related_name='servicios_torreros_creados')
+    creado_en = models.DateTimeField(auto_now_add=True)
+    actualizado_en = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        verbose_name = 'Servicio de Torrero'
+        verbose_name_plural = 'Servicios de Torreros'
+        ordering = ['-fecha_inicio']
+        indexes = [
+            models.Index(fields=['cliente', 'estado']),
+            models.Index(fields=['fecha_inicio', 'estado']),
+        ]
+    
+    def __str__(self):
+        return f"{self.cliente.razon_social} - {self.cantidad_torreros} torrero(s) x {self.dias_solicitados} días"
+    
+    @property
+    def dias_restantes(self):
+        """Calcula los días restantes del servicio"""
+        return max(0, self.dias_solicitados - self.dias_trabajados)
+    
+    @property
+    def porcentaje_completado(self):
+        """Calcula el porcentaje de días completados"""
+        if self.dias_solicitados > 0:
+            return round((self.dias_trabajados / self.dias_solicitados) * 100, 2)
+        return 0
+    
+    @property
+    def saldo_pendiente(self):
+        """Calcula el saldo pendiente de pago"""
+        return self.monto_total - self.monto_pagado
+    
+    @property
+    def esta_pagado(self):
+        """Verifica si el servicio está completamente pagado"""
+        return self.monto_pagado >= self.monto_total
+    
+    def calcular_monto_total(self):
+        """Calcula el monto total basado en días solicitados y tarifa"""
+        self.monto_total = self.dias_solicitados * self.tarifa_por_dia * self.cantidad_torreros
+        return self.monto_total
+
+
+class RegistroDiasTrabajados(models.Model):
+    """Modelo para registrar los días trabajados en un servicio de torrero"""
+    servicio = models.ForeignKey(ServicioTorrero, on_delete=models.CASCADE, 
+                                related_name='registros_dias')
+    
+    # Información del registro
+    fecha_registro = models.DateField(help_text="Fecha en que se trabajaron los días")
+    dias_trabajados = models.DecimalField(max_digits=5, decimal_places=1, help_text="Cantidad de días trabajados en esta fecha (puede ser 0.5, 1, 1.5, etc.)")
+    torreros_presentes = models.PositiveIntegerField(default=1, help_text="Cantidad de torreros que trabajaron")
+    
+    # Detalles
+    descripcion = models.TextField(blank=True, help_text="Descripción del trabajo realizado")
+    observaciones = models.TextField(blank=True, help_text="Observaciones adicionales")
+    
+    # Validación
+    es_dia_extra = models.BooleanField(default=False, 
+                                      help_text="Marca si este registro excede los días solicitados")
+    aprobado = models.BooleanField(default=False, 
+                                  help_text="Indica si el registro ha sido aprobado")
+    aprobado_por = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True,
+                                    related_name='registros_dias_aprobados')
+    
+    # Auditoría
+    registrado_por = models.ForeignKey(User, on_delete=models.SET_NULL, null=True,
+                                      related_name='registros_dias_creados')
+    creado_en = models.DateTimeField(auto_now_add=True)
+    actualizado_en = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        verbose_name = 'Registro de Días Trabajados'
+        verbose_name_plural = 'Registros de Días Trabajados'
+        ordering = ['-fecha_registro']
+        indexes = [
+            models.Index(fields=['servicio', 'fecha_registro']),
+            models.Index(fields=['aprobado']),
+        ]
+    
+    def __str__(self):
+        return f"{self.servicio.cliente.razon_social} - {self.dias_trabajados} día(s) - {self.fecha_registro}"
+    
+    def save(self, *args, **kwargs):
+        # Verificar si excede los días solicitados
+        total_dias = self.servicio.dias_trabajados + self.dias_trabajados
+        if total_dias > self.servicio.dias_solicitados:
+            self.es_dia_extra = True
+        
+        super().save(*args, **kwargs)
+        
+        # Actualizar el contador de días trabajados en el servicio
+        if self.aprobado:
+            self.servicio.dias_trabajados = self.servicio.registros_dias.filter(
+                aprobado=True
+            ).aggregate(total=models.Sum('dias_trabajados'))['total'] or 0
+            self.servicio.save()
+
+
+class AsignacionTorrero(models.Model):
+    """Modelo intermedio para asignar torreros a servicios"""
+    servicio = models.ForeignKey(ServicioTorrero, on_delete=models.CASCADE,
+                                related_name='asignaciones')
+    torrero = models.ForeignKey(Torrero, on_delete=models.CASCADE,
+                               related_name='asignaciones_torrero')
+    
+    # Información de la asignación
+    fecha_asignacion = models.DateField(auto_now_add=True)
+    tarifa_acordada = models.DecimalField(max_digits=10, decimal_places=2,
+                                         help_text="Tarifa acordada para este servicio")
+    activo = models.BooleanField(default=True)
+    observaciones = models.TextField(blank=True)
+    
+    # Auditoría
+    asignado_por = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
+    creado_en = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        verbose_name = 'Asignación de Torrero'
+        verbose_name_plural = 'Asignaciones de Torreros'
+        unique_together = ['servicio', 'torrero']
+        ordering = ['-fecha_asignacion']
+    
+    def __str__(self):
+        return f"{self.torrero.nombre} → {self.servicio.cliente.razon_social}"
+
+
+class PagoServicioTorrero(models.Model):
+    """Modelo para registrar los pagos de servicios de torreros"""
+    METODO_PAGO_CHOICES = [
+        ('efectivo', 'Efectivo'),
+        ('transferencia', 'Transferencia Bancaria'),
+        ('cheque', 'Cheque'),
+        ('deposito', 'Depósito'),
+    ]
+    
+    servicio = models.ForeignKey(ServicioTorrero, on_delete=models.CASCADE,
+                                related_name='pagos')
+    
+    # Información del pago
+    fecha_pago = models.DateField(help_text="Fecha en que se realizó el pago")
+    monto = models.DecimalField(max_digits=10, decimal_places=2, help_text="Monto del pago")
+    metodo_pago = models.CharField(max_length=20, choices=METODO_PAGO_CHOICES, default='efectivo')
+    
+    # Referencias
+    numero_referencia = models.CharField(max_length=100, blank=True,
+                                        help_text="Número de referencia, cheque o transacción")
+    comprobante = models.FileField(upload_to='comprobantes_torreros/', blank=True,
+                                   help_text="Comprobante de pago (opcional)")
+    
+    # Detalles
+    concepto = models.CharField(max_length=200, help_text="Concepto del pago")
+    observaciones = models.TextField(blank=True, help_text="Observaciones adicionales")
+    
+    # Auditoría
+    registrado_por = models.ForeignKey(User, on_delete=models.SET_NULL, null=True,
+                                      related_name='pagos_torreros_registrados')
+    creado_en = models.DateTimeField(auto_now_add=True)
+    actualizado_en = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        verbose_name = 'Pago de Servicio de Torrero'
+        verbose_name_plural = 'Pagos de Servicios de Torreros'
+        ordering = ['-fecha_pago']
+        indexes = [
+            models.Index(fields=['servicio', 'fecha_pago']),
+        ]
+    
+    def __str__(self):
+        return f"Pago {self.monto} - {self.servicio.cliente.razon_social} - {self.fecha_pago}"
+    
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        
+        # Actualizar el monto pagado en el servicio
+        self.servicio.monto_pagado = self.servicio.pagos.aggregate(
+            total=models.Sum('monto')
+        )['total'] or 0
+        self.servicio.save()
 
 

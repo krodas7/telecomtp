@@ -1,0 +1,312 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load custom_filters %}
+
+{% block title %}Lista de Servicios - Torreros{% endblock %}
+
+{% block extra_css %}
+<style>
+    .page-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 2rem;
+        border-radius: 15px;
+        margin-bottom: 2rem;
+        box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+    }
+    
+    .filters-card {
+        background: white;
+        border-radius: 15px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+    }
+    
+    .table-card {
+        background: white;
+        border-radius: 15px;
+        padding: 1.5rem;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+    }
+    
+    .table-modern {
+        margin-bottom: 0;
+    }
+    
+    .table-modern thead {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+    }
+    
+    .table-modern thead th {
+        padding: 1rem;
+        font-weight: 600;
+        border: none;
+        text-transform: uppercase;
+        font-size: 0.85rem;
+    }
+    
+    .table-modern tbody tr {
+        border-bottom: 1px solid #f3f4f6;
+        transition: all 0.2s ease;
+    }
+    
+    .table-modern tbody tr:hover {
+        background: #f9fafb;
+    }
+    
+    .table-modern tbody td {
+        padding: 1rem;
+        vertical-align: middle;
+    }
+    
+    .badge-modern {
+        padding: 0.5rem 1rem;
+        border-radius: 50px;
+        font-weight: 600;
+        font-size: 0.85rem;
+    }
+    
+    .badge-modern.activo {
+        background: #d1fae5;
+        color: #065f46;
+    }
+    
+    .badge-modern.completado {
+        background: #dbeafe;
+        color: #1e40af;
+    }
+    
+    .badge-modern.pausado {
+        background: #fef3c7;
+        color: #92400e;
+    }
+    
+    .badge-modern.cancelado {
+        background: #fee2e2;
+        color: #991b1b;
+    }
+    
+    .progress-modern {
+        height: 8px;
+        border-radius: 50px;
+        background: #e5e7eb;
+    }
+    
+    .progress-bar-modern {
+        height: 100%;
+        border-radius: 50px;
+        background: linear-gradient(90deg, #10b981, #059669);
+    }
+    
+    .btn-action {
+        padding: 0.4rem 0.8rem;
+        border-radius: 8px;
+        border: none;
+        transition: all 0.2s ease;
+    }
+    
+    .btn-action:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+    
+    .pagination {
+        margin-top: 2rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h1 class="mb-2"><i class="fas fa-list me-2"></i>Todos los Servicios de Torreros</h1>
+                <p class="mb-0 opacity-75">Gestión completa de servicios contratados</p>
+            </div>
+            <a href="{% url 'servicio_torrero_create' %}" class="btn btn-light btn-lg">
+                <i class="fas fa-plus me-2"></i>Nuevo Servicio
+            </a>
+        </div>
+    </div>
+    
+    <!-- Filtros -->
+    <div class="filters-card">
+        <form method="get" class="row g-3">
+            <div class="col-md-4">
+                <label class="form-label fw-bold">Estado</label>
+                <select name="estado" class="form-select">
+                    <option value="">Todos los estados</option>
+                    <option value="activo" {% if filtro_estado == 'activo' %}selected{% endif %}>Activo</option>
+                    <option value="completado" {% if filtro_estado == 'completado' %}selected{% endif %}>Completado</option>
+                    <option value="pausado" {% if filtro_estado == 'pausado' %}selected{% endif %}>Pausado</option>
+                    <option value="cancelado" {% if filtro_estado == 'cancelado' %}selected{% endif %}>Cancelado</option>
+                </select>
+            </div>
+            
+            <div class="col-md-4">
+                <label class="form-label fw-bold">Cliente</label>
+                <select name="cliente" class="form-select">
+                    <option value="">Todos los clientes</option>
+                    {% for cliente in clientes %}
+                        <option value="{{ cliente.id }}" {% if filtro_cliente == cliente.id|stringformat:"s" %}selected{% endif %}>
+                            {{ cliente.nombre }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="col-md-4 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary me-2">
+                    <i class="fas fa-filter me-2"></i>Filtrar
+                </button>
+                <a href="{% url 'servicio_torrero_list' %}" class="btn btn-outline-secondary">
+                    <i class="fas fa-times me-2"></i>Limpiar
+                </a>
+            </div>
+        </form>
+    </div>
+    
+    <!-- Tabla de Servicios -->
+    <div class="table-card">
+        {% if servicios %}
+        <div class="table-responsive">
+            <table class="table table-modern">
+                <thead>
+                    <tr>
+                        <th>Cliente</th>
+                        <th>Proyecto</th>
+                        <th>Torreros</th>
+                        <th>Días</th>
+                        <th>Progreso</th>
+                        <th>Tarifa/Día</th>
+                        <th>Monto Total</th>
+                        <th>Estado</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for servicio in servicios %}
+                    <tr>
+                        <td>
+                            <div class="fw-bold">{{ servicio.cliente.nombre }}</div>
+                            <div class="text-muted small">
+                                <i class="fas fa-calendar me-1"></i>{{ servicio.fecha_inicio|date:"d/m/Y" }}
+                            </div>
+                        </td>
+                        <td>
+                            {% if servicio.proyecto %}
+                                <span class="text-primary">{{ servicio.proyecto.nombre }}</span>
+                            {% else %}
+                                <span class="text-muted">-</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-center">
+                            <span class="badge bg-info">{{ servicio.cantidad_torreros }}</span>
+                        </td>
+                        <td class="text-center">
+                            <div class="small">
+                                <strong>{{ servicio.dias_trabajados }}</strong> / {{ servicio.dias_solicitados }}
+                            </div>
+                        </td>
+                        <td style="min-width: 150px;">
+                            <div class="d-flex align-items-center gap-2">
+                                <div class="progress-modern flex-grow-1">
+                                    <div class="progress-bar-modern" style="width: {{ servicio.porcentaje_completado }}%"></div>
+                                </div>
+                                <span class="small fw-bold">{{ servicio.porcentaje_completado }}%</span>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="text-success fw-bold">{{ servicio.tarifa_por_dia|currency_gtq }}</span>
+                        </td>
+                        <td>
+                            <div class="fw-bold">{{ servicio.monto_total|currency_gtq }}</div>
+                            <div class="small text-muted">Pagado: {{ servicio.monto_pagado|currency_gtq }}</div>
+                        </td>
+                        <td>
+                            <span class="badge-modern {{ servicio.estado }}">
+                                {{ servicio.get_estado_display }}
+                            </span>
+                        </td>
+                        <td>
+                            <div class="d-flex gap-1">
+                                <a href="{% url 'servicio_torrero_detail' servicio.id %}" 
+                                   class="btn btn-primary btn-sm btn-action" 
+                                   title="Ver Detalle">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                <a href="{% url 'servicio_torrero_edit' servicio.id %}" 
+                                   class="btn btn-warning btn-sm btn-action" 
+                                   title="Editar">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <a href="{% url 'servicio_torrero_delete' servicio.id %}" 
+                                   class="btn btn-danger btn-sm btn-action" 
+                                   title="Eliminar">
+                                    <i class="fas fa-trash"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Paginación -->
+        {% if page_obj.has_other_pages %}
+        <nav aria-label="Paginación" class="mt-4">
+            <ul class="pagination justify-content-center">
+                {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page=1{% if filtro_estado %}&estado={{ filtro_estado }}{% endif %}{% if filtro_cliente %}&cliente={{ filtro_cliente }}{% endif %}">
+                            <i class="fas fa-angle-double-left"></i>
+                        </a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if filtro_estado %}&estado={{ filtro_estado }}{% endif %}{% if filtro_cliente %}&cliente={{ filtro_cliente }}{% endif %}">
+                            <i class="fas fa-angle-left"></i>
+                        </a>
+                    </li>
+                {% endif %}
+                
+                <li class="page-item active">
+                    <span class="page-link">
+                        Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}
+                    </span>
+                </li>
+                
+                {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if filtro_estado %}&estado={{ filtro_estado }}{% endif %}{% if filtro_cliente %}&cliente={{ filtro_cliente }}{% endif %}">
+                            <i class="fas fa-angle-right"></i>
+                        </a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if filtro_estado %}&estado={{ filtro_estado }}{% endif %}{% if filtro_cliente %}&cliente={{ filtro_cliente }}{% endif %}">
+                            <i class="fas fa-angle-double-right"></i>
+                        </a>
+                    </li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+        
+        {% else %}
+        <div class="text-center py-5">
+            <i class="fas fa-hard-hat fa-4x text-muted mb-3"></i>
+            <h5 class="text-muted">No se encontraron servicios</h5>
+            <p class="text-muted">Intenta ajustar los filtros o crea un nuevo servicio</p>
+            <a href="{% url 'servicio_torrero_create' %}" class="btn btn-primary mt-3">
+                <i class="fas fa-plus me-2"></i>Crear Primer Servicio
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+

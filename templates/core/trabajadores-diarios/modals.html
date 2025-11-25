@@ -1,0 +1,75 @@
+<!-- Modal de Finalizar Planilla -->
+<div class="modal fade" id="finalizarPlanillaModal" tabindex="-1" aria-labelledby="finalizarPlanillaModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="finalizarPlanillaModalLabel">
+                    <i class="fas fa-check-circle text-warning me-2"></i>Finalizar Planilla
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    <strong>¿Está seguro que desea finalizar esta planilla?</strong>
+                </div>
+                <p>Esta acción realizará lo siguiente:</p>
+                <ul class="list-unstyled">
+                    <li><i class="fas fa-file-pdf text-success me-2"></i>Generará un PDF de la planilla actual</li>
+                    <li><i class="fas fa-folder-plus text-primary me-2"></i>Creará una carpeta "Trabajadores Diarios" en los archivos del proyecto</li>
+                    <li><i class="fas fa-save text-info me-2"></i>Guardará el PDF en la carpeta del proyecto</li>
+                    <li><i class="fas fa-trash text-danger me-2"></i>Limpiará la lista de trabajadores para una nueva planilla</li>
+                </ul>
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <strong>Advertencia:</strong> Esta acción no se puede deshacer.
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-1"></i>Cancelar
+                </button>
+                <form method="post" action="{% url 'finalizar_planilla_trabajadores' proyecto.id %}" style="display: inline;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-warning" id="finalizarPlanillaBtn">
+                        <i class="fas fa-check-circle me-1"></i>Finalizar Planilla
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Reactivar Todos -->
+<div class="modal fade" id="reactivarTodosModal" tabindex="-1" aria-labelledby="reactivarTodosModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="reactivarTodosModalLabel">
+                    <i class="fas fa-undo text-success me-2"></i>Reactivar Todos los Trabajadores
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    <strong>¿Estás seguro?</strong> Esta acción reactivará todos los trabajadores liquidados de esta planilla.
+                </div>
+                <p>Los trabajadores reactivados podrán ser editados y pagados nuevamente.</p>
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <strong>Nota:</strong> Esta acción no se puede deshacer automáticamente.
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-1"></i>Cancelar
+                </button>
+                <button type="button" class="btn btn-success" onclick="reactivarTodosTrabajadores()">
+                    <i class="fas fa-undo me-1"></i>Reactivar Todos
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+

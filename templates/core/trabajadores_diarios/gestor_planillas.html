@@ -1,0 +1,428 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Gestor de Planillas - Trabajadores Diarios{% endblock %}
+
+{% block extra_css %}
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+    
+    * {
+        font-family: 'Inter', sans-serif;
+    }
+    
+    body {
+        background: #fafafa;
+    }
+    
+    /* Hero Section */
+    .hero-section {
+        background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
+        color: white;
+        padding: 2rem 0;
+        margin: -2rem -2rem 2rem -2rem;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .hero-section::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: radial-gradient(circle at 20% 50%, rgba(99, 102, 241, 0.15) 0%, transparent 50%);
+    }
+    
+    .hero-content {
+        position: relative;
+        z-index: 1;
+    }
+    
+    .hero-title {
+        font-size: 2rem;
+        font-weight: 900;
+        margin-bottom: 0.5rem;
+        letter-spacing: -0.02em;
+    }
+    
+    /* Stats Cards */
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .stat-card {
+        background: white;
+        border-radius: 12px;
+        padding: 1.25rem;
+        border: 1px solid #e5e7eb;
+        transition: all 0.3s;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+    
+    .stat-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    
+    .stat-label {
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: #6b7280;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        margin-bottom: 0.5rem;
+    }
+    
+    .stat-value {
+        font-size: 1.5rem;
+        font-weight: 900;
+        color: #111827;
+    }
+    
+    /* Card Modern */
+    .card-modern {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        border: 1px solid #e5e7eb;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+    
+    .card-header-modern {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+        padding-bottom: 1rem;
+        border-bottom: 2px solid #f3f4f6;
+    }
+    
+    .card-title-modern {
+        font-size: 1.125rem;
+        font-weight: 700;
+        color: #111827;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    /* Filters */
+    .filters-card {
+        background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+        border: 2px solid #3b82f6;
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .select-modern {
+        padding: 0.75rem 1rem;
+        border: 2px solid #3b82f6;
+        border-radius: 8px;
+        font-size: 0.9375rem;
+        font-weight: 600;
+        background: white;
+        transition: all 0.2s;
+    }
+    
+    .select-modern:focus {
+        outline: none;
+        border-color: #2563eb;
+        box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+    }
+    
+    /* Planilla Cards */
+    .planilla-card {
+        background: white;
+        border: 2px solid #e5e7eb;
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 1rem;
+        transition: all 0.3s;
+    }
+    
+    .planilla-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        border-color: #6366f1;
+    }
+    
+    .planilla-card.finalizada {
+        background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
+        border-color: #9ca3af;
+    }
+    
+    .planilla-card.activa {
+        border-color: #10b981;
+    }
+    
+    /* Buttons Modern */
+    .btn-modern {
+        padding: 0.625rem 1.25rem;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 0.875rem;
+        border: none;
+        transition: all 0.2s;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        text-decoration: none;
+        cursor: pointer;
+    }
+    
+    .btn-modern-primary {
+        background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+        color: white;
+    }
+    
+    .btn-modern-primary:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+        color: white;
+    }
+    
+    .btn-action-sm {
+        padding: 0.375rem 0.625rem;
+        border-radius: 6px;
+        border: 1.5px solid #e5e7eb;
+        background: white;
+        color: #6b7280;
+        font-size: 0.875rem;
+        transition: all 0.2s;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
+    
+    .btn-action-sm:hover {
+        background: #f9fafb;
+        border-color: #6366f1;
+        color: #6366f1;
+    }
+    
+    /* Badges */
+    .badge-modern {
+        padding: 0.375rem 0.75rem;
+        border-radius: 6px;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+    
+    @media (max-width: 768px) {
+        .stats-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<div class="hero-section">
+    <div class="container hero-content">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h1 class="hero-title">
+                    <i class="fas fa-cog me-3"></i>Gestor de Planillas
+                </h1>
+                <p class="hero-subtitle">Administración centralizada de planillas de trabajadores diarios</p>
+            </div>
+            <div>
+                <a href="{% url 'trabajadores_diarios_dashboard' %}" class="btn-modern btn-modern-primary" style="background: white; color: #1f2937;">
+                    <i class="fas fa-arrow-left"></i>
+                    <span>Volver</span>
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container">
+    <!-- Stats Cards -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-label">Total Planillas</div>
+            <div class="stat-value">{{ total_planillas }}</div>
+        </div>
+        
+        <div class="stat-card">
+            <div class="stat-label">Planillas Activas</div>
+            <div class="stat-value text-success">{{ planillas_activas }}</div>
+        </div>
+        
+        <div class="stat-card">
+            <div class="stat-label">Planillas Finalizadas</div>
+            <div class="stat-value text-info">{{ planillas_finalizadas }}</div>
+        </div>
+    </div>
+    
+    <!-- Filtros -->
+    <div class="filters-card">
+        <h5 class="fw-bold mb-3" style="color: #1e40af;">
+            <i class="fas fa-filter me-2"></i>Filtros
+        </h5>
+        <form method="get" class="row g-3">
+            <div class="col-md-5">
+                <label for="proyecto" class="form-label fw-bold">Proyecto:</label>
+                <select class="select-modern" id="proyecto" name="proyecto" onchange="this.form.submit()">
+                    <option value="">Todos los proyectos</option>
+                    {% for proyecto in proyectos %}
+                    <option value="{{ proyecto.id }}" {% if proyecto_selected == proyecto.id|stringformat:"s" %}selected{% endif %}>
+                        {{ proyecto.nombre }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-5">
+                <label for="estado" class="form-label fw-bold">Estado:</label>
+                <select class="select-modern" id="estado" name="estado" onchange="this.form.submit()">
+                    <option value="">Todos los estados</option>
+                    <option value="activa" {% if estado_selected == 'activa' %}selected{% endif %}>Activa</option>
+                    <option value="finalizada" {% if estado_selected == 'finalizada' %}selected{% endif %}>Finalizada</option>
+                    <option value="archivada" {% if estado_selected == 'archivada' %}selected{% endif %}>Archivada</option>
+                </select>
+            </div>
+            <div class="col-md-2 d-flex align-items-end">
+                <a href="{% url 'planillas_trabajadores_diarios_gestor' %}" class="btn-modern" style="background: white; color: #6366f1; border: 2px solid #6366f1; width: 100%;">
+                    <i class="fas fa-redo"></i>
+                    <span>Limpiar</span>
+                </a>
+            </div>
+        </form>
+    </div>
+    
+    <!-- Lista de Planillas -->
+    <div class="card-modern">
+        <div class="card-header-modern">
+            <h3 class="card-title-modern">
+                <i class="fas fa-file-invoice-dollar"></i>
+                Lista de Planillas
+            </h3>
+        </div>
+        
+        {% if planillas %}
+        <div>
+            {% for planilla in planillas %}
+            <div class="planilla-card {% if planilla.estado == 'finalizada' %}finalizada{% elif planilla.estado == 'activa' %}activa{% endif %}">
+                <div class="row align-items-center">
+                    <div class="col-md-6">
+                        <h5 class="fw-bold mb-1">
+                            {{ planilla.nombre }}
+                            <span class="badge-modern 
+                                {% if planilla.estado == 'activa' %}bg-success{% elif planilla.estado == 'finalizada' %}bg-info{% else %}bg-secondary{% endif %} text-white ms-2">
+                                {{ planilla.get_estado_display }}
+                            </span>
+                        </h5>
+                        <p class="text-muted mb-1">
+                            <i class="fas fa-building me-1"></i>{{ planilla.proyecto.nombre }}
+                        </p>
+                        {% if planilla.fecha_inicio and planilla.fecha_fin %}
+                        <p class="text-muted mb-0 small">
+                            <i class="fas fa-calendar me-1"></i>
+                            {{ planilla.fecha_inicio|date:"d/m/Y" }} - {{ planilla.fecha_fin|date:"d/m/Y" }}
+                        </p>
+                        {% endif %}
+                        {% if planilla.descripcion %}
+                        <p class="text-muted mb-2 small mt-2">{{ planilla.descripcion }}</p>
+                        {% endif %}
+                        <div class="mt-2">
+                            <small class="text-muted">
+                                <i class="fas fa-users me-1"></i>{{ planilla.num_trabajadores }} trabajador{{ planilla.num_trabajadores|pluralize:"es" }}
+                                {% if planilla.estado == 'activa' %}
+                                | 
+                                <i class="fas fa-money-bill-wave me-1"></i>${{ planilla.total_a_pagar|floatformat:2 }}
+                                {% endif %}
+                            </small>
+                        </div>
+                    </div>
+                    <div class="col-md-6 text-end">
+                        <div class="d-flex gap-2 justify-content-end flex-wrap">
+                            <a href="{% url 'trabajadores_diarios_list' planilla.proyecto.id %}?planilla_id={{ planilla.id }}" 
+                               class="btn-action-sm" title="Ver Trabajadores">
+                                <i class="fas fa-users"></i>
+                                <span>Ver</span>
+                            </a>
+                            
+                            {% if planilla.estado == 'finalizada' %}
+                            <button type="button" class="btn-action-sm text-success" title="Reabrir Planilla" onclick="reabrirPlanilla({{ planilla.proyecto.id }}, {{ planilla.id }})">
+                                <i class="fas fa-undo"></i>
+                                <span>Reabrir</span>
+                            </button>
+                            {% endif %}
+                            
+                            {% if planilla.estado != 'finalizada' %}
+                            <a href="{% url 'planilla_trabajadores_diarios_edit' planilla.proyecto.id planilla.id %}" 
+                               class="btn-action-sm" title="Editar Planilla">
+                                <i class="fas fa-edit"></i>
+                                <span>Editar</span>
+                            </a>
+                            {% endif %}
+                            
+                            {% if planilla.estado != 'finalizada' %}
+                            <a href="{% url 'planilla_trabajadores_diarios_delete' planilla.proyecto.id planilla.id %}" 
+                               class="btn-action-sm text-danger" title="Eliminar Planilla" onclick="return confirm('¿Estás seguro de que quieres eliminar esta planilla?');">
+                                <i class="fas fa-trash"></i>
+                                <span>Eliminar</span>
+                            </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="text-center py-5">
+            <i class="fas fa-file-invoice-dollar fa-4x text-muted mb-3 opacity-25"></i>
+            <h5 class="text-muted">No hay planillas registradas</h5>
+            <p class="text-muted mb-4">Crea una nueva planilla desde un proyecto</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+function reabrirPlanilla(proyectoId, planillaId) {
+    if (confirm('¿Estás seguro de que quieres reabrir esta planilla? Los trabajadores se reactivarán.')) {
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = `/proyectos/${proyectoId}/trabajadores-diarios/planilla/${planillaId}/reabrir/`;
+        
+        const csrfInput = document.createElement('input');
+        csrfInput.type = 'hidden';
+        csrfInput.name = 'csrfmiddlewaretoken';
+        csrfInput.value = getCookie('csrftoken');
+        form.appendChild(csrfInput);
+        
+        document.body.appendChild(form);
+        form.submit();
+    }
+}
+</script>
+{% endblock %}
+{% endblock %}
+

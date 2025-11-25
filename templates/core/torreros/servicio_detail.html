@@ -1,0 +1,621 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load custom_filters %}
+
+{% block title %}Detalle del Servicio - Torreros{% endblock %}
+
+{% block extra_css %}
+<style>
+    .hero-detail {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 2.5rem;
+        margin: -2rem -2rem 2rem -2rem;
+        border-radius: 0 0 20px 20px;
+        box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+    }
+    
+    .info-card {
+        background: white;
+        border-radius: 15px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+    }
+    
+    .stat-row {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+    
+    .stat-item {
+        background: #f9fafb;
+        padding: 1rem;
+        border-radius: 10px;
+        border-left: 4px solid #667eea;
+    }
+    
+    .stat-label {
+        font-size: 0.875rem;
+        color: #6b7280;
+        font-weight: 600;
+        margin-bottom: 0.25rem;
+    }
+    
+    .stat-value {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #1f2937;
+    }
+    
+    .progress-section {
+        background: white;
+        border-radius: 15px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+    }
+    
+    .progress-circle {
+        width: 150px;
+        height: 150px;
+        border-radius: 50%;
+        background: conic-gradient(#667eea 0% var(--progress), #e5e7eb var(--progress) 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        margin: 0 auto 1rem;
+    }
+    
+    .progress-circle::before {
+        content: '';
+        width: 120px;
+        height: 120px;
+        border-radius: 50%;
+        background: white;
+        position: absolute;
+    }
+    
+    .progress-text {
+        position: relative;
+        z-index: 1;
+        font-size: 2rem;
+        font-weight: 700;
+        color: #667eea;
+    }
+    
+    .section-card {
+        background: white;
+        border-radius: 15px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+    }
+    
+    .section-title {
+        font-size: 1.3rem;
+        font-weight: 700;
+        color: #1f2937;
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .section-title i {
+        color: #667eea;
+    }
+    
+    .table-modern {
+        margin-bottom: 0;
+    }
+    
+    .table-modern thead {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+    }
+    
+    .table-modern thead th {
+        padding: 1rem;
+        font-weight: 600;
+        border: none;
+        font-size: 0.85rem;
+    }
+    
+    .table-modern tbody tr {
+        border-bottom: 1px solid #f3f4f6;
+        transition: all 0.2s ease;
+    }
+    
+    .table-modern tbody tr:hover {
+        background: #f9fafb;
+    }
+    
+    .table-modern tbody td {
+        padding: 1rem;
+        vertical-align: middle;
+    }
+    
+    .badge-modern {
+        padding: 0.5rem 1rem;
+        border-radius: 50px;
+        font-weight: 600;
+        font-size: 0.85rem;
+    }
+    
+    .badge-modern.success {
+        background: #d1fae5;
+        color: #065f46;
+    }
+    
+    .badge-modern.warning {
+        background: #fef3c7;
+        color: #92400e;
+    }
+    
+    .badge-modern.danger {
+        background: #fee2e2;
+        color: #991b1b;
+    }
+    
+    .badge-modern.info {
+        background: #dbeafe;
+        color: #1e40af;
+    }
+    
+    .btn-action {
+        padding: 0.5rem 1rem;
+        border-radius: 8px;
+        border: none;
+        font-weight: 600;
+        transition: all 0.2s ease;
+    }
+    
+    .btn-action:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+    
+    .modal-content {
+        border-radius: 15px;
+        border: none;
+    }
+    
+    .modal-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 15px 15px 0 0;
+    }
+    
+    .form-control, .form-select {
+        border: 2px solid #e5e7eb;
+        border-radius: 10px;
+        padding: 0.75rem;
+    }
+    
+    .form-control:focus, .form-select:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 3rem;
+        color: #9ca3af;
+    }
+    
+    .empty-state i {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+        opacity: 0.3;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<div class="hero-detail">
+    <div class="container">
+        <div class="d-flex justify-content-between align-items-start">
+            <div>
+                <h1 class="mb-2">
+                    <i class="fas fa-hard-hat me-2"></i>
+                    Servicio de Torrero
+                </h1>
+                <h3 class="mb-3 opacity-90">{{ servicio.cliente.nombre }}</h3>
+                <div class="d-flex gap-2 flex-wrap">
+                    <span class="badge bg-light text-dark">
+                        <i class="fas fa-users me-1"></i>{{ servicio.cantidad_torreros }} Torrero{{ servicio.cantidad_torreros|pluralize }}
+                    </span>
+                    <span class="badge bg-light text-dark">
+                        <i class="fas fa-calendar me-1"></i>{{ servicio.dias_solicitados }} Días Solicitados
+                    </span>
+                    <span class="badge {% if servicio.estado == 'activo' %}bg-success{% elif servicio.estado == 'completado' %}bg-primary{% elif servicio.estado == 'pausado' %}bg-warning{% else %}bg-danger{% endif %}">
+                        {{ servicio.get_estado_display }}
+                    </span>
+                </div>
+            </div>
+            <div class="d-flex gap-2">
+                <a href="{% url 'servicio_torrero_edit' servicio.id %}" class="btn btn-light">
+                    <i class="fas fa-edit me-2"></i>Editar
+                </a>
+                <a href="{% url 'servicio_torrero_list' %}" class="btn btn-outline-light">
+                    <i class="fas fa-arrow-left me-2"></i>Volver
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container mt-4">
+    <!-- Estadísticas Principales -->
+    <div class="stat-row">
+        <div class="stat-item">
+            <div class="stat-label">Días Trabajados</div>
+            <div class="stat-value">{{ servicio.dias_trabajados }} / {{ servicio.dias_solicitados }}</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-label">Días Restantes</div>
+            <div class="stat-value">{{ servicio.dias_restantes }}</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-label">Monto Total</div>
+            <div class="stat-value text-success">{{ servicio.monto_total|currency_gtq }}</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-label">Monto Pagado</div>
+            <div class="stat-value text-primary">{{ servicio.monto_pagado|currency_gtq }}</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-label">Saldo Pendiente</div>
+            <div class="stat-value text-danger">{{ servicio.saldo_pendiente|currency_gtq }}</div>
+        </div>
+    </div>
+    
+    <!-- Progreso -->
+    <div class="progress-section">
+        <div class="row align-items-center">
+            <div class="col-md-4 text-center">
+                <div class="progress-circle" style="--progress: {{ servicio.porcentaje_completado }}%">
+                    <div class="progress-text">{{ servicio.porcentaje_completado }}%</div>
+                </div>
+                <h5 class="text-muted">Progreso del Servicio</h5>
+            </div>
+            <div class="col-md-8">
+                <h4 class="mb-3">Información del Servicio</h4>
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <strong>Descripción:</strong>
+                        <p class="text-muted">{{ servicio.descripcion }}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <strong>Proyecto:</strong>
+                        <p class="text-muted">{{ servicio.proyecto.nombre|default:"No asignado" }}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <strong>Fecha de Inicio:</strong>
+                        <p class="text-muted">{{ servicio.fecha_inicio|date:"d/m/Y" }}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <strong>Fecha Fin Estimada:</strong>
+                        <p class="text-muted">{{ servicio.fecha_fin_estimada|date:"d/m/Y" }}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <strong>Tarifa por Día:</strong>
+                        <p class="text-muted">{{ servicio.tarifa_por_dia|currency_gtq }}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <strong>Periodo:</strong>
+                        <p class="text-muted">{{ servicio.get_periodo_display }}</p>
+                    </div>
+                </div>
+                {% if servicio.observaciones %}
+                <div class="mt-3">
+                    <strong>Observaciones:</strong>
+                    <p class="text-muted">{{ servicio.observaciones }}</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Registros de Días Trabajados -->
+    <div class="section-card">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h2 class="section-title mb-0">
+                <i class="fas fa-calendar-check"></i>
+                Registros de Días Trabajados
+            </h2>
+            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalRegistroDias">
+                <i class="fas fa-plus me-2"></i>Registrar Días
+            </button>
+        </div>
+        
+        {% if registros %}
+        <div class="table-responsive">
+            <table class="table table-modern">
+                <thead>
+                    <tr>
+                        <th>Fecha</th>
+                        <th>Días Trabajados</th>
+                        <th>Torreros Presentes</th>
+                        <th>Descripción</th>
+                        <th>Estado</th>
+                        <th>Registrado Por</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for registro in registros %}
+                    <tr>
+                        <td>{{ registro.fecha_registro|date:"d/m/Y" }}</td>
+                        <td class="text-center">
+                            <span class="badge-modern info">{{ registro.dias_trabajados }}</span>
+                        </td>
+                        <td class="text-center">{{ registro.torreros_presentes }}</td>
+                        <td>{{ registro.descripcion|truncatechars:50 }}</td>
+                        <td>
+                            {% if registro.aprobado %}
+                                <span class="badge-modern success">Aprobado</span>
+                            {% else %}
+                                <span class="badge-modern warning">Pendiente</span>
+                            {% endif %}
+                            {% if registro.es_dia_extra %}
+                                <span class="badge-modern danger ms-1">Extra</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ registro.registrado_por.get_full_name|default:registro.registrado_por.username }}</td>
+                        <td>
+                            <button type="button" 
+                                    class="btn btn-sm {% if registro.aprobado %}btn-warning{% else %}btn-success{% endif %} btn-action"
+                                    onclick="toggleAprobarRegistro({{ registro.id }}, {{ registro.aprobado|yesno:'true,false' }})">
+                                <i class="fas fa-{% if registro.aprobado %}times{% else %}check{% endif %}"></i>
+                                {% if registro.aprobado %}Desaprobar{% else %}Aprobar{% endif %}
+                            </button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <i class="fas fa-calendar-times"></i>
+            <h5>No hay registros de días trabajados</h5>
+            <p>Comienza registrando los días trabajados</p>
+        </div>
+        {% endif %}
+    </div>
+    
+    <!-- Pagos -->
+    <div class="section-card">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h2 class="section-title mb-0">
+                <i class="fas fa-money-bill-wave"></i>
+                Pagos Recibidos
+            </h2>
+            <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#modalRegistroPago">
+                <i class="fas fa-plus me-2"></i>Registrar Pago
+            </button>
+        </div>
+        
+        {% if pagos %}
+        <div class="table-responsive">
+            <table class="table table-modern">
+                <thead>
+                    <tr>
+                        <th>Fecha</th>
+                        <th>Monto</th>
+                        <th>Método</th>
+                        <th>Referencia</th>
+                        <th>Concepto</th>
+                        <th>Registrado Por</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for pago in pagos %}
+                    <tr>
+                        <td>{{ pago.fecha_pago|date:"d/m/Y" }}</td>
+                        <td>
+                            <span class="fw-bold text-success">{{ pago.monto|currency_gtq }}</span>
+                        </td>
+                        <td>
+                            <span class="badge-modern info">{{ pago.get_metodo_pago_display }}</span>
+                        </td>
+                        <td>{{ pago.numero_referencia|default:"-" }}</td>
+                        <td>{{ pago.concepto|truncatechars:40 }}</td>
+                        <td>{{ pago.registrado_por.get_full_name|default:pago.registrado_por.username }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <i class="fas fa-receipt"></i>
+            <h5>No hay pagos registrados</h5>
+            <p>Comienza registrando el primer pago</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Modal Registrar Días -->
+<div class="modal fade" id="modalRegistroDias" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-calendar-plus me-2"></i>Registrar Días Trabajados</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" action="{% url 'registro_dias_create' servicio.id %}">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Fecha del Registro</label>
+                            {{ form_registro.fecha_registro }}
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label fw-bold">Días Trabajados</label>
+                            {{ form_registro.dias_trabajados }}
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label fw-bold">Torreros Presentes</label>
+                            {{ form_registro.torreros_presentes }}
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label fw-bold">Descripción del Trabajo</label>
+                            {{ form_registro.descripcion }}
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label fw-bold">Observaciones</label>
+                            {{ form_registro.observaciones }}
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-2"></i>Guardar Registro
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Registrar Pago -->
+<div class="modal fade" id="modalRegistroPago" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-dollar-sign me-2"></i>Registrar Pago</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" action="{% url 'pago_servicio_create' servicio.id %}" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Fecha del Pago</label>
+                            {{ form_pago.fecha_pago }}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Monto</label>
+                            <div class="input-group">
+                                <span class="input-group-text">Q</span>
+                                {{ form_pago.monto }}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Método de Pago</label>
+                            {{ form_pago.metodo_pago }}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Número de Referencia</label>
+                            {{ form_pago.numero_referencia }}
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label fw-bold">Concepto</label>
+                            {{ form_pago.concepto }}
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label fw-bold">Comprobante (Opcional)</label>
+                            {{ form_pago.comprobante }}
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label fw-bold">Observaciones</label>
+                            {{ form_pago.observaciones }}
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-success">
+                        <i class="fas fa-save me-2"></i>Guardar Pago
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+    function getCSRFToken() {
+        return document.querySelector('[name=csrfmiddlewaretoken]').value;
+    }
+    
+    function toggleAprobarRegistro(registroId, isAprobado) {
+        const action = isAprobado ? 'desaprobar' : 'aprobar';
+        const title = isAprobado ? '¿Desaprobar este registro?' : '¿Aprobar este registro?';
+        const confirmText = isAprobado ? 'Sí, desaprobar' : 'Sí, aprobar';
+        
+        Swal.fire({
+            title: title,
+            text: `Esta acción ${action}á el registro de días trabajados`,
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: isAprobado ? '#f59e0b' : '#10b981',
+            cancelButtonColor: '#6b7280',
+            confirmButtonText: confirmText,
+            cancelButtonText: 'Cancelar'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                fetch(`/torreros/registros/${registroId}/aprobar/`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': getCSRFToken(),
+                        'Content-Type': 'application/json'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: '¡Éxito!',
+                            text: data.message,
+                            timer: 2000,
+                            showConfirmButton: false
+                        }).then(() => {
+                            location.reload();
+                        });
+                    } else {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: data.message
+                        });
+                    }
+                })
+                .catch(error => {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: 'Ocurrió un error al procesar la solicitud'
+                    });
+                });
+            }
+        });
+    }
+    
+    // Establecer fecha de hoy por defecto en los modales
+    document.addEventListener('DOMContentLoaded', function() {
+        const today = new Date().toISOString().split('T')[0];
+        const fechaInputs = document.querySelectorAll('input[type="date"]');
+        fechaInputs.forEach(input => {
+            if (!input.value) {
+                input.value = today;
+            }
+        });
+    });
+</script>
+{% endblock %}
+

@@ -30,6 +30,9 @@ urlpatterns = [
     path('proyecto/<int:proyecto_id>/planilla/liquidar/', views.liquidar_y_generar_planilla, name='liquidar_y_generar_planilla'),
     path('proyecto/<int:proyecto_id>/planilla/pdf/', views.planilla_proyecto_pdf, name='planilla_proyecto_pdf'),
     path('proyecto/<int:proyecto_id>/planilla/configurar/', views.configurar_planilla_proyecto, name='configurar_planilla_proyecto'),
+    
+    # Historial de Planillas Liquidadas
+    path('planillas/historial/', views.planillas_liquidadas_historial, name='planillas_liquidadas_historial'),
     path('proyecto/<int:proyecto_id>/historico-nomina/reset/', views.resetear_historico_nomina, name='resetear_historico_nomina'),
     path('proyectos/<int:proyecto_id>/administrar-anticipos/', views.administrar_anticipos_proyecto, name='administrar_anticipos_proyecto'),
     path('anticipos/<int:anticipo_id>/editar/', views.editar_anticipo, name='editar_anticipo'),
@@ -47,10 +50,43 @@ urlpatterns = [
     path('caja-menuda/<int:pk>/editar/', views.caja_menuda_edit, name='caja_menuda_edit'),
     path('caja-menuda/<int:pk>/eliminar/', views.caja_menuda_delete, name='caja_menuda_delete'),
     
+    # Torreros - Dashboard y Servicios
+    path('torreros/', views.torreros_dashboard, name='torreros_dashboard'),
+    path('torreros/servicios/', views.servicio_torrero_list, name='servicio_torrero_list'),
+    path('torreros/servicios/crear/', views.servicio_torrero_create, name='servicio_torrero_create'),
+    path('torreros/servicios/<int:pk>/', views.servicio_torrero_detail, name='servicio_torrero_detail'),
+    path('torreros/servicios/<int:pk>/editar/', views.servicio_torrero_edit, name='servicio_torrero_edit'),
+    path('torreros/servicios/<int:pk>/eliminar/', views.servicio_torrero_delete, name='servicio_torrero_delete'),
+    path('torreros/servicios/<int:pk>/pdf/', views.servicio_torrero_pdf, name='servicio_torrero_pdf'),
+    path('torreros/servicios/<int:servicio_id>/registrar-dias/', views.registro_dias_create, name='registro_dias_create'),
+    path('torreros/servicios/<int:servicio_id>/registrar-dia/', views.registro_dias_quick, name='registro_dias_quick'),
+    path('torreros/registros/<int:pk>/aprobar/', views.registro_dias_aprobar, name='registro_dias_aprobar'),
+    path('torreros/servicios/<int:servicio_id>/registrar-pago/', views.pago_servicio_create, name='pago_servicio_create'),
+    
+    # Torreros - Catálogo
+    path('torreros/catalogo/', views.torreros_list, name='torreros_list'),
+    path('torreros/catalogo/crear/', views.torrero_create, name='torrero_create'),
+    path('torreros/catalogo/<int:pk>/editar/', views.torrero_edit, name='torrero_edit'),
+    path('torreros/catalogo/<int:pk>/eliminar/', views.torrero_delete, name='torrero_delete'),
+    path('torreros/registro-rapido/', views.torrero_registro_rapido, name='torrero_registro_rapido'),
+    
+    # Subproyectos
+    path('proyectos/<int:proyecto_id>/subproyectos/', views.subproyectos_dashboard, name='subproyectos_dashboard'),
+    path('proyectos/<int:proyecto_id>/subproyectos/crear/', views.subproyecto_create, name='subproyecto_create'),
+    path('subproyectos/<int:pk>/editar/', views.subproyecto_edit, name='subproyecto_edit'),
+    path('subproyectos/<int:pk>/eliminar/', views.subproyecto_delete, name='subproyecto_delete'),
+    
+    # Trabajadores Diarios - Dashboard Principal
+    path('trabajadores-diarios/', views.trabajadores_diarios_dashboard, name='trabajadores_diarios_dashboard'),
+    
+    # Gestor de Planillas de Trabajadores Diarios
+    path('trabajadores-diarios/gestor-planillas/', views.planillas_trabajadores_diarios_gestor, name='planillas_trabajadores_diarios_gestor'),
+    
     # Trabajadores Diarios
     path('proyectos/<int:proyecto_id>/trabajadores-diarios/', views.trabajadores_diarios_list, name='trabajadores_diarios_list'),
     path('proyectos/<int:proyecto_id>/trabajadores-diarios/crear/', views.trabajador_diario_create, name='trabajador_diario_create'),
     path('proyectos/<int:proyecto_id>/trabajadores-diarios/finalizar/', views.finalizar_planilla_trabajadores, name='finalizar_planilla_trabajadores'),
+    path('proyectos/<int:proyecto_id>/trabajadores-diarios/planilla/<int:planilla_id>/reabrir/', views.reabrir_planilla_trabajadores, name='reabrir_planilla_trabajadores'),
     path('proyectos/<int:proyecto_id>/trabajadores-diarios/reactivar-todos/', views.reactivar_todos_trabajadores_diarios, name='reactivar_todos_trabajadores_diarios'),
     path('proyectos/<int:proyecto_id>/trabajadores-diarios/<int:trabajador_id>/', views.trabajador_diario_detail, name='trabajador_diario_detail'),
     path('proyectos/<int:proyecto_id>/trabajadores-diarios/<int:trabajador_id>/editar/', views.trabajador_diario_edit, name='trabajador_diario_edit'),
@@ -74,6 +110,7 @@ urlpatterns = [
     
     # Anticipos de Trabajadores Diarios
     path('proyectos/<int:proyecto_id>/anticipos-trabajadores-diarios/', views.anticipo_trabajador_diario_list, name='anticipo_trabajador_diario_list'),
+    path('proyectos/<int:proyecto_id>/trabajadores-diarios/<int:trabajador_id>/anticipos/', views.anticipos_trabajador_diario_list, name='anticipos_trabajador_diario_list'),
     path('proyectos/<int:proyecto_id>/anticipos-trabajadores-diarios/crear/', views.anticipo_trabajador_diario_create, name='anticipo_trabajador_diario_create'),
     path('proyectos/<int:proyecto_id>/anticipos-trabajadores-diarios/<int:anticipo_id>/', views.anticipo_trabajador_diario_detail, name='anticipo_trabajador_diario_detail'),
     path('proyectos/<int:proyecto_id>/anticipos-trabajadores-diarios/<int:anticipo_id>/editar/', views.anticipo_trabajador_diario_edit, name='anticipo_trabajador_diario_edit'),

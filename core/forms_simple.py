@@ -911,9 +911,23 @@ class AnticipoTrabajadorDiarioForm(forms.ModelForm):
     
     def __init__(self, *args, **kwargs):
         proyecto_id = kwargs.pop('proyecto_id', None)
+        trabajador_id = kwargs.pop('trabajador_id', None)
         super().__init__(*args, **kwargs)
+        
+        # Filtrar trabajadores por proyecto
         if proyecto_id:
-            self.fields['trabajador'].queryset = TrabajadorDiario.objects.filter(proyecto_id=proyecto_id, activo=True)
+            self.fields['trabajador'].queryset = TrabajadorDiario.objects.filter(
+                proyecto_id=proyecto_id,
+                activo=True
+            ).order_by('nombre')
+        
+        # Preseleccionar trabajador si se pasa trabajador_id
+        if trabajador_id and not self.instance.pk:
+            try:
+                trabajador = TrabajadorDiario.objects.get(id=trabajador_id)
+                self.fields['trabajador'].initial = trabajador
+            except TrabajadorDiario.DoesNotExist:
+                pass
     
     class Meta:
         model = AnticipoTrabajadorDiario
@@ -1284,3 +1298,258 @@ class CajaMenudaForm(forms.ModelForm):
                 'class': 'form-select'
             })
         }
+
+
+class ServicioTorreroForm(forms.ModelForm):
+    """Formulario para crear/editar servicios de torreros"""
+    class Meta:
+        model = ServicioTorrero
+        fields = [
+            'cliente', 'proyecto', 'descripcion', 'cantidad_torreros',
+            'periodo', 'dias_solicitados', 'fecha_inicio', 'fecha_fin_estimada',
+            'tarifa_por_dia', 'estado', 'observaciones'
+        ]
+        widgets = {
+            'cliente': forms.Select(attrs={
+                'class': 'form-select',
+                'required': True
+            }),
+            'proyecto': forms.Select(attrs={
+                'class': 'form-select'
+            }),
+            'descripcion': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 3,
+                'placeholder': 'Describe el servicio solicitado...'
+            }),
+            'cantidad_torreros': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'min': '1',
+                'value': '1'
+            }),
+            'periodo': forms.Select(attrs={
+                'class': 'form-select'
+            }),
+            'dias_solicitados': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'min': '1',
+                'placeholder': 'Ej: 5'
+            }),
+            'fecha_inicio': forms.DateInput(attrs={
+                'class': 'form-control',
+                'type': 'date'
+            }),
+            'fecha_fin_estimada': forms.DateInput(attrs={
+                'class': 'form-control',
+                'type': 'date'
+            }),
+            'tarifa_por_dia': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'step': '0.01',
+                'min': '0',
+                'placeholder': '0.00'
+            }),
+            'estado': forms.Select(attrs={
+                'class': 'form-select'
+            }),
+            'observaciones': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 2,
+                'placeholder': 'Observaciones adicionales (opcional)'
+            })
+        }
+
+
+class RegistroDiasTrabajarForm(forms.ModelForm):
+    """Formulario para registrar días trabajados"""
+    class Meta:
+        model = RegistroDiasTrabajados
+        fields = [
+            'fecha_registro', 'dias_trabajados', 'torreros_presentes',
+            'descripcion', 'observaciones'
+        ]
+        widgets = {
+            'fecha_registro': forms.DateInput(attrs={
+                'class': 'form-control',
+                'type': 'date'
+            }),
+            'dias_trabajados': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'min': '1',
+                'value': '1'
+            }),
+            'torreros_presentes': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'min': '1',
+                'value': '1'
+            }),
+            'descripcion': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 3,
+                'placeholder': 'Describe el trabajo realizado...'
+            }),
+            'observaciones': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 2,
+                'placeholder': 'Observaciones adicionales (opcional)'
+            })
+        }
+
+
+class PagoServicioTorreroForm(forms.ModelForm):
+    """Formulario para registrar pagos de servicios de torreros"""
+    class Meta:
+        model = PagoServicioTorrero
+        fields = [
+            'fecha_pago', 'monto', 'metodo_pago', 'numero_referencia',
+            'comprobante', 'concepto', 'observaciones'
+        ]
+        widgets = {
+            'fecha_pago': forms.DateInput(attrs={
+                'class': 'form-control',
+                'type': 'date'
+            }),
+            'monto': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'step': '0.01',
+                'min': '0',
+                'placeholder': '0.00'
+            }),
+            'metodo_pago': forms.Select(attrs={
+                'class': 'form-select'
+            }),
+            'numero_referencia': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Número de referencia, cheque o transacción'
+            }),
+            'comprobante': forms.FileInput(attrs={
+                'class': 'form-control'
+            }),
+            'concepto': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Concepto del pago'
+            }),
+            'observaciones': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 2,
+                'placeholder': 'Observaciones adicionales (opcional)'
+            })
+        }
+
+
+class TorreroForm(forms.ModelForm):
+    """Formulario para crear/editar torreros"""
+    class Meta:
+        model = Torrero
+        fields = [
+            'nombre', 'cedula', 'telefono', 'email', 'direccion',
+            'fecha_ingreso', 'especialidad', 'tarifa_diaria', 'foto',
+            'activo', 'observaciones'
+        ]
+        widgets = {
+            'nombre': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Nombre completo del torrero'
+            }),
+            'cedula': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Cédula o documento de identidad'
+            }),
+            'telefono': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Número de teléfono'
+            }),
+            'email': forms.EmailInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'correo@ejemplo.com'
+            }),
+            'direccion': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 2,
+                'placeholder': 'Dirección de residencia'
+            }),
+            'fecha_ingreso': forms.DateInput(attrs={
+                'class': 'form-control',
+                'type': 'date'
+            }),
+            'especialidad': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Ej: Soldadura, Electricidad, etc.'
+            }),
+            'tarifa_diaria': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'step': '0.01',
+                'min': '0',
+                'placeholder': '0.00'
+            }),
+            'foto': forms.FileInput(attrs={
+                'class': 'form-control'
+            }),
+            'activo': forms.CheckboxInput(attrs={
+                'class': 'form-check-input'
+            }),
+            'observaciones': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 3,
+                'placeholder': 'Observaciones adicionales (opcional)'
+            })
+        }
+
+
+class SubproyectoForm(forms.ModelForm):
+    """Formulario para subproyectos"""
+    
+    class Meta:
+        model = Subproyecto
+        fields = [
+            'nombre', 'codigo', 'descripcion', 'cotizacion',
+            'fecha_inicio', 'fecha_fin_estimada', 'estado', 
+            'porcentaje_avance'
+        ]
+        widgets = {
+            'nombre': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Nombre del subproyecto'
+            }),
+            'codigo': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Código único (ej: PROJ-001-SUB-001)'
+            }),
+            'descripcion': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 3,
+                'placeholder': 'Descripción del subproyecto'
+            }),
+            'cotizacion': forms.Select(attrs={
+                'class': 'form-select'
+            }),
+            'fecha_inicio': forms.DateInput(attrs={
+                'class': 'form-control',
+                'type': 'date'
+            }),
+            'fecha_fin_estimada': forms.DateInput(attrs={
+                'class': 'form-control',
+                'type': 'date'
+            }),
+            'estado': forms.Select(attrs={
+                'class': 'form-select'
+            }),
+            'porcentaje_avance': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'min': '0',
+                'max': '100',
+                'step': '0.01'
+            })
+        }
+    
+    def __init__(self, *args, **kwargs):
+        proyecto = kwargs.pop('proyecto', None)
+        super().__init__(*args, **kwargs)
+        
+        # Filtrar cotizaciones solo del proyecto actual
+        if proyecto:
+            self.fields['cotizacion'].queryset = Cotizacion.objects.filter(
+                proyecto=proyecto
+            ).exclude(
+                estado__in=['cancelada', 'rechazada', 'vencida']
+            ).order_by('-fecha_creacion')

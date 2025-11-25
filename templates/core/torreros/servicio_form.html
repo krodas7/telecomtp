@@ -1,0 +1,368 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load widget_tweaks %}
+
+{% block title %}{{ titulo }} - Sistema ARCA{% endblock %}
+
+{% block extra_css %}
+<style>
+    .hero-section {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 2.5rem 0;
+        margin: -2rem -2rem 2rem -2rem;
+        border-radius: 0 0 20px 20px;
+        box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+    }
+    
+    .form-container {
+        background: white;
+        border-radius: 15px;
+        padding: 2rem;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+        max-width: 900px;
+        margin: 0 auto;
+    }
+    
+    .form-section {
+        margin-bottom: 2rem;
+        padding-bottom: 2rem;
+        border-bottom: 2px solid #f3f4f6;
+    }
+    
+    .form-section:last-child {
+        border-bottom: none;
+        margin-bottom: 0;
+        padding-bottom: 0;
+    }
+    
+    .section-title {
+        font-size: 1.2rem;
+        font-weight: 700;
+        color: #667eea;
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .form-label {
+        font-weight: 600;
+        color: #374151;
+        margin-bottom: 0.5rem;
+    }
+    
+    .form-control, .form-select {
+        border: 2px solid #e5e7eb;
+        border-radius: 10px;
+        padding: 0.75rem 1rem;
+        transition: all 0.3s ease;
+    }
+    
+    .form-control:focus, .form-select:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+    
+    .btn-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border: none;
+        padding: 0.75rem 2rem;
+        border-radius: 10px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+    }
+    
+    .btn-secondary {
+        border: 2px solid #e5e7eb;
+        background: white;
+        color: #6b7280;
+        padding: 0.75rem 2rem;
+        border-radius: 10px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-secondary:hover {
+        border-color: #667eea;
+        color: #667eea;
+        background: #f9fafb;
+    }
+    
+    .help-text {
+        font-size: 0.875rem;
+        color: #6b7280;
+        margin-top: 0.25rem;
+    }
+    
+    .errorlist {
+        list-style: none;
+        padding: 0;
+        margin: 0.5rem 0 0 0;
+    }
+    
+    .errorlist li {
+        color: #ef4444;
+        font-size: 0.875rem;
+        margin-top: 0.25rem;
+    }
+    
+    .form-control.is-invalid, .form-select.is-invalid {
+        border-color: #ef4444;
+    }
+    
+    .required-field::after {
+        content: " *";
+        color: #ef4444;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<div class="hero-section">
+    <div class="container">
+        <h1><i class="fas fa-{% if servicio %}edit{% else %}plus{% endif %} me-2"></i>{{ titulo }}</h1>
+        <p class="mb-0 opacity-75">Complete la información del servicio de torrero</p>
+    </div>
+</div>
+
+<div class="container mt-4">
+    <div class="form-container">
+        <form method="post" enctype="multipart/form-data" id="servicioForm">
+            {% csrf_token %}
+            
+            <!-- Información Básica -->
+            <div class="form-section">
+                <h3 class="section-title">
+                    <i class="fas fa-info-circle"></i>
+                    Información Básica
+                </h3>
+                
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label for="{{ form.cliente.id_for_label }}" class="form-label required-field">Cliente</label>
+                        {{ form.cliente }}
+                        {% if form.cliente.errors %}
+                            <ul class="errorlist">
+                                {% for error in form.cliente.errors %}
+                                    <li>{{ error }}</li>
+                                {% endfor %}
+                            </ul>
+                        {% endif %}
+                        <div class="help-text">Seleccione el cliente que solicita el servicio</div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <label for="{{ form.proyecto.id_for_label }}" class="form-label">Proyecto (Opcional)</label>
+                        {{ form.proyecto }}
+                        {% if form.proyecto.errors %}
+                            <ul class="errorlist">
+                                {% for error in form.proyecto.errors %}
+                                    <li>{{ error }}</li>
+                                {% endfor %}
+                            </ul>
+                        {% endif %}
+                        <div class="help-text">Proyecto asociado si aplica</div>
+                    </div>
+                    
+                    <div class="col-12">
+                        <label for="{{ form.descripcion.id_for_label }}" class="form-label required-field">Descripción del Servicio</label>
+                        {{ form.descripcion }}
+                        {% if form.descripcion.errors %}
+                            <ul class="errorlist">
+                                {% for error in form.descripcion.errors %}
+                                    <li>{{ error }}</li>
+                                {% endfor %}
+                            </ul>
+                        {% endif %}
+                        <div class="help-text">Describa detalladamente el servicio solicitado</div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <label for="{{ form.cantidad_torreros.id_for_label }}" class="form-label required-field">Cantidad de Torreros</label>
+                        {{ form.cantidad_torreros }}
+                        {% if form.cantidad_torreros.errors %}
+                            <ul class="errorlist">
+                                {% for error in form.cantidad_torreros.errors %}
+                                    <li>{{ error }}</li>
+                                {% endfor %}
+                            </ul>
+                        {% endif %}
+                        <div class="help-text">Número de torreros requeridos</div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <label for="{{ form.estado.id_for_label }}" class="form-label required-field">Estado</label>
+                        {{ form.estado }}
+                        {% if form.estado.errors %}
+                            <ul class="errorlist">
+                                {% for error in form.estado.errors %}
+                                    <li>{{ error }}</li>
+                                {% endfor %}
+                            </ul>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Periodo y Tiempo -->
+            <div class="form-section">
+                <h3 class="section-title">
+                    <i class="fas fa-calendar-alt"></i>
+                    Periodo y Tiempo
+                </h3>
+                
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label for="{{ form.periodo.id_for_label }}" class="form-label required-field">Periodo</label>
+                        {{ form.periodo }}
+                        {% if form.periodo.errors %}
+                            <ul class="errorlist">
+                                {% for error in form.periodo.errors %}
+                                    <li>{{ error }}</li>
+                                {% endfor %}
+                            </ul>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="col-md-4">
+                        <label for="{{ form.dias_solicitados.id_for_label }}" class="form-label required-field">Días Solicitados</label>
+                        {{ form.dias_solicitados }}
+                        {% if form.dias_solicitados.errors %}
+                            <ul class="errorlist">
+                                {% for error in form.dias_solicitados.errors %}
+                                    <li>{{ error }}</li>
+                                {% endfor %}
+                            </ul>
+                        {% endif %}
+                        <div class="help-text">Total de días contratados</div>
+                    </div>
+                    
+                    <div class="col-md-4">
+                        <label for="{{ form.tarifa_por_dia.id_for_label }}" class="form-label required-field">Tarifa por Día</label>
+                        <div class="input-group">
+                            <span class="input-group-text">Q</span>
+                            {{ form.tarifa_por_dia }}
+                        </div>
+                        {% if form.tarifa_por_dia.errors %}
+                            <ul class="errorlist">
+                                {% for error in form.tarifa_por_dia.errors %}
+                                    <li>{{ error }}</li>
+                                {% endfor %}
+                            </ul>
+                        {% endif %}
+                        <div class="help-text">Tarifa por día por torrero</div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <label for="{{ form.fecha_inicio.id_for_label }}" class="form-label required-field">Fecha de Inicio</label>
+                        {{ form.fecha_inicio }}
+                        {% if form.fecha_inicio.errors %}
+                            <ul class="errorlist">
+                                {% for error in form.fecha_inicio.errors %}
+                                    <li>{{ error }}</li>
+                                {% endfor %}
+                            </ul>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <label for="{{ form.fecha_fin_estimada.id_for_label }}" class="form-label required-field">Fecha Fin Estimada</label>
+                        {{ form.fecha_fin_estimada }}
+                        {% if form.fecha_fin_estimada.errors %}
+                            <ul class="errorlist">
+                                {% for error in form.fecha_fin_estimada.errors %}
+                                    <li>{{ error }}</li>
+                                {% endfor %}
+                            </ul>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Observaciones -->
+            <div class="form-section">
+                <h3 class="section-title">
+                    <i class="fas fa-sticky-note"></i>
+                    Observaciones
+                </h3>
+                
+                <div class="col-12">
+                    <label for="{{ form.observaciones.id_for_label }}" class="form-label">Observaciones Adicionales</label>
+                    {{ form.observaciones }}
+                    {% if form.observaciones.errors %}
+                        <ul class="errorlist">
+                            {% for error in form.observaciones.errors %}
+                                <li>{{ error }}</li>
+                            {% endfor %}
+                        </ul>
+                    {% endif %}
+                    <div class="help-text">Información adicional relevante (opcional)</div>
+                </div>
+            </div>
+            
+            <!-- Botones -->
+            <div class="d-flex gap-3 justify-content-end mt-4">
+                <a href="{% if servicio %}{% url 'servicio_torrero_detail' servicio.id %}{% else %}{% url 'torreros_dashboard' %}{% endif %}" 
+                   class="btn btn-secondary">
+                    <i class="fas fa-times me-2"></i>Cancelar
+                </a>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save me-2"></i>Guardar Servicio
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Calcular monto total automáticamente
+    document.addEventListener('DOMContentLoaded', function() {
+        const cantidadInput = document.getElementById('{{ form.cantidad_torreros.id_for_label }}');
+        const diasInput = document.getElementById('{{ form.dias_solicitados.id_for_label }}');
+        const tarifaInput = document.getElementById('{{ form.tarifa_por_dia.id_for_label }}');
+        
+        function calcularMontoTotal() {
+            const cantidad = parseFloat(cantidadInput.value) || 0;
+            const dias = parseFloat(diasInput.value) || 0;
+            const tarifa = parseFloat(tarifaInput.value) || 0;
+            
+            const total = cantidad * dias * tarifa;
+            
+            if (total > 0) {
+                console.log(`Monto Total Calculado: Q${total.toFixed(2)}`);
+                // Mostrar el monto calculado (opcional)
+                // Puedes agregar un elemento en el HTML para mostrar esto
+            }
+        }
+        
+        if (cantidadInput && diasInput && tarifaInput) {
+            cantidadInput.addEventListener('input', calcularMontoTotal);
+            diasInput.addEventListener('input', calcularMontoTotal);
+            tarifaInput.addEventListener('input', calcularMontoTotal);
+        }
+        
+        // Validación del formulario
+        const form = document.getElementById('servicioForm');
+        form.addEventListener('submit', function(e) {
+            const fechaInicio = new Date(document.getElementById('{{ form.fecha_inicio.id_for_label }}').value);
+            const fechaFin = new Date(document.getElementById('{{ form.fecha_fin_estimada.id_for_label }}').value);
+            
+            if (fechaFin < fechaInicio) {
+                e.preventDefault();
+                alert('La fecha de fin estimada no puede ser anterior a la fecha de inicio');
+                return false;
+            }
+        });
+    });
+</script>
+{% endblock %}
+
