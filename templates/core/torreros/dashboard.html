@@ -6,274 +6,797 @@
 
 {% block extra_css %}
 <style>
-    /* Hero Section con Gradiente */
-    .hero-section {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    /* ============================================
+       REACT-STYLE DASHBOARD - Vercel + Stripe Inspired
+    ============================================ */
+    
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+    
+    * {
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    }
+    
+    body {
+        background: #fafafa;
+        min-height: 100vh;
+    }
+    
+    /* Hero Section - Glassmorphism */
+    .hero-modern {
+        background: linear-gradient(135deg, #000000 0%, #1a1a1a 100%);
         color: white;
-        padding: 3rem 0;
-        margin: -2rem -2rem 2rem -2rem;
-        border-radius: 0 0 20px 20px;
-        box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+        padding: 4rem 0;
+        margin: -2rem -2rem 3rem -2rem;
+        position: relative;
+        overflow: hidden;
     }
     
-    .hero-content h1 {
-        font-size: 2.5rem;
-        font-weight: 700;
-        margin-bottom: 0.5rem;
-        text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+    .hero-modern::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: 
+            radial-gradient(circle at 20% 50%, rgba(99, 102, 241, 0.15) 0%, transparent 50%),
+            radial-gradient(circle at 80% 80%, rgba(139, 92, 246, 0.15) 0%, transparent 50%);
+        animation: pulse 8s ease-in-out infinite;
     }
     
-    .hero-content p {
-        font-size: 1.1rem;
-        opacity: 0.95;
-        margin-bottom: 1.5rem;
+    @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.8; }
+    }
+    
+    .hero-content {
+        position: relative;
+        z-index: 1;
+    }
+    
+    .hero-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        padding: 0.5rem 1rem;
+        border-radius: 50px;
+        font-size: 0.875rem;
+        font-weight: 600;
+        margin-bottom: 1rem;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .hero-title {
+        font-size: 3.5rem;
+        font-weight: 900;
+        margin-bottom: 1rem;
+        letter-spacing: -0.03em;
+        background: linear-gradient(135deg, #ffffff 0%, #a0a0a0 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+    
+    .hero-subtitle {
+        font-size: 1.25rem;
+        opacity: 0.7;
+        font-weight: 400;
+        margin-bottom: 2rem;
     }
     
     .btn-hero {
         background: white;
-        color: #667eea;
-        padding: 12px 30px;
-        border-radius: 50px;
-        font-weight: 600;
+        color: #000;
+        padding: 1rem 2rem;
+        border-radius: 12px;
+        font-weight: 700;
         border: none;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-        transition: all 0.3s ease;
+        font-size: 1rem;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.75rem;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: 0 4px 20px rgba(255, 255, 255, 0.1);
     }
     
     .btn-hero:hover {
         transform: translateY(-2px);
-        box-shadow: 0 6px 20px rgba(0,0,0,0.3);
-        color: #667eea;
+        box-shadow: 0 8px 30px rgba(255, 255, 255, 0.2);
+        color: #000;
     }
     
-    /* Stats Cards Modernos */
+    /* Stats Grid - Bento Box Style */
     .stats-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-        gap: 1.5rem;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 1rem;
         margin-bottom: 2rem;
     }
     
-    .stat-card {
+    .stat-card-modern {
         background: white;
-        border-radius: 15px;
-        padding: 1.5rem;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.08);
-        transition: all 0.3s ease;
-        border-left: 4px solid;
-    }
-    
-    .stat-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
-    }
-    
-    .stat-card.primary { border-left-color: #667eea; }
-    .stat-card.success { border-left-color: #10b981; }
-    .stat-card.warning { border-left-color: #f59e0b; }
-    .stat-card.danger { border-left-color: #ef4444; }
-    
-    .stat-icon {
-        width: 50px;
-        height: 50px;
         border-radius: 12px;
+        padding: 1.25rem;
+        border: 1px solid #e5e7eb;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .stat-card-modern::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: linear-gradient(90deg, var(--card-color) 0%, transparent 100%);
+    }
+    
+    .stat-card-modern:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+        border-color: var(--card-color);
+    }
+    
+    .stat-card-modern.primary { --card-color: #6366f1; }
+    .stat-card-modern.success { --card-color: #10b981; }
+    .stat-card-modern.warning { --card-color: #f59e0b; }
+    .stat-card-modern.danger { --card-color: #ef4444; }
+    
+    .stat-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 0.75rem;
+    }
+    
+    .stat-icon-modern {
+        width: 40px;
+        height: 40px;
+        border-radius: 10px;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 1.5rem;
-        margin-bottom: 1rem;
-    }
-    
-    .stat-card.primary .stat-icon { background: #eef2ff; color: #667eea; }
-    .stat-card.success .stat-icon { background: #d1fae5; color: #10b981; }
-    .stat-card.warning .stat-icon { background: #fef3c7; color: #f59e0b; }
-    .stat-card.danger .stat-icon { background: #fee2e2; color: #ef4444; }
-    
-    .stat-value {
-        font-size: 2rem;
-        font-weight: 700;
-        margin-bottom: 0.25rem;
-        color: #1f2937;
-    }
-    
-    .stat-label {
-        color: #6b7280;
-        font-size: 0.9rem;
-        font-weight: 500;
-    }
-    
-    /* Tabla Moderna */
-    .table-modern {
-        background: white;
-        border-radius: 15px;
-        overflow: hidden;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.08);
-    }
-    
-    .table-modern thead {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        font-size: 1.125rem;
+        background: var(--card-color);
         color: white;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     }
     
-    .table-modern thead th {
-        padding: 1rem;
+    .stat-value-modern {
+        font-size: 1.75rem;
+        font-weight: 900;
+        color: #000;
+        letter-spacing: -0.02em;
+        margin-bottom: 0.375rem;
+    }
+    
+    .stat-label-modern {
+        color: #6b7280;
+        font-size: 0.75rem;
         font-weight: 600;
-        border: none;
         text-transform: uppercase;
-        font-size: 0.85rem;
-        letter-spacing: 0.5px;
+        letter-spacing: 0.05em;
     }
     
-    .table-modern tbody tr {
-        border-bottom: 1px solid #f3f4f6;
-        transition: all 0.2s ease;
-    }
-    
-    .table-modern tbody tr:hover {
-        background: #f9fafb;
-        transform: scale(1.01);
-    }
-    
-    .table-modern tbody td {
-        padding: 1rem;
-        vertical-align: middle;
-    }
-    
-    /* Badges Modernos */
-    .badge-modern {
-        padding: 0.5rem 1rem;
-        border-radius: 50px;
+    .stat-trend {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+        font-size: 0.875rem;
         font-weight: 600;
-        font-size: 0.85rem;
-        display: inline-block;
+        padding: 0.25rem 0.75rem;
+        border-radius: 50px;
+        margin-top: 0.5rem;
     }
     
-    .badge-modern.success {
+    .stat-trend.up {
         background: #d1fae5;
         color: #065f46;
     }
     
-    .badge-modern.warning {
-        background: #fef3c7;
-        color: #92400e;
-    }
-    
-    .badge-modern.danger {
+    .stat-trend.down {
         background: #fee2e2;
         color: #991b1b;
     }
     
-    .badge-modern.info {
+    /* Section Card */
+    .section-modern {
+        background: white;
+        border-radius: 20px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        border: 1px solid #e5e7eb;
+        animation: fadeInUp 0.6s ease-out;
+    }
+    
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    .section-header-modern {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+        padding-bottom: 1rem;
+        border-bottom: 2px solid #f3f4f6;
+    }
+    
+    .section-title-modern {
+        font-size: 1.5rem;
+        font-weight: 800;
+        color: #000;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        letter-spacing: -0.01em;
+    }
+    
+    .section-title-modern i {
+        color: #6366f1;
+    }
+    
+    /* Table Modern */
+    .table-react {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+    }
+    
+    .table-react thead th {
+        background: #fafafa;
+        padding: 1rem;
+        text-align: left;
+        font-weight: 700;
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: #6b7280;
+        border-bottom: 2px solid #e5e7eb;
+    }
+    
+    .table-react tbody tr {
+        transition: all 0.2s ease;
+        border-bottom: 1px solid #f3f4f6;
+    }
+    
+    .table-react tbody tr:hover {
+        background: #fafafa;
+    }
+    
+    .table-react tbody td {
+        padding: 1.25rem 1rem;
+        vertical-align: middle;
+        font-size: 0.9375rem;
+    }
+    
+    /* Badge Modern */
+    .badge-react {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 1rem;
+        border-radius: 50px;
+        font-weight: 700;
+        font-size: 0.8125rem;
+        letter-spacing: 0.02em;
+    }
+    
+    .badge-react.success {
+        background: #d1fae5;
+        color: #065f46;
+    }
+    
+    .badge-react.warning {
+        background: #fef3c7;
+        color: #92400e;
+    }
+    
+    .badge-react.info {
         background: #dbeafe;
         color: #1e40af;
     }
     
-    /* Progress Bar */
-    .progress-modern {
+    .badge-react.danger {
+        background: #fee2e2;
+        color: #991b1b;
+    }
+    
+    /* Progress Bar Modern */
+    .progress-container {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+    
+    .progress-bar-react {
+        flex: 1;
         height: 8px;
+        background: #f3f4f6;
         border-radius: 50px;
-        background: #e5e7eb;
+        overflow: hidden;
+        position: relative;
+    }
+    
+    .progress-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #6366f1 0%, #8b5cf6 100%);
+        border-radius: 50px;
+        transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
         overflow: hidden;
     }
     
-    .progress-bar-modern {
-        height: 100%;
-        border-radius: 50px;
-        transition: width 0.3s ease;
+    .progress-fill::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        bottom: 0;
+        right: 0;
+        background: linear-gradient(
+            90deg,
+            transparent,
+            rgba(255, 255, 255, 0.3),
+            transparent
+        );
+        animation: shimmer 2s infinite;
     }
     
-    .progress-bar-modern.success { background: linear-gradient(90deg, #10b981, #059669); }
-    .progress-bar-modern.warning { background: linear-gradient(90deg, #f59e0b, #d97706); }
-    .progress-bar-modern.danger { background: linear-gradient(90deg, #ef4444, #dc2626); }
-    
-    /* Section Card */
-    .section-card {
-        background: white;
-        border-radius: 15px;
-        padding: 1.5rem;
-        margin-bottom: 2rem;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+    @keyframes shimmer {
+        0% { transform: translateX(-100%); }
+        100% { transform: translateX(100%); }
     }
     
-    .section-title {
-        font-size: 1.3rem;
+    .progress-text {
+        font-weight: 700;
+        font-size: 0.875rem;
+        color: #6366f1;
+        min-width: 45px;
+        text-align: right;
+    }
+    
+    /* Action Buttons */
+    .btn-action-modern {
+        padding: 0.625rem 1rem;
+        border-radius: 10px;
+        border: none;
+        font-weight: 600;
+        font-size: 0.875rem;
+        transition: all 0.2s ease;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .btn-action-modern:hover {
+        transform: translateY(-2px);
+    }
+    
+    .btn-action-modern.primary {
+        background: #6366f1;
+        color: white;
+    }
+    
+    .btn-action-modern.primary:hover {
+        background: #4f46e5;
+        box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
+    }
+    
+    .btn-action-modern.warning {
+        background: #fef3c7;
+        color: #92400e;
+    }
+    
+    .btn-action-modern.warning:hover {
+        background: #fde68a;
+    }
+    
+    /* Empty State */
+    .empty-state-modern {
+        text-align: center;
+        padding: 4rem 2rem;
+    }
+    
+    .empty-icon {
+        width: 120px;
+        height: 120px;
+        margin: 0 auto 2rem;
+        background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 3rem;
+        color: #9ca3af;
+    }
+    
+    .empty-title {
+        font-size: 1.5rem;
         font-weight: 700;
         color: #1f2937;
-        margin-bottom: 1.5rem;
+        margin-bottom: 0.5rem;
+    }
+    
+    .empty-text {
+        color: #6b7280;
+        margin-bottom: 2rem;
+    }
+    
+    /* Servicios Grid Compact */
+    .servicios-grid-compact {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+        gap: 1rem;
+    }
+    
+    .servicio-card-compact {
+        background: white;
+        border: 1px solid #e5e7eb;
+        border-radius: 12px;
+        padding: 1.25rem;
+        transition: all 0.2s;
+    }
+    
+    .servicio-card-compact:hover {
+        border-color: #6366f1;
+        box-shadow: 0 4px 12px rgba(99, 102, 241, 0.1);
+        transform: translateY(-2px);
+    }
+    
+    .servicio-header-compact {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 1rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid #f3f4f6;
+    }
+    
+    .servicio-info-compact {
+        flex: 1;
+    }
+    
+    .servicio-cliente {
+        font-size: 1rem;
+        font-weight: 700;
+        color: #111827;
+        margin: 0 0 0.25rem 0;
+    }
+    
+    .servicio-proyecto {
+        font-size: 0.8125rem;
+        color: #6b7280;
+        margin: 0;
+    }
+    
+    .servicio-badges {
+        display: flex;
+        gap: 0.5rem;
+    }
+    
+    .badge-compact {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+        padding: 0.25rem 0.625rem;
+        border-radius: 6px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        white-space: nowrap;
+    }
+    
+    .badge-compact.success {
+        background: #d1fae5;
+        color: #065f46;
+    }
+    
+    .badge-compact.warning {
+        background: #fef3c7;
+        color: #92400e;
+    }
+    
+    .servicio-stats-compact {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 0.75rem;
+        margin-bottom: 1rem;
+    }
+    
+    .stat-item-compact {
         display: flex;
         align-items: center;
         gap: 0.5rem;
     }
     
-    .section-title i {
-        color: #667eea;
-    }
-    
-    /* Empty State */
-    .empty-state {
-        text-align: center;
-        padding: 3rem;
-        color: #9ca3af;
-    }
-    
-    .empty-state i {
-        font-size: 4rem;
-        margin-bottom: 1rem;
-        opacity: 0.3;
-    }
-    
-    .empty-state h5 {
-        color: #6b7280;
-        margin-bottom: 0.5rem;
-    }
-    
-    /* Botones de Acción */
-    .btn-action-group {
+    .stat-icon-compact {
+        width: 32px;
+        height: 32px;
         display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #f3f4f6;
+        border-radius: 8px;
+        color: #6366f1;
+        font-size: 0.875rem;
+    }
+    
+    .stat-value-compact {
+        font-size: 0.9375rem;
+        font-weight: 700;
+        color: #111827;
+        line-height: 1.2;
+    }
+    
+    .stat-value-compact.money {
+        color: #10b981;
+    }
+    
+    .stat-label-compact {
+        font-size: 0.6875rem;
+        color: #6b7280;
+        text-transform: uppercase;
+        letter-spacing: 0.025em;
+    }
+    
+    .servicio-progress-compact {
+        margin-bottom: 1rem;
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        padding: 1rem;
+        border-radius: 10px;
+        border: 1px solid #e5e7eb;
+    }
+    
+    .progress-info-compact {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0.75rem;
+    }
+    
+    .progress-label-compact {
+        font-size: 0.75rem;
+        font-weight: 700;
+        color: #6b7280;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        display: flex;
+        align-items: center;
+        gap: 0.375rem;
+    }
+    
+    .progress-label-compact::before {
+        content: '';
+        width: 8px;
+        height: 8px;
+        background: #6366f1;
+        border-radius: 50%;
+        animation: pulse-dot 2s ease-in-out infinite;
+    }
+    
+    @keyframes pulse-dot {
+        0%, 100% { opacity: 1; transform: scale(1); }
+        50% { opacity: 0.5; transform: scale(1.2); }
+    }
+    
+    .progress-percentage-compact {
+        font-size: 1.25rem;
+        font-weight: 900;
+        background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+    
+    .progress-bar-compact {
+        height: 12px;
+        background: #e5e7eb;
+        border-radius: 20px;
+        overflow: hidden;
+        box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.08);
+        position: relative;
+    }
+    
+    .progress-fill-compact {
+        height: 100%;
+        border-radius: 20px;
+        transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .progress-fill-compact::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(
+            90deg,
+            transparent,
+            rgba(255, 255, 255, 0.4),
+            transparent
+        );
+        animation: shimmer 2.5s infinite;
+    }
+    
+    @keyframes shimmer {
+        0% { transform: translateX(-100%); }
+        100% { transform: translateX(100%); }
+    }
+    
+    /* Colores dinámicos según progreso */
+    .progress-fill-compact[data-progress="low"] {
+        background: linear-gradient(90deg, #ef4444 0%, #dc2626 100%);
+    }
+    
+    .progress-fill-compact[data-progress="medium"] {
+        background: linear-gradient(90deg, #f59e0b 0%, #d97706 100%);
+    }
+    
+    .progress-fill-compact[data-progress="high"] {
+        background: linear-gradient(90deg, #10b981 0%, #059669 100%);
+    }
+    
+    .progress-fill-compact[data-progress="complete"] {
+        background: linear-gradient(90deg, #6366f1 0%, #4f46e5 100%);
+        animation: pulse-complete 2s ease-in-out infinite;
+    }
+    
+    @keyframes pulse-complete {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.85; }
+    }
+    
+    .servicio-actions-compact {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
         gap: 0.5rem;
     }
     
-    .btn-action {
-        padding: 0.5rem 1rem;
+    .btn-compact {
+        padding: 0.625rem;
         border-radius: 8px;
-        border: none;
-        font-weight: 600;
+        font-size: 1rem;
+        font-weight: 500;
+        text-align: center;
+        text-decoration: none;
         transition: all 0.2s ease;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
         cursor: pointer;
+        width: 100%;
+        aspect-ratio: 1;
+        position: relative;
+        background: white;
+        border: 1.5px solid #e5e7eb;
+        color: #374151;
     }
     
-    .btn-action:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    .btn-compact i {
+        transition: transform 0.2s ease;
     }
     
-    .btn-action.primary {
-        background: #667eea;
-        color: white;
+    .btn-compact:hover {
+        background: #f9fafb;
+        border-color: #d1d5db;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
     }
     
-    .btn-action.success {
-        background: #10b981;
-        color: white;
+    .btn-compact:hover i {
+        transform: scale(1.1);
     }
     
-    .btn-action.warning {
-        background: #f59e0b;
-        color: white;
+    .btn-compact:active {
+        transform: scale(0.95);
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+    }
+    
+    /* Colores sutiles para cada tipo */
+    .btn-compact.success:hover {
+        background: #f0fdf4;
+        border-color: #bbf7d0;
+        color: #16a34a;
+    }
+    
+    .btn-compact.primary:hover {
+        background: #f5f3ff;
+        border-color: #c4b5fd;
+        color: #7c3aed;
+    }
+    
+    .btn-compact.info:hover {
+        background: #eff6ff;
+        border-color: #bfdbfe;
+        color: #2563eb;
+    }
+    
+    .btn-compact.danger:hover {
+        background: #fef2f2;
+        border-color: #fecaca;
+        color: #dc2626;
+    }
+    
+    /* Responsive */
+    @media (max-width: 1200px) {
+        .stats-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+    
+    @media (max-width: 768px) {
+        .hero-title {
+            font-size: 2.5rem;
+        }
+        
+        .stats-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .section-modern {
+            padding: 1.5rem;
+        }
+        
+        .servicios-grid-compact {
+            grid-template-columns: 1fr;
+        }
+        
+        .servicio-stats-compact {
+            grid-template-columns: 1fr;
+        }
+        
+        .servicio-actions-compact {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+    
+    @media (max-width: 480px) {
+        .servicio-actions-compact {
+            grid-template-columns: 1fr;
+        }
     }
 </style>
 {% endblock %}
 
 {% block content %}
 <!-- Hero Section -->
-<div class="hero-section">
+<div class="hero-modern">
     <div class="container">
         <div class="hero-content">
-            <h1><i class="fas fa-hard-hat me-2"></i>Gestión de Servicios de Torreros</h1>
-            <p>Control completo de servicios, días trabajados y pagos</p>
-            <a href="{% url 'servicio_torrero_create' %}" class="btn btn-hero">
-                <i class="fas fa-plus me-2"></i>Nuevo Servicio
-            </a>
+            <div class="hero-badge">
+                <i class="fas fa-hard-hat"></i>
+                <span>Módulo de Gestión</span>
+            </div>
+            <h1 class="hero-title">Servicios de Torreros</h1>
+            <p class="hero-subtitle">Control completo de servicios, días trabajados y pagos en tiempo real</p>
+            <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                <a href="{% url 'servicio_torrero_create' %}" class="btn-hero">
+                    <i class="fas fa-plus-circle"></i>
+                    <span>Nuevo Servicio</span>
+                </a>
+                <button type="button" class="btn-hero" style="background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); color: white; border: none; cursor: pointer;" onclick="abrirModalTorrero()">
+                    <i class="fas fa-user-plus"></i>
+                    <span>Registrar Torrero</span>
+                </button>
+                <a href="{% url 'torreros_list' %}" class="btn-hero" style="background: rgba(255,255,255,0.15); backdrop-filter: blur(10px); color: white;">
+                    <i class="fas fa-users"></i>
+                    <span>Ver Catálogo</span>
+                </a>
+            </div>
         </div>
     </div>
 </div>
@@ -281,248 +804,531 @@
 <div class="container mt-4">
     <!-- Stats Grid -->
     <div class="stats-grid">
-        <div class="stat-card primary">
-            <div class="stat-icon">
-                <i class="fas fa-briefcase"></i>
+        <div class="stat-card-modern primary">
+            <div class="stat-header">
+                <div>
+                    <div class="stat-value-modern">{{ total_servicios_activos }}</div>
+                    <div class="stat-label-modern">Servicios Activos</div>
+                </div>
+                <div class="stat-icon-modern">
+                    <i class="fas fa-briefcase"></i>
+                </div>
             </div>
-            <div class="stat-value">{{ total_servicios_activos }}</div>
-            <div class="stat-label">Servicios Activos</div>
         </div>
         
-        <div class="stat-card success">
-            <div class="stat-icon">
-                <i class="fas fa-dollar-sign"></i>
+        <div class="stat-card-modern success">
+            <div class="stat-header">
+                <div>
+                    <div class="stat-value-modern">{{ ingresos_totales|currency_gtq }}</div>
+                    <div class="stat-label-modern">Ingresos Totales</div>
+                </div>
+                <div class="stat-icon-modern">
+                    <i class="fas fa-arrow-trend-up"></i>
+                </div>
             </div>
-            <div class="stat-value">{{ ingresos_totales|currency_gtq }}</div>
-            <div class="stat-label">Ingresos Totales</div>
         </div>
         
-        <div class="stat-card warning">
-            <div class="stat-icon">
-                <i class="fas fa-money-bill-wave"></i>
+        <div class="stat-card-modern warning">
+            <div class="stat-header">
+                <div>
+                    <div class="stat-value-modern">{{ pagos_recibidos|currency_gtq }}</div>
+                    <div class="stat-label-modern">Pagos Recibidos</div>
+                </div>
+                <div class="stat-icon-modern">
+                    <i class="fas fa-money-bill-wave"></i>
+                </div>
             </div>
-            <div class="stat-value">{{ pagos_recibidos|currency_gtq }}</div>
-            <div class="stat-label">Pagos Recibidos</div>
         </div>
         
-        <div class="stat-card danger">
-            <div class="stat-icon">
-                <i class="fas fa-exclamation-triangle"></i>
+        <div class="stat-card-modern danger">
+            <div class="stat-header">
+                <div>
+                    <div class="stat-value-modern">{{ saldo_pendiente|currency_gtq }}</div>
+                    <div class="stat-label-modern">Saldo Pendiente</div>
+                </div>
+                <div class="stat-icon-modern">
+                    <i class="fas fa-exclamation-circle"></i>
+                </div>
             </div>
-            <div class="stat-value">{{ saldo_pendiente|currency_gtq }}</div>
-            <div class="stat-label">Saldo Pendiente</div>
         </div>
     </div>
     
-    <!-- Servicios Activos -->
-    <div class="section-card">
-        <h2 class="section-title">
-            <i class="fas fa-list"></i>
-            Servicios Activos
-        </h2>
-        
-        {% if servicios_activos %}
-        <div class="table-responsive">
-            <table class="table table-modern">
-                <thead>
-                    <tr>
-                        <th>Cliente</th>
-                        <th>Torreros</th>
-                        <th>Días Solicitados</th>
-                        <th>Días Trabajados</th>
-                        <th>Progreso</th>
-                        <th>Monto Total</th>
-                        <th>Estado Pago</th>
-                        <th>Acciones</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for servicio in servicios_activos %}
-                    <tr>
-                        <td>
-                            <div class="fw-bold">{{ servicio.cliente.nombre }}</div>
-                            {% if servicio.proyecto %}
-                                <div class="text-muted small">{{ servicio.proyecto.nombre }}</div>
-                            {% endif %}
-                        </td>
-                        <td>
-                            <span class="badge-modern info">
-                                {{ servicio.cantidad_torreros }} torrero{{ servicio.cantidad_torreros|pluralize }}
-                            </span>
-                        </td>
-                        <td class="text-center">{{ servicio.dias_solicitados }}</td>
-                        <td class="text-center">{{ servicio.dias_trabajados }}</td>
-                        <td style="min-width: 150px;">
-                            <div class="d-flex align-items-center gap-2">
-                                <div class="progress-modern flex-grow-1">
-                                    <div class="progress-bar-modern {% if servicio.porcentaje_completado >= 100 %}success{% elif servicio.porcentaje_completado >= 70 %}warning{% else %}danger{% endif %}" 
-                                         style="width: {{ servicio.porcentaje_completado }}%"></div>
-                                </div>
-                                <span class="small fw-bold">{{ servicio.porcentaje_completado }}%</span>
-                            </div>
-                        </td>
-                        <td>
-                            <span class="fw-bold text-success">{{ servicio.monto_total|currency_gtq }}</span>
-                        </td>
-                        <td>
-                            {% if servicio.esta_pagado %}
-                                <span class="badge-modern success">Pagado</span>
-                            {% else %}
-                                <span class="badge-modern warning">Pendiente</span>
-                            {% endif %}
-                        </td>
-                        <td>
-                            <div class="btn-action-group">
-                                <a href="{% url 'servicio_torrero_detail' servicio.id %}" class="btn-action primary btn-sm" title="Ver Detalle">
-                                    <i class="fas fa-eye"></i>
-                                </a>
-                                <a href="{% url 'servicio_torrero_edit' servicio.id %}" class="btn-action warning btn-sm" title="Editar">
-                                    <i class="fas fa-edit"></i>
-                                </a>
-                            </div>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-        
-        <div class="text-center mt-3">
-            <a href="{% url 'servicio_torrero_list' %}" class="btn btn-outline-primary">
-                <i class="fas fa-list me-2"></i>Ver Todos los Servicios
+    <!-- Servicios Activos Recientes -->
+    <div class="section-modern">
+        <div class="section-header-modern">
+            <h2 class="section-title-modern">
+                <i class="fas fa-clock-rotate-left"></i>
+                Servicios Recientes
+            </h2>
+            <a href="{% url 'servicio_torrero_list' %}" class="btn-action-modern primary">
+                <i class="fas fa-table-list"></i>
+                Ver Todos los Servicios
             </a>
         </div>
+        
+        {% if servicios_activos %}
+        <p style="color: #6b7280; font-size: 0.875rem; margin-bottom: 1rem;">
+            <i class="fas fa-info-circle"></i> Mostrando los últimos 6 servicios activos. 
+            <a href="{% url 'servicio_torrero_list' %}" style="color: #6366f1; text-decoration: none; font-weight: 600;">Ver historial completo →</a>
+        </p>
+        <div class="servicios-grid-compact">
+            {% for servicio in servicios_activos|slice:":6" %}
+            <div class="servicio-card-compact">
+                <div class="servicio-header-compact">
+                    <div class="servicio-info-compact">
+                        <h4 class="servicio-cliente">{{ servicio.cliente.razon_social }}</h4>
+                        {% if servicio.proyecto %}
+                        <p class="servicio-proyecto">{{ servicio.proyecto.nombre }}</p>
+                        {% endif %}
+                    </div>
+                    <div class="servicio-badges">
+                        {% if servicio.esta_pagado %}
+                        <span class="badge-compact success">
+                            <i class="fas fa-check-circle"></i> Pagado
+                        </span>
+                        {% else %}
+                        <span class="badge-compact warning">
+                            <i class="fas fa-clock"></i> Pendiente
+                        </span>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="servicio-stats-compact">
+                    <div class="stat-item-compact">
+                        <i class="fas fa-user-hard-hat stat-icon-compact"></i>
+                        <div>
+                            <div class="stat-value-compact">{{ servicio.cantidad_torreros }}</div>
+                            <div class="stat-label-compact">Torreros</div>
+                        </div>
+                    </div>
+                    <div class="stat-item-compact">
+                        <i class="fas fa-calendar-days stat-icon-compact"></i>
+                        <div>
+                            <div class="stat-value-compact">{{ servicio.dias_trabajados }}/{{ servicio.dias_solicitados }}</div>
+                            <div class="stat-label-compact">Días</div>
+                        </div>
+                    </div>
+                    <div class="stat-item-compact">
+                        <i class="fas fa-dollar-sign stat-icon-compact"></i>
+                        <div>
+                            <div class="stat-value-compact money">{{ servicio.monto_total|currency_gtq }}</div>
+                            <div class="stat-label-compact">Total</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="servicio-progress-compact">
+                    <div class="progress-info-compact">
+                        <span class="progress-label-compact">Progreso</span>
+                        <span class="progress-percentage-compact">{{ servicio.porcentaje_completado }}%</span>
+                    </div>
+                    <div class="progress-bar-compact">
+                        <div class="progress-fill-compact" 
+                             style="width: {{ servicio.porcentaje_completado }}%"
+                             data-progress="{% if servicio.porcentaje_completado >= 100 %}complete{% elif servicio.porcentaje_completado >= 70 %}high{% elif servicio.porcentaje_completado >= 40 %}medium{% else %}low{% endif %}">
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="servicio-actions-compact">
+                    <button onclick="abrirModalRegistroDia({{ servicio.id }}, '{{ servicio.cliente.razon_social|escapejs }}')" 
+                            class="btn-compact success"
+                            title="Registrar Día">
+                        <i class="fas fa-plus-circle"></i>
+                    </button>
+                    <a href="{% url 'servicio_torrero_detail' servicio.id %}" 
+                       class="btn-compact primary"
+                       title="Ver Detalles">
+                        <i class="fas fa-eye"></i>
+                    </a>
+                    <a href="{% url 'servicio_torrero_pdf' servicio.id %}" 
+                       class="btn-compact info" 
+                       target="_blank"
+                       title="Generar PDF">
+                        <i class="fas fa-file-pdf"></i>
+                    </a>
+                    <a href="{% url 'servicio_torrero_delete' servicio.id %}" 
+                       class="btn-compact danger"
+                       title="Eliminar Servicio">
+                        <i class="fas fa-trash-alt"></i>
+                    </a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
         {% else %}
-        <div class="empty-state">
-            <i class="fas fa-hard-hat"></i>
-            <h5>No hay servicios activos</h5>
-            <p>Comienza agregando el primer servicio de torrero</p>
-            <a href="{% url 'servicio_torrero_create' %}" class="btn btn-primary">
-                <i class="fas fa-plus me-2"></i>Agregar Primer Servicio
+        <div class="empty-state-modern">
+            <div class="empty-icon">
+                <i class="fas fa-hard-hat"></i>
+            </div>
+            <h3 class="empty-title">No hay servicios activos</h3>
+            <p class="empty-text">Comienza agregando el primer servicio de torrero para gestionar tus operaciones</p>
+            <a href="{% url 'servicio_torrero_create' %}" class="btn-hero">
+                <i class="fas fa-plus-circle"></i>
+                <span>Crear Primer Servicio</span>
             </a>
         </div>
         {% endif %}
     </div>
     
-    <!-- Últimos Registros de Días -->
-    <div class="section-card">
-        <h2 class="section-title">
-            <i class="fas fa-calendar-check"></i>
-            Últimos Registros de Días Trabajados
-        </h2>
+    <!-- Últimos Registros -->
+    {% if ultimos_registros %}
+    <div class="section-modern">
+        <div class="section-header-modern">
+            <h2 class="section-title-modern">
+                <i class="fas fa-calendar-check"></i>
+                Últimos Registros de Días
+            </h2>
+        </div>
         
-        {% if ultimos_registros %}
         <div class="table-responsive">
-            <table class="table table-modern">
+            <table class="table-react">
                 <thead>
                     <tr>
                         <th>Fecha</th>
                         <th>Cliente</th>
-                        <th>Días Trabajados</th>
-                        <th>Torreros Presentes</th>
+                        <th>Días</th>
+                        <th>Torreros</th>
                         <th>Estado</th>
-                        <th>Registrado Por</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for registro in ultimos_registros %}
                     <tr>
-                        <td>{{ registro.fecha_registro|date:"d/m/Y" }}</td>
-                        <td>{{ registro.servicio.cliente.nombre }}</td>
-                        <td class="text-center">
-                            <span class="badge-modern info">{{ registro.dias_trabajados }} día{{ registro.dias_trabajados|pluralize }}</span>
+                        <td style="font-weight: 600;">{{ registro.fecha_registro|date:"d/m/Y" }}</td>
+                        <td>{{ registro.servicio.cliente.razon_social }}</td>
+                        <td>
+                            <span class="badge-react info">{{ registro.dias_trabajados }} día{{ registro.dias_trabajados|pluralize }}</span>
                         </td>
-                        <td class="text-center">{{ registro.torreros_presentes }}</td>
+                        <td style="text-align: center;">{{ registro.torreros_presentes }}</td>
                         <td>
                             {% if registro.aprobado %}
-                                <span class="badge-modern success">Aprobado</span>
+                                <span class="badge-react success">
+                                    <i class="fas fa-check-circle"></i> Aprobado
+                                </span>
                             {% else %}
-                                <span class="badge-modern warning">Pendiente</span>
+                                <span class="badge-react warning">
+                                    <i class="fas fa-clock"></i> Pendiente
+                                </span>
                             {% endif %}
                             {% if registro.es_dia_extra %}
-                                <span class="badge-modern danger ms-1">Extra</span>
+                                <span class="badge-react danger ms-1">Extra</span>
                             {% endif %}
                         </td>
-                        <td>{{ registro.registrado_por.get_full_name|default:registro.registrado_por.username }}</td>
                     </tr>
                     {% endfor %}
                 </tbody>
             </table>
         </div>
-        {% else %}
-        <div class="empty-state">
-            <i class="fas fa-calendar-times"></i>
-            <h5>No hay registros de días trabajados</h5>
-        </div>
-        {% endif %}
     </div>
-    
-    <!-- Últimos Pagos -->
-    <div class="section-card">
-        <h2 class="section-title">
-            <i class="fas fa-receipt"></i>
-            Últimos Pagos Recibidos
-        </h2>
-        
-        {% if ultimos_pagos %}
-        <div class="table-responsive">
-            <table class="table table-modern">
-                <thead>
-                    <tr>
-                        <th>Fecha</th>
-                        <th>Cliente</th>
-                        <th>Monto</th>
-                        <th>Método</th>
-                        <th>Concepto</th>
-                        <th>Registrado Por</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for pago in ultimos_pagos %}
-                    <tr>
-                        <td>{{ pago.fecha_pago|date:"d/m/Y" }}</td>
-                        <td>{{ pago.servicio.cliente.nombre }}</td>
-                        <td>
-                            <span class="fw-bold text-success">{{ pago.monto|currency_gtq }}</span>
-                        </td>
-                        <td>
-                            <span class="badge-modern info">{{ pago.get_metodo_pago_display }}</span>
-                        </td>
-                        <td>{{ pago.concepto|truncatechars:40 }}</td>
-                        <td>{{ pago.registrado_por.get_full_name|default:pago.registrado_por.username }}</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+    {% endif %}
+</div>
+
+<!-- Modal Personalizado Registro Rápido de Torrero -->
+<div id="modalTorreroOverlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 9999; backdrop-filter: blur(5px);">
+    <div style="display: flex; align-items: center; justify-content: center; height: 100%; padding: 1rem;">
+        <div id="modalTorreroContent" style="background: white; border-radius: 20px; max-width: 500px; width: 100%; box-shadow: 0 20px 60px rgba(0,0,0,0.3); animation: slideIn 0.3s ease-out;">
+            <div style="background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); color: white; padding: 1.5rem 2rem; border-radius: 20px 20px 0 0; display: flex; justify-content: space-between; align-items: center;">
+                <h5 style="margin: 0; font-weight: 700;"><i class="fas fa-user-plus me-2"></i>Registro Rápido de Torrero</h5>
+                <button type="button" onclick="cerrarModalTorrero()" style="background: rgba(255,255,255,0.2); border: none; color: white; width: 32px; height: 32px; border-radius: 50%; cursor: pointer; font-size: 1.25rem; display: flex; align-items: center; justify-content: center;">
+                    ×
+                </button>
+            </div>
+            <form id="formRegistroRapidoTorrero">
+                {% csrf_token %}
+                <div style="padding: 2rem;">
+                    <div style="margin-bottom: 1.5rem;">
+                        <label style="display: block; font-weight: 600; margin-bottom: 0.5rem;">Nombre del Torrero <span style="color: #ef4444;">*</span></label>
+                        <input type="text" name="nombre" placeholder="Ej: Juan Pérez" required style="width: 100%; border: 2px solid #e5e7eb; border-radius: 12px; padding: 0.75rem; font-size: 1rem;">
+                    </div>
+                    <div style="margin-bottom: 1.5rem;">
+                        <label style="display: block; font-weight: 600; margin-bottom: 0.5rem;">Tarifa Diaria ($)</label>
+                        <div style="position: relative;">
+                            <span style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #6b7280; font-weight: 600;">$</span>
+                            <input type="number" name="tarifa_diaria" placeholder="0.00" step="0.01" min="0" style="width: 100%; border: 2px solid #e5e7eb; border-radius: 12px; padding: 0.75rem 0.75rem 0.75rem 2rem; font-size: 1rem;">
+                        </div>
+                    </div>
+                    <div style="border-radius: 12px; background: #dbeafe; color: #1e40af; padding: 1rem;">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>Registro súper rápido:</strong> Solo el nombre es obligatorio. La tarifa es opcional.
+                    </div>
+                </div>
+                <div style="padding: 1.5rem 2rem; display: flex; gap: 1rem; justify-content: flex-end;">
+                    <button type="button" onclick="cerrarModalTorrero()" style="background: #e5e7eb; color: #374151; border: none; border-radius: 12px; padding: 0.75rem 1.5rem; font-weight: 600; cursor: pointer;">
+                        Cancelar
+                    </button>
+                    <button type="submit" style="background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); color: white; border: none; border-radius: 12px; padding: 0.75rem 1.5rem; font-weight: 600; cursor: pointer;">
+                        <i class="fas fa-save me-2"></i>Registrar Torrero
+                    </button>
+                </div>
+            </form>
         </div>
-        {% else %}
-        <div class="empty-state">
-            <i class="fas fa-money-bill-wave"></i>
-            <h5>No hay pagos registrados</h5>
-        </div>
-        {% endif %}
     </div>
 </div>
+
+<style>
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+</style>
+
 {% endblock %}
 
 {% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
-    // Animación de entrada para las cards
-    document.addEventListener('DOMContentLoaded', function() {
-        const cards = document.querySelectorAll('.stat-card, .section-card');
-        cards.forEach((card, index) => {
-            setTimeout(() => {
-                card.style.opacity = '0';
-                card.style.transform = 'translateY(20px)';
-                card.style.transition = 'all 0.5s ease';
-                
-                setTimeout(() => {
-                    card.style.opacity = '1';
-                    card.style.transform = 'translateY(0)';
-                }, 50);
-            }, index * 100);
-        });
+    // Funciones para el modal personalizado
+    function abrirModalTorrero() {
+        document.getElementById('modalTorreroOverlay').style.display = 'block';
+        document.body.style.overflow = 'hidden';
+        // Focus en el primer input
+        setTimeout(() => {
+            document.querySelector('#formRegistroRapidoTorrero input[name="nombre"]').focus();
+        }, 100);
+    }
+    
+    function cerrarModalTorrero() {
+        document.getElementById('modalTorreroOverlay').style.display = 'none';
+        document.body.style.overflow = 'auto';
+        document.getElementById('formRegistroRapidoTorrero').reset();
+    }
+    
+    // Cerrar con ESC
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            cerrarModalTorrero();
+        }
     });
+    
+    // Cerrar al hacer click fuera del modal
+    document.getElementById('modalTorreroOverlay')?.addEventListener('click', function(e) {
+        if (e.target === this) {
+            cerrarModalTorrero();
+        }
+    });
+    
+    // Animate stats on load
+    document.addEventListener('DOMContentLoaded', function() {
+        const stats = document.querySelectorAll('.stat-value-modern');
+        
+        stats.forEach(stat => {
+            const text = stat.textContent;
+            stat.style.opacity = '0';
+            
+            setTimeout(() => {
+                stat.style.transition = 'opacity 0.6s ease-out';
+                stat.style.opacity = '1';
+            }, 200);
+        });
+        
+        // Animate progress bars
+        const progressBars = document.querySelectorAll('.progress-fill');
+        progressBars.forEach(bar => {
+            const width = bar.style.width;
+            bar.style.width = '0';
+            setTimeout(() => {
+                bar.style.width = width;
+            }, 500);
+        });
+        
+        // Registro rápido de torrero
+        const formRegistro = document.getElementById('formRegistroRapidoTorrero');
+        if (formRegistro) {
+            formRegistro.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const formData = new FormData(formRegistro);
+                const submitBtn = formRegistro.querySelector('button[type="submit"]');
+                const originalText = submitBtn.innerHTML;
+                
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Registrando...';
+                
+                fetch('{% url "torrero_registro_rapido" %}', {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-CSRFToken': formData.get('csrfmiddlewaretoken')
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Cerrar el modal
+                        cerrarModalTorrero();
+                        
+                        // Mostrar mensaje de éxito
+                        Swal.fire({
+                            icon: 'success',
+                            title: '¡Torrero Registrado!',
+                            text: data.message,
+                            timer: 2000,
+                            showConfirmButton: false
+                        }).then(() => {
+                            location.reload();
+                        });
+                    } else {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: data.message
+                        });
+                        submitBtn.disabled = false;
+                        submitBtn.innerHTML = originalText;
+                    }
+                })
+                .catch(error => {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: 'Ocurrió un error al registrar el torrero'
+                    });
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = originalText;
+                });
+            });
+        }
+    });
+    
+    // ============================================
+    // MODAL REGISTRO RÁPIDO DE DÍA
+    // ============================================
+    function abrirModalRegistroDia(servicioId, clienteNombre) {
+        Swal.fire({
+            title: '<strong>Registrar Día Trabajado</strong>',
+            html: `
+                <div style="text-align: center; padding: 1rem;">
+                    <p style="margin-bottom: 1.5rem; color: #6b7280; font-size: 1rem;">
+                        <i class="fas fa-building" style="color: #6366f1;"></i> 
+                        <strong>${clienteNombre}</strong>
+                    </p>
+                    <div style="margin-bottom: 1rem;">
+                        <label style="display: block; font-size: 0.875rem; font-weight: 600; color: #374151; margin-bottom: 0.75rem;">
+                            ¿Cuántos días deseas registrar?
+                        </label>
+                        <input type="number" id="dias_trabajados" class="swal2-input" 
+                               value="1" min="0.5" step="0.5"
+                               style="width: 100%; padding: 1rem; border: 2px solid #6366f1; border-radius: 12px; font-size: 2rem; font-weight: 700; text-align: center; color: #6366f1;">
+                    </div>
+                    <p style="color: #9ca3af; font-size: 0.8125rem; margin-top: 0.5rem;">
+                        <i class="fas fa-info-circle"></i> Puedes usar medios días (0.5, 1.5, etc.)
+                    </p>
+                </div>
+            `,
+            showCancelButton: true,
+            confirmButtonText: '<i class="fas fa-check-circle"></i> Registrar',
+            cancelButtonText: '<i class="fas fa-times"></i> Cancelar',
+            confirmButtonColor: '#10b981',
+            cancelButtonColor: '#6b7280',
+            width: '400px',
+            customClass: {
+                confirmButton: 'btn-swal-confirm',
+                cancelButton: 'btn-swal-cancel'
+            },
+            preConfirm: () => {
+                const dias = document.getElementById('dias_trabajados').value;
+                
+                if (!dias || parseFloat(dias) <= 0) {
+                    Swal.showValidationMessage('Por favor ingresa una cantidad válida de días');
+                    return false;
+                }
+                
+                return { 
+                    fecha: new Date().toISOString().split('T')[0], 
+                    dias, 
+                    observaciones: '' 
+                };
+            }
+        }).then((result) => {
+            if (result.isConfirmed) {
+                registrarDiaTrabajado(servicioId, result.value);
+            }
+        });
+    }
+    
+    function registrarDiaTrabajado(servicioId, datos) {
+        // Mostrar loading
+        Swal.fire({
+            title: 'Registrando...',
+            html: 'Por favor espera',
+            allowOutsideClick: false,
+            didOpen: () => {
+                Swal.showLoading();
+            }
+        });
+        
+        // Enviar datos al servidor
+        fetch(`/torreros/servicios/${servicioId}/registrar-dia/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({
+                fecha_registro: datos.fecha,
+                dias_trabajados: datos.dias,
+                observaciones: datos.observaciones
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                Swal.fire({
+                    icon: 'success',
+                    title: '¡Día Registrado!',
+                    text: data.message,
+                    timer: 2000,
+                    showConfirmButton: false
+                }).then(() => {
+                    location.reload();
+                });
+            } else {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: data.message || 'No se pudo registrar el día'
+                });
+            }
+        })
+        .catch(error => {
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: 'Ocurrió un error al registrar el día trabajado'
+            });
+        });
+    }
+    
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
 </script>
-{% endblock %}
 
+<style>
+    .btn-swal-confirm, .btn-swal-cancel {
+        padding: 0.75rem 1.5rem !important;
+        border-radius: 8px !important;
+        font-weight: 600 !important;
+        font-size: 0.9375rem !important;
+    }
+</style>
+{% endblock %}

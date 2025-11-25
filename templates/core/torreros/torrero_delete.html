@@ -1,0 +1,153 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Eliminar Torrero - Sistema ARCA{% endblock %}
+
+{% block extra_css %}
+<style>
+    .delete-container {
+        max-width: 600px;
+        margin: 3rem auto;
+        background: white;
+        border-radius: 15px;
+        padding: 2rem;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    }
+    
+    .delete-icon {
+        width: 80px;
+        height: 80px;
+        background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 1.5rem;
+        color: white;
+        font-size: 2.5rem;
+    }
+    
+    .delete-title {
+        text-align: center;
+        font-size: 1.8rem;
+        font-weight: 700;
+        color: #1f2937;
+        margin-bottom: 1rem;
+    }
+    
+    .delete-warning {
+        background: #fef3c7;
+        border-left: 4px solid #f59e0b;
+        padding: 1rem;
+        border-radius: 8px;
+        margin-bottom: 1.5rem;
+    }
+    
+    .torrero-info {
+        background: #f9fafb;
+        border-radius: 10px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .info-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 0.75rem 0;
+        border-bottom: 1px solid #e5e7eb;
+    }
+    
+    .info-row:last-child {
+        border-bottom: none;
+    }
+    
+    .btn-delete {
+        background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        border: none;
+        color: white;
+        padding: 0.75rem 2rem;
+        border-radius: 10px;
+        font-weight: 600;
+        width: 100%;
+        margin-bottom: 0.75rem;
+    }
+    
+    .btn-cancel {
+        background: white;
+        border: 2px solid #e5e7eb;
+        color: #6b7280;
+        padding: 0.75rem 2rem;
+        border-radius: 10px;
+        font-weight: 600;
+        width: 100%;
+        text-decoration: none;
+        display: block;
+        text-align: center;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="delete-container">
+        <div class="delete-icon">
+            <i class="fas fa-exclamation-triangle"></i>
+        </div>
+        
+        <h1 class="delete-title">¿Eliminar este torrero?</h1>
+        
+        <p class="text-center text-muted mb-4">
+            Esta acción marcará el torrero como inactivo en el sistema.
+        </p>
+        
+        <div class="delete-warning">
+            <i class="fas fa-info-circle"></i>
+            <strong>Importante:</strong> El torrero no se eliminará permanentemente, pero quedará marcado como inactivo.
+        </div>
+        
+        <div class="torrero-info">
+            <h5 class="mb-3 fw-bold">Información del Torrero</h5>
+            
+            <div class="info-row">
+                <span class="fw-bold">Nombre:</span>
+                <span>{{ torrero.nombre }}</span>
+            </div>
+            
+            <div class="info-row">
+                <span class="fw-bold">Cédula:</span>
+                <span>{{ torrero.cedula }}</span>
+            </div>
+            
+            {% if torrero.telefono %}
+            <div class="info-row">
+                <span class="fw-bold">Teléfono:</span>
+                <span>{{ torrero.telefono }}</span>
+            </div>
+            {% endif %}
+            
+            {% if torrero.especialidad %}
+            <div class="info-row">
+                <span class="fw-bold">Especialidad:</span>
+                <span>{{ torrero.especialidad }}</span>
+            </div>
+            {% endif %}
+            
+            <div class="info-row">
+                <span class="fw-bold">Tarifa Diaria:</span>
+                <span class="text-success fw-bold">${{ torrero.tarifa_diaria }}</span>
+            </div>
+        </div>
+        
+        <form method="post">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-delete">
+                <i class="fas fa-trash me-2"></i>Sí, Eliminar Torrero
+            </button>
+        </form>
+        
+        <a href="{% url 'torreros_list' %}" class="btn btn-cancel">
+            <i class="fas fa-times me-2"></i>Cancelar
+        </a>
+    </div>
+</div>
+{% endblock %}

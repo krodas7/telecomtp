@@ -2,13 +2,13 @@ from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 from django.contrib.auth.models import User
 from .models import (
-    Rol, PerfilUsuario, Cliente, Colaborador, Proyecto,
+    Rol, PerfilUsuario, Cliente, Colaborador, Proyecto, Subproyecto,
     Factura, Pago, CategoriaGasto, Gasto, GastoFijoMensual,
     LogActividad, ArchivoAdjunto, Anticipo, AplicacionAnticipo,
     ArchivoProyecto, CarpetaProyecto, ConfiguracionSistema,
     Cotizacion, ItemCotizacion, ItemReutilizable, ConfiguracionPlanilla, PlanillaLiquidada,
     EventoCalendario, NotaPostit, CajaMenuda, ServicioTorrero, RegistroDiasTrabajados, 
-    PagoServicioTorrero
+    PagoServicioTorrero, Torrero, AsignacionTorrero
 )
 
 
@@ -541,4 +541,92 @@ class PagoServicioTorreroAdmin(admin.ModelAdmin):
     def save_model(self, request, obj, form, change):
         if not change:
             obj.registrado_por = request.user
+        super().save_model(request, obj, form, change)
+
+
+@admin.register(Torrero)
+class TorreroAdmin(admin.ModelAdmin):
+    list_display = ('nombre', 'cedula', 'telefono', 'especialidad', 'tarifa_diaria', 
+                   'fecha_ingreso', 'activo')
+    list_filter = ('activo', 'fecha_ingreso', 'especialidad')
+    search_fields = ('nombre', 'cedula', 'telefono', 'email', 'especialidad')
+    readonly_fields = ('creado_por', 'creado_en', 'actualizado_en')
+    
+    fieldsets = (
+        ('Información Personal', {
+            'fields': ('nombre', 'cedula', 'telefono', 'email', 'direccion', 'foto')
+        }),
+        ('Información Laboral', {
+            'fields': ('fecha_ingreso', 'especialidad', 'tarifa_diaria')
+        }),
+        ('Estado y Observaciones', {
+            'fields': ('activo', 'observaciones')
+        }),
+        ('Auditoría', {
+            'fields': ('creado_por', 'creado_en', 'actualizado_en'),
+            'classes': ('collapse',)
+        }),
+    )
+    
+    def save_model(self, request, obj, form, change):
+        if not change:
+            obj.creado_por = request.user
+        super().save_model(request, obj, form, change)
+
+
+@admin.register(AsignacionTorrero)
+class AsignacionTorreroAdmin(admin.ModelAdmin):
+    list_display = ('torrero', 'servicio', 'tarifa_acordada', 'fecha_asignacion', 'activo')
+    list_filter = ('activo', 'fecha_asignacion')
+    search_fields = ('torrero__nombre', 'servicio__cliente__nombre')
+    readonly_fields = ('asignado_por', 'creado_en')
+    
+    fieldsets = (
+        ('Asignación', {
+            'fields': ('servicio', 'torrero', 'tarifa_acordada')
+        }),
+        ('Detalles', {
+            'fields': ('activo', 'observaciones')
+        }),
+        ('Auditoría', {
+            'fields': ('asignado_por', 'creado_en'),
+            'classes': ('collapse',)
+        }),
+    )
+    
+    def save_model(self, request, obj, form, change):
+        if not change:
+            obj.asignado_por = request.user
+        super().save_model(request, obj, form, change)
+
+
+@admin.register(Subproyecto)
+class SubproyectoAdmin(admin.ModelAdmin):
+    list_display = ('codigo', 'nombre', 'proyecto', 'cotizacion', 'estado', 'porcentaje_avance', 'monto_cotizado', 'activo')
+    list_filter = ('estado', 'activo', 'proyecto')
+    search_fields = ('codigo', 'nombre', 'descripcion', 'proyecto__nombre')
+    readonly_fields = ('creado_por', 'creado_en', 'actualizado_en', 'total_ingresos', 'total_gastos', 'rentabilidad', 'margen_rentabilidad')
+    
+    fieldsets = (
+        ('Información Básica', {
+            'fields': ('proyecto', 'cotizacion', 'codigo', 'nombre', 'descripcion')
+        }),
+        ('Fechas', {
+            'fields': ('fecha_inicio', 'fecha_fin_estimada', 'fecha_fin_real')
+        }),
+        ('Financiero', {
+            'fields': ('monto_cotizado', 'total_ingresos', 'total_gastos', 'rentabilidad', 'margen_rentabilidad')
+        }),
+        ('Estado', {
+            'fields': ('estado', 'porcentaje_avance', 'activo')
+        }),
+        ('Auditoría', {
+            'fields': ('creado_por', 'creado_en', 'actualizado_en'),
+            'classes': ('collapse',)
+        }),
+    )
+    
+    def save_model(self, request, obj, form, change):
+        if not change:
+            obj.creado_por = request.user
         super().save_model(request, obj, form, change)

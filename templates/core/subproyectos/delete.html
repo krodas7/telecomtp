@@ -2,7 +2,7 @@
 {% load static %}
 {% load custom_filters %}
 
-{% block title %}Eliminar Servicio - Torreros{% endblock %}
+{% block title %}Eliminar Subproyecto - Sistema ARCA{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -10,9 +10,9 @@
         max-width: 600px;
         margin: 3rem auto;
         background: white;
-        border-radius: 15px;
+        border-radius: 12px;
         padding: 2rem;
-        box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
     }
     
     .delete-icon {
@@ -30,7 +30,7 @@
     
     .delete-title {
         text-align: center;
-        font-size: 1.8rem;
+        font-size: 1.5rem;
         font-weight: 700;
         color: #1f2937;
         margin-bottom: 1rem;
@@ -44,12 +44,7 @@
         margin-bottom: 1.5rem;
     }
     
-    .delete-warning i {
-        color: #f59e0b;
-        margin-right: 0.5rem;
-    }
-    
-    .service-info {
+    .info-card {
         background: #f9fafb;
         border-radius: 10px;
         padding: 1.5rem;
@@ -104,11 +99,14 @@
         font-weight: 600;
         width: 100%;
         transition: all 0.3s ease;
+        text-decoration: none;
+        display: block;
+        text-align: center;
     }
     
     .btn-cancel:hover {
-        border-color: #667eea;
-        color: #667eea;
+        border-color: #6366f1;
+        color: #6366f1;
         background: #f9fafb;
     }
 </style>
@@ -121,62 +119,52 @@
             <i class="fas fa-exclamation-triangle"></i>
         </div>
         
-        <h1 class="delete-title">¿Eliminar este servicio?</h1>
+        <h1 class="delete-title">¿Eliminar este subproyecto?</h1>
         
         <p class="text-center text-muted mb-4">
-            Esta acción marcará el servicio como cancelado y lo desactivará del sistema.
+            Esta acción marcará el subproyecto como cancelado y lo desactivará del sistema.
         </p>
         
         <div class="delete-warning">
             <i class="fas fa-info-circle"></i>
-            <strong>Importante:</strong> El servicio no se eliminará permanentemente, pero quedará marcado como cancelado y no aparecerá en las listas activas.
+            <strong>Importante:</strong> El subproyecto no se eliminará permanentemente, pero quedará marcado como cancelado.
         </div>
         
-        <div class="service-info">
-            <h5 class="mb-3 fw-bold">Información del Servicio</h5>
+        <div class="info-card">
+            <h5 class="mb-3 fw-bold">Información del Subproyecto</h5>
             
             <div class="info-row">
-                <span class="info-label">Cliente:</span>
-                <span class="info-value">{{ servicio.cliente.razon_social }}</span>
+                <span class="info-label">Código:</span>
+                <span class="info-value">{{ subproyecto.codigo }}</span>
             </div>
             
-            {% if servicio.proyecto %}
+            <div class="info-row">
+                <span class="info-label">Nombre:</span>
+                <span class="info-value">{{ subproyecto.nombre }}</span>
+            </div>
+            
             <div class="info-row">
                 <span class="info-label">Proyecto:</span>
-                <span class="info-value">{{ servicio.proyecto.nombre }}</span>
+                <span class="info-value">{{ proyecto.nombre }}</span>
+            </div>
+            
+            {% if subproyecto.cotizacion %}
+            <div class="info-row">
+                <span class="info-label">Cotización:</span>
+                <span class="info-value">{{ subproyecto.cotizacion }}</span>
             </div>
             {% endif %}
             
             <div class="info-row">
-                <span class="info-label">Cantidad de Torreros:</span>
-                <span class="info-value">{{ servicio.cantidad_torreros }}</span>
+                <span class="info-label">Monto Cotizado:</span>
+                <span class="info-value text-success fw-bold">{{ subproyecto.monto_cotizado|currency_gtq }}</span>
             </div>
             
             <div class="info-row">
-                <span class="info-label">Días Solicitados:</span>
-                <span class="info-value">{{ servicio.dias_solicitados }}</span>
-            </div>
-            
-            <div class="info-row">
-                <span class="info-label">Días Trabajados:</span>
-                <span class="info-value">{{ servicio.dias_trabajados }}</span>
-            </div>
-            
-            <div class="info-row">
-                <span class="info-label">Monto Total:</span>
-                <span class="info-value text-success fw-bold">{{ servicio.monto_total|currency_gtq }}</span>
-            </div>
-            
-            <div class="info-row">
-                <span class="info-label">Monto Pagado:</span>
-                <span class="info-value text-primary fw-bold">{{ servicio.monto_pagado|currency_gtq }}</span>
-            </div>
-            
-            <div class="info-row">
-                <span class="info-label">Estado Actual:</span>
+                <span class="info-label">Estado:</span>
                 <span class="info-value">
-                    <span class="badge {% if servicio.estado == 'activo' %}bg-success{% elif servicio.estado == 'completado' %}bg-primary{% elif servicio.estado == 'pausado' %}bg-warning{% else %}bg-danger{% endif %}">
-                        {{ servicio.get_estado_display }}
+                    <span class="badge bg-{{ subproyecto.estado|yesno:'success,warning,danger' }}">
+                        {{ subproyecto.get_estado_display }}
                     </span>
                 </span>
             </div>
@@ -185,25 +173,14 @@
         <form method="post">
             {% csrf_token %}
             <button type="submit" class="btn btn-delete">
-                <i class="fas fa-trash me-2"></i>Sí, Eliminar Servicio
+                <i class="fas fa-trash me-2"></i>Sí, Eliminar Subproyecto
             </button>
         </form>
         
-        <a href="{% url 'servicio_torrero_detail' servicio.id %}" class="btn btn-cancel">
+        <a href="{% url 'proyectos_list' %}" class="btn-cancel">
             <i class="fas fa-times me-2"></i>Cancelar
         </a>
     </div>
 </div>
-{% endblock %}
-
-{% block extra_js %}
-<script>
-    // Confirmación adicional antes de eliminar
-    document.querySelector('form').addEventListener('submit', function(e) {
-        if (!confirm('¿Está completamente seguro de que desea eliminar este servicio?')) {
-            e.preventDefault();
-        }
-    });
-</script>
 {% endblock %}
 

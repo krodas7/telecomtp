@@ -33,6 +33,9 @@
         </div>
         
         <div>
+            <a href="{% url 'subproyectos_dashboard' proyecto.id %}" class="btn btn-primary btn-sm me-2">
+                <i class="fas fa-folder-tree"></i> Subproyectos
+            </a>
             <a href="{% url 'archivos_proyecto_list' proyecto.id %}" class="btn btn-info btn-sm me-2">
                 <i class="fas fa-folder-open"></i> Ver Archivos
             </a>

@@ -1,368 +1,680 @@
 {% extends 'base.html' %}
 {% load static %}
-{% load widget_tweaks %}
 
 {% block title %}{{ titulo }} - Sistema ARCA{% endblock %}
 
 {% block extra_css %}
 <style>
-    .hero-section {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        padding: 2.5rem 0;
-        margin: -2rem -2rem 2rem -2rem;
-        border-radius: 0 0 20px 20px;
-        box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+    
+    * {
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
     }
     
-    .form-container {
-        background: white;
-        border-radius: 15px;
-        padding: 2rem;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.08);
-        max-width: 900px;
+    body {
+        background: #fafafa;
+    }
+    
+    /* Hero Minimalista */
+    .hero-minimal {
+        background: #000;
+        color: white;
+        padding: 2rem 0;
+        margin: -2rem -2rem 2rem -2rem;
+    }
+    
+    .hero-minimal h1 {
+        font-size: 2rem;
+        font-weight: 900;
+        letter-spacing: -0.02em;
+        margin-bottom: 0.25rem;
+    }
+    
+    .hero-minimal p {
+        opacity: 0.7;
+        font-size: 1rem;
+    }
+    
+    /* Container Principal */
+    .form-wrapper {
+        max-width: 1200px;
         margin: 0 auto;
     }
     
+    /* Layout de 2 Columnas */
+    .form-layout {
+        display: grid;
+        grid-template-columns: 1fr 350px;
+        gap: 1.5rem;
+    }
+    
+    /* Columna Principal (Formulario) */
+    .form-main {
+        background: white;
+        border-radius: 12px;
+        border: 1px solid #e5e7eb;
+        overflow: hidden;
+    }
+    
     .form-section {
-        margin-bottom: 2rem;
-        padding-bottom: 2rem;
-        border-bottom: 2px solid #f3f4f6;
+        padding: 1.5rem;
+        border-bottom: 1px solid #f3f4f6;
     }
     
     .form-section:last-child {
         border-bottom: none;
-        margin-bottom: 0;
-        padding-bottom: 0;
     }
     
     .section-title {
-        font-size: 1.2rem;
+        font-size: 1rem;
         font-weight: 700;
-        color: #667eea;
-        margin-bottom: 1.5rem;
+        color: #000;
+        margin-bottom: 1rem;
         display: flex;
         align-items: center;
         gap: 0.5rem;
     }
     
-    .form-label {
+    .section-title i {
+        color: #6366f1;
+    }
+    
+    /* Inputs Modernos */
+    .input-modern {
+        margin-bottom: 1rem;
+    }
+    
+    .input-modern label {
+        display: block;
+        font-size: 0.8125rem;
         font-weight: 600;
         color: #374151;
-        margin-bottom: 0.5rem;
+        margin-bottom: 0.375rem;
     }
     
-    .form-control, .form-select {
-        border: 2px solid #e5e7eb;
-        border-radius: 10px;
-        padding: 0.75rem 1rem;
-        transition: all 0.3s ease;
+    .input-modern input,
+    .input-modern select,
+    .input-modern textarea {
+        width: 100%;
+        padding: 0.625rem 0.875rem;
+        border: 1px solid #d1d5db;
+        border-radius: 6px;
+        font-size: 0.875rem;
+        transition: all 0.2s;
+        background: white;
     }
     
-    .form-control:focus, .form-select:focus {
-        border-color: #667eea;
-        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    .input-modern input:focus,
+    .input-modern select:focus,
+    .input-modern textarea:focus {
+        outline: none;
+        border-color: #6366f1;
+        box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
     }
     
-    .btn-primary {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    .input-modern textarea {
+        resize: vertical;
+        min-height: 80px;
+    }
+    
+    .input-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.75rem;
+    }
+    
+    .required-mark {
+        color: #ef4444;
+    }
+    
+    /* Selector de Torreros */
+    .torreros-selector {
+        background: #f9fafb;
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+    }
+    
+    .torreros-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0.75rem;
+    }
+    
+    .torreros-header h4 {
+        font-size: 0.875rem;
+        font-weight: 700;
+        margin: 0;
+    }
+    
+    .btn-add-torrero {
+        background: #6366f1;
+        color: white;
         border: none;
-        padding: 0.75rem 2rem;
-        border-radius: 10px;
+        padding: 0.375rem 0.75rem;
+        border-radius: 6px;
+        font-size: 0.8125rem;
         font-weight: 600;
-        transition: all 0.3s ease;
+        cursor: pointer;
+        transition: all 0.2s;
     }
     
-    .btn-primary:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+    .btn-add-torrero:hover {
+        background: #4f46e5;
     }
     
-    .btn-secondary {
-        border: 2px solid #e5e7eb;
+    .torreros-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.5rem;
+        margin-top: 0.75rem;
+    }
+    
+    .torrero-card {
+        background: white;
+        border: 1px solid #e5e7eb;
+        border-radius: 6px;
+        padding: 0.625rem;
+        position: relative;
+        transition: all 0.2s;
+    }
+    
+    .torrero-card:hover {
+        border-color: #6366f1;
+    }
+    
+    .torrero-card .remove-btn {
+        position: absolute;
+        top: 0.375rem;
+        right: 0.375rem;
+        background: #fee2e2;
+        color: #dc2626;
+        border: none;
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        font-size: 0.6875rem;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .torrero-name {
+        font-weight: 600;
+        font-size: 0.8125rem;
+        color: #1f2937;
+        margin-bottom: 0.125rem;
+        padding-right: 1.25rem;
+    }
+    
+    .torrero-tarifa {
+        font-size: 0.75rem;
+        color: #10b981;
+        font-weight: 600;
+    }
+    
+    .empty-torreros {
+        text-align: center;
+        padding: 2rem 1rem;
+        color: #9ca3af;
+        font-size: 0.875rem;
+    }
+    
+    /* Sidebar (Resumen) */
+    .form-sidebar {
+        position: sticky;
+        top: 1.5rem;
+        height: fit-content;
+    }
+    
+    .summary-card {
+        background: white;
+        border-radius: 8px;
+        border: 1px solid #e5e7eb;
+        padding: 1rem;
+        margin-bottom: 0.75rem;
+    }
+    
+    .summary-title {
+        font-size: 0.875rem;
+        font-weight: 700;
+        margin-bottom: 0.75rem;
+        color: #000;
+    }
+    
+    .summary-item {
+        display: flex;
+        justify-content: space-between;
+        padding: 0.5rem 0;
+        border-bottom: 1px solid #f3f4f6;
+        font-size: 0.8125rem;
+    }
+    
+    .summary-item:last-child {
+        border-bottom: none;
+    }
+    
+    .summary-label {
+        color: #6b7280;
+    }
+    
+    .summary-value {
+        font-weight: 600;
+        color: #1f2937;
+    }
+    
+    .summary-total {
+        background: #f9fafb;
+        padding: 1rem;
+        border-radius: 8px;
+        margin-top: 1rem;
+    }
+    
+    .summary-total .summary-item {
+        border: none;
+        padding: 0;
+    }
+    
+    .summary-total .summary-value {
+        font-size: 1.5rem;
+        color: #10b981;
+    }
+    
+    /* Botones de Acción */
+    .action-buttons {
+        display: flex;
+        gap: 1rem;
+        padding: 1.5rem 2rem;
+        background: #fafafa;
+        border-top: 1px solid #e5e7eb;
+    }
+    
+    .btn-primary-modern {
+        flex: 1;
+        background: #000;
+        color: white;
+        border: none;
+        padding: 1rem;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 1rem;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    
+    .btn-primary-modern:hover {
+        background: #1f2937;
+    }
+    
+    .btn-secondary-modern {
         background: white;
         color: #6b7280;
-        padding: 0.75rem 2rem;
-        border-radius: 10px;
+        border: 1px solid #d1d5db;
+        padding: 1rem 2rem;
+        border-radius: 8px;
         font-weight: 600;
-        transition: all 0.3s ease;
+        cursor: pointer;
+        text-decoration: none;
+        display: inline-block;
+        transition: all 0.2s;
     }
     
-    .btn-secondary:hover {
-        border-color: #667eea;
-        color: #667eea;
-        background: #f9fafb;
+    .btn-secondary-modern:hover {
+        border-color: #9ca3af;
+        color: #374151;
     }
     
-    .help-text {
-        font-size: 0.875rem;
-        color: #6b7280;
-        margin-top: 0.25rem;
+    /* Responsive */
+    @media (max-width: 1024px) {
+        .form-layout {
+            grid-template-columns: 1fr;
+        }
+        
+        .form-sidebar {
+            position: static;
+        }
     }
     
-    .errorlist {
-        list-style: none;
-        padding: 0;
-        margin: 0.5rem 0 0 0;
-    }
-    
-    .errorlist li {
-        color: #ef4444;
-        font-size: 0.875rem;
-        margin-top: 0.25rem;
-    }
-    
-    .form-control.is-invalid, .form-select.is-invalid {
-        border-color: #ef4444;
-    }
-    
-    .required-field::after {
-        content: " *";
-        color: #ef4444;
+    @media (max-width: 640px) {
+        .input-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .torreros-grid {
+            grid-template-columns: 1fr;
+        }
     }
 </style>
 {% endblock %}
 
 {% block content %}
-<!-- Hero Section -->
-<div class="hero-section">
+<!-- Hero -->
+<div class="hero-minimal">
     <div class="container">
-        <h1><i class="fas fa-{% if servicio %}edit{% else %}plus{% endif %} me-2"></i>{{ titulo }}</h1>
-        <p class="mb-0 opacity-75">Complete la información del servicio de torrero</p>
+        <h1>{{ titulo }}</h1>
+        <p>Complete la información para crear el servicio</p>
     </div>
 </div>
 
-<div class="container mt-4">
-    <div class="form-container">
-        <form method="post" enctype="multipart/form-data" id="servicioForm">
-            {% csrf_token %}
-            
-            <!-- Información Básica -->
-            <div class="form-section">
-                <h3 class="section-title">
-                    <i class="fas fa-info-circle"></i>
-                    Información Básica
-                </h3>
-                
-                <div class="row g-3">
-                    <div class="col-md-6">
-                        <label for="{{ form.cliente.id_for_label }}" class="form-label required-field">Cliente</label>
-                        {{ form.cliente }}
-                        {% if form.cliente.errors %}
-                            <ul class="errorlist">
-                                {% for error in form.cliente.errors %}
-                                    <li>{{ error }}</li>
-                                {% endfor %}
-                            </ul>
-                        {% endif %}
-                        <div class="help-text">Seleccione el cliente que solicita el servicio</div>
-                    </div>
-                    
-                    <div class="col-md-6">
-                        <label for="{{ form.proyecto.id_for_label }}" class="form-label">Proyecto (Opcional)</label>
-                        {{ form.proyecto }}
-                        {% if form.proyecto.errors %}
-                            <ul class="errorlist">
-                                {% for error in form.proyecto.errors %}
-                                    <li>{{ error }}</li>
-                                {% endfor %}
-                            </ul>
-                        {% endif %}
-                        <div class="help-text">Proyecto asociado si aplica</div>
-                    </div>
-                    
-                    <div class="col-12">
-                        <label for="{{ form.descripcion.id_for_label }}" class="form-label required-field">Descripción del Servicio</label>
-                        {{ form.descripcion }}
-                        {% if form.descripcion.errors %}
-                            <ul class="errorlist">
-                                {% for error in form.descripcion.errors %}
-                                    <li>{{ error }}</li>
-                                {% endfor %}
-                            </ul>
-                        {% endif %}
-                        <div class="help-text">Describa detalladamente el servicio solicitado</div>
-                    </div>
-                    
-                    <div class="col-md-6">
-                        <label for="{{ form.cantidad_torreros.id_for_label }}" class="form-label required-field">Cantidad de Torreros</label>
-                        {{ form.cantidad_torreros }}
-                        {% if form.cantidad_torreros.errors %}
-                            <ul class="errorlist">
-                                {% for error in form.cantidad_torreros.errors %}
-                                    <li>{{ error }}</li>
-                                {% endfor %}
-                            </ul>
-                        {% endif %}
-                        <div class="help-text">Número de torreros requeridos</div>
-                    </div>
-                    
-                    <div class="col-md-6">
-                        <label for="{{ form.estado.id_for_label }}" class="form-label required-field">Estado</label>
-                        {{ form.estado }}
-                        {% if form.estado.errors %}
-                            <ul class="errorlist">
-                                {% for error in form.estado.errors %}
-                                    <li>{{ error }}</li>
-                                {% endfor %}
-                            </ul>
-                        {% endif %}
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Periodo y Tiempo -->
-            <div class="form-section">
-                <h3 class="section-title">
-                    <i class="fas fa-calendar-alt"></i>
-                    Periodo y Tiempo
-                </h3>
-                
-                <div class="row g-3">
-                    <div class="col-md-4">
-                        <label for="{{ form.periodo.id_for_label }}" class="form-label required-field">Periodo</label>
-                        {{ form.periodo }}
-                        {% if form.periodo.errors %}
-                            <ul class="errorlist">
-                                {% for error in form.periodo.errors %}
-                                    <li>{{ error }}</li>
-                                {% endfor %}
-                            </ul>
-                        {% endif %}
-                    </div>
-                    
-                    <div class="col-md-4">
-                        <label for="{{ form.dias_solicitados.id_for_label }}" class="form-label required-field">Días Solicitados</label>
-                        {{ form.dias_solicitados }}
-                        {% if form.dias_solicitados.errors %}
-                            <ul class="errorlist">
-                                {% for error in form.dias_solicitados.errors %}
-                                    <li>{{ error }}</li>
-                                {% endfor %}
-                            </ul>
-                        {% endif %}
-                        <div class="help-text">Total de días contratados</div>
-                    </div>
-                    
-                    <div class="col-md-4">
-                        <label for="{{ form.tarifa_por_dia.id_for_label }}" class="form-label required-field">Tarifa por Día</label>
-                        <div class="input-group">
-                            <span class="input-group-text">Q</span>
-                            {{ form.tarifa_por_dia }}
+<div class="container">
+    <form method="post" id="servicioForm">
+        {% csrf_token %}
+        
+        <div class="form-wrapper">
+            <div class="form-layout">
+                <!-- Columna Principal -->
+                <div class="form-main">
+                    <!-- Cliente y Proyecto -->
+                    <div class="form-section">
+                        <h3 class="section-title">
+                            <i class="fas fa-building"></i>
+                            Cliente y Proyecto
+                        </h3>
+                        
+                        <div class="input-grid">
+                            <div class="input-modern">
+                                <label>Cliente <span class="required-mark">*</span></label>
+                                {{ form.cliente }}
+                            </div>
+                            
+                            <div class="input-modern">
+                                <label>Proyecto (Opcional)</label>
+                                {{ form.proyecto }}
+                            </div>
                         </div>
-                        {% if form.tarifa_por_dia.errors %}
-                            <ul class="errorlist">
-                                {% for error in form.tarifa_por_dia.errors %}
-                                    <li>{{ error }}</li>
-                                {% endfor %}
-                            </ul>
-                        {% endif %}
-                        <div class="help-text">Tarifa por día por torrero</div>
+                        
+                        <div class="input-modern">
+                            <label>Descripción del Servicio <span class="required-mark">*</span></label>
+                            {{ form.descripcion }}
+                        </div>
                     </div>
                     
-                    <div class="col-md-6">
-                        <label for="{{ form.fecha_inicio.id_for_label }}" class="form-label required-field">Fecha de Inicio</label>
-                        {{ form.fecha_inicio }}
-                        {% if form.fecha_inicio.errors %}
-                            <ul class="errorlist">
-                                {% for error in form.fecha_inicio.errors %}
-                                    <li>{{ error }}</li>
-                                {% endfor %}
-                            </ul>
-                        {% endif %}
+                    <!-- Torreros -->
+                    <div class="form-section">
+                        <h3 class="section-title">
+                            <i class="fas fa-users"></i>
+                            Selección de Torreros
+                        </h3>
+                        
+                        <div class="torreros-selector">
+                            <div class="torreros-header">
+                                <h4>Torreros Asignados</h4>
+                                <button type="button" class="btn-add-torrero" onclick="abrirModalTorrero()">
+                                    <i class="fas fa-plus me-1"></i> Nuevo
+                                </button>
+                            </div>
+                            
+                            <div class="input-modern">
+                                <label>Seleccionar del Catálogo</label>
+                                <select id="selectorTorreros" style="width: 100%; padding: 0.75rem; border: 1px solid #d1d5db; border-radius: 8px;">
+                                    <option value="">-- Selecciona un torrero --</option>
+                                    {% for torrero in torreros_disponibles %}
+                                        <option value="{{ torrero.id }}" data-nombre="{{ torrero.nombre }}" data-tarifa="{{ torrero.tarifa_diaria }}">
+                                            {{ torrero.nombre }} - ${{ torrero.tarifa_diaria }}/día
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            
+                            <div id="torrerrosSeleccionados" class="torreros-grid">
+                                <!-- Torreros seleccionados -->
+                            </div>
+                        </div>
+                        
+                        <input type="hidden" name="torreros_ids" id="torrerrosIdsInput">
+                        <input type="hidden" name="cantidad_torreros" id="cantidadTorrerrosInput" value="0">
                     </div>
                     
-                    <div class="col-md-6">
-                        <label for="{{ form.fecha_fin_estimada.id_for_label }}" class="form-label required-field">Fecha Fin Estimada</label>
-                        {{ form.fecha_fin_estimada }}
-                        {% if form.fecha_fin_estimada.errors %}
-                            <ul class="errorlist">
-                                {% for error in form.fecha_fin_estimada.errors %}
-                                    <li>{{ error }}</li>
-                                {% endfor %}
-                            </ul>
-                        {% endif %}
+                    <!-- Periodo y Fechas -->
+                    <div class="form-section">
+                        <h3 class="section-title">
+                            <i class="fas fa-calendar"></i>
+                            Periodo y Fechas
+                        </h3>
+                        
+                        <div class="input-grid">
+                            <div class="input-modern">
+                                <label>Periodo <span class="required-mark">*</span></label>
+                                {{ form.periodo }}
+                            </div>
+                            
+                            <div class="input-modern">
+                                <label>Días Solicitados <span class="required-mark">*</span></label>
+                                {{ form.dias_solicitados }}
+                            </div>
+                            
+                            <div class="input-modern">
+                                <label>Fecha de Inicio <span class="required-mark">*</span></label>
+                                {{ form.fecha_inicio }}
+                            </div>
+                            
+                            <div class="input-modern">
+                                <label>Fecha Fin Estimada <span class="required-mark">*</span></label>
+                                {{ form.fecha_fin_estimada }}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Tarifa y Estado -->
+                    <div class="form-section">
+                        <h3 class="section-title">
+                            <i class="fas fa-dollar-sign"></i>
+                            Tarifa y Estado
+                        </h3>
+                        
+                        <div class="input-grid">
+                            <div class="input-modern">
+                                <label>Tarifa por Día ($) <span class="required-mark">*</span></label>
+                                {{ form.tarifa_por_dia }}
+                            </div>
+                            
+                            <div class="input-modern">
+                                <label>Estado <span class="required-mark">*</span></label>
+                                {{ form.estado }}
+                            </div>
+                        </div>
+                        
+                        <div class="input-modern">
+                            <label>Observaciones</label>
+                            {{ form.observaciones }}
+                        </div>
+                    </div>
+                    
+                    <!-- Botones -->
+                    <div class="action-buttons">
+                        <a href="{% url 'torreros_dashboard' %}" class="btn-secondary-modern">
+                            Cancelar
+                        </a>
+                        <button type="submit" class="btn-primary-modern">
+                            <i class="fas fa-check me-2"></i>Crear Servicio
+                        </button>
                     </div>
                 </div>
-            </div>
-            
-            <!-- Observaciones -->
-            <div class="form-section">
-                <h3 class="section-title">
-                    <i class="fas fa-sticky-note"></i>
-                    Observaciones
-                </h3>
                 
-                <div class="col-12">
-                    <label for="{{ form.observaciones.id_for_label }}" class="form-label">Observaciones Adicionales</label>
-                    {{ form.observaciones }}
-                    {% if form.observaciones.errors %}
-                        <ul class="errorlist">
-                            {% for error in form.observaciones.errors %}
-                                <li>{{ error }}</li>
-                            {% endfor %}
-                        </ul>
-                    {% endif %}
-                    <div class="help-text">Información adicional relevante (opcional)</div>
+                <!-- Sidebar (Resumen) -->
+                <div class="form-sidebar">
+                    <div class="summary-card">
+                        <h4 class="summary-title">Resumen del Servicio</h4>
+                        
+                        <div class="summary-item">
+                            <span class="summary-label">Torreros:</span>
+                            <span class="summary-value" id="summaryTorreros">0</span>
+                        </div>
+                        
+                        <div class="summary-item">
+                            <span class="summary-label">Días:</span>
+                            <span class="summary-value" id="summaryDias">0</span>
+                        </div>
+                        
+                        <div class="summary-item">
+                            <span class="summary-label">Tarifa/Día:</span>
+                            <span class="summary-value" id="summaryTarifa">$0.00</span>
+                        </div>
+                        
+                        <div class="summary-total">
+                            <div class="summary-item">
+                                <span class="summary-label">Total Estimado:</span>
+                                <span class="summary-value" id="summaryTotal">$0.00</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="summary-card" style="background: #f9fafb;">
+                        <p style="font-size: 0.8125rem; color: #6b7280; margin: 0;">
+                            <i class="fas fa-info-circle me-1"></i>
+                            El monto total se calculará automáticamente basado en los torreros, días y tarifa.
+                        </p>
+                    </div>
                 </div>
             </div>
-            
-            <!-- Botones -->
-            <div class="d-flex gap-3 justify-content-end mt-4">
-                <a href="{% if servicio %}{% url 'servicio_torrero_detail' servicio.id %}{% else %}{% url 'torreros_dashboard' %}{% endif %}" 
-                   class="btn btn-secondary">
-                    <i class="fas fa-times me-2"></i>Cancelar
-                </a>
-                <button type="submit" class="btn btn-primary">
-                    <i class="fas fa-save me-2"></i>Guardar Servicio
-                </button>
+        </div>
+    </form>
+</div>
+
+<!-- Modal Registro Rápido -->
+<div id="modalTorreroOverlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 9999;">
+    <div style="display: flex; align-items: center; justify-content: center; height: 100%; padding: 1rem;">
+        <div style="background: white; border-radius: 16px; max-width: 450px; width: 100%;">
+            <div style="background: #000; color: white; padding: 1.5rem; border-radius: 16px 16px 0 0;">
+                <h5 style="margin: 0; font-weight: 700;">Registro Rápido de Torrero</h5>
             </div>
-        </form>
+            <form id="formRegistroRapidoTorrero">
+                {% csrf_token %}
+                <div style="padding: 1.5rem;">
+                    <div style="margin-bottom: 1rem;">
+                        <label style="display: block; font-weight: 600; font-size: 0.875rem; margin-bottom: 0.5rem;">Nombre <span style="color: #ef4444;">*</span></label>
+                        <input type="text" name="nombre" placeholder="Ej: Juan Pérez" required style="width: 100%; padding: 0.75rem; border: 1px solid #d1d5db; border-radius: 8px;">
+                    </div>
+                    <div style="margin-bottom: 1rem;">
+                        <label style="display: block; font-weight: 600; font-size: 0.875rem; margin-bottom: 0.5rem;">Tarifa Diaria ($)</label>
+                        <input type="number" name="tarifa_diaria" placeholder="0.00" step="0.01" min="0" style="width: 100%; padding: 0.75rem; border: 1px solid #d1d5db; border-radius: 8px;">
+                    </div>
+                </div>
+                <div style="padding: 1rem 1.5rem; display: flex; gap: 0.75rem; background: #fafafa; border-radius: 0 0 16px 16px;">
+                    <button type="button" onclick="cerrarModalTorrero()" style="flex: 1; background: white; border: 1px solid #d1d5db; padding: 0.75rem; border-radius: 8px; font-weight: 600; cursor: pointer;">Cancelar</button>
+                    <button type="submit" style="flex: 1; background: #000; color: white; border: none; padding: 0.75rem; border-radius: 8px; font-weight: 600; cursor: pointer;">Registrar</button>
+                </div>
+            </form>
+        </div>
     </div>
 </div>
+
 {% endblock %}
 
 {% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
-    // Calcular monto total automáticamente
+    // Modal functions
+    function abrirModalTorrero() {
+        document.getElementById('modalTorreroOverlay').style.display = 'block';
+        document.body.style.overflow = 'hidden';
+    }
+    
+    function cerrarModalTorrero() {
+        document.getElementById('modalTorreroOverlay').style.display = 'none';
+        document.body.style.overflow = 'auto';
+        document.getElementById('formRegistroRapidoTorrero').reset();
+    }
+    
     document.addEventListener('DOMContentLoaded', function() {
-        const cantidadInput = document.getElementById('{{ form.cantidad_torreros.id_for_label }}');
-        const diasInput = document.getElementById('{{ form.dias_solicitados.id_for_label }}');
-        const tarifaInput = document.getElementById('{{ form.tarifa_por_dia.id_for_label }}');
+        let torrerrosSeleccionados = [];
         
-        function calcularMontoTotal() {
-            const cantidad = parseFloat(cantidadInput.value) || 0;
-            const dias = parseFloat(diasInput.value) || 0;
-            const tarifa = parseFloat(tarifaInput.value) || 0;
-            
-            const total = cantidad * dias * tarifa;
-            
-            if (total > 0) {
-                console.log(`Monto Total Calculado: Q${total.toFixed(2)}`);
-                // Mostrar el monto calculado (opcional)
-                // Puedes agregar un elemento en el HTML para mostrar esto
-            }
-        }
+        // Selector de torreros
+        const selector = document.getElementById('selectorTorreros');
+        const contenedor = document.getElementById('torrerrosSeleccionados');
         
-        if (cantidadInput && diasInput && tarifaInput) {
-            cantidadInput.addEventListener('input', calcularMontoTotal);
-            diasInput.addEventListener('input', calcularMontoTotal);
-            tarifaInput.addEventListener('input', calcularMontoTotal);
-        }
-        
-        // Validación del formulario
-        const form = document.getElementById('servicioForm');
-        form.addEventListener('submit', function(e) {
-            const fechaInicio = new Date(document.getElementById('{{ form.fecha_inicio.id_for_label }}').value);
-            const fechaFin = new Date(document.getElementById('{{ form.fecha_fin_estimada.id_for_label }}').value);
-            
-            if (fechaFin < fechaInicio) {
-                e.preventDefault();
-                alert('La fecha de fin estimada no puede ser anterior a la fecha de inicio');
-                return false;
+        selector.addEventListener('change', function() {
+            const option = this.options[this.selectedIndex];
+            if (option.value) {
+                const torrero = {
+                    id: option.value,
+                    nombre: option.dataset.nombre,
+                    tarifa: parseFloat(option.dataset.tarifa)
+                };
+                
+                if (!torrerrosSeleccionados.find(t => t.id === torrero.id)) {
+                    torrerrosSeleccionados.push(torrero);
+                    actualizarVista();
+                }
+                
+                this.value = '';
             }
         });
+        
+        window.eliminarTorrero = function(id) {
+            torrerrosSeleccionados = torrerrosSeleccionados.filter(t => t.id !== id);
+            actualizarVista();
+        };
+        
+        function actualizarVista() {
+            // Actualizar grid de torreros
+            if (torrerrosSeleccionados.length === 0) {
+                contenedor.innerHTML = '<div class="empty-torreros" style="grid-column: 1/-1;">No hay torreros seleccionados</div>';
+            } else {
+                contenedor.innerHTML = torrerrosSeleccionados.map(t => `
+                    <div class="torrero-card">
+                        <button type="button" class="remove-btn" onclick="eliminarTorrero('${t.id}')">×</button>
+                        <div class="torrero-name">${t.nombre}</div>
+                        <div class="torrero-tarifa">$${t.tarifa}/día</div>
+                    </div>
+                `).join('');
+            }
+            
+            // Actualizar inputs hidden
+            document.getElementById('torrerrosIdsInput').value = torrerrosSeleccionados.map(t => t.id).join(',');
+            document.getElementById('cantidadTorrerrosInput').value = torrerrosSeleccionados.length;
+            
+            // Actualizar resumen
+            actualizarResumen();
+        }
+        
+        function actualizarResumen() {
+            const dias = parseInt(document.querySelector('[name="dias_solicitados"]').value) || 0;
+            const tarifa = parseFloat(document.querySelector('[name="tarifa_por_dia"]').value) || 0;
+            const cantidadTorreros = torrerrosSeleccionados.length;
+            
+            document.getElementById('summaryTorreros').textContent = cantidadTorreros;
+            document.getElementById('summaryDias').textContent = dias;
+            document.getElementById('summaryTarifa').textContent = `$${tarifa.toFixed(2)}`;
+            
+            const total = cantidadTorreros * dias * tarifa;
+            document.getElementById('summaryTotal').textContent = `$${total.toFixed(2)}`;
+        }
+        
+        // Actualizar resumen en tiempo real
+        document.querySelector('[name="dias_solicitados"]')?.addEventListener('input', actualizarResumen);
+        document.querySelector('[name="tarifa_por_dia"]')?.addEventListener('input', actualizarResumen);
+        
+        // Registro rápido
+        document.getElementById('formRegistroRapidoTorrero').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+            
+            fetch('{% url "torrero_registro_rapido" %}', {
+                method: 'POST',
+                body: formData,
+                headers: {'X-CSRFToken': formData.get('csrfmiddlewaretoken')}
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    cerrarModalTorrero();
+                    Swal.fire({
+                        icon: 'success',
+                        title: '¡Registrado!',
+                        text: data.message,
+                        timer: 2000,
+                        showConfirmButton: false
+                    }).then(() => location.reload());
+                } else {
+                    Swal.fire({icon: 'error', title: 'Error', text: data.message});
+                }
+            });
+        });
+        
+        actualizarVista();
     });
 </script>
 {% endblock %}
-

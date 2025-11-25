@@ -116,6 +116,20 @@
                 </li>
                 
                 <li class="nav-item">
+                    <a class="nav-link {% if 'trabajadores_diarios' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'trabajadores_diarios_dashboard' %}">
+                        <i class="fas fa-hammer"></i>
+                        <span>Trabajadores Diarios</span>
+                    </a>
+                </li>
+                
+                <li class="nav-item">
+                    <a class="nav-link {% if 'planillas_liquidadas_historial' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'planillas_liquidadas_historial' %}">
+                        <i class="fas fa-history"></i>
+                        <span>Historial de Planillas</span>
+                    </a>
+                </li>
+                
+                <li class="nav-item">
                     <a class="nav-link {% if 'clientes' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'clientes_list' %}">
                         <i class="fas fa-users"></i>
                         <span>Clientes</span>

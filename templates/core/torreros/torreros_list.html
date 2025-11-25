@@ -1,0 +1,152 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load custom_filters %}
+
+{% block title %}Catálogo de Torreros - Sistema ARCA{% endblock %}
+
+{% block extra_css %}
+<style>
+    .page-header {
+        background: linear-gradient(135deg, #000 0%, #1a1a1a 100%);
+        color: white;
+        padding: 2rem;
+        border-radius: 15px;
+        margin-bottom: 2rem;
+    }
+    
+    .search-box {
+        background: white;
+        border-radius: 15px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+    }
+    
+    .torrero-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 1.5rem;
+    }
+    
+    .torrero-card {
+        background: white;
+        border-radius: 15px;
+        padding: 1.5rem;
+        border: 1px solid #e5e7eb;
+        transition: all 0.3s ease;
+    }
+    
+    .torrero-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+    }
+    
+    .torrero-avatar {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 2rem;
+        font-weight: 700;
+        margin: 0 auto 1rem;
+    }
+    
+    .torrero-name {
+        font-size: 1.25rem;
+        font-weight: 700;
+        text-align: center;
+        margin-bottom: 0.5rem;
+    }
+    
+    .torrero-info {
+        text-align: center;
+        color: #6b7280;
+        font-size: 0.875rem;
+        margin-bottom: 1rem;
+    }
+    
+    .torrero-actions {
+        display: flex;
+        gap: 0.5rem;
+        justify-content: center;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="page-header">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h1><i class="fas fa-users me-2"></i>Catálogo de Torreros</h1>
+                <p class="mb-0 opacity-75">Gestiona tu equipo de torreros</p>
+            </div>
+            <a href="{% url 'torrero_create' %}" class="btn btn-light btn-lg">
+                <i class="fas fa-plus me-2"></i>Nuevo Torrero
+            </a>
+        </div>
+    </div>
+    
+    <div class="search-box">
+        <form method="get" class="row g-3">
+            <div class="col-md-10">
+                <input type="text" name="q" class="form-control" placeholder="Buscar por nombre, cédula o especialidad..." value="{{ busqueda }}">
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="fas fa-search me-2"></i>Buscar
+                </button>
+            </div>
+        </form>
+    </div>
+    
+    {% if torreros %}
+    <div class="torrero-grid">
+        {% for torrero in torreros %}
+        <div class="torrero-card">
+            <div class="torrero-avatar">
+                {% if torrero.foto %}
+                    <img src="{{ torrero.foto.url }}" alt="{{ torrero.nombre }}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">
+                {% else %}
+                    {{ torrero.nombre|slice:":1"|upper }}
+                {% endif %}
+            </div>
+            <div class="torrero-name">{{ torrero.nombre }}</div>
+            <div class="torrero-info">
+                <div><i class="fas fa-id-card me-1"></i>{{ torrero.cedula }}</div>
+                {% if torrero.especialidad %}
+                    <div><i class="fas fa-tools me-1"></i>{{ torrero.especialidad }}</div>
+                {% endif %}
+                <div><i class="fas fa-dollar-sign me-1"></i>${{ torrero.tarifa_diaria }}/día</div>
+                {% if torrero.telefono %}
+                    <div><i class="fas fa-phone me-1"></i>{{ torrero.telefono }}</div>
+                {% endif %}
+            </div>
+            <div class="torrero-actions">
+                <a href="{% url 'torrero_edit' torrero.id %}" class="btn btn-sm btn-primary">
+                    <i class="fas fa-edit"></i> Editar
+                </a>
+                <a href="{% url 'torrero_delete' torrero.id %}" class="btn btn-sm btn-danger">
+                    <i class="fas fa-trash"></i> Eliminar
+                </a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="text-center py-5">
+        <i class="fas fa-user-hard-hat fa-4x text-muted mb-3"></i>
+        <h5 class="text-muted">No hay torreros registrados</h5>
+        <p class="text-muted">Comienza agregando el primer torrero al catálogo</p>
+        <a href="{% url 'torrero_create' %}" class="btn btn-primary mt-3">
+            <i class="fas fa-plus me-2"></i>Agregar Primer Torrero
+        </a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
