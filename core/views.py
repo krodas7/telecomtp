@@ -10977,6 +10977,55 @@ def planillas_liquidadas_historial(request):
 
 
 @login_required
+def planilla_liquidada_delete(request, planilla_id):
+    """Eliminar una planilla liquidada"""
+    planilla = get_object_or_404(PlanillaLiquidada, id=planilla_id)
+    proyecto = planilla.proyecto
+    
+    if request.method == 'POST':
+        # Guardar información antes de eliminar para el log
+        proyecto_nombre = proyecto.nombre
+        mes_nombre = planilla.get_mes_display()
+        año = planilla.año
+        quincena_nombre = planilla.get_quincena_display()
+        total_planilla = planilla.total_planilla
+        
+        # Eliminar la planilla
+        planilla.delete()
+        
+        # Registrar actividad
+        LogActividad.objects.create(
+            usuario=request.user,
+            accion='Eliminar Planilla Liquidada',
+            modulo='Planillas Liquidadas',
+            descripcion=f'Planilla liquidada eliminada: {proyecto_nombre} - {mes_nombre} {año} ({quincena_nombre}) - Total: ${total_planilla:,.2f}',
+            ip_address=request.META.get('REMOTE_ADDR')
+        )
+        
+        messages.success(
+            request,
+            f'✅ Planilla liquidada eliminada exitosamente.<br>'
+            f'<strong>Proyecto:</strong> {proyecto_nombre}<br>'
+            f'<strong>Período:</strong> {mes_nombre} {año} ({quincena_nombre})<br>'
+            f'<strong>Total eliminado:</strong> ${total_planilla:,.2f}',
+            extra_tags='html'
+        )
+        
+        # Redirigir de vuelta al historial manteniendo los filtros
+        redirect_url = reverse('planillas_liquidadas_historial')
+        params = request.GET.copy()
+        if params:
+            redirect_url += '?' + params.urlencode()
+        return redirect(redirect_url)
+    
+    # Si es GET, mostrar confirmación
+    return render(request, 'core/planillas/delete.html', {
+        'planilla': planilla,
+        'proyecto': proyecto
+    })
+
+
+@login_required
 def trabajadores_diarios_dashboard(request):
     """Dashboard principal del módulo de Trabajadores Diarios"""
     from django.db.models import Sum, Count, Q

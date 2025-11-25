@@ -33,6 +33,7 @@ urlpatterns = [
     
     # Historial de Planillas Liquidadas
     path('planillas/historial/', views.planillas_liquidadas_historial, name='planillas_liquidadas_historial'),
+    path('planillas/<int:planilla_id>/eliminar/', views.planilla_liquidada_delete, name='planilla_liquidada_delete'),
     path('proyecto/<int:proyecto_id>/historico-nomina/reset/', views.resetear_historico_nomina, name='resetear_historico_nomina'),
     path('proyectos/<int:proyecto_id>/administrar-anticipos/', views.administrar_anticipos_proyecto, name='administrar_anticipos_proyecto'),
     path('anticipos/<int:anticipo_id>/editar/', views.editar_anticipo, name='editar_anticipo'),
