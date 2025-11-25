@@ -2540,9 +2540,6 @@ def proyecto_dashboard(request, proyecto_id=None):
     # Anticipos recientes
     anticipos_recientes = anticipos_proyecto.order_by('-fecha_recepcion')[:5]
     
-    # Rentabilidad del proyecto: Total cobrado REAL - Total gastos aprobados
-    rentabilidad_proyecto = total_cobrado - total_gastos
-    
     # Archivos del proyecto
     archivos_proyecto = ArchivoProyecto.objects.filter(proyecto=proyecto, activo=True)
     
@@ -2569,11 +2566,21 @@ def proyecto_dashboard(request, proyecto_id=None):
     # 3. Total Histórico de Nómina Combinado
     total_historico_nomina = total_historico_personal + total_historico_trabajadores_diarios
     
-    # Cálculo del Balance del Proyecto (Ingresos + Facturas - Gastos)
+    # Cálculo del Balance del Proyecto (Ingresos + Facturas - Gastos - Nómina Histórica)
+    # IMPORTANTE: El total histórico de nómina SÍ afecta el balance porque son gastos reales del proyecto
     total_ingresos_proyecto = proyecto.ingresos.aggregate(total=Sum('monto_total'))['total'] or Decimal('0.00')
     total_facturas_proyecto = proyecto.facturas.filter(estado='pagada').aggregate(total=Sum('monto_total'))['total'] or Decimal('0.00')
     total_ingresos_totales = total_ingresos_proyecto + total_facturas_proyecto
-    proyecto_balance = total_ingresos_totales - total_gastos
+    
+    # Total de gastos incluyendo nómina histórica (gastos aprobados + planillas liquidadas)
+    total_gastos_completo = total_gastos + total_historico_nomina
+    
+    # Rentabilidad del proyecto: Total cobrado REAL - (Total gastos aprobados + Nómina Histórica)
+    # IMPORTANTE: La nómina histórica SÍ afecta la rentabilidad porque son costos reales del proyecto
+    rentabilidad_proyecto = total_cobrado - total_gastos_completo
+    
+    # Balance del proyecto: Ingresos - (Gastos + Nómina Histórica)
+    proyecto_balance = total_ingresos_totales - total_gastos_completo
     
     context = {
         'proyecto': proyecto,
@@ -2584,6 +2591,7 @@ def proyecto_dashboard(request, proyecto_id=None):
         'total_gastos': total_gastos,
         'total_gastos_aprobados': total_gastos_aprobados,
         'total_gastos_pendientes': total_gastos_pendientes,
+        'total_gastos_completo': total_gastos_completo,  # Gastos + Nómina Histórica
         'total_anticipos': total_anticipos,
         'total_anticipos_aplicados': total_anticipos_aplicados,
         'total_anticipos_disponibles': total_anticipos_disponibles,
