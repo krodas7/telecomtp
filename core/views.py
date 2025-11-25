@@ -10916,6 +10916,7 @@ def planillas_liquidadas_historial(request):
     proyecto_id = request.GET.get('proyecto')
     año = request.GET.get('año')
     mes = request.GET.get('mes')
+    tipo_planilla = request.GET.get('tipo_planilla', 'todas')  # 'todas', 'personal', 'trabajadores_diarios'
     search = request.GET.get('search', '')
     
     # Query inicial
@@ -10923,7 +10924,16 @@ def planillas_liquidadas_historial(request):
         'proyecto', 'liquidada_por'
     ).order_by('-año', '-mes', '-quincena', '-fecha_liquidacion')
     
-    # Filtros
+    # Filtro por tipo de planilla
+    if tipo_planilla == 'personal':
+        # Solo planillas de personal (sin observaciones de trabajadores diarios)
+        planillas = planillas.exclude(observaciones__icontains='trabajadores diarios')
+    elif tipo_planilla == 'trabajadores_diarios':
+        # Solo planillas de trabajadores diarios
+        planillas = planillas.filter(observaciones__icontains='trabajadores diarios')
+    # Si es 'todas', no aplicamos filtro
+    
+    # Filtros adicionales
     if proyecto_id:
         planillas = planillas.filter(proyecto_id=proyecto_id)
     
@@ -10944,7 +10954,7 @@ def planillas_liquidadas_historial(request):
     page = request.GET.get('page')
     planillas_page = paginator.get_page(page)
     
-    # Calcular totales
+    # Calcular totales de las planillas filtradas
     total_planillas = planillas.count()
     total_general = planillas.aggregate(
         total=Sum('total_planilla')
@@ -10957,6 +10967,24 @@ def planillas_liquidadas_historial(request):
     total_anticipos_general = planillas.aggregate(
         total=Sum('total_anticipos')
     )['total'] or Decimal('0.00')
+    
+    # Calcular estadísticas generales (todas las planillas, sin filtro de tipo)
+    todas_planillas = PlanillaLiquidada.objects.all()
+    total_planillas_personal = todas_planillas.exclude(
+        observaciones__icontains='trabajadores diarios'
+    ).count()
+    total_planillas_trabajadores_diarios = todas_planillas.filter(
+        observaciones__icontains='trabajadores diarios'
+    ).count()
+    total_planillas_todas = todas_planillas.count()
+    
+    total_general_personal = todas_planillas.exclude(
+        observaciones__icontains='trabajadores diarios'
+    ).aggregate(total=Sum('total_planilla'))['total'] or Decimal('0.00')
+    
+    total_general_trabajadores_diarios = todas_planillas.filter(
+        observaciones__icontains='trabajadores diarios'
+    ).aggregate(total=Sum('total_planilla'))['total'] or Decimal('0.00')
     
     # Obtener proyectos para el filtro
     proyectos = Proyecto.objects.filter(
@@ -10977,8 +11005,15 @@ def planillas_liquidadas_historial(request):
         'proyecto_selected': proyecto_id,
         'año_selected': año,
         'mes_selected': mes,
+        'tipo_planilla_selected': tipo_planilla,
         'search': search,
         'meses_choices': PlanillaLiquidada.MESES_CHOICES,
+        # Estadísticas generales por tipo
+        'total_planillas_todas': total_planillas_todas,
+        'total_planillas_personal': total_planillas_personal,
+        'total_planillas_trabajadores_diarios': total_planillas_trabajadores_diarios,
+        'total_general_personal': total_general_personal,
+        'total_general_trabajadores_diarios': total_general_trabajadores_diarios,
     }
     
     return render(request, 'core/planillas/historial.html', context)
