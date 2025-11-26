@@ -1211,7 +1211,9 @@
         
         // Generar HTML para checkboxes de torreros
         let torrerosHTML = '';
-        if (torreros.length > 0) {
+        let hayTorreros = torreros.length > 0;
+        
+        if (hayTorreros) {
             torrerosHTML = `
                 <div style="margin-top: 1.5rem; text-align: left;">
                     <label style="display: block; font-size: 0.875rem; font-weight: 600; color: #374151; margin-bottom: 0.75rem;">
@@ -1237,7 +1239,7 @@
                 <div style="margin-top: 1.5rem; padding: 1rem; background: #fef3c7; border-radius: 8px; text-align: center;">
                     <i class="fas fa-exclamation-triangle" style="color: #f59e0b;"></i>
                     <p style="margin: 0.5rem 0 0 0; font-size: 0.8125rem; color: #92400e;">
-                        No hay torreros activos. Debes registrar torreros primero.
+                        No hay torreros activos. Debes registrar torreros primero en el catálogo.
                     </p>
                 </div>
             `;
@@ -1255,7 +1257,7 @@
                         <label style="display: block; font-size: 0.875rem; font-weight: 600; color: #374151; margin-bottom: 0.75rem;">
                             ¿Cuántos días deseas registrar?
                         </label>
-                        <input type="number" id="dias_trabajados" class="swal2-input" 
+                        <input type="number" id="swal-dias-trabajados" class="swal2-input" 
                                value="1" min="0.5" step="0.5"
                                style="width: 100%; padding: 1rem; border: 2px solid #6366f1; border-radius: 12px; font-size: 2rem; font-weight: 700; text-align: center; color: #6366f1;">
                     </div>
@@ -1275,20 +1277,41 @@
                 confirmButton: 'btn-swal-confirm',
                 cancelButton: 'btn-swal-cancel'
             },
+            didOpen: () => {
+                // Asegurar que el input tenga el foco
+                const diasInput = document.getElementById('swal-dias-trabajados');
+                if (diasInput) {
+                    diasInput.focus();
+                }
+            },
             preConfirm: () => {
-                const dias = document.getElementById('dias_trabajados').value;
+                const popup = Swal.getPopup();
+                if (!popup) {
+                    Swal.showValidationMessage('Error al acceder al formulario');
+                    return false;
+                }
+                
+                const diasInput = popup.querySelector('#swal-dias-trabajados');
+                const dias = diasInput ? diasInput.value : null;
                 
                 if (!dias || parseFloat(dias) <= 0) {
                     Swal.showValidationMessage('Por favor ingresa una cantidad válida de días');
                     return false;
                 }
                 
-                // Obtener torreros seleccionados
-                const checkboxes = document.querySelectorAll('input[name="torreros"]:checked');
+                // Obtener torreros seleccionados desde el popup de SweetAlert
+                const checkboxes = popup.querySelectorAll('input[name="torreros"]:checked');
                 const torrerosSeleccionados = Array.from(checkboxes).map(cb => parseInt(cb.value));
                 
-                if (torrerosSeleccionados.length === 0) {
+                // Solo validar torreros si hay torreros disponibles
+                if (hayTorreros && torrerosSeleccionados.length === 0) {
                     Swal.showValidationMessage('Debes seleccionar al menos un torrero');
+                    return false;
+                }
+                
+                // Si no hay torreros activos, no permitir continuar
+                if (!hayTorreros) {
+                    Swal.showValidationMessage('No hay torreros activos. Por favor registra torreros primero en el catálogo.');
                     return false;
                 }
                 
@@ -1300,7 +1323,7 @@
                 };
             }
         }).then((result) => {
-            if (result.isConfirmed) {
+            if (result.isConfirmed && result.value) {
                 registrarDiaTrabajado(servicioId, result.value);
             }
         });
