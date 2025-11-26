@@ -6467,7 +6467,7 @@ def eliminar_anticipo_proyecto(request, anticipo_id):
         'proyecto': anticipo.proyecto,
     }
     
-    return render(request, 'core/proyectos/eliminar_anticipo_confirm.html', context)
+    return render(request, 'core/proyectos/eliminar_anticipo.html', context)
 
 
 @login_required
