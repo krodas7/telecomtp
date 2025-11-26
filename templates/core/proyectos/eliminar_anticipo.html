@@ -244,86 +244,57 @@
     </form>
 </div>
 
-<!-- Modal de Confirmación de Eliminación -->
-<div class="modal fade" id="confirmDeleteModal" tabindex="-1" aria-labelledby="confirmDeleteModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header bg-danger text-white">
-                <h5 class="modal-title" id="confirmDeleteModalLabel">
-                    <i class="fas fa-exclamation-triangle me-2"></i>Confirmar Eliminación
-                </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <div class="text-center">
-                    <div class="mb-3">
-                        <i class="fas fa-trash-alt fa-3x text-danger"></i>
-                    </div>
-                    <h6 class="mb-3">¿Estás seguro de que quieres eliminar este anticipo?</h6>
-                    <div class="alert alert-danger">
-                        <strong>⚠️ Advertencia:</strong> Esta acción no se puede deshacer.
-                        <br><br>
-                        <div class="row">
-                            <div class="col-6">
-                                <strong>Colaborador:</strong><br>
-                                <span>{{ anticipo.colaborador.nombre }}</span>
-                            </div>
-                            <div class="col-6">
-                                <strong>Monto:</strong><br>
-                                <span class="text-danger fw-bold">{{ anticipo.monto|currency_gtq }}</span>
-                            </div>
-                        </div>
-                        <div class="row mt-2">
-                            <div class="col-12">
-                                <strong>Concepto:</strong><br>
-                                <span>{{ anticipo.concepto }}</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                    <i class="fas fa-times me-2"></i>Cancelar
-                </button>
-                <button type="button" class="btn btn-danger" id="confirmDelete">
-                    <i class="fas fa-trash me-2"></i>Eliminar Anticipo
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
 {% endblock %}
 
 {% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     // Animación de entrada
     const container = document.querySelector('.delete-container');
-    container.style.opacity = '0';
-    container.style.transform = 'translateY(30px)';
-    
-    setTimeout(() => {
-        container.style.transition = 'all 0.8s ease';
-        container.style.opacity = '1';
-        container.style.transform = 'translateY(0)';
-    }, 200);
-    
-    // Confirmación adicional antes de eliminar
-    const form = document.querySelector('form');
-    form.addEventListener('submit', function(e) {
-        e.preventDefault();
+    if (container) {
+        container.style.opacity = '0';
+        container.style.transform = 'translateY(30px)';
         
-        // Mostrar modal de confirmación
-        const modal = new bootstrap.Modal(document.getElementById('confirmDeleteModal'));
-        modal.show();
-    });
+        setTimeout(() => {
+            container.style.transition = 'all 0.8s ease';
+            container.style.opacity = '1';
+            container.style.transform = 'translateY(0)';
+        }, 200);
+    }
     
-    // Manejar la confirmación del modal
-    document.getElementById('confirmDelete').addEventListener('click', function() {
-        // Enviar el formulario
-        form.submit();
-    });
+    // Confirmación antes de eliminar usando SweetAlert2
+    const form = document.querySelector('form');
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            Swal.fire({
+                title: '¿Estás seguro?',
+                html: `
+                    <p>Esta acción eliminará permanentemente el anticipo:</p>
+                    <div style="text-align: left; margin-top: 1rem;">
+                        <p><strong>Colaborador:</strong> {{ anticipo.colaborador.nombre }}</p>
+                        <p><strong>Monto:</strong> <span style="color: #dc3545; font-weight: bold;">{{ anticipo.monto|currency_gtq }}</span></p>
+                        <p><strong>Concepto:</strong> {{ anticipo.concepto }}</p>
+                    </div>
+                    <p style="color: #dc3545; font-weight: bold; margin-top: 1rem;">⚠️ Esta acción no se puede deshacer.</p>
+                `,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#dc3545',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Sí, eliminar',
+                cancelButtonText: 'Cancelar',
+                reverseButtons: true
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // Enviar el formulario
+                    form.submit();
+                }
+            });
+        });
+    }
     
     // Efecto hover para los botones
     const buttons = document.querySelectorAll('.btn-eliminar, .btn-cancelar');
@@ -339,9 +310,11 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Efecto de parpadeo para el icono de advertencia
     const warningIcon = document.querySelector('.warning-icon');
-    setInterval(() => {
-        warningIcon.style.opacity = warningIcon.style.opacity === '0.8' ? '0.4' : '0.8';
-    }, 1000);
+    if (warningIcon) {
+        setInterval(() => {
+            warningIcon.style.opacity = warningIcon.style.opacity === '0.8' ? '0.4' : '0.8';
+        }, 1000);
+    }
 });
 </script>
 {% endblock %}
