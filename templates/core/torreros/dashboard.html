@@ -1115,99 +1115,21 @@
         }
     });
     
-    // Animate stats on load
-    document.addEventListener('DOMContentLoaded', function() {
-        const stats = document.querySelectorAll('.stat-value-modern');
-        
-        stats.forEach(stat => {
-            const text = stat.textContent;
-            stat.style.opacity = '0';
-            
-            setTimeout(() => {
-                stat.style.transition = 'opacity 0.6s ease-out';
-                stat.style.opacity = '1';
-            }, 200);
-        });
-        
-        // Animate progress bars
-        const progressBars = document.querySelectorAll('.progress-fill');
-        progressBars.forEach(bar => {
-            const width = bar.style.width;
-            bar.style.width = '0';
-            setTimeout(() => {
-                bar.style.width = width;
-            }, 500);
-        });
-        
-        // Registro rápido de torrero
-        const formRegistro = document.getElementById('formRegistroRapidoTorrero');
-        if (formRegistro) {
-            formRegistro.addEventListener('submit', function(e) {
-                e.preventDefault();
-                
-                const formData = new FormData(formRegistro);
-                const submitBtn = formRegistro.querySelector('button[type="submit"]');
-                const originalText = submitBtn.innerHTML;
-                
-                submitBtn.disabled = true;
-                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Registrando...';
-                
-                fetch('{% url "torrero_registro_rapido" %}', {
-                    method: 'POST',
-                    body: formData,
-                    headers: {
-                        'X-CSRFToken': formData.get('csrfmiddlewaretoken')
-                    }
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        // Cerrar el modal
-                        cerrarModalTorrero();
-                        
-                        // Mostrar mensaje de éxito
-                        Swal.fire({
-                            icon: 'success',
-                            title: '¡Torrero Registrado!',
-                            text: data.message,
-                            timer: 2000,
-                            showConfirmButton: false
-                        }).then(() => {
-                            location.reload();
-                        });
-                    } else {
-                        Swal.fire({
-                            icon: 'error',
-                            title: 'Error',
-                            text: data.message
-                        });
-                        submitBtn.disabled = false;
-                        submitBtn.innerHTML = originalText;
-                    }
-                })
-                .catch(error => {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Error',
-                        text: 'Ocurrió un error al registrar el torrero'
-                    });
-                    submitBtn.disabled = false;
-                    submitBtn.innerHTML = originalText;
-                });
-            });
-        }
-    });
-    
     // ============================================
     // MODAL REGISTRO RÁPIDO DE DÍA
     // ============================================
+    // Definir torreros activos en scope global
+    const torrerosActivos = [
+        {% for torrero in torreros_activos %}
+        {id: {{ torrero.id }}, nombre: '{{ torrero.nombre|escapejs }}', tarifa: {{ torrero.tarifa_diaria|default:0 }}}{% if not forloop.last %},{% endif %}
+        {% empty %}
+        {% endfor %}
+    ];
+    
     function abrirModalRegistroDia(servicioId, clienteNombre) {
-        // Obtener lista de torreros activos
-        const torreros = [
-            {% for torrero in torreros_activos %}
-            {id: {{ torrero.id }}, nombre: '{{ torrero.nombre|escapejs }}', tarifa: {{ torrero.tarifa_diaria }}},
-            {% endfor %}
-        ];
+        try {
+        // Usar la lista global de torreros activos
+        const torreros = torrerosActivos || [];
         
         // Generar HTML para checkboxes de torreros
         let torrerosHTML = '';
@@ -1327,7 +1249,98 @@
                 registrarDiaTrabajado(servicioId, result.value);
             }
         });
+        } catch (error) {
+            console.error('Error al abrir modal:', error);
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: 'Ocurrió un error al abrir el formulario. Por favor recarga la página e intenta nuevamente.'
+            });
+        }
     }
+    
+    // Animate stats on load
+    document.addEventListener('DOMContentLoaded', function() {
+        const stats = document.querySelectorAll('.stat-value-modern');
+        
+        stats.forEach(stat => {
+            const text = stat.textContent;
+            stat.style.opacity = '0';
+            
+            setTimeout(() => {
+                stat.style.transition = 'opacity 0.6s ease-out';
+                stat.style.opacity = '1';
+            }, 200);
+        });
+        
+        // Animate progress bars
+        const progressBars = document.querySelectorAll('.progress-fill');
+        progressBars.forEach(bar => {
+            const width = bar.style.width;
+            bar.style.width = '0';
+            setTimeout(() => {
+                bar.style.width = width;
+            }, 500);
+        });
+        
+        // Registro rápido de torrero
+        const formRegistro = document.getElementById('formRegistroRapidoTorrero');
+        if (formRegistro) {
+            formRegistro.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const formData = new FormData(formRegistro);
+                const submitBtn = formRegistro.querySelector('button[type="submit"]');
+                const originalText = submitBtn.innerHTML;
+                
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Registrando...';
+                
+                fetch('{% url "torrero_registro_rapido" %}', {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-CSRFToken': formData.get('csrfmiddlewaretoken')
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Cerrar el modal
+                        cerrarModalTorrero();
+                        
+                        // Mostrar mensaje de éxito
+                        Swal.fire({
+                            icon: 'success',
+                            title: '¡Torrero Registrado!',
+                            text: data.message,
+                            timer: 2000,
+                            showConfirmButton: false
+                        }).then(() => {
+                            location.reload();
+                        });
+                    } else {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: data.message
+                        });
+                        submitBtn.disabled = false;
+                        submitBtn.innerHTML = originalText;
+                    }
+                })
+                .catch(error => {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: 'Ocurrió un error al registrar el torrero'
+                    });
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = originalText;
+                });
+            });
+        }
+    });
     
     function registrarDiaTrabajado(servicioId, datos) {
         // Mostrar loading
