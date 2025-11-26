@@ -9960,11 +9960,29 @@ def caja_menuda_delete(request, pk):
 def torreros_dashboard(request):
     """Dashboard principal del módulo de torreros"""
     try:
-        # Servicios activos
+        # Servicios activos - forzar recálculo de días trabajados para asegurar datos actualizados
         servicios_activos = ServicioTorrero.objects.filter(
             estado='activo',
             activo=True
         ).select_related('cliente', 'proyecto').order_by('-fecha_inicio')
+        
+        # Asegurar que todos los servicios tengan los días trabajados correctos
+        # (solo recalcular si es necesario, para no afectar el rendimiento)
+        for servicio in servicios_activos[:10]:  # Solo los primeros 10 que se mostrarán
+            # Verificar si necesita recálculo comparando con la suma real
+            from django.db.models import Sum
+            total_real = servicio.registros_dias.filter(
+                aprobado=True
+            ).aggregate(total=Sum('dias_trabajados'))['total'] or Decimal('0.00')
+            
+            if isinstance(total_real, Decimal):
+                total_real = total_real
+            else:
+                total_real = Decimal(str(total_real))
+            
+            if servicio.dias_trabajados != total_real:
+                servicio.recalcular_dias_trabajados()
+                servicio.refresh_from_db()
         
         # Estadísticas generales
         total_servicios_activos = servicios_activos.count()
