@@ -10076,7 +10076,13 @@ def servicio_torrero_create(request):
                 servicio = form.save(commit=False)
                 servicio.creado_por = request.user
                 
-                # Calcular monto total
+                # Asegurar que los valores numéricos estén correctos
+                if not servicio.monto_pagado:
+                    servicio.monto_pagado = Decimal('0.00')
+                if not servicio.dias_trabajados:
+                    servicio.dias_trabajados = Decimal('0.00')
+                
+                # Calcular monto total antes de guardar
                 servicio.calcular_monto_total()
                 
                 servicio.save()
@@ -10097,9 +10103,20 @@ def servicio_torrero_create(request):
                 
             except Exception as e:
                 logger.error(f"Error al crear servicio: {str(e)}")
+                import traceback
+                logger.error(traceback.format_exc())
                 messages.error(request, f'❌ Error al crear servicio: {str(e)}')
         else:
-            messages.error(request, '❌ Por favor corrige los errores del formulario')
+            # Mostrar errores específicos del formulario
+            error_messages = []
+            for field, errors in form.errors.items():
+                for error in errors:
+                    field_label = form.fields[field].label if field in form.fields else field
+                    error_messages.append(f'{field_label}: {error}')
+            if error_messages:
+                messages.error(request, '❌ Por favor corrige los errores del formulario:<br>' + '<br>'.join(error_messages), extra_tags='html')
+            else:
+                messages.error(request, '❌ Por favor corrige los errores del formulario')
     else:
         form = ServicioTorreroForm()
     

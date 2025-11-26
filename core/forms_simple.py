@@ -1342,6 +1342,7 @@ class ServicioTorreroForm(forms.ModelForm):
             'dias_solicitados': forms.NumberInput(attrs={
                 'class': 'form-control',
                 'min': '1',
+                'step': '0.5',
                 'placeholder': 'Ej: 5'
             }),
             'fecha_inicio': forms.DateInput(attrs={
@@ -1367,6 +1368,21 @@ class ServicioTorreroForm(forms.ModelForm):
                 'placeholder': 'Observaciones adicionales (opcional)'
             })
         }
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        
+        # Filtrar clientes activos
+        self.fields['cliente'].queryset = Cliente.objects.filter(activo=True).order_by('razon_social')
+        
+        # Filtrar proyectos activos
+        self.fields['proyecto'].queryset = Proyecto.objects.filter(activo=True).order_by('nombre')
+        
+        # Establecer valores por defecto si es nuevo servicio
+        if not self.instance.pk:
+            self.fields['estado'].initial = 'activo'
+            self.fields['periodo'].initial = 'dias'
+            self.fields['cantidad_torreros'].initial = 1
 
 
 class RegistroDiasTrabajarForm(forms.ModelForm):
