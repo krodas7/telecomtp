@@ -329,9 +329,9 @@
                 <i class="fas fa-calendar-check"></i>
                 Registros de Días Trabajados
             </h2>
-            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalRegistroDias">
-                <i class="fas fa-plus me-2"></i>Registrar Días
-            </button>
+            <a href="{% url 'registro_dias_create' servicio.id %}" class="btn btn-primary">
+                <i class="fas fa-plus me-2"></i>Registrar Días Trabajados
+            </a>
         </div>
         
         {% if registros %}
@@ -443,50 +443,7 @@
     </div>
 </div>
 
-<!-- Modal Registrar Días -->
-<div class="modal fade" id="modalRegistroDias" tabindex="-1">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title"><i class="fas fa-calendar-plus me-2"></i>Registrar Días Trabajados</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-            </div>
-            <form method="post" action="{% url 'registro_dias_create' servicio.id %}">
-                {% csrf_token %}
-                <div class="modal-body">
-                    <div class="row g-3">
-                        <div class="col-md-6">
-                            <label class="form-label fw-bold">Fecha del Registro</label>
-                            {{ form_registro.fecha_registro }}
-                        </div>
-                        <div class="col-md-3">
-                            <label class="form-label fw-bold">Días Trabajados</label>
-                            {{ form_registro.dias_trabajados }}
-                        </div>
-                        <div class="col-md-3">
-                            <label class="form-label fw-bold">Torreros Presentes</label>
-                            {{ form_registro.torreros_presentes }}
-                        </div>
-                        <div class="col-12">
-                            <label class="form-label fw-bold">Descripción del Trabajo</label>
-                            {{ form_registro.descripcion }}
-                        </div>
-                        <div class="col-12">
-                            <label class="form-label fw-bold">Observaciones</label>
-                            {{ form_registro.observaciones }}
-                        </div>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-primary">
-                        <i class="fas fa-save me-2"></i>Guardar Registro
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
+<!-- Modal ya no es necesario, se usa página dedicada para registro de días con selección de torreros -->
 
 <!-- Modal Registrar Pago -->
 <div class="modal fade" id="modalRegistroPago" tabindex="-1">
