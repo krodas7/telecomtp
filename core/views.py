@@ -10384,13 +10384,24 @@ def registro_dias_quick(request, servicio_id):
 
 @login_required
 def registro_dias_aprobar(request, pk):
-    """Aprobar registro de días trabajados"""
+    """Aprobar/desaprobar registro de días trabajados"""
     if request.method == 'POST':
         try:
             registro = get_object_or_404(RegistroDiasTrabajados, pk=pk)
-            registro.aprobado = not registro.aprobado  # Toggle
+            
+            # Guardar el estado anterior para el log
+            estado_anterior = registro.aprobado
+            
+            # Toggle del estado
+            registro.aprobado = not registro.aprobado
             registro.aprobado_por = request.user if registro.aprobado else None
+            
+            # Guardar el registro (esto activará el método save() que recalculará los días del servicio)
             registro.save()
+            
+            # Refrescar el servicio desde la base de datos para obtener los valores actualizados
+            servicio = registro.servicio
+            servicio.refresh_from_db()
             
             # Log de actividad
             accion = 'aprobó' if registro.aprobado else 'desaprobó'
@@ -10398,20 +10409,24 @@ def registro_dias_aprobar(request, pk):
                 usuario=request.user,
                 accion='aprobar' if registro.aprobado else 'desaprobar',
                 modulo='Servicios Torreros',
-                descripcion=f'{accion.capitalize()} registro de {registro.dias_trabajados} día(s) para {registro.servicio.cliente.razon_social} (ID: {registro.id})'
+                descripcion=f'{accion.capitalize()} registro de {registro.dias_trabajados} día(s) para {servicio.cliente.razon_social}. Días trabajados actualizados a: {servicio.dias_trabajados} (ID: {registro.id})'
             )
             
             estado = 'aprobado' if registro.aprobado else 'desaprobado'
-            messages.success(request, f'✅ Registro {estado} exitosamente')
             
             return JsonResponse({
                 'success': True,
                 'aprobado': registro.aprobado,
-                'message': f'Registro {estado} exitosamente'
+                'message': f'Registro {estado} exitosamente. Días trabajados actualizados: {servicio.dias_trabajados}',
+                'dias_trabajados': float(servicio.dias_trabajados),
+                'dias_solicitados': float(servicio.dias_solicitados),
+                'porcentaje_completado': float(servicio.porcentaje_completado)
             })
             
         except Exception as e:
-            logger.error(f"Error al aprobar registro: {str(e)}")
+            logger.error(f"Error al aprobar/desaprobar registro: {str(e)}")
+            import traceback
+            logger.error(traceback.format_exc())
             return JsonResponse({
                 'success': False,
                 'message': f'Error: {str(e)}'

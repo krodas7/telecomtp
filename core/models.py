@@ -2389,19 +2389,32 @@ class RegistroDiasTrabajados(models.Model):
         return f"{self.servicio.cliente.razon_social} - {self.dias_trabajados} día(s) - {self.fecha_registro}"
     
     def save(self, *args, **kwargs):
-        # Verificar si excede los días solicitados
-        total_dias = self.servicio.dias_trabajados + self.dias_trabajados
-        if total_dias > self.servicio.dias_solicitados:
-            self.es_dia_extra = True
-        
+        # Guardar primero para poder acceder al registro en las queries
         super().save(*args, **kwargs)
         
-        # Actualizar el contador de días trabajados en el servicio
-        if self.aprobado:
-            self.servicio.dias_trabajados = self.servicio.registros_dias.filter(
-                aprobado=True
-            ).aggregate(total=models.Sum('dias_trabajados'))['total'] or 0
-            self.servicio.save()
+        # SIEMPRE recalcular el contador de días trabajados en el servicio
+        # basándose SOLO en registros aprobados
+        from django.db.models import Sum
+        total_dias_aprobados = self.servicio.registros_dias.filter(
+            aprobado=True
+        ).aggregate(total=Sum('dias_trabajados'))['total']
+        
+        if total_dias_aprobados is None:
+            total_dias_aprobados = Decimal('0.00')
+        else:
+            total_dias_aprobados = Decimal(str(total_dias_aprobados))
+        
+        # Verificar si excede los días solicitados (solo para el registro actual si está aprobado)
+        if self.aprobado and total_dias_aprobados > self.servicio.dias_solicitados:
+            # Marcar este registro como día extra
+            if not self.es_dia_extra:
+                self.es_dia_extra = True
+                # Guardar nuevamente si cambió es_dia_extra
+                super().save(update_fields=['es_dia_extra'])
+        
+        # Actualizar el servicio con el total de días aprobados
+        self.servicio.dias_trabajados = total_dias_aprobados
+        self.servicio.save(update_fields=['dias_trabajados'])
 
 
 class AsignacionTorrero(models.Model):
