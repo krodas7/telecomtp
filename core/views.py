@@ -11049,21 +11049,36 @@ def servicio_torrero_pdf(request, pk):
         elements.append(pagos_table)
         elements.append(Spacer(1, 0.3*inch))
     
-    # Pie de página
-    elements.append(Spacer(1, 0.5*inch))
+    # Pie de página mejorado
+    elements.append(Spacer(1, 0.6*inch))
+    
+    # Línea decorativa superior
+    footer_divider = Table([['']], colWidths=[7*inch])
+    footer_divider.setStyle(TableStyle([
+        ('LINEABOVE', (0, 0), (0, 0), 1, colors.HexColor('#e2e8f0')),
+    ]))
+    elements.append(footer_divider)
+    elements.append(Spacer(1, 0.2*inch))
+    
     footer_style = ParagraphStyle(
         'Footer',
         parent=styles['Normal'],
-        fontSize=8,
-        textColor=colors.HexColor('#9ca3af'),
-        alignment=TA_CENTER
+        fontSize=9,
+        textColor=colors.HexColor('#64748b'),
+        alignment=TA_CENTER,
+        leading=12
     )
-    elements.append(Paragraph(
-        f"Este documento fue generado automáticamente por el Sistema ARCA<br/>"
-        f"Generado por: {request.user.get_full_name() or request.user.username}<br/>"
-        f"Fecha: {fecha_actual.strftime('%d/%m/%Y %I:%M:%S %p')}",
-        footer_style
-    ))
+    
+    footer_text = f"""
+    <para align="center" spaceAfter="4">
+        <font size="9" color="#64748b">
+            <b>Sistema ARCA</b> - Technology Panama INC.<br/>
+            Documento generado automáticamente por: <b>{request.user.get_full_name() or request.user.username}</b><br/>
+            <font size="8">Fecha de generación: {fecha_actual.strftime('%d/%m/%Y a las %I:%M:%S %p')}</font>
+        </font>
+    </para>
+    """
+    elements.append(Paragraph(footer_text, styles['Normal']))
     
     # Construir PDF
     doc.build(elements)
