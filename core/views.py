@@ -9993,29 +9993,14 @@ def caja_menuda_delete(request, pk):
 def torreros_dashboard(request):
     """Dashboard principal del módulo de torreros"""
     try:
-        # Servicios activos - forzar recálculo de días trabajados para asegurar datos actualizados
+        # Servicios activos
         servicios_activos = ServicioTorrero.objects.filter(
             estado='activo',
             activo=True
         ).select_related('cliente', 'proyecto').order_by('-fecha_inicio')
         
-        # Asegurar que todos los servicios tengan los días trabajados correctos
-        # (solo recalcular si es necesario, para no afectar el rendimiento)
-        for servicio in servicios_activos[:10]:  # Solo los primeros 10 que se mostrarán
-            # Verificar si necesita recálculo comparando con la suma real
-            from django.db.models import Sum
-            total_real = servicio.registros_dias.filter(
-                aprobado=True
-            ).aggregate(total=Sum('dias_trabajados'))['total'] or Decimal('0.00')
-            
-            if isinstance(total_real, Decimal):
-                total_real = total_real
-            else:
-                total_real = Decimal(str(total_real))
-            
-            if servicio.dias_trabajados != total_real:
-                servicio.recalcular_dias_trabajados()
-                servicio.refresh_from_db()
+        # Obtener solo los primeros 6 servicios activos para mostrar en el dashboard
+        ultimos_servicios_activos = list(servicios_activos[:6])
         
         # Estadísticas generales
         total_servicios_activos = servicios_activos.count()
@@ -10032,32 +10017,48 @@ def torreros_dashboard(request):
         
         saldo_pendiente = ingresos_totales - pagos_recibidos
         
-        # Servicios por completar pronto (menos del 30% de días restantes)
+        # Servicios por completar pronto (70% o más completado)
         servicios_por_completar = []
         for servicio in servicios_activos:
-            if servicio.porcentaje_completado >= 70:
-                servicios_por_completar.append(servicio)
+            try:
+                if servicio.porcentaje_completado >= 70:
+                    servicios_por_completar.append(servicio)
+            except:
+                continue
         
         # Servicios con pagos pendientes
-        servicios_pago_pendiente = servicios_activos.filter(
-            monto_pagado__lt=models.F('monto_total')
-        ).order_by('cliente__razon_social')[:5]
+        try:
+            servicios_pago_pendiente = servicios_activos.filter(
+                monto_pagado__lt=models.F('monto_total')
+            ).order_by('cliente__razon_social')[:5]
+        except:
+            servicios_pago_pendiente = []
         
         # Últimos registros de días trabajados
-        ultimos_registros = RegistroDiasTrabajados.objects.select_related(
-            'servicio__cliente', 'registrado_por'
-        ).order_by('-fecha_registro')[:10]
+        try:
+            ultimos_registros = RegistroDiasTrabajados.objects.select_related(
+                'servicio__cliente', 'registrado_por'
+            ).order_by('-fecha_registro')[:10]
+        except:
+            ultimos_registros = []
         
         # Últimos pagos
-        ultimos_pagos = PagoServicioTorrero.objects.select_related(
-            'servicio__cliente', 'registrado_por'
-        ).order_by('-fecha_pago')[:10]
+        try:
+            ultimos_pagos = PagoServicioTorrero.objects.select_related(
+                'servicio__cliente', 'registrado_por'
+            ).order_by('-fecha_pago')[:10]
+        except:
+            ultimos_pagos = []
         
         # Torreros activos para el modal
-        torreros_activos = Torrero.objects.filter(activo=True).order_by('nombre')
+        try:
+            torreros_activos = Torrero.objects.filter(activo=True).order_by('nombre')
+        except:
+            torreros_activos = []
         
         context = {
-            'servicios_activos': servicios_activos[:10],
+            'servicios_activos': ultimos_servicios_activos,
+            'ultimos_servicios_activos': ultimos_servicios_activos,
             'total_servicios_activos': total_servicios_activos,
             'total_servicios': total_servicios,
             'ingresos_totales': ingresos_totales,
@@ -10073,8 +10074,11 @@ def torreros_dashboard(request):
         return render(request, 'core/torreros/dashboard.html', context)
         
     except Exception as e:
-        logger.error(f'Error en torreros_dashboard: {e}')
-        messages.error(request, 'Error al cargar el dashboard de torreros')
+        import traceback
+        error_detail = traceback.format_exc()
+        logger.error(f'Error en torreros_dashboard: {str(e)}')
+        logger.error(f'Traceback completo: {error_detail}')
+        messages.error(request, f'Error al cargar el dashboard de torreros: {str(e)}')
         return redirect('dashboard')
 
 
