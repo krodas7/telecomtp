@@ -10873,7 +10873,7 @@ def servicio_torrero_pdf(request, pk):
     elements.append(Paragraph(header_text, styles['Normal']))
     
     # Subtítulo
-    elements.append(Paragraph(f"<para align='center'><font size='11' color='#64748b'>Sistema ARCA - Generado el {fecha_actual.strftime('%d/%m/%Y a las %I:%M %p')}</font></para>", styles['Normal']))
+    elements.append(Paragraph(f"<para align='center'><font size='11' color='#64748b'>TELECOM PANAMA - Generado el {fecha_actual.strftime('%d/%m/%Y a las %I:%M %p')}</font></para>", styles['Normal']))
     
     # Línea decorativa
     elements.append(Spacer(1, 0.2*inch))
@@ -10894,12 +10894,10 @@ def servicio_torrero_pdf(request, pk):
         ['Proyecto:', servicio.proyecto.nombre if servicio.proyecto else 'No asignado'],
         ['Descripción:', servicio.descripcion or 'Sin descripción'],
         ['Estado del Servicio:', Paragraph(f"{'PAGADO' if servicio.esta_pagado else 'PENDIENTE'}", ParagraphStyle('EstadoStyle', parent=styles['Normal'], textColor=colors.HexColor('#10b981') if servicio.esta_pagado else colors.HexColor('#f59e0b'), fontName='Helvetica-Bold'))],
-        ['', ''],  # Separador
         ['Días Solicitados:', f"{servicio.dias_solicitados} día(s)"],
         ['Días Trabajados:', f"{servicio.dias_trabajados} día(s)"],
         ['Días Restantes:', f"{servicio.dias_restantes} día(s)"],
         ['Progreso:', f"{servicio.porcentaje_completado}%"],
-        ['', ''],  # Separador
         ['Tarifa Diaria:', f"${servicio.tarifa_por_dia:,.2f}"],
         ['Monto Total:', Paragraph(f"${servicio.monto_total:,.2f}", ParagraphStyle('MontoStyle', parent=styles['Normal'], textColor=colors.HexColor('#1e40af'), fontName='Helvetica-Bold'))],
         ['Total Pagado:', Paragraph(f"${servicio.monto_pagado:,.2f}", ParagraphStyle('MontoStyle', parent=styles['Normal'], textColor=colors.HexColor('#10b981'), fontName='Helvetica-Bold'))],
@@ -10909,8 +10907,6 @@ def servicio_torrero_pdf(request, pk):
     info_table = Table(info_data, colWidths=[2.2*inch, 4.3*inch])
     info_table.setStyle(TableStyle([
         ('BACKGROUND', (0, 0), (0, -1), colors.HexColor('#f8fafc')),
-        ('BACKGROUND', (0, 4), (-1, 4), colors.HexColor('#ffffff')),  # Separador
-        ('BACKGROUND', (0, 9), (-1, 9), colors.HexColor('#ffffff')),  # Separador
         ('TEXTCOLOR', (0, 0), (-1, -1), colors.HexColor('#1e293b')),
         ('ALIGN', (0, 0), (0, -1), 'RIGHT'),
         ('ALIGN', (1, 0), (1, -1), 'LEFT'),
@@ -11069,7 +11065,7 @@ def servicio_torrero_pdf(request, pk):
         leading=12
     )
     
-    footer_text = f"""Sistema ARCA - Technology Panama INC.<br/>
+    footer_text = f"""TELECOM PANAMA - Technology Panama INC.<br/>
 Documento generado automáticamente por: {request.user.get_full_name() or request.user.username}<br/>
 Fecha de generación: {fecha_actual.strftime('%d/%m/%Y a las %I:%M:%S %p')}"""
     elements.append(Paragraph(footer_text, footer_style))
