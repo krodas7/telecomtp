@@ -255,23 +255,23 @@
     <div class="stat-row">
         <div class="stat-item">
             <div class="stat-label">Días Trabajados</div>
-            <div class="stat-value">{{ servicio.dias_trabajados }} / {{ servicio.dias_solicitados }}</div>
+            <div class="stat-value" id="stat-dias-trabajados">{{ servicio.dias_trabajados }} / {{ servicio.dias_solicitados }}</div>
         </div>
         <div class="stat-item">
             <div class="stat-label">Días Restantes</div>
-            <div class="stat-value">{{ servicio.dias_restantes }}</div>
+            <div class="stat-value" id="stat-dias-restantes">{{ servicio.dias_restantes }}</div>
         </div>
         <div class="stat-item">
             <div class="stat-label">Monto Total</div>
-            <div class="stat-value text-success">{{ servicio.monto_total|currency_gtq }}</div>
+            <div class="stat-value text-success" id="stat-monto-total">{{ servicio.monto_total|currency_gtq }}</div>
         </div>
         <div class="stat-item">
             <div class="stat-label">Monto Pagado</div>
-            <div class="stat-value text-primary">{{ servicio.monto_pagado|currency_gtq }}</div>
+            <div class="stat-value text-primary" id="stat-monto-pagado">{{ servicio.monto_pagado|currency_gtq }}</div>
         </div>
         <div class="stat-item">
             <div class="stat-label">Saldo Pendiente</div>
-            <div class="stat-value text-danger">{{ servicio.saldo_pendiente|currency_gtq }}</div>
+            <div class="stat-value text-danger" id="stat-saldo-pendiente">{{ servicio.saldo_pendiente|currency_gtq }}</div>
         </div>
     </div>
     
@@ -279,8 +279,8 @@
     <div class="progress-section">
         <div class="row align-items-center">
             <div class="col-md-4 text-center">
-                <div class="progress-circle" style="--progress: {{ servicio.porcentaje_completado }}%">
-                    <div class="progress-text">{{ servicio.porcentaje_completado }}%</div>
+                <div class="progress-circle" id="progress-circle" style="--progress: {{ servicio.porcentaje_completado }}%">
+                    <div class="progress-text" id="progress-text">{{ servicio.porcentaje_completado }}%</div>
                 </div>
                 <h5 class="text-muted">Progreso del Servicio</h5>
             </div>
@@ -370,8 +370,9 @@
                         <td>{{ registro.registrado_por.get_full_name|default:registro.registrado_por.username }}</td>
                         <td>
                             <button type="button" 
-                                    class="btn btn-sm {% if registro.aprobado %}btn-warning{% else %}btn-success{% endif %} btn-action"
-                                    onclick="toggleAprobarRegistro({{ registro.id }}, {{ registro.aprobado|yesno:'true,false' }})">
+                                    class="btn btn-sm {% if registro.aprobado %}btn-warning{% else %}btn-success{% endif %} btn-action btn-toggle-aprobar"
+                                    data-registro-id="{{ registro.id }}"
+                                    data-aprobado="{{ registro.aprobado|yesno:'true,false' }}">
                                 <i class="fas fa-{% if registro.aprobado %}times{% else %}check{% endif %}"></i>
                                 {% if registro.aprobado %}Desaprobar{% else %}Aprobar{% endif %}
                             </button>
@@ -509,7 +510,55 @@
         return document.querySelector('[name=csrfmiddlewaretoken]').value;
     }
     
-    function toggleAprobarRegistro(registroId, isAprobado) {
+    function formatCurrency(value) {
+        return new Intl.NumberFormat('es-GT', {
+            style: 'currency',
+            currency: 'GTQ',
+            minimumFractionDigits: 2
+        }).format(value);
+    }
+    
+    function updateServiceStats(data) {
+        // Actualizar días trabajados
+        const diasElement = document.getElementById('stat-dias-trabajados');
+        if (diasElement) {
+            diasElement.textContent = `${parseFloat(data.dias_trabajados).toFixed(1)} / ${parseFloat(data.dias_solicitados).toFixed(1)}`;
+        }
+        
+        // Actualizar días restantes
+        const restantesElement = document.getElementById('stat-dias-restantes');
+        if (restantesElement) {
+            restantesElement.textContent = parseFloat(data.dias_restantes).toFixed(1);
+        }
+        
+        // Actualizar porcentaje de progreso
+        const progressText = document.getElementById('progress-text');
+        const progressCircle = document.getElementById('progress-circle');
+        if (progressText && progressCircle) {
+            const porcentaje = parseFloat(data.porcentaje_completado).toFixed(2);
+            progressText.textContent = `${porcentaje}%`;
+            progressCircle.style.setProperty('--progress', `${porcentaje}%`);
+        }
+        
+        // Actualizar saldo pendiente
+        const saldoElement = document.getElementById('stat-saldo-pendiente');
+        if (saldoElement && data.saldo_pendiente !== undefined) {
+            saldoElement.textContent = formatCurrency(data.saldo_pendiente);
+        }
+    }
+    
+    // Asignar eventos a todos los botones de aprobar/desaprobar
+    document.addEventListener('DOMContentLoaded', function() {
+        document.querySelectorAll('.btn-toggle-aprobar').forEach(button => {
+            button.addEventListener('click', function() {
+                const registroId = this.getAttribute('data-registro-id');
+                const isAprobado = this.getAttribute('data-aprobado') === 'true';
+                toggleAprobarRegistro(registroId, isAprobado, this);
+            });
+        });
+    });
+    
+    function toggleAprobarRegistro(registroId, isAprobado, buttonElement) {
         const action = isAprobado ? 'desaprobar' : 'aprobar';
         const title = isAprobado ? '¿Desaprobar este registro?' : '¿Aprobar este registro?';
         const confirmText = isAprobado ? 'Sí, desaprobar' : 'Sí, aprobar';
@@ -525,6 +574,16 @@
             cancelButtonText: 'Cancelar'
         }).then((result) => {
             if (result.isConfirmed) {
+                // Mostrar loading
+                Swal.fire({
+                    title: 'Procesando...',
+                    html: 'Por favor espera',
+                    allowOutsideClick: false,
+                    didOpen: () => {
+                        Swal.showLoading();
+                    }
+                });
+                
                 fetch(`/torreros/registros/${registroId}/aprobar/`, {
                     method: 'POST',
                     headers: {
@@ -535,14 +594,31 @@
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
+                        // Actualizar los valores en la interfaz sin recargar
+                        updateServiceStats(data);
+                        
+                        // Actualizar el badge del registro en la tabla
+                        const row = buttonElement.closest('tr');
+                        const estadoCell = row.querySelector('td:nth-child(5)');
+                        
+                        if (data.aprobado) {
+                            estadoCell.innerHTML = '<span class="badge-modern success">Aprobado</span>';
+                            buttonElement.className = 'btn btn-sm btn-warning btn-action btn-toggle-aprobar';
+                            buttonElement.innerHTML = '<i class="fas fa-times"></i>Desaprobar';
+                            buttonElement.setAttribute('data-aprobado', 'true');
+                        } else {
+                            estadoCell.innerHTML = '<span class="badge-modern warning">Pendiente</span>';
+                            buttonElement.className = 'btn btn-sm btn-success btn-action btn-toggle-aprobar';
+                            buttonElement.innerHTML = '<i class="fas fa-check"></i>Aprobar';
+                            buttonElement.setAttribute('data-aprobado', 'false');
+                        }
+                        
                         Swal.fire({
                             icon: 'success',
                             title: '¡Éxito!',
                             text: data.message,
-                            timer: 2000,
+                            timer: 2500,
                             showConfirmButton: false
-                        }).then(() => {
-                            location.reload();
                         });
                     } else {
                         Swal.fire({
@@ -553,6 +629,7 @@
                     }
                 })
                 .catch(error => {
+                    console.error('Error:', error);
                     Swal.fire({
                         icon: 'error',
                         title: 'Error',

@@ -10414,13 +10414,19 @@ def registro_dias_aprobar(request, pk):
             
             estado = 'aprobado' if registro.aprobado else 'desaprobado'
             
+            # Recalcular días restantes y porcentaje
+            dias_restantes = max(Decimal('0.00'), servicio.dias_solicitados - servicio.dias_trabajados)
+            
             return JsonResponse({
                 'success': True,
                 'aprobado': registro.aprobado,
                 'message': f'Registro {estado} exitosamente. Días trabajados actualizados: {servicio.dias_trabajados}',
                 'dias_trabajados': float(servicio.dias_trabajados),
                 'dias_solicitados': float(servicio.dias_solicitados),
-                'porcentaje_completado': float(servicio.porcentaje_completado)
+                'dias_restantes': float(dias_restantes),
+                'porcentaje_completado': float(servicio.porcentaje_completado),
+                'monto_total': float(servicio.monto_total),
+                'saldo_pendiente': float(servicio.saldo_pendiente())
             })
             
         except Exception as e:
