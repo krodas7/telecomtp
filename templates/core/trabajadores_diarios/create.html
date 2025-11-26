@@ -62,7 +62,11 @@
                 <div class="card-body">
                     <form method="post">
                         {% csrf_token %}
+                        {% if planilla_seleccionada %}
+                            <input type="hidden" name="planilla_id" value="{{ planilla_seleccionada.id }}">
+                        {% endif %}
                         <div class="row">
+                            {% if not planilla_seleccionada %}
                             <div class="col-md-6">
                                 <div class="form-group mb-3">
                                     <label for="{{ form.planilla.id_for_label }}" class="form-label">
@@ -78,6 +82,9 @@
                                     {% endif %}
                                 </div>
                             </div>
+                            {% else %}
+                                {{ form.planilla }}
+                            {% endif %}
                             <div class="col-md-6">
                                 <div class="form-group mb-3">
                                     <label for="{{ form.nombre.id_for_label }}" class="form-label">

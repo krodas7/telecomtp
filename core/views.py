@@ -7657,8 +7657,8 @@ def trabajador_diario_create(request, proyecto_id):
     """Crear trabajador diario - SIGUIENDO DOCUMENTACIÓN COMPLETA"""
     proyecto = get_object_or_404(Proyecto, id=proyecto_id)
     
-    # Obtener planilla_id de la URL si existe
-    planilla_id = request.GET.get('planilla_id')
+    # Obtener planilla_id de la URL (GET) o del POST si existe
+    planilla_id = request.GET.get('planilla_id') or request.POST.get('planilla_id')
     planilla_seleccionada = None
     if planilla_id:
         try:
@@ -7696,6 +7696,15 @@ def trabajador_diario_create(request, proyecto_id):
                 trabajador.creado_por = request.user
                 trabajador.save()
                 
+                # Registrar actividad
+                LogActividad.objects.create(
+                    usuario=request.user,
+                    accion='Crear',
+                    modulo='Trabajadores Diarios',
+                    descripcion=f'Trabajador "{trabajador.nombre}" creado en planilla "{planilla_seleccionada.nombre if planilla_seleccionada else "sin planilla"}"',
+                    ip_address=request.META.get('REMOTE_ADDR')
+                )
+                
                 messages.success(request, 
                     f'✅ Trabajador "{nombre_trabajador}" agregado a la planilla "{planilla_seleccionada.nombre if planilla_seleccionada else "sin planilla"}".'
                 )
@@ -7704,6 +7713,11 @@ def trabajador_diario_create(request, proyecto_id):
                         f'{reverse("trabajadores_diarios_list", args=[proyecto_id])}?planilla_id={planilla_id}'
                     )
                 return redirect('trabajadores_diarios_list', proyecto_id=proyecto_id)
+        else:
+            # Mostrar errores del formulario
+            for field, errors in form.errors.items():
+                for error in errors:
+                    messages.error(request, f'Error en {field}: {error}')
     else:
         form = TrabajadorDiarioForm(planilla=planilla_seleccionada, proyecto=proyecto)
     
