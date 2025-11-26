@@ -7234,11 +7234,21 @@ def trabajadores_diarios_list(request, proyecto_id):
         ).order_by('nombre')
     else:
         # Mostrar TODOS los trabajadores activos del proyecto (no solo los de la planilla seleccionada)
-        # Esto asegura que los trabajadores creados desde cualquier planilla sean visibles
-        trabajadores = TrabajadorDiario.objects.filter(
-            proyecto=proyecto, 
-            activo=True
-        ).order_by('nombre', 'id')
+        # Si hay planilla seleccionada, mostrar trabajadores de esa planilla activos
+        # Si no hay planilla seleccionada, mostrar todos los trabajadores activos del proyecto
+        if planilla_seleccionada:
+            # Mostrar TODOS los trabajadores de la planilla seleccionada (activos e inactivos)
+            # para que se vean todos los trabajadores de esa planilla
+            trabajadores = TrabajadorDiario.objects.filter(
+                proyecto=proyecto,
+                planilla=planilla_seleccionada
+            ).order_by('nombre', 'id')
+        else:
+            # Mostrar TODOS los trabajadores activos del proyecto
+            trabajadores = TrabajadorDiario.objects.filter(
+                proyecto=proyecto, 
+                activo=True
+            ).order_by('nombre', 'id')
     
     # Calcular anticipos aplicados y total bruto para cada trabajador
     for trabajador in trabajadores:
