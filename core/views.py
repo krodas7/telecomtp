@@ -10451,7 +10451,8 @@ def registro_dias_aprobar(request, pk):
                 'dias_restantes': float(dias_restantes),
                 'porcentaje_completado': float(servicio.porcentaje_completado),
                 'monto_total': float(servicio.monto_total),
-                'saldo_pendiente': float(servicio.saldo_pendiente())
+                'monto_pagado': float(servicio.monto_pagado),
+                'saldo_pendiente': float(servicio.saldo_pendiente)
             })
             
         except Exception as e:
@@ -10502,10 +10503,11 @@ def registro_dias_delete(request, pk):
                 'message': f'✅ Registro eliminado exitosamente. Días trabajados actualizados a: {servicio.dias_trabajados}',
                 'dias_trabajados': float(servicio.dias_trabajados),
                 'dias_solicitados': float(servicio.dias_solicitados),
+                'dias_restantes': float(servicio.dias_restantes),
                 'porcentaje_completado': float(servicio.porcentaje_completado),
                 'monto_total': float(servicio.monto_total),
                 'monto_pagado': float(servicio.monto_pagado),
-                'saldo_pendiente': float(servicio.saldo_pendiente())
+                'saldo_pendiente': float(servicio.saldo_pendiente)
             })
             
         except Exception as e:
