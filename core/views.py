@@ -10467,6 +10467,57 @@ def registro_dias_aprobar(request, pk):
 
 
 @login_required
+def registro_dias_delete(request, pk):
+    """Eliminar registro de días trabajados"""
+    if request.method == 'POST':
+        try:
+            registro = get_object_or_404(RegistroDiasTrabajados, pk=pk)
+            servicio = registro.servicio
+            dias_trabajados = registro.dias_trabajados
+            cliente_nombre = servicio.cliente.razon_social
+            
+            # Guardar información para el log antes de eliminar
+            registro_id = registro.id
+            
+            # Eliminar el registro
+            registro.delete()
+            
+            # Recalcular los días trabajados del servicio
+            from core.models import ServicioTorrero
+            servicio = ServicioTorrero.objects.get(pk=servicio.pk)
+            servicio.recalcular_dias_trabajados()
+            servicio.refresh_from_db()
+            
+            # Log de actividad
+            LogActividad.objects.create(
+                usuario=request.user,
+                accion='eliminar',
+                modulo='Servicios Torreros',
+                descripcion=f'Eliminó registro de {dias_trabajados} día(s) para {cliente_nombre}. Días trabajados actualizados a: {servicio.dias_trabajados} (ID eliminado: {registro_id})'
+            )
+            
+            # Retornar datos actualizados del servicio para actualizar la UI
+            return JsonResponse({
+                'success': True,
+                'message': f'✅ Registro eliminado exitosamente. Días trabajados actualizados a: {servicio.dias_trabajados}',
+                'dias_trabajados': float(servicio.dias_trabajados),
+                'dias_solicitados': float(servicio.dias_solicitados),
+                'porcentaje_completado': float(servicio.porcentaje_completado),
+                'monto_total': float(servicio.monto_total),
+                'monto_pagado': float(servicio.monto_pagado),
+                'saldo_pendiente': float(servicio.saldo_pendiente())
+            })
+            
+        except Exception as e:
+            logger.error(f"Error al eliminar registro: {str(e)}")
+            import traceback
+            logger.error(traceback.format_exc())
+            return JsonResponse({'success': False, 'message': f'Error: {str(e)}'}, status=500)
+    
+    return JsonResponse({'success': False, 'message': 'Método no permitido'}, status=405)
+
+
+@login_required
 def servicio_torrero_toggle_pago(request, servicio_id):
     """Toggle estado de pago del servicio (AJAX)"""
     if request.method == 'POST':

@@ -369,13 +369,21 @@
                         </td>
                         <td>{{ registro.registrado_por.get_full_name|default:registro.registrado_por.username }}</td>
                         <td>
-                            <button type="button" 
-                                    class="btn btn-sm {% if registro.aprobado %}btn-warning{% else %}btn-success{% endif %} btn-action btn-toggle-aprobar"
-                                    data-registro-id="{{ registro.id }}"
-                                    data-aprobado="{{ registro.aprobado|yesno:'true,false' }}">
-                                <i class="fas fa-{% if registro.aprobado %}times{% else %}check{% endif %}"></i>
-                                {% if registro.aprobado %}Desaprobar{% else %}Aprobar{% endif %}
-                            </button>
+                            <div class="btn-group" role="group">
+                                <button type="button" 
+                                        class="btn btn-sm {% if registro.aprobado %}btn-warning{% else %}btn-success{% endif %} btn-action btn-toggle-aprobar"
+                                        data-registro-id="{{ registro.id }}"
+                                        data-aprobado="{{ registro.aprobado|yesno:'true,false' }}">
+                                    <i class="fas fa-{% if registro.aprobado %}times{% else %}check{% endif %}"></i>
+                                    {% if registro.aprobado %}Desaprobar{% else %}Aprobar{% endif %}
+                                </button>
+                                <button type="button" 
+                                        class="btn btn-sm btn-danger btn-action btn-eliminar-registro"
+                                        data-registro-id="{{ registro.id }}"
+                                        title="Eliminar registro">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
                         </td>
                     </tr>
                     {% endfor %}
@@ -639,6 +647,75 @@
             }
         });
     }
+    
+    // Manejar eliminación de registros
+    document.querySelectorAll('.btn-eliminar-registro').forEach(button => {
+        button.addEventListener('click', function() {
+            const registroId = this.getAttribute('data-registro-id');
+            const row = this.closest('tr');
+            
+            Swal.fire({
+                title: '¿Estás seguro?',
+                text: "Esta acción eliminará el registro de días trabajados. No podrás revertir esto.",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: 'Sí, eliminar',
+                cancelButtonText: 'Cancelar'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    fetch(`/torreros/registros/${registroId}/eliminar/`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': getCSRFToken()
+                        },
+                        body: JSON.stringify({})
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            // Actualizar los valores en la interfaz sin recargar
+                            updateServiceStats(data);
+                            
+                            // Remover la fila de la tabla
+                            row.remove();
+                            
+                            // Verificar si quedan registros
+                            const tbody = row.closest('tbody');
+                            if (tbody && tbody.querySelectorAll('tr').length === 0) {
+                                // Si no hay más registros, recargar la página para mostrar el estado vacío
+                                window.location.reload();
+                            }
+                            
+                            Swal.fire({
+                                icon: 'success',
+                                title: '¡Eliminado!',
+                                text: data.message,
+                                timer: 2500,
+                                showConfirmButton: false
+                            });
+                        } else {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Error',
+                                text: data.message
+                            });
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: 'Ocurrió un error al eliminar el registro'
+                        });
+                    });
+                }
+            });
+        });
+    });
     
     // Establecer fecha de hoy por defecto en los modales
     document.addEventListener('DOMContentLoaded', function() {
