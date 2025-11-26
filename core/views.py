@@ -10892,38 +10892,9 @@ def servicio_torrero_pdf(request, pk):
     elements.append(info_table)
     elements.append(Spacer(1, 0.3*inch))
     
-    # Torreros Asignados
-    if torreros:
-        elements.append(Paragraph("TORREROS ASIGNADOS", heading_style))
-        
-        torreros_data = [['Nombre', 'Cédula', 'Teléfono', 'Especialidad']]
-        for torrero in torreros:
-            torreros_data.append([
-                torrero.nombre,
-                torrero.cedula or 'N/A',
-                torrero.telefono or 'N/A',
-                torrero.especialidad or 'N/A'
-            ])
-        
-        torreros_table = Table(torreros_data, colWidths=[2*inch, 1.5*inch, 1.5*inch, 1.5*inch])
-        torreros_table.setStyle(TableStyle([
-            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#6366f1')),
-            ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
-            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-            ('FONTSIZE', (0, 0), (-1, 0), 10),
-            ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
-            ('FONTSIZE', (0, 1), (-1, -1), 9),
-            ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#e5e7eb')),
-            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-            ('TOPPADDING', (0, 0), (-1, -1), 6),
-            ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
-            ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#f9fafb')]),
-        ]))
-        elements.append(torreros_table)
-        elements.append(Spacer(1, 0.3*inch))
+    # No mostrar tabla de torreros asignados aquí, se mostrarán en el detalle de registros
     
-    # Registro de Días Trabajados con Detalle Completo
+    # Registro de Días Trabajados con Detalle Completo - Diseño Mejorado
     if registros.exists():
         elements.append(Paragraph("REGISTRO DETALLADO DE DÍAS TRABAJADOS", heading_style))
         
@@ -10931,47 +10902,66 @@ def servicio_torrero_pdf(request, pk):
         asignaciones_activas = AsignacionTorrero.objects.filter(servicio=servicio, activo=True).select_related('torrero')
         lista_torreros_asignados = [a.torrero.nombre for a in asignaciones_activas]
         
-        registros_data = [['Fecha', 'Días Trabajados', 'Torreros Presentes', 'Observaciones', 'Estado']]
-        total_dias_registrados = Decimal('0.00')
+        # Nueva tabla mejorada: Fecha, Torreros que Trabajaron, Días, Estado
+        registros_data = [['FECHA TRABAJADA', 'TORREROS', 'DÍAS', 'ESTADO']]
         
         for registro in registros:
-            total_dias_registrados += registro.dias_trabajados
-            observaciones_text = registro.observaciones[:40] + '...' if len(registro.observaciones) > 40 else registro.observaciones or '-'
+            # Obtener nombres de torreros (usar los asignados al servicio)
+            torreros_nombres = ", ".join(lista_torreros_asignados) if lista_torreros_asignados else "No asignado"
+            
+            # Formatear fecha
+            fecha_str = registro.fecha_registro.strftime('%d/%m/%Y')
+            
+            # Estado con ícono
+            estado_str = '✓ Aprobado' if registro.aprobado else '⏳ Pendiente'
             
             registros_data.append([
-                registro.fecha_registro.strftime('%d/%m/%Y'),
-                f"{registro.dias_trabajados} día(s)",
-                f"{registro.torreros_presentes} torrero(s)",
-                observaciones_text,
-                '✓ Aprobado' if registro.aprobado else '⏳ Pendiente'
+                fecha_str,
+                torreros_nombres,
+                f"{registro.dias_trabajados}",
+                estado_str
             ])
         
-        registros_table = Table(registros_data, colWidths=[1.3*inch, 1.2*inch, 1.2*inch, 2.5*inch, 1*inch])
+        # Tabla más ancha y profesional
+        registros_table = Table(registros_data, colWidths=[1.5*inch, 3.5*inch, 0.8*inch, 1.2*inch])
         registros_table.setStyle(TableStyle([
-            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#10b981')),
+            # Header
+            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#6366f1')),
             ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
-            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-            ('ALIGN', (3, 0), (3, -1), 'LEFT'),
             ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-            ('FONTSIZE', (0, 0), (-1, 0), 10),
+            ('FONTSIZE', (0, 0), (-1, 0), 11),
+            ('ALIGN', (0, 0), (-1, 0), 'CENTER'),
+            ('VALIGN', (0, 0), (-1, 0), 'MIDDLE'),
+            ('TOPPADDING', (0, 0), (-1, 0), 10),
+            ('BOTTOMPADDING', (0, 0), (-1, 0), 10),
+            # Body
+            ('ALIGN', (0, 1), (0, -1), 'CENTER'),  # Fecha centrada
+            ('ALIGN', (1, 1), (1, -1), 'LEFT'),    # Torreros izquierda
+            ('ALIGN', (2, 1), (2, -1), 'CENTER'),  # Días centrada
+            ('ALIGN', (3, 1), (3, -1), 'CENTER'),  # Estado centrada
             ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
-            ('FONTSIZE', (0, 1), (-1, -1), 9),
+            ('FONTSIZE', (0, 1), (-1, -1), 10),
+            ('VALIGN', (0, 1), (-1, -1), 'MIDDLE'),
+            ('TOPPADDING', (0, 1), (-1, -1), 8),
+            ('BOTTOMPADDING', (0, 1), (-1, -1), 8),
+            ('LEFTPADDING', (0, 1), (-1, -1), 8),
+            ('RIGHTPADDING', (0, 1), (-1, -1), 8),
+            # Grid
             ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#e5e7eb')),
-            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-            ('TOPPADDING', (0, 0), (-1, -1), 6),
-            ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
-            ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#f9fafb')]),
+            ('BOX', (0, 0), (-1, -1), 1.5, colors.HexColor('#6366f1')),
+            # Row backgrounds alternados
+            ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#f8fafc')]),
         ]))
         elements.append(registros_table)
-        elements.append(Spacer(1, 0.2*inch))
+        elements.append(Spacer(1, 0.3*inch))
         
-        # Resumen de días trabajados
+        # Resumen mejorado de días trabajados
         elements.append(Paragraph("RESUMEN DE DÍAS", heading_style))
         resumen_dias_data = [
-            ['Total Días Solicitados:', f"{servicio.dias_solicitados} día(s)"],
-            ['Total Días Trabajados:', f"{servicio.dias_trabajados} día(s)"],
-            ['Días Restantes:', f"{servicio.dias_restantes} día(s)"],
-            ['Progreso:', f"{servicio.porcentaje_completado}%"],
+            ['Total Días Solicitados:', Paragraph(f"<b>{servicio.dias_solicitados} día(s)</b>", styles['Normal'])],
+            ['Total Días Trabajados:', Paragraph(f"<b>{servicio.dias_trabajados} día(s)</b>", styles['Normal'])],
+            ['Días Restantes:', Paragraph(f"<b>{servicio.dias_restantes} día(s)</b>", styles['Normal'])],
+            ['Progreso:', Paragraph(f"<b>{servicio.porcentaje_completado}%</b>", ParagraphStyle('ProgressStyle', parent=styles['Normal'], textColor=colors.HexColor('#10b981')))],
         ]
         
         resumen_dias_table = Table(resumen_dias_data, colWidths=[3*inch, 3.5*inch])
@@ -10981,22 +10971,15 @@ def servicio_torrero_pdf(request, pk):
             ('ALIGN', (0, 0), (0, -1), 'RIGHT'),
             ('ALIGN', (1, 0), (1, -1), 'LEFT'),
             ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
-            ('FONTNAME', (1, 0), (1, -1), 'Helvetica'),
             ('FONTSIZE', (0, 0), (-1, -1), 10),
             ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#e5e7eb')),
             ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-            ('TOPPADDING', (0, 0), (-1, -1), 8),
-            ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
+            ('TOPPADDING', (0, 0), (-1, -1), 10),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 10),
+            ('BOX', (0, 0), (-1, -1), 1.5, colors.HexColor('#6366f1')),
         ]))
         elements.append(resumen_dias_table)
-        elements.append(Spacer(1, 0.2*inch))
-        
-        # Lista de torreros que trabajaron
-        if lista_torreros_asignados:
-            elements.append(Paragraph("TORREROS QUE TRABAJARON EN ESTE SERVICIO", heading_style))
-            torreros_lista_text = ", ".join(lista_torreros_asignados)
-            elements.append(Paragraph(torreros_lista_text, styles['Normal']))
-            elements.append(Spacer(1, 0.3*inch))
+        elements.append(Spacer(1, 0.3*inch))
     
     # Historial de Pagos
     if pagos.exists():
