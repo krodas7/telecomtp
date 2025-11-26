@@ -298,12 +298,14 @@ def dashboard(request):
         eventos_calendario_json = json.dumps(eventos_calendario, default=str)
         
         # Datos de proyectos por estado
-        estados_proyectos_json = json.dumps(list(proyectos_por_estado.keys()), default=str)
-        cantidad_proyectos_json = json.dumps(list(proyectos_por_estado.values()), default=str)
+        estados_proyectos_json = json.dumps(list(proyectos_por_estado.keys()), ensure_ascii=False)
+        cantidad_proyectos_json = json.dumps(list(proyectos_por_estado.values()))
         
-        # Datos de gastos por categoría
-        categorias_gastos_json = json.dumps([item['categoria__nombre'] if item['categoria__nombre'] else 'Sin Categoría' for item in gastos_por_categoria], default=str)
-        montos_gastos_json = json.dumps([float(item['total']) for item in gastos_por_categoria], default=str)
+        # Datos de gastos por categoría - asegurar que sean listas válidas
+        categorias_gastos_list = [item['categoria__nombre'] if item['categoria__nombre'] else 'Sin Categoría' for item in gastos_por_categoria]
+        montos_gastos_list = [float(item['total']) for item in gastos_por_categoria]
+        categorias_gastos_json = json.dumps(categorias_gastos_list, ensure_ascii=False)
+        montos_gastos_json = json.dumps(montos_gastos_list)
         
         # Log eventos del calendario para debugging
         logger.debug(f"Eventos calendario: {len(eventos_calendario)} eventos generados")
@@ -465,9 +467,9 @@ def dashboard(request):
             'cantidad_proyectos': cantidad_proyectos_json,
             'categorias_gastos': categorias_gastos_json,
             'montos_gastos': montos_gastos_json,
-            'ingresos_mensuales': ingresos_mensuales,
-            'gastos_mensuales': gastos_mensuales,
-            'meses_grafico': meses_grafico,
+            'ingresos_mensuales': json.dumps(ingresos_mensuales),
+            'gastos_mensuales': json.dumps(gastos_mensuales),
+            'meses_grafico': json.dumps(meses_grafico, ensure_ascii=False),
             'periodo_actual': periodo,
             # ============================================================================
             # DATOS DE RENTABILIDAD REAL PARA EL DASHBOARD
@@ -507,8 +509,9 @@ def dashboard(request):
             'evolucion_proyectos': '[]',
             'categorias_gastos': '[]',
             'montos_gastos': '[]',
-            'ingresos_mensuales': [],
-            'gastos_mensuales': [],
+            'ingresos_mensuales': json.dumps([]),
+            'gastos_mensuales': json.dumps([]),
+            'meses_grafico': json.dumps([]),
             'meses_grafico': [],
         }
         

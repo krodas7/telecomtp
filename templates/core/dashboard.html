@@ -1251,38 +1251,71 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Inicializar gráficos
     setTimeout(() => {
-        const estadosProyectos = JSON.parse('{{ estados_proyectos|escapejs }}');
-        const cantidadProyectos = JSON.parse('{{ cantidad_proyectos|escapejs }}');
-        const categoriasGastos = JSON.parse('{{ categorias_gastos|escapejs }}');
-        const montosGastos = JSON.parse('{{ montos_gastos|escapejs }}');
-        const ingresosM = JSON.parse('{{ ingresos_mensuales|escapejs }}');
-        const gastosM = JSON.parse('{{ gastos_mensuales|escapejs }}');
-        const mesesG = JSON.parse('{{ meses_grafico|escapejs }}');
+        // Función auxiliar para parsear de forma segura
+        function safeParse(jsonString, defaultValue = []) {
+            try {
+                if (!jsonString || jsonString === 'None' || jsonString === 'null' || jsonString === '') {
+                    return defaultValue;
+                }
+                const parsed = JSON.parse(jsonString);
+                return parsed !== null ? parsed : defaultValue;
+            } catch (e) {
+                console.error('Error parsing JSON:', e, 'String:', jsonString);
+                return defaultValue;
+            }
+        }
+        
+        const estadosProyectos = safeParse('{{ estados_proyectos|escapejs }}', []);
+        const cantidadProyectos = safeParse('{{ cantidad_proyectos|escapejs }}', []);
+        const categoriasGastos = safeParse('{{ categorias_gastos|escapejs }}', []);
+        const montosGastos = safeParse('{{ montos_gastos|escapejs }}', []);
+        const ingresosM = safeParse('{{ ingresos_mensuales|escapejs }}', []);
+        const gastosM = safeParse('{{ gastos_mensuales|escapejs }}', []);
+        const mesesG = safeParse('{{ meses_grafico|escapejs }}', []);
         
         console.log('📊 Datos para gráficos:');
-        console.log('Categorías Gastos:', categoriasGastos);
-        console.log('Montos Gastos:', montosGastos);
-        console.log('Meses:', mesesG);
-        console.log('Ingresos:', ingresosM);
-        console.log('Gastos:', gastosM);
+        console.log('Categorías Gastos:', categoriasGastos, 'Tipo:', Array.isArray(categoriasGastos));
+        console.log('Montos Gastos:', montosGastos, 'Tipo:', Array.isArray(montosGastos));
+        console.log('Meses:', mesesG, 'Tipo:', Array.isArray(mesesG));
+        console.log('Ingresos:', ingresosM, 'Tipo:', Array.isArray(ingresosM));
+        console.log('Gastos:', gastosM, 'Tipo:', Array.isArray(gastosM));
         
-        if (typeof initializeDashboardCharts === 'function') {
+        // Verificar que tenemos datos antes de inicializar
+        if (categoriasGastos.length > 0 && montosGastos.length > 0 && typeof initializeDashboardCharts === 'function') {
+            console.log('✅ Inicializando gráfico de gastos por categoría');
             initializeDashboardCharts(estadosProyectos, cantidadProyectos, categoriasGastos, montosGastos);
+        } else {
+            console.warn('⚠️ No hay datos de gastos por categoría o función no disponible');
         }
         
         // Inicializar gráfico de tendencia financiera
-        if (typeof initializeTendenciaFinanciera === 'function') {
+        if (mesesG.length > 0 && ingresosM.length > 0 && gastosM.length > 0 && typeof initializeTendenciaFinanciera === 'function') {
+            console.log('✅ Inicializando gráfico de tendencia financiera');
             initializeTendenciaFinanciera(mesesG, ingresosM, gastosM);
+        } else {
+            console.warn('⚠️ No hay datos de tendencia financiera o función no disponible');
+            console.warn('   Meses:', mesesG.length, 'Ingresos:', ingresosM.length, 'Gastos:', gastosM.length);
         }
         
         // Inicializar salud financiera de proyectos
         if (typeof initializeSaludProyectos === 'function') {
-            const proyectosRentables = JSON.parse('{{ proyectos_rentables|escapejs }}');
+            // proyectos_rentables ya viene como JSON string desde la vista
+            const proyectosRentablesRaw = '{{ proyectos_rentables|safe }}';
+            const proyectosRentables = safeParse(proyectosRentablesRaw, []);
+            
             console.log('🔍 Proyectos Rentables recibidos:', proyectosRentables);
             console.log('🔍 Tipo:', typeof proyectosRentables);
             console.log('🔍 Es array?', Array.isArray(proyectosRentables));
             console.log('🔍 Longitud:', proyectosRentables?.length);
-            initializeSaludProyectos(proyectosRentables);
+            
+            if (proyectosRentables && proyectosRentables.length > 0) {
+                console.log('✅ Inicializando salud financiera de proyectos');
+                initializeSaludProyectos(proyectosRentables);
+            } else {
+                console.warn('⚠️ No hay proyectos rentables para mostrar');
+            }
+        } else {
+            console.warn('⚠️ Función initializeSaludProyectos no está disponible');
         }
     }, 500);
 });

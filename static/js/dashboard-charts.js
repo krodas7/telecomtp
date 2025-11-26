@@ -327,7 +327,7 @@ function initializeSaludProyectos(proyectos) {
                 <div style="flex: 1;">
                     <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.5rem;">
                         <div style="width: 32px; height: 32px; background: ${colorSecondary}; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: ${colorPrimary};"><i class="fas ${icono}"></i></div>
-                        <div><div style="font-size: 0.95rem; font-weight: 600; color: #1e293b;">${proyecto.nombre}</div><div style="font-size: 0.75rem; color: #64748b;">${proyecto.cliente}</div></div>
+                        <div><div style="font-size: 0.95rem; font-weight: 600; color: #1e293b;">${proyecto.nombre}</div></div>
                     </div>
                     <div style="display: flex; gap: 1.5rem; margin-top: 0.75rem;">
                         <div><div style="font-size: 0.7rem; color: #64748b;">INGRESOS</div><div style="font-size: 0.9rem; font-weight: 600; color: #10b981;">$${ingresos.toFixed(2)}</div></div>
