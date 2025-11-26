@@ -10400,8 +10400,27 @@ def registro_dias_aprobar(request, pk):
             registro.save()
             
             # Refrescar el servicio desde la base de datos para obtener los valores actualizados
-            servicio = registro.servicio
+            # Importar el modelo para asegurar que obtenemos la instancia fresca
+            from core.models import ServicioTorrero
+            servicio = ServicioTorrero.objects.get(pk=registro.servicio.pk)
             servicio.refresh_from_db()
+            
+            # Forzar recálculo explícito para asegurar que esté actualizado
+            from django.db.models import Sum
+            total_dias_aprobados = servicio.registros_dias.filter(
+                aprobado=True
+            ).aggregate(total=Sum('dias_trabajados'))['total']
+            
+            if total_dias_aprobados is None:
+                total_dias_aprobados = Decimal('0.00')
+            else:
+                total_dias_aprobados = Decimal(str(total_dias_aprobados))
+            
+            # Actualizar explícitamente si es necesario
+            if servicio.dias_trabajados != total_dias_aprobados:
+                servicio.dias_trabajados = total_dias_aprobados
+                servicio.save(update_fields=['dias_trabajados'])
+                servicio.refresh_from_db()
             
             # Log de actividad
             accion = 'aprobó' if registro.aprobado else 'desaprobó'

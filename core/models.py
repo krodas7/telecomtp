@@ -2395,26 +2395,37 @@ class RegistroDiasTrabajados(models.Model):
         # SIEMPRE recalcular el contador de días trabajados en el servicio
         # basándose SOLO en registros aprobados
         from django.db.models import Sum
-        total_dias_aprobados = self.servicio.registros_dias.filter(
-            aprobado=True
-        ).aggregate(total=Sum('dias_trabajados'))['total']
+        from django.db import transaction
         
-        if total_dias_aprobados is None:
-            total_dias_aprobados = Decimal('0.00')
-        else:
-            total_dias_aprobados = Decimal(str(total_dias_aprobados))
-        
-        # Verificar si excede los días solicitados (solo para el registro actual si está aprobado)
-        if self.aprobado and total_dias_aprobados > self.servicio.dias_solicitados:
-            # Marcar este registro como día extra
-            if not self.es_dia_extra:
-                self.es_dia_extra = True
-                # Guardar nuevamente si cambió es_dia_extra
-                super().save(update_fields=['es_dia_extra'])
-        
-        # Actualizar el servicio con el total de días aprobados
-        self.servicio.dias_trabajados = total_dias_aprobados
-        self.servicio.save(update_fields=['dias_trabajados'])
+        # Usar una transacción para asegurar consistencia
+        with transaction.atomic():
+            # Obtener el servicio desde la BD para evitar problemas de caché
+            servicio = ServicioTorrero.objects.select_for_update().get(pk=self.servicio.pk)
+            
+            # Recalcular días trabajados SOLO de registros aprobados
+            total_dias_aprobados = servicio.registros_dias.filter(
+                aprobado=True
+            ).aggregate(total=Sum('dias_trabajados'))['total']
+            
+            if total_dias_aprobados is None:
+                total_dias_aprobados = Decimal('0.00')
+            else:
+                total_dias_aprobados = Decimal(str(total_dias_aprobados))
+            
+            # Verificar si excede los días solicitados (solo para el registro actual si está aprobado)
+            if self.aprobado and total_dias_aprobados > servicio.dias_solicitados:
+                # Marcar este registro como día extra
+                if not self.es_dia_extra:
+                    self.es_dia_extra = True
+                    # Guardar nuevamente si cambió es_dia_extra
+                    super().save(update_fields=['es_dia_extra'])
+            
+            # Actualizar el servicio con el total de días aprobados
+            servicio.dias_trabajados = total_dias_aprobados
+            servicio.save(update_fields=['dias_trabajados'])
+            
+            # Refrescar self.servicio para que tenga los valores actualizados
+            self.servicio.refresh_from_db()
 
 
 class AsignacionTorrero(models.Model):
