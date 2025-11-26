@@ -460,8 +460,27 @@
                         
                         <div class="input-grid">
                             <div class="input-modern">
+                                <label>Cantidad de Torreros <span class="required-mark">*</span></label>
+                                {{ form.cantidad_torreros }}
+                                {% if form.cantidad_torreros.errors %}
+                                    <ul class="errorlist">
+                                        {% for error in form.cantidad_torreros.errors %}
+                                            <li>{{ error }}</li>
+                                        {% endfor %}
+                                    </ul>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="input-modern">
                                 <label>Periodo <span class="required-mark">*</span></label>
                                 {{ form.periodo }}
+                                {% if form.periodo.errors %}
+                                    <ul class="errorlist">
+                                        {% for error in form.periodo.errors %}
+                                            <li>{{ error }}</li>
+                                        {% endfor %}
+                                    </ul>
+                                {% endif %}
                             </div>
                             
                             <div class="input-modern">
@@ -638,63 +657,12 @@
     }
     
     document.addEventListener('DOMContentLoaded', function() {
-        let torrerrosSeleccionados = [];
-        
-        // Selector de torreros
-        const selector = document.getElementById('selectorTorreros');
-        const contenedor = document.getElementById('torrerrosSeleccionados');
-        
-        selector.addEventListener('change', function() {
-            const option = this.options[this.selectedIndex];
-            if (option.value) {
-                const torrero = {
-                    id: option.value,
-                    nombre: option.dataset.nombre,
-                    tarifa: parseFloat(option.dataset.tarifa)
-                };
-                
-                if (!torrerrosSeleccionados.find(t => t.id === torrero.id)) {
-                    torrerrosSeleccionados.push(torrero);
-                    actualizarVista();
-                }
-                
-                this.value = '';
-            }
-        });
-        
-        window.eliminarTorrero = function(id) {
-            torrerrosSeleccionados = torrerrosSeleccionados.filter(t => t.id !== id);
-            actualizarVista();
-        };
-        
-        function actualizarVista() {
-            // Actualizar grid de torreros
-            if (torrerrosSeleccionados.length === 0) {
-                contenedor.innerHTML = '<div class="empty-torreros" style="grid-column: 1/-1;">No hay torreros seleccionados</div>';
-            } else {
-                contenedor.innerHTML = torrerrosSeleccionados.map(t => `
-                    <div class="torrero-card">
-                        <button type="button" class="remove-btn" onclick="eliminarTorrero('${t.id}')">×</button>
-                        <div class="torrero-name">${t.nombre}</div>
-                        <div class="torrero-tarifa">$${t.tarifa}/día</div>
-                    </div>
-                `).join('');
-            }
-            
-            // Actualizar inputs hidden
-            document.getElementById('torrerrosIdsInput').value = torrerrosSeleccionados.map(t => t.id).join(',');
-            document.getElementById('cantidadTorrerrosInput').value = torrerrosSeleccionados.length;
-            
-            // Actualizar resumen
-            actualizarResumen();
-        }
-        
         function actualizarResumen() {
-            const dias = parseInt(document.querySelector('[name="dias_solicitados"]').value) || 0;
+            const dias = parseFloat(document.querySelector('[name="dias_solicitados"]').value) || 0;
             const tarifa = parseFloat(document.querySelector('[name="tarifa_por_dia"]').value) || 0;
-            const cantidadTorreros = torrerrosSeleccionados.length;
+            const cantidadTorreros = parseInt(document.querySelector('[name="cantidad_torreros"]').value) || 1;
             
-            document.getElementById('summaryTorreros').textContent = cantidadTorreros;
+            document.getElementById('summaryCantidadTorreros').textContent = cantidadTorreros;
             document.getElementById('summaryDias').textContent = dias;
             document.getElementById('summaryTarifa').textContent = `$${tarifa.toFixed(2)}`;
             
@@ -703,8 +671,12 @@
         }
         
         // Actualizar resumen en tiempo real
+        document.querySelector('[name="cantidad_torreros"]')?.addEventListener('input', actualizarResumen);
         document.querySelector('[name="dias_solicitados"]')?.addEventListener('input', actualizarResumen);
         document.querySelector('[name="tarifa_por_dia"]')?.addEventListener('input', actualizarResumen);
+        
+        // Inicializar resumen al cargar
+        actualizarResumen();
         
         // Registro rápido
         document.getElementById('formRegistroRapidoTorrero').addEventListener('submit', function(e) {
@@ -733,7 +705,7 @@
             });
         });
         
-        actualizarVista();
+        actualizarResumen();
     });
 </script>
 {% endblock %}
