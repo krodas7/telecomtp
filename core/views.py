@@ -10821,76 +10821,112 @@ def servicio_torrero_pdf(request, pk):
     elements = []
     styles = getSampleStyleSheet()
     
-    # Estilos personalizados
+    # Estilos personalizados mejorados
     title_style = ParagraphStyle(
         'CustomTitle',
         parent=styles['Heading1'],
-        fontSize=24,
-        textColor=colors.HexColor('#1f2937'),
-        spaceAfter=12,
+        fontSize=26,
+        textColor=colors.HexColor('#1e293b'),
+        spaceAfter=8,
         alignment=TA_CENTER,
-        fontName='Helvetica-Bold'
+        fontName='Helvetica-Bold',
+        leading=32
     )
     
     subtitle_style = ParagraphStyle(
         'CustomSubtitle',
         parent=styles['Normal'],
-        fontSize=12,
-        textColor=colors.HexColor('#6b7280'),
-        spaceAfter=20,
+        fontSize=11,
+        textColor=colors.HexColor('#64748b'),
+        spaceAfter=25,
         alignment=TA_CENTER
     )
     
     heading_style = ParagraphStyle(
         'CustomHeading',
         parent=styles['Heading2'],
-        fontSize=14,
-        textColor=colors.HexColor('#111827'),
-        spaceAfter=10,
-        spaceBefore=15,
-        fontName='Helvetica-Bold'
+        fontSize=16,
+        textColor=colors.HexColor('#0f172a'),
+        spaceAfter=12,
+        spaceBefore=20,
+        fontName='Helvetica-Bold',
+        borderWidth=0,
+        borderPadding=0,
+        backColor=colors.HexColor('#f1f5f9'),
+        leftIndent=10,
+        rightIndent=10,
+        topPadding=8,
+        bottomPadding=8
     )
     
-    # Título
+    # Encabezado profesional con diseño moderno
     from django.utils import timezone
     fecha_actual = timezone.localtime(timezone.now())
-    elements.append(Paragraph("REPORTE DE SERVICIO DE TORREROS", title_style))
-    elements.append(Paragraph(f"Sistema ARCA - {fecha_actual.strftime('%d/%m/%Y %I:%M %p')}", subtitle_style))
-    elements.append(Spacer(1, 0.3*inch))
     
-    # Información del Servicio
-    elements.append(Paragraph("INFORMACIÓN DEL SERVICIO", heading_style))
+    # Título principal
+    header_text = f"""
+    <para align="center" spaceAfter="12">
+        <font size="26" name="Helvetica-Bold" color="#0f172a">REPORTE DE SERVICIO</font><br/>
+        <font size="26" name="Helvetica-Bold" color="#6366f1">TORREROS</font>
+    </para>
+    """
+    elements.append(Paragraph(header_text, styles['Normal']))
+    
+    # Subtítulo
+    elements.append(Paragraph(f"<para align='center'><font size='11' color='#64748b'>Sistema ARCA - Generado el {fecha_actual.strftime('%d/%m/%Y a las %I:%M %p')}</font></para>", styles['Normal']))
+    
+    # Línea decorativa
+    elements.append(Spacer(1, 0.2*inch))
+    divider_data = [['']]
+    divider_table = Table(divider_data, colWidths=[7*inch])
+    divider_table.setStyle(TableStyle([
+        ('LINEBELOW', (0, 0), (0, 0), 2, colors.HexColor('#6366f1')),
+    ]))
+    elements.append(divider_table)
+    elements.append(Spacer(1, 0.25*inch))
+    
+    # Información del Servicio - Diseño mejorado
+    info_heading = Paragraph("INFORMACIÓN DEL SERVICIO", heading_style)
+    elements.append(info_heading)
     
     info_data = [
-        ['Cliente:', servicio.cliente.razon_social],
-        ['Proyecto:', servicio.proyecto.nombre if servicio.proyecto else 'N/A'],
-        ['Descripción:', servicio.descripcion or 'N/A'],
-        ['Días Solicitados:', str(servicio.dias_solicitados)],
-        ['Días Trabajados:', str(servicio.dias_trabajados)],
-        ['Progreso:', f"{servicio.porcentaje_completado}%"],
-        ['Tarifa Diaria:', f"${servicio.tarifa_por_dia:,.2f}"],
-        ['Monto Total:', f"${servicio.monto_total:,.2f}"],
-        ['Total Pagado:', f"${servicio.monto_pagado:,.2f}"],
-        ['Saldo Pendiente:', f"${servicio.saldo_pendiente:,.2f}"],
-        ['Estado:', 'PAGADO' if servicio.esta_pagado else 'PENDIENTE'],
+        ['<b>Cliente:</b>', servicio.cliente.razon_social],
+        ['<b>Proyecto:</b>', servicio.proyecto.nombre if servicio.proyecto else 'No asignado'],
+        ['<b>Descripción:</b>', servicio.descripcion or 'Sin descripción'],
+        ['<b>Estado del Servicio:</b>', Paragraph(f"<b>{'PAGADO' if servicio.esta_pagado else 'PENDIENTE'}</b>", ParagraphStyle('EstadoStyle', parent=styles['Normal'], textColor=colors.HexColor('#10b981') if servicio.esta_pagado else colors.HexColor('#f59e0b')))],
+        ['', ''],  # Separador
+        ['<b>Días Solicitados:</b>', f"<b>{servicio.dias_solicitados}</b> día(s)"],
+        ['<b>Días Trabajados:</b>', f"<b>{servicio.dias_trabajados}</b> día(s)"],
+        ['<b>Días Restantes:</b>', f"<b>{servicio.dias_restantes}</b> día(s)"],
+        ['<b>Progreso:</b>', f"<b>{servicio.porcentaje_completado}%</b>"],
+        ['', ''],  # Separador
+        ['<b>Tarifa Diaria:</b>', f"<b>${servicio.tarifa_por_dia:,.2f}</b>"],
+        ['<b>Monto Total:</b>', Paragraph(f"<b>${servicio.monto_total:,.2f}</b>", ParagraphStyle('MontoStyle', parent=styles['Normal'], textColor=colors.HexColor('#1e40af')))],
+        ['<b>Total Pagado:</b>', Paragraph(f"<b>${servicio.monto_pagado:,.2f}</b>", ParagraphStyle('MontoStyle', parent=styles['Normal'], textColor=colors.HexColor('#10b981')))],
+        ['<b>Saldo Pendiente:</b>', Paragraph(f"<b>${servicio.saldo_pendiente:,.2f}</b>", ParagraphStyle('MontoStyle', parent=styles['Normal'], textColor=colors.HexColor('#dc2626')))],
     ]
     
-    info_table = Table(info_data, colWidths=[2*inch, 4.5*inch])
+    info_table = Table(info_data, colWidths=[2.2*inch, 4.3*inch])
     info_table.setStyle(TableStyle([
-        ('BACKGROUND', (0, 0), (0, -1), colors.HexColor('#f3f4f6')),
-        ('TEXTCOLOR', (0, 0), (-1, -1), colors.HexColor('#1f2937')),
+        ('BACKGROUND', (0, 0), (0, -1), colors.HexColor('#f8fafc')),
+        ('BACKGROUND', (0, 4), (-1, 4), colors.HexColor('#ffffff')),  # Separador
+        ('BACKGROUND', (0, 9), (-1, 9), colors.HexColor('#ffffff')),  # Separador
+        ('TEXTCOLOR', (0, 0), (-1, -1), colors.HexColor('#1e293b')),
         ('ALIGN', (0, 0), (0, -1), 'RIGHT'),
         ('ALIGN', (1, 0), (1, -1), 'LEFT'),
-        ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
+        ('FONTNAME', (0, 0), (0, -1), 'Helvetica'),
         ('FONTNAME', (1, 0), (1, -1), 'Helvetica'),
         ('FONTSIZE', (0, 0), (-1, -1), 10),
-        ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#e5e7eb')),
+        ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#e2e8f0')),
         ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-        ('TOPPADDING', (0, 0), (-1, -1), 8),
-        ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
+        ('TOPPADDING', (0, 0), (-1, -1), 10),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 10),
+        ('LEFTPADDING', (0, 0), (-1, -1), 12),
+        ('RIGHTPADDING', (0, 0), (-1, -1), 12),
+        ('BOX', (0, 0), (-1, -1), 1.5, colors.HexColor('#6366f1')),
     ]))
     elements.append(info_table)
-    elements.append(Spacer(1, 0.3*inch))
+    elements.append(Spacer(1, 0.4*inch))
     
     # No mostrar tabla de torreros asignados aquí, se mostrarán en el detalle de registros
     
