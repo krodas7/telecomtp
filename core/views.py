@@ -8949,18 +8949,52 @@ def trabajador_diario_add_to_planilla(request, proyecto_id, planilla_id):
     planilla = get_object_or_404(PlanillaTrabajadoresDiarios, id=planilla_id, proyecto=proyecto)
     
     if request.method == 'POST':
-        form = TrabajadorDiarioForm(request.POST, planilla=planilla)
+        form = TrabajadorDiarioForm(request.POST, planilla=planilla, proyecto=proyecto)
         if form.is_valid():
-            trabajador = form.save(commit=False)
-            trabajador.proyecto = proyecto
-            trabajador.planilla = planilla
-            trabajador.creado_por = request.user
-            trabajador.save()
+            nombre_trabajador = form.cleaned_data.get('nombre')
             
-            messages.success(request, f'Trabajador "{trabajador.nombre}" agregado a la planilla.')
-            return redirect('planilla_trabajadores_diarios_detail', proyecto_id=proyecto_id, planilla_id=planilla_id)
+            # Validar que no exista el mismo nombre en otras planillas ACTIVAS
+            trabajadores_duplicados = TrabajadorDiario.objects.filter(
+                proyecto=proyecto,
+                nombre__iexact=nombre_trabajador,
+                activo=True,
+                planilla__estado__in=['activa', 'pendiente']
+            ).exclude(planilla=planilla)
+            
+            if trabajadores_duplicados.exists():
+                planilla_duplicada = trabajadores_duplicados.first().planilla
+                messages.error(
+                    request,
+                    f'❌ El trabajador "{nombre_trabajador}" ya existe en la planilla activa "{planilla_duplicada.nombre}". '
+                    f'No se permiten trabajadores duplicados entre planillas activas.'
+                )
+            else:
+                trabajador = form.save(commit=False)
+                trabajador.proyecto = proyecto
+                trabajador.planilla = planilla
+                trabajador.creado_por = request.user
+                trabajador.save()
+                
+                # Registrar actividad
+                LogActividad.objects.create(
+                    usuario=request.user,
+                    accion='Crear',
+                    modulo='Trabajadores Diarios',
+                    descripcion=f'Trabajador "{trabajador.nombre}" agregado a la planilla "{planilla.nombre}"',
+                    ip_address=request.META.get('REMOTE_ADDR')
+                )
+                
+                messages.success(request, 
+                    f'✅ Trabajador "{trabajador.nombre}" agregado a la planilla "{planilla.nombre}".'
+                )
+                return redirect('planilla_trabajadores_diarios_detail', proyecto_id=proyecto_id, planilla_id=planilla_id)
+        else:
+            # Mostrar errores del formulario
+            for field, errors in form.errors.items():
+                for error in errors:
+                    messages.error(request, f'Error en {field}: {error}')
     else:
-        form = TrabajadorDiarioForm(planilla=planilla)
+        form = TrabajadorDiarioForm(planilla=planilla, proyecto=proyecto)
     
     context = {
         'proyecto': proyecto,

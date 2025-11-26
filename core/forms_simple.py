@@ -868,9 +868,18 @@ class TrabajadorDiarioForm(forms.ModelForm):
             self.fields['planilla'].queryset = PlanillaTrabajadoresDiarios.objects.filter(proyecto=proyecto)
             self.fields['planilla'].empty_label = "Selecciona una planilla"
         
-        # Si se pasa una planilla específica, seleccionarla
+        # Si se pasa una planilla específica, seleccionarla y ocultarla del formulario
         if self.planilla:
-            self.fields['planilla'].initial = self.planilla
+            self.fields['planilla'].initial = self.planilla.id
+            self.fields['planilla'].widget = forms.HiddenInput()
+            self.fields['planilla'].required = True
+    
+    def clean(self):
+        cleaned_data = super().clean()
+        # Si se pasó una planilla específica, asegurarse de que esté en cleaned_data
+        if self.planilla:
+            cleaned_data['planilla'] = self.planilla
+        return cleaned_data
 
 
 class RegistroTrabajoForm(forms.ModelForm):
