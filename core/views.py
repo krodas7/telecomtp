@@ -25,7 +25,7 @@ from .models import (
     TrabajadorDiario, RegistroTrabajo, AnticipoTrabajadorDiario, PlanillaLiquidada, PlanillaTrabajadoresDiarios,
     ItemCotizacion, ItemReutilizable, ConfiguracionPlanilla,
     ServicioTorrero, RegistroDiasTrabajados, PagoServicioTorrero, Torrero, AsignacionTorrero,
-    Subproyecto
+    Subproyecto, NotaPostit, CajaMenuda
 )
 from .forms_simple import (
     ClienteForm, ProyectoForm, ColaboradorForm, FacturaForm, 
@@ -36,7 +36,7 @@ from .forms_simple import (
     AsignacionInventarioForm, TrabajadorDiarioForm, RegistroTrabajoForm,
     AnticipoTrabajadorDiarioForm, PlanillaTrabajadoresDiariosForm, IngresoProyectoForm, CotizacionForm,
     ConfiguracionPlanillaForm, ServicioTorreroForm, RegistroDiasTrabajarForm, PagoServicioTorreroForm,
-    TorreroForm, SubproyectoForm
+    TorreroForm, SubproyectoForm, CajaMenudaForm
 )
 from django.contrib.auth.models import User
 from django.contrib.auth.forms import UserCreationForm, UserChangeForm
@@ -3415,11 +3415,11 @@ def sistema_reset_app(request):
                 GastoFijoMensual.objects.all().delete()
                 logger.info("Datos financieros eliminados")
                 
-                # 3. Eliminar presupuestos
-                logger.info("Eliminando presupuestos")
-                PartidaPresupuesto.objects.all().delete()
-                Presupuesto.objects.all().delete()
-                logger.info("Presupuestos eliminados")
+                # 3. Eliminar presupuestos (comentado - modelos no existen)
+                # logger.info("Eliminando presupuestos")
+                # PartidaPresupuesto.objects.all().delete()
+                # Presupuesto.objects.all().delete()
+                # logger.info("Presupuestos eliminados")
                 
                 # 4. Eliminar archivos
                 logger.info("Eliminando archivos")
@@ -3860,8 +3860,11 @@ def rentabilidad_view(request):
 
 @login_required
 def presupuesto_create(request):
-    """Crear nuevo presupuesto"""
-    if request.method == 'POST':
+    """Crear nuevo presupuesto - DESHABILITADO: Modelo Presupuesto no existe"""
+    messages.error(request, 'Funcionalidad de presupuestos deshabilitada - modelo no disponible')
+    return redirect('dashboard')
+    # Código comentado - modelo Presupuesto no existe
+    if False and request.method == 'POST':
         form = PresupuestoForm(request.POST)
         proyecto_id = request.POST.get('proyecto')
         
@@ -3916,8 +3919,12 @@ def presupuesto_create(request):
 
 @login_required
 def presupuesto_detail(request, presupuesto_id):
-    """Detalle de un presupuesto"""
-    presupuesto = get_object_or_404(Presupuesto, id=presupuesto_id, activo=True)
+    """Detalle de un presupuesto - DESHABILITADO: Modelo Presupuesto no existe"""
+    messages.error(request, 'Funcionalidad de presupuestos deshabilitada - modelo no disponible')
+    return redirect('dashboard')
+    # Código comentado - modelo Presupuesto no existe
+    if False:
+        presupuesto = None  # get_object_or_404(Presupuesto, id=presupuesto_id, activo=True)
     partidas = presupuesto.partidas.all()
     variaciones = presupuesto.variaciones.all()
     
@@ -3949,8 +3956,12 @@ def presupuesto_detail(request, presupuesto_id):
 
 @login_required
 def presupuesto_edit(request, presupuesto_id):
-    """Editar presupuesto"""
-    presupuesto = get_object_or_404(Presupuesto, id=presupuesto_id, activo=True)
+    """Editar presupuesto - DESHABILITADO: Modelo Presupuesto no existe"""
+    messages.error(request, 'Funcionalidad de presupuestos deshabilitada - modelo no disponible')
+    return redirect('dashboard')
+    # Código comentado - modelo Presupuesto no existe
+    if False:
+        presupuesto = None  # get_object_or_404(Presupuesto, id=presupuesto_id, activo=True)
     
     if request.method == 'POST':
         form = PresupuestoForm(request.POST, instance=presupuesto)
@@ -3980,8 +3991,12 @@ def presupuesto_edit(request, presupuesto_id):
 
 @login_required
 def partida_create(request, presupuesto_id):
-    """Crear nueva partida en un presupuesto"""
-    presupuesto = get_object_or_404(Presupuesto, id=presupuesto_id, activo=True)
+    """Crear nueva partida en un presupuesto - DESHABILITADO: Modelo Presupuesto no existe"""
+    messages.error(request, 'Funcionalidad de presupuestos deshabilitada - modelo no disponible')
+    return redirect('dashboard')
+    # Código comentado - modelo Presupuesto no existe
+    if False:
+        presupuesto = None  # get_object_or_404(Presupuesto, id=presupuesto_id, activo=True)
     
     # Verificar que el presupuesto puede recibir partidas
     if presupuesto.estado in ['aprobado', 'rechazado', 'obsoleto']:
@@ -4025,8 +4040,12 @@ def partida_create(request, presupuesto_id):
 
 @login_required
 def presupuesto_aprobar(request, presupuesto_id):
-    """Aprobar un presupuesto"""
-    presupuesto = get_object_or_404(Presupuesto, id=presupuesto_id, activo=True)
+    """Aprobar un presupuesto - DESHABILITADO: Modelo Presupuesto no existe"""
+    messages.error(request, 'Funcionalidad de presupuestos deshabilitada - modelo no disponible')
+    return redirect('dashboard')
+    # Código comentado - modelo Presupuesto no existe
+    if False:
+        presupuesto = None  # get_object_or_404(Presupuesto, id=presupuesto_id, activo=True)
     
     # Verificar que el presupuesto puede ser aprobado
     if presupuesto.estado not in ['borrador', 'en_revision']:
@@ -7204,28 +7223,22 @@ def trabajadores_diarios_list(request, proyecto_id):
     if not planilla_seleccionada:
         planilla_seleccionada = planillas_activas.first()
     
-    # Filtrar trabajadores por planilla seleccionada
-    if planilla_seleccionada:
-        if planilla_seleccionada.estado == 'finalizada':
-            # Si está finalizada, mostrar trabajadores archivados (para historial)
-            trabajadores = TrabajadorDiario.objects.filter(
-                proyecto=proyecto, 
-                planilla=planilla_seleccionada
-            ).order_by('nombre')
-        else:
-            # Si está activa, mostrar solo trabajadores activos
-            trabajadores = TrabajadorDiario.objects.filter(
-                proyecto=proyecto, 
-                planilla=planilla_seleccionada, 
-                activo=True
-            ).order_by('nombre')
-    else:
-        # Mostrar trabajadores sin planilla asignada
+    # Filtrar trabajadores: Mostrar TODOS los trabajadores activos del proyecto
+    # Si hay una planilla seleccionada, se puede usar para filtrar opcionalmente
+    # pero por defecto mostrar todos los trabajadores activos del proyecto
+    if planilla_seleccionada and planilla_seleccionada.estado == 'finalizada':
+        # Si está finalizada, mostrar trabajadores de esa planilla (para historial)
         trabajadores = TrabajadorDiario.objects.filter(
             proyecto=proyecto, 
-            planilla__isnull=True, 
-            activo=True
+            planilla=planilla_seleccionada
         ).order_by('nombre')
+    else:
+        # Mostrar TODOS los trabajadores activos del proyecto (no solo los de la planilla seleccionada)
+        # Esto asegura que los trabajadores creados desde cualquier planilla sean visibles
+        trabajadores = TrabajadorDiario.objects.filter(
+            proyecto=proyecto, 
+            activo=True
+        ).order_by('nombre', 'id')
     
     # Calcular anticipos aplicados y total bruto para cada trabajador
     for trabajador in trabajadores:
