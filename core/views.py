@@ -10041,7 +10041,7 @@ def torreros_dashboard(request):
         # Servicios con pagos pendientes
         servicios_pago_pendiente = servicios_activos.filter(
             monto_pagado__lt=models.F('monto_total')
-        ).order_by('cliente__nombre')[:5]
+        ).order_by('cliente__razon_social')[:5]
         
         # Últimos registros de días trabajados
         ultimos_registros = RegistroDiasTrabajados.objects.select_related(
