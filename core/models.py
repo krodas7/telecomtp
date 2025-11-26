@@ -2346,6 +2346,22 @@ class ServicioTorrero(models.Model):
         """Calcula el monto total basado en días solicitados y tarifa"""
         self.monto_total = self.dias_solicitados * self.tarifa_por_dia * self.cantidad_torreros
         return self.monto_total
+    
+    def recalcular_dias_trabajados(self):
+        """Recalcula los días trabajados basándose solo en registros aprobados"""
+        from django.db.models import Sum
+        total_dias_aprobados = self.registros_dias.filter(
+            aprobado=True
+        ).aggregate(total=Sum('dias_trabajados'))['total']
+        
+        if total_dias_aprobados is None:
+            total_dias_aprobados = Decimal('0.00')
+        else:
+            total_dias_aprobados = Decimal(str(total_dias_aprobados))
+        
+        self.dias_trabajados = total_dias_aprobados
+        self.save(update_fields=['dias_trabajados'])
+        return total_dias_aprobados
 
 
 class RegistroDiasTrabajados(models.Model):
@@ -2421,8 +2437,9 @@ class RegistroDiasTrabajados(models.Model):
                     super().save(update_fields=['es_dia_extra'])
             
             # Actualizar el servicio con el total de días aprobados
-            servicio.dias_trabajados = total_dias_aprobados
-            servicio.save(update_fields=['dias_trabajados'])
+            if servicio.dias_trabajados != total_dias_aprobados:
+                servicio.dias_trabajados = total_dias_aprobados
+                servicio.save(update_fields=['dias_trabajados'])
             
             # Refrescar self.servicio para que tenga los valores actualizados
             self.servicio.refresh_from_db()
