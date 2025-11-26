@@ -7692,9 +7692,14 @@ def trabajador_diario_create(request, proyecto_id):
             else:
                 trabajador = form.save(commit=False)
                 trabajador.proyecto = proyecto
-                trabajador.planilla = planilla_seleccionada
+                if planilla_seleccionada:
+                    trabajador.planilla = planilla_seleccionada
                 trabajador.creado_por = request.user
                 trabajador.save()
+                
+                # Refrescar la instancia de la planilla para asegurar que se actualice la relación
+                if planilla_seleccionada:
+                    planilla_seleccionada.refresh_from_db()
                 
                 # Registrar actividad
                 LogActividad.objects.create(
@@ -7708,10 +7713,10 @@ def trabajador_diario_create(request, proyecto_id):
                 messages.success(request, 
                     f'✅ Trabajador "{nombre_trabajador}" agregado a la planilla "{planilla_seleccionada.nombre if planilla_seleccionada else "sin planilla"}".'
                 )
-                if planilla_id:
-                    return redirect(
-                        f'{reverse("trabajadores_diarios_list", args=[proyecto_id])}?planilla_id={planilla_id}'
-                    )
+                # Si hay planilla seleccionada, redirigir a la vista de detalle de la planilla
+                if planilla_seleccionada:
+                    return redirect('planilla_trabajadores_diarios_detail', proyecto_id=proyecto_id, planilla_id=planilla_seleccionada.id)
+                # Si no hay planilla, redirigir a la lista general
                 return redirect('trabajadores_diarios_list', proyecto_id=proyecto_id)
         else:
             # Mostrar errores del formulario
@@ -8838,7 +8843,10 @@ def planilla_trabajadores_diarios_detail(request, proyecto_id, planilla_id):
     """Detalle de una planilla de trabajadores diarios"""
     proyecto = get_object_or_404(Proyecto, id=proyecto_id)
     planilla = get_object_or_404(PlanillaTrabajadoresDiarios, id=planilla_id, proyecto=proyecto)
-    trabajadores = planilla.trabajadores.all().order_by('nombre')
+    
+    # Obtener trabajadores de la planilla usando la relación inversa
+    # Si no hay trabajadores por la relación, intentar obtenerlos directamente
+    trabajadores = TrabajadorDiario.objects.filter(planilla=planilla).order_by('nombre')
     
     # Calcular totales
     total_trabajadores = trabajadores.count()
