@@ -413,24 +413,33 @@
                        onmouseover="this.style.background='#f3f4f6'; this.style.borderColor='#6366f1'; this.style.transform='translateX(4px)';"
                        onmouseout="this.style.background='#f9fafb'; this.style.borderColor='#e5e7eb'; this.style.transform='translateX(0)';">
                         <div style="display: flex; justify-content: space-between; align-items: center;">
-                            <div>
+                            <div style="flex: 1;">
                                 <h6 style="margin: 0 0 0.25rem 0; font-weight: 600; color: #1f2937; display: flex; align-items: center; gap: 0.5rem;">
                                     <i class="fas fa-building" style="color: #6366f1;"></i>{{ proyecto.nombre }}
                                 </h6>
-                                {% if proyecto.activo %}
-                                <small style="color: #10b981; font-weight: 600; display: flex; align-items: center; gap: 0.25rem;">
-                                    <i class="fas fa-check-circle"></i>Activo
-                                </small>
-                                {% endif %}
+                                <div style="display: flex; gap: 0.75rem; flex-wrap: wrap; align-items: center;">
+                                    {% if proyecto.activo %}
+                                    <small style="color: #10b981; font-weight: 600; display: flex; align-items: center; gap: 0.25rem;">
+                                        <i class="fas fa-check-circle"></i>Activo
+                                    </small>
+                                    {% else %}
+                                    <small style="color: #ef4444; font-weight: 600; display: flex; align-items: center; gap: 0.25rem;">
+                                        <i class="fas fa-times-circle"></i>Inactivo
+                                    </small>
+                                    {% endif %}
+                                    <small style="color: #6b7280; font-weight: 500;">
+                                        {{ proyecto.get_estado_display }}
+                                    </small>
+                                </div>
                             </div>
-                            <i class="fas fa-chevron-right" style="color: #9ca3af;"></i>
+                            <i class="fas fa-chevron-right" style="color: #9ca3af; margin-left: 1rem;"></i>
                         </div>
                     </a>
                     {% empty %}
                     <div style="padding: 2rem; text-align: center; background: #fef3c7; border: 2px solid #fbbf24; border-radius: 12px;">
                         <i class="fas fa-info-circle" style="font-size: 2rem; color: #f59e0b; margin-bottom: 1rem;"></i>
-                        <p style="margin: 0; color: #92400e; font-weight: 600;">No hay proyectos activos disponibles</p>
-                        <p style="margin: 0.5rem 0 0 0; color: #78350f; font-size: 0.875rem;">Activa un proyecto para poder crear planillas</p>
+                        <p style="margin: 0; color: #92400e; font-weight: 600;">No hay proyectos disponibles</p>
+                        <p style="margin: 0.5rem 0 0 0; color: #78350f; font-size: 0.875rem;">Crea un proyecto primero para poder crear planillas de trabajadores diarios</p>
                     </div>
                     {% endfor %}
                 </div>

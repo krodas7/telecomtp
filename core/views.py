@@ -11137,10 +11137,13 @@ def planillas_trabajadores_diarios_gestor(request):
         num_trabajadores=Count('trabajadores', filter=Q(trabajadores__activo=True))
     ).order_by('-fecha_creacion')
     
-    # Obtener proyectos para el filtro
-    proyectos = Proyecto.objects.filter(
+    # Obtener proyectos para el filtro (todos los proyectos activos, no solo los que tienen planillas)
+    proyectos_filtro = Proyecto.objects.filter(
         planillas_trabajadores_diarios__isnull=False
     ).distinct().order_by('nombre')
+    
+    # Obtener TODOS los proyectos para poder crear planillas (mostrar todos, no solo activos)
+    todos_proyectos = Proyecto.objects.all().order_by('nombre')
     
     # Estadísticas sobre TODAS las planillas (no filtradas)
     todas_planillas = PlanillaTrabajadoresDiarios.objects.all()
@@ -11157,7 +11160,8 @@ def planillas_trabajadores_diarios_gestor(request):
     
     context = {
         'planillas': planillas,
-        'proyectos': proyectos,
+        'proyectos': proyectos_filtro,
+        'todos_proyectos': todos_proyectos,
         'total_planillas': total_planillas,
         'planillas_activas': planillas_activas,
         'planillas_finalizadas': planillas_finalizadas,
