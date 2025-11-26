@@ -10397,9 +10397,8 @@ def registro_dias_aprobar(request, pk):
             LogActividad.objects.create(
                 usuario=request.user,
                 accion='aprobar' if registro.aprobado else 'desaprobar',
-                modelo='RegistroDiasTrabajados',
-                objeto_id=registro.id,
-                descripcion=f'{accion.capitalize()} registro de {registro.dias_trabajados} día(s)'
+                modulo='Servicios Torreros',
+                descripcion=f'{accion.capitalize()} registro de {registro.dias_trabajados} día(s) para {registro.servicio.cliente.razon_social} (ID: {registro.id})'
             )
             
             estado = 'aprobado' if registro.aprobado else 'desaprobado'
