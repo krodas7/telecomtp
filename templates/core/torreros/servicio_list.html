@@ -228,16 +228,37 @@
                             <div class="small text-muted">Pagado: {{ servicio.monto_pagado|currency_gtq }}</div>
                         </td>
                         <td>
-                            <span class="badge-modern {{ servicio.estado }}">
-                                {{ servicio.get_estado_display }}
-                            </span>
+                            <div class="d-flex flex-column gap-1">
+                                <span class="badge-modern {{ servicio.estado }}">
+                                    {{ servicio.get_estado_display }}
+                                </span>
+                                <span class="badge-modern {% if servicio.esta_pagado %}activo{% else %}warning{% endif %}" id="badge-pago-{{ servicio.id }}">
+                                    {% if servicio.esta_pagado %}
+                                        <i class="fas fa-check-circle"></i> Pagado
+                                    {% else %}
+                                        <i class="fas fa-clock"></i> Pendiente
+                                    {% endif %}
+                                </span>
+                            </div>
                         </td>
                         <td>
                             <div class="d-flex gap-1">
+                                <button onclick="togglePago({{ servicio.id }}, {{ servicio.esta_pagado|yesno:'true,false' }})" 
+                                        class="btn btn-sm btn-action {% if servicio.esta_pagado %}btn-success{% else %}btn-outline-warning{% endif %}" 
+                                        title="{% if servicio.esta_pagado %}Marcar como Pendiente{% else %}Marcar como Pagado{% endif %}"
+                                        id="btn-pago-{{ servicio.id }}">
+                                    <i class="fas {% if servicio.esta_pagado %}fa-check-circle{% else %}fa-clock{% endif %}"></i>
+                                </button>
                                 <a href="{% url 'servicio_torrero_detail' servicio.id %}" 
                                    class="btn btn-primary btn-sm btn-action" 
                                    title="Ver Detalle">
                                     <i class="fas fa-eye"></i>
+                                </a>
+                                <a href="{% url 'servicio_torrero_pdf' servicio.id %}" 
+                                   class="btn btn-info btn-sm btn-action" 
+                                   title="Descargar PDF"
+                                   target="_blank">
+                                    <i class="fas fa-file-pdf"></i>
                                 </a>
                                 <a href="{% url 'servicio_torrero_edit' servicio.id %}" 
                                    class="btn btn-warning btn-sm btn-action" 
@@ -308,5 +329,111 @@
         {% endif %}
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+    
+    function togglePago(servicioId, actualmentePagado) {
+        const estadoActual = actualmentePagado ? 'pagado' : 'pendiente';
+        const nuevoEstado = actualmentePagado ? 'pendiente' : 'pagado';
+        
+        Swal.fire({
+            title: '¿Confirmar cambio?',
+            text: `¿Deseas marcar este servicio como ${nuevoEstado}?`,
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonText: 'Sí, cambiar',
+            cancelButtonText: 'Cancelar',
+            confirmButtonColor: '#10b981',
+            cancelButtonColor: '#6b7280'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                // Mostrar loading
+                Swal.fire({
+                    title: 'Procesando...',
+                    html: 'Por favor espera',
+                    allowOutsideClick: false,
+                    didOpen: () => {
+                        Swal.showLoading();
+                    }
+                });
+                
+                // Enviar petición AJAX
+                fetch(`/torreros/servicios/${servicioId}/toggle-pago/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCookie('csrftoken')
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Actualizar botón
+                        const btn = document.getElementById(`btn-pago-${servicioId}`);
+                        const badge = document.getElementById(`badge-pago-${servicioId}`);
+                        
+                        if (data.esta_pagado) {
+                            btn.className = 'btn btn-sm btn-action btn-success';
+                            btn.innerHTML = '<i class="fas fa-check-circle"></i>';
+                            btn.title = 'Marcar como Pendiente';
+                            badge.className = 'badge-modern activo';
+                            badge.innerHTML = '<i class="fas fa-check-circle"></i> Pagado';
+                        } else {
+                            btn.className = 'btn btn-sm btn-action btn-outline-warning';
+                            btn.innerHTML = '<i class="fas fa-clock"></i>';
+                            btn.title = 'Marcar como Pagado';
+                            badge.className = 'badge-modern warning';
+                            badge.innerHTML = '<i class="fas fa-clock"></i> Pendiente';
+                        }
+                        
+                        Swal.fire({
+                            icon: 'success',
+                            title: '¡Actualizado!',
+                            text: data.message,
+                            timer: 2000,
+                            showConfirmButton: false
+                        });
+                        
+                        // Recargar para actualizar montos en la tabla
+                        setTimeout(() => {
+                            location.reload();
+                        }, 2000);
+                    } else {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: data.message
+                        });
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: 'Ocurrió un error al cambiar el estado'
+                    });
+                });
+            }
+        });
+    }
+</script>
 {% endblock %}
 

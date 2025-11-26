@@ -10422,6 +10422,53 @@ def registro_dias_aprobar(request, pk):
 
 
 @login_required
+def servicio_torrero_toggle_pago(request, servicio_id):
+    """Toggle estado de pago del servicio (AJAX)"""
+    if request.method == 'POST':
+        try:
+            servicio = get_object_or_404(ServicioTorrero, pk=servicio_id)
+            
+            # Si está pagado, marcar como pendiente (monto_pagado = 0)
+            # Si está pendiente, marcar como pagado (monto_pagado = monto_total)
+            if servicio.esta_pagado:
+                servicio.monto_pagado = Decimal('0.00')
+                estado = 'pendiente'
+                mensaje = 'Servicio marcado como pendiente'
+            else:
+                servicio.monto_pagado = servicio.monto_total
+                estado = 'pagado'
+                mensaje = 'Servicio marcado como pagado'
+            
+            servicio.save()
+            
+            # Log de actividad
+            LogActividad.objects.create(
+                usuario=request.user,
+                accion='editar',
+                modulo='Servicios Torreros',
+                descripcion=f'Marcó servicio de {servicio.cliente.razon_social} como {estado} (ID: {servicio.id})'
+            )
+            
+            return JsonResponse({
+                'success': True,
+                'message': mensaje,
+                'estado': estado,
+                'monto_pagado': float(servicio.monto_pagado),
+                'saldo_pendiente': float(servicio.saldo_pendiente),
+                'esta_pagado': servicio.esta_pagado
+            })
+            
+        except Exception as e:
+            logger.error(f"Error al cambiar estado de pago: {str(e)}")
+            return JsonResponse({
+                'success': False,
+                'message': f'Error: {str(e)}'
+            }, status=400)
+    
+    return JsonResponse({'success': False, 'message': 'Método no permitido'}, status=405)
+
+
+@login_required
 def pago_servicio_create(request, servicio_id):
     """Crear pago de servicio de torrero"""
     servicio = get_object_or_404(ServicioTorrero, pk=servicio_id)
@@ -10778,25 +10825,35 @@ def servicio_torrero_pdf(request, pk):
         elements.append(torreros_table)
         elements.append(Spacer(1, 0.3*inch))
     
-    # Registro de Días Trabajados
+    # Registro de Días Trabajados con Detalle Completo
     if registros.exists():
-        elements.append(Paragraph("REGISTRO DE DÍAS TRABAJADOS", heading_style))
+        elements.append(Paragraph("REGISTRO DETALLADO DE DÍAS TRABAJADOS", heading_style))
         
-        registros_data = [['Fecha', 'Días', 'Observaciones', 'Registrado Por', 'Estado']]
+        # Obtener todas las asignaciones activas para el servicio
+        asignaciones_activas = AsignacionTorrero.objects.filter(servicio=servicio, activo=True).select_related('torrero')
+        lista_torreros_asignados = [a.torrero.nombre for a in asignaciones_activas]
+        
+        registros_data = [['Fecha', 'Días Trabajados', 'Torreros Presentes', 'Observaciones', 'Estado']]
+        total_dias_registrados = Decimal('0.00')
+        
         for registro in registros:
+            total_dias_registrados += registro.dias_trabajados
+            observaciones_text = registro.observaciones[:40] + '...' if len(registro.observaciones) > 40 else registro.observaciones or '-'
+            
             registros_data.append([
                 registro.fecha_registro.strftime('%d/%m/%Y'),
-                str(registro.dias_trabajados),
-                registro.observaciones[:30] + '...' if len(registro.observaciones) > 30 else registro.observaciones or '-',
-                registro.registrado_por.get_full_name() or registro.registrado_por.username,
-                'Aprobado' if registro.aprobado else 'Pendiente'
+                f"{registro.dias_trabajados} día(s)",
+                f"{registro.torreros_presentes} torrero(s)",
+                observaciones_text,
+                '✓ Aprobado' if registro.aprobado else '⏳ Pendiente'
             ])
         
-        registros_table = Table(registros_data, colWidths=[1.2*inch, 0.8*inch, 2.2*inch, 1.5*inch, 1*inch])
+        registros_table = Table(registros_data, colWidths=[1.3*inch, 1.2*inch, 1.2*inch, 2.5*inch, 1*inch])
         registros_table.setStyle(TableStyle([
             ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#10b981')),
             ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
             ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+            ('ALIGN', (3, 0), (3, -1), 'LEFT'),
             ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
             ('FONTSIZE', (0, 0), (-1, 0), 10),
             ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
@@ -10808,7 +10865,40 @@ def servicio_torrero_pdf(request, pk):
             ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#f9fafb')]),
         ]))
         elements.append(registros_table)
-        elements.append(Spacer(1, 0.3*inch))
+        elements.append(Spacer(1, 0.2*inch))
+        
+        # Resumen de días trabajados
+        elements.append(Paragraph("RESUMEN DE DÍAS", heading_style))
+        resumen_dias_data = [
+            ['Total Días Solicitados:', f"{servicio.dias_solicitados} día(s)"],
+            ['Total Días Trabajados:', f"{servicio.dias_trabajados} día(s)"],
+            ['Días Restantes:', f"{servicio.dias_restantes} día(s)"],
+            ['Progreso:', f"{servicio.porcentaje_completado}%"],
+        ]
+        
+        resumen_dias_table = Table(resumen_dias_data, colWidths=[3*inch, 3.5*inch])
+        resumen_dias_table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (0, -1), colors.HexColor('#f3f4f6')),
+            ('TEXTCOLOR', (0, 0), (-1, -1), colors.HexColor('#1f2937')),
+            ('ALIGN', (0, 0), (0, -1), 'RIGHT'),
+            ('ALIGN', (1, 0), (1, -1), 'LEFT'),
+            ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
+            ('FONTNAME', (1, 0), (1, -1), 'Helvetica'),
+            ('FONTSIZE', (0, 0), (-1, -1), 10),
+            ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#e5e7eb')),
+            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+            ('TOPPADDING', (0, 0), (-1, -1), 8),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
+        ]))
+        elements.append(resumen_dias_table)
+        elements.append(Spacer(1, 0.2*inch))
+        
+        # Lista de torreros que trabajaron
+        if lista_torreros_asignados:
+            elements.append(Paragraph("TORREROS QUE TRABAJARON EN ESTE SERVICIO", heading_style))
+            torreros_lista_text = ", ".join(lista_torreros_asignados)
+            elements.append(Paragraph(torreros_lista_text, styles['Normal']))
+            elements.append(Spacer(1, 0.3*inch))
     
     # Historial de Pagos
     if pagos.exists():

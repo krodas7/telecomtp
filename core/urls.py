@@ -59,6 +59,7 @@ urlpatterns = [
     path('torreros/servicios/<int:pk>/editar/', views.servicio_torrero_edit, name='servicio_torrero_edit'),
     path('torreros/servicios/<int:pk>/eliminar/', views.servicio_torrero_delete, name='servicio_torrero_delete'),
     path('torreros/servicios/<int:pk>/pdf/', views.servicio_torrero_pdf, name='servicio_torrero_pdf'),
+    path('torreros/servicios/<int:servicio_id>/toggle-pago/', views.servicio_torrero_toggle_pago, name='servicio_torrero_toggle_pago'),
     path('torreros/servicios/<int:servicio_id>/registrar-dias/', views.registro_dias_create, name='registro_dias_create'),
     path('torreros/servicios/<int:servicio_id>/registrar-dia/', views.registro_dias_quick, name='registro_dias_quick'),
     path('torreros/registros/<int:pk>/aprobar/', views.registro_dias_aprobar, name='registro_dias_aprobar'),
