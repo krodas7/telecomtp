@@ -5,15 +5,10 @@
 
 {% block extra_css %}
 <style>
-    /* ============================================
-       REACT-STYLE MODERN FORM DESIGN
-       Inspirado en Vercel + Stripe + Material Design
-    ============================================ */
-    
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
     
     * {
-        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
     }
     
     body {
@@ -21,7 +16,6 @@
         min-height: 100vh;
     }
     
-    /* Hero Section Glassmorphism */
     .hero-glass {
         background: linear-gradient(135deg, rgba(99, 102, 241, 0.95) 0%, rgba(139, 92, 246, 0.95) 100%);
         backdrop-filter: blur(20px);
@@ -32,17 +26,6 @@
         box-shadow: 0 20px 60px rgba(99, 102, 241, 0.3);
         position: relative;
         overflow: hidden;
-    }
-    
-    .hero-glass::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
-        opacity: 0.3;
     }
     
     .hero-content {
@@ -65,15 +48,11 @@
         font-weight: 400;
     }
     
-    /* Form Container - Card Style */
     .form-card {
         background: white;
         border-radius: 24px;
         padding: 3rem;
-        box-shadow: 
-            0 0 0 1px rgba(0,0,0,0.03),
-            0 2px 4px rgba(0,0,0,0.05),
-            0 12px 24px rgba(0,0,0,0.05);
+        box-shadow: 0 0 0 1px rgba(0,0,0,0.03), 0 2px 4px rgba(0,0,0,0.05), 0 12px 24px rgba(0,0,0,0.05);
         max-width: 900px;
         margin: 0 auto;
         animation: slideUp 0.5s ease-out;
@@ -90,7 +69,6 @@
         }
     }
     
-    /* Section Divider */
     .form-section {
         margin-bottom: 3rem;
         padding-bottom: 2rem;
@@ -109,7 +87,6 @@
         to { opacity: 1; }
     }
     
-    /* Section Title */
     .section-header {
         display: flex;
         align-items: center;
@@ -137,7 +114,6 @@
         letter-spacing: -0.01em;
     }
     
-    /* Floating Label Input Group */
     .input-group-float {
         position: relative;
         margin-bottom: 2rem;
@@ -201,14 +177,22 @@
         padding-top: 1.25rem;
     }
     
-    /* Required Indicator */
+    .input-group-float input[type="file"] {
+        padding: 0.75rem;
+    }
+    
+    .input-group-float input[type="checkbox"] {
+        width: auto;
+        margin-right: 0.5rem;
+        margin-top: 0.5rem;
+    }
+    
     .required-star {
         color: #ef4444;
         margin-left: 4px;
         font-weight: 700;
     }
     
-    /* Help Text */
     .help-text {
         font-size: 0.875rem;
         color: #6b7280;
@@ -218,36 +202,35 @@
         gap: 0.5rem;
     }
     
-    .help-text i {
-        color: #9ca3af;
-        font-size: 0.75rem;
+    .error-message {
+        background: #fef2f2;
+        border-left: 4px solid #ef4444;
+        padding: 1rem;
+        border-radius: 8px;
+        margin-top: 0.5rem;
     }
     
-    /* Input with Icon */
-    .input-with-icon {
-        position: relative;
+    .error-message ul {
+        list-style: none;
+        padding: 0;
+        margin: 0;
     }
     
-    .input-icon {
-        position: absolute;
-        left: 16px;
-        top: 50%;
-        transform: translateY(-50%);
-        color: #9ca3af;
-        font-size: 1.125rem;
-        pointer-events: none;
-        transition: color 0.3s;
+    .error-message li {
+        color: #dc2626;
+        font-size: 0.875rem;
+        font-weight: 500;
     }
     
-    .input-with-icon input {
-        padding-left: 3rem;
+    .button-group {
+        display: flex;
+        gap: 1rem;
+        justify-content: flex-end;
+        margin-top: 3rem;
+        padding-top: 2rem;
+        border-top: 1px solid #e5e7eb;
     }
     
-    .input-with-icon input:focus ~ .input-icon {
-        color: #6366f1;
-    }
-    
-    /* Button Styles - React/Vercel Style */
     .btn-react {
         padding: 1rem 2rem;
         font-size: 1rem;
@@ -259,31 +242,7 @@
         display: inline-flex;
         align-items: center;
         gap: 0.75rem;
-        position: relative;
-        overflow: hidden;
-    }
-    
-    .btn-react::before {
-        content: '';
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        width: 0;
-        height: 0;
-        border-radius: 50%;
-        background: rgba(255, 255, 255, 0.3);
-        transform: translate(-50%, -50%);
-        transition: width 0.6s, height 0.6s;
-    }
-    
-    .btn-react:hover::before {
-        width: 300px;
-        height: 300px;
-    }
-    
-    .btn-react span {
-        position: relative;
-        z-index: 1;
+        text-decoration: none;
     }
     
     .btn-primary-react {
@@ -297,10 +256,6 @@
         box-shadow: 0 8px 24px rgba(99, 102, 241, 0.5);
     }
     
-    .btn-primary-react:active {
-        transform: translateY(0);
-    }
-    
     .btn-secondary-react {
         background: white;
         color: #6b7280;
@@ -312,107 +267,11 @@
         background: #f9fafb;
         border-color: #d1d5db;
         transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-    }
-    
-    /* Button Group */
-    .button-group {
-        display: flex;
-        gap: 1rem;
-        justify-content: flex-end;
-        margin-top: 3rem;
-        padding-top: 2rem;
-        border-top: 1px solid #e5e7eb;
-    }
-    
-    /* Error Messages */
-    .error-message {
-        background: #fef2f2;
-        border-left: 4px solid #ef4444;
-        padding: 1rem;
-        border-radius: 8px;
-        margin-top: 0.5rem;
-        animation: shake 0.5s;
-    }
-    
-    @keyframes shake {
-        0%, 100% { transform: translateX(0); }
-        25% { transform: translateX(-10px); }
-        75% { transform: translateX(10px); }
-    }
-    
-    .error-message ul {
-        list-style: none;
-        padding: 0;
-        margin: 0;
-    }
-    
-    .error-message li {
-        color: #dc2626;
-        font-size: 0.875rem;
-        font-weight: 500;
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-    }
-    
-    .error-message li::before {
-        content: '⚠';
-        font-size: 1rem;
-    }
-    
-    /* Loading State */
-    .btn-loading {
-        pointer-events: none;
-        opacity: 0.7;
-    }
-    
-    .btn-loading::after {
-        content: '';
-        position: absolute;
-        width: 16px;
-        height: 16px;
-        border: 2px solid rgba(255, 255, 255, 0.3);
-        border-top-color: white;
-        border-radius: 50%;
-        animation: spin 0.6s linear infinite;
-        right: 1rem;
-    }
-    
-    @keyframes spin {
-        to { transform: rotate(360deg); }
-    }
-    
-    /* Responsive */
-    @media (max-width: 768px) {
-        .form-card {
-            padding: 2rem 1.5rem;
-            border-radius: 16px;
-        }
-        
-        .hero-title {
-            font-size: 2rem;
-        }
-        
-        .button-group {
-            flex-direction: column-reverse;
-        }
-        
-        .btn-react {
-            width: 100%;
-            justify-content: center;
-        }
-    }
-    
-    /* Smooth Scroll */
-    html {
-        scroll-behavior: smooth;
     }
 </style>
 {% endblock %}
 
 {% block content %}
-<!-- Hero Section -->
 <div class="hero-glass">
     <div class="container">
         <div class="hero-content">
@@ -427,112 +286,93 @@
 
 <div class="container mt-4">
     <div class="form-card">
-        <form method="post" enctype="multipart/form-data" id="servicioForm">
+        <form method="post" enctype="multipart/form-data" id="torreroForm">
             {% csrf_token %}
             
-            <!-- Información Básica -->
+            <!-- Información Personal -->
             <div class="form-section">
                 <div class="section-header">
                     <div class="section-icon">
-                        <i class="fas fa-info-circle"></i>
+                        <i class="fas fa-user"></i>
                     </div>
-                    <h3 class="section-title">Información Básica</h3>
+                    <h3 class="section-title">Información Personal</h3>
                 </div>
                 
                 <div class="row g-4">
                     <div class="col-md-6">
                         <div class="input-group-float">
-                            {{ form.cliente }}
-                            <label for="{{ form.cliente.id_for_label }}">
-                                Cliente<span class="required-star">*</span>
+                            {{ form.nombre }}
+                            <label for="{{ form.nombre.id_for_label }}">
+                                Nombre Completo<span class="required-star">*</span>
                             </label>
-                            {% if form.cliente.errors %}
+                            {% if form.nombre.errors %}
                                 <div class="error-message">
                                     <ul>
-                                        {% for error in form.cliente.errors %}
+                                        {% for error in form.nombre.errors %}
                                             <li>{{ error }}</li>
                                         {% endfor %}
                                     </ul>
                                 </div>
                             {% endif %}
-                            <div class="help-text">
-                                <i class="fas fa-info-circle"></i>
-                                Seleccione el cliente que solicita el servicio
-                            </div>
                         </div>
                     </div>
                     
                     <div class="col-md-6">
                         <div class="input-group-float">
-                            {{ form.proyecto }}
-                            <label for="{{ form.proyecto.id_for_label }}">Proyecto (Opcional)</label>
-                            {% if form.proyecto.errors %}
+                            {{ form.cedula }}
+                            <label for="{{ form.cedula.id_for_label }}">Cédula / Documento</label>
+                            {% if form.cedula.errors %}
                                 <div class="error-message">
                                     <ul>
-                                        {% for error in form.proyecto.errors %}
+                                        {% for error in form.cedula.errors %}
                                             <li>{{ error }}</li>
                                         {% endfor %}
                                     </ul>
                                 </div>
                             {% endif %}
-                            <div class="help-text">
-                                <i class="fas fa-info-circle"></i>
-                                Proyecto asociado si aplica
-                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="input-group-float">
+                            {{ form.telefono }}
+                            <label for="{{ form.telefono.id_for_label }}">Teléfono</label>
+                            {% if form.telefono.errors %}
+                                <div class="error-message">
+                                    <ul>
+                                        {% for error in form.telefono.errors %}
+                                            <li>{{ error }}</li>
+                                        {% endfor %}
+                                    </ul>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="input-group-float">
+                            {{ form.email }}
+                            <label for="{{ form.email.id_for_label }}">Email</label>
+                            {% if form.email.errors %}
+                                <div class="error-message">
+                                    <ul>
+                                        {% for error in form.email.errors %}
+                                            <li>{{ error }}</li>
+                                        {% endfor %}
+                                    </ul>
+                                </div>
+                            {% endif %}
                         </div>
                     </div>
                     
                     <div class="col-12">
                         <div class="input-group-float">
-                            {{ form.descripcion }}
-                            <label for="{{ form.descripcion.id_for_label }}">
-                                Descripción del Servicio<span class="required-star">*</span>
-                            </label>
-                            {% if form.descripcion.errors %}
+                            {{ form.direccion }}
+                            <label for="{{ form.direccion.id_for_label }}">Dirección</label>
+                            {% if form.direccion.errors %}
                                 <div class="error-message">
                                     <ul>
-                                        {% for error in form.descripcion.errors %}
-                                            <li>{{ error }}</li>
-                                        {% endfor %}
-                                    </ul>
-                                </div>
-                            {% endif %}
-                            <div class="help-text">
-                                <i class="fas fa-info-circle"></i>
-                                Describa detalladamente el servicio solicitado
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="col-md-6">
-                        <div class="input-group-float input-with-icon">
-                            {{ form.cantidad_torreros }}
-                            <label for="{{ form.cantidad_torreros.id_for_label }}">
-                                Cantidad de Torreros<span class="required-star">*</span>
-                            </label>
-                            <i class="fas fa-users input-icon"></i>
-                            {% if form.cantidad_torreros.errors %}
-                                <div class="error-message">
-                                    <ul>
-                                        {% for error in form.cantidad_torreros.errors %}
-                                            <li>{{ error }}</li>
-                                        {% endfor %}
-                                    </ul>
-                                </div>
-                            {% endif %}
-                        </div>
-                    </div>
-                    
-                    <div class="col-md-6">
-                        <div class="input-group-float">
-                            {{ form.estado }}
-                            <label for="{{ form.estado.id_for_label }}">
-                                Estado<span class="required-star">*</span>
-                            </label>
-                            {% if form.estado.errors %}
-                                <div class="error-message">
-                                    <ul>
-                                        {% for error in form.estado.errors %}
+                                        {% for error in form.direccion.errors %}
                                             <li>{{ error }}</li>
                                         {% endfor %}
                                     </ul>
@@ -543,26 +383,24 @@
                 </div>
             </div>
             
-            <!-- Periodo y Tiempo -->
+            <!-- Información Laboral -->
             <div class="form-section">
                 <div class="section-header">
                     <div class="section-icon">
-                        <i class="fas fa-calendar-alt"></i>
+                        <i class="fas fa-briefcase"></i>
                     </div>
-                    <h3 class="section-title">Periodo y Tiempo</h3>
+                    <h3 class="section-title">Información Laboral</h3>
                 </div>
                 
                 <div class="row g-4">
-                    <div class="col-md-4">
+                    <div class="col-md-6">
                         <div class="input-group-float">
-                            {{ form.periodo }}
-                            <label for="{{ form.periodo.id_for_label }}">
-                                Periodo<span class="required-star">*</span>
-                            </label>
-                            {% if form.periodo.errors %}
+                            {{ form.fecha_ingreso }}
+                            <label for="{{ form.fecha_ingreso.id_for_label }}">Fecha de Ingreso</label>
+                            {% if form.fecha_ingreso.errors %}
                                 <div class="error-message">
                                     <ul>
-                                        {% for error in form.periodo.errors %}
+                                        {% for error in form.fecha_ingreso.errors %}
                                             <li>{{ error }}</li>
                                         {% endfor %}
                                     </ul>
@@ -571,36 +409,14 @@
                         </div>
                     </div>
                     
-                    <div class="col-md-4">
-                        <div class="input-group-float input-with-icon">
-                            {{ form.dias_solicitados }}
-                            <label for="{{ form.dias_solicitados.id_for_label }}">
-                                Días Solicitados<span class="required-star">*</span>
-                            </label>
-                            <i class="fas fa-calendar-day input-icon"></i>
-                            {% if form.dias_solicitados.errors %}
+                    <div class="col-md-6">
+                        <div class="input-group-float">
+                            {{ form.especialidad }}
+                            <label for="{{ form.especialidad.id_for_label }}">Especialidad</label>
+                            {% if form.especialidad.errors %}
                                 <div class="error-message">
                                     <ul>
-                                        {% for error in form.dias_solicitados.errors %}
-                                            <li>{{ error }}</li>
-                                        {% endfor %}
-                                    </ul>
-                                </div>
-                            {% endif %}
-                        </div>
-                    </div>
-                    
-                    <div class="col-md-4">
-                        <div class="input-group-float input-with-icon">
-                            {{ form.tarifa_por_dia }}
-                            <label for="{{ form.tarifa_por_dia.id_for_label }}">
-                                Tarifa por Día<span class="required-star">*</span>
-                            </label>
-                            <i class="fas fa-dollar-sign input-icon"></i>
-                            {% if form.tarifa_por_dia.errors %}
-                                <div class="error-message">
-                                    <ul>
-                                        {% for error in form.tarifa_por_dia.errors %}
+                                        {% for error in form.especialidad.errors %}
                                             <li>{{ error }}</li>
                                         {% endfor %}
                                     </ul>
@@ -608,22 +424,21 @@
                             {% endif %}
                             <div class="help-text">
                                 <i class="fas fa-info-circle"></i>
-                                Tarifa por día por torrero
+                                Ej: Soldadura, Electricidad, etc.
                             </div>
                         </div>
                     </div>
                     
                     <div class="col-md-6">
-                        <div class="input-group-float input-with-icon">
-                            {{ form.fecha_inicio }}
-                            <label for="{{ form.fecha_inicio.id_for_label }}">
-                                Fecha de Inicio<span class="required-star">*</span>
+                        <div class="input-group-float">
+                            {{ form.tarifa_diaria }}
+                            <label for="{{ form.tarifa_diaria.id_for_label }}">
+                                Tarifa Diaria ($)<span class="required-star">*</span>
                             </label>
-                            <i class="fas fa-calendar-check input-icon"></i>
-                            {% if form.fecha_inicio.errors %}
+                            {% if form.tarifa_diaria.errors %}
                                 <div class="error-message">
                                     <ul>
-                                        {% for error in form.fecha_inicio.errors %}
+                                        {% for error in form.tarifa_diaria.errors %}
                                             <li>{{ error }}</li>
                                         {% endfor %}
                                     </ul>
@@ -633,19 +448,22 @@
                     </div>
                     
                     <div class="col-md-6">
-                        <div class="input-group-float input-with-icon">
-                            {{ form.fecha_fin_estimada }}
-                            <label for="{{ form.fecha_fin_estimada.id_for_label }}">
-                                Fecha Fin Estimada<span class="required-star">*</span>
-                            </label>
-                            <i class="fas fa-calendar-times input-icon"></i>
-                            {% if form.fecha_fin_estimada.errors %}
+                        <div class="input-group-float">
+                            {{ form.foto }}
+                            <label for="{{ form.foto.id_for_label }}">Foto</label>
+                            {% if form.foto.errors %}
                                 <div class="error-message">
                                     <ul>
-                                        {% for error in form.fecha_fin_estimada.errors %}
+                                        {% for error in form.foto.errors %}
                                             <li>{{ error }}</li>
                                         {% endfor %}
                                     </ul>
+                                </div>
+                            {% endif %}
+                            {% if torrero and torrero.foto %}
+                                <div class="help-text">
+                                    <i class="fas fa-image"></i>
+                                    Foto actual: <a href="{{ torrero.foto.url }}" target="_blank">Ver foto</a>
                                 </div>
                             {% endif %}
                         </div>
@@ -653,44 +471,63 @@
                 </div>
             </div>
             
-            <!-- Observaciones -->
+            <!-- Estado y Observaciones -->
             <div class="form-section">
                 <div class="section-header">
                     <div class="section-icon">
-                        <i class="fas fa-sticky-note"></i>
+                        <i class="fas fa-cog"></i>
                     </div>
-                    <h3 class="section-title">Observaciones</h3>
+                    <h3 class="section-title">Estado y Observaciones</h3>
                 </div>
                 
-                <div class="input-group-float">
-                    {{ form.observaciones }}
-                    <label for="{{ form.observaciones.id_for_label }}">Observaciones Adicionales</label>
-                    {% if form.observaciones.errors %}
-                        <div class="error-message">
-                            <ul>
-                                {% for error in form.observaciones.errors %}
-                                    <li>{{ error }}</li>
-                                {% endfor %}
-                            </ul>
+                <div class="row g-4">
+                    <div class="col-12">
+                        <div class="input-group-float">
+                            <div style="display: flex; align-items: center; gap: 0.75rem; padding: 1rem 1.25rem;">
+                                {{ form.activo }}
+                                <label for="{{ form.activo.id_for_label }}" style="position: static; transform: none; margin: 0; cursor: pointer;">
+                                    Torrero Activo
+                                </label>
+                            </div>
+                            {% if form.activo.errors %}
+                                <div class="error-message">
+                                    <ul>
+                                        {% for error in form.activo.errors %}
+                                            <li>{{ error }}</li>
+                                        {% endfor %}
+                                    </ul>
+                                </div>
+                            {% endif %}
                         </div>
-                    {% endif %}
-                    <div class="help-text">
-                        <i class="fas fa-info-circle"></i>
-                        Información adicional relevante (opcional)
+                    </div>
+                    
+                    <div class="col-12">
+                        <div class="input-group-float">
+                            {{ form.observaciones }}
+                            <label for="{{ form.observaciones.id_for_label }}">Observaciones</label>
+                            {% if form.observaciones.errors %}
+                                <div class="error-message">
+                                    <ul>
+                                        {% for error in form.observaciones.errors %}
+                                            <li>{{ error }}</li>
+                                        {% endfor %}
+                                    </ul>
+                                </div>
+                            {% endif %}
+                        </div>
                     </div>
                 </div>
             </div>
             
             <!-- Botones -->
             <div class="button-group">
-                <a href="{% if servicio %}{% url 'servicio_torrero_detail' servicio.id %}{% else %}{% url 'torreros_dashboard' %}{% endif %}" 
-                   class="btn-react btn-secondary-react">
+                <a href="{% url 'torreros_list' %}" class="btn-react btn-secondary-react">
                     <i class="fas fa-times"></i>
                     <span>Cancelar</span>
                 </a>
-                <button type="submit" class="btn-react btn-primary-react" id="submitBtn">
+                <button type="submit" class="btn-react btn-primary-react">
                     <i class="fas fa-save"></i>
-                    <span>Guardar Servicio</span>
+                    <span>Guardar Torrero</span>
                 </button>
             </div>
         </form>
@@ -700,92 +537,23 @@
 
 {% block extra_js %}
 <script>
-    // Form Enhancement - React Style
-    document.addEventListener('DOMContentLoaded', function() {
-        const form = document.getElementById('servicioForm');
-        const submitBtn = document.getElementById('submitBtn');
-        
-        // Auto-focus first input
-        const firstInput = form.querySelector('input, select, textarea');
-        if (firstInput) {
-            setTimeout(() => firstInput.focus(), 300);
-        }
-        
-        // Loading state on submit
-        form.addEventListener('submit', function(e) {
-            submitBtn.classList.add('btn-loading');
-            submitBtn.querySelector('span').textContent = 'Guardando...';
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('torreroForm');
+    const inputs = form.querySelectorAll('input, select, textarea');
+    
+    inputs.forEach(input => {
+        input.addEventListener('focus', function() {
+            this.style.borderColor = '#6366f1';
         });
         
-        // Real-time validation feedback
-        const inputs = form.querySelectorAll('input, select, textarea');
-        inputs.forEach(input => {
-            input.addEventListener('blur', function() {
-                if (this.value.trim() !== '') {
-                    this.style.borderColor = '#10b981';
-                }
-            });
-            
-            input.addEventListener('focus', function() {
-                this.style.borderColor = '#6366f1';
-            });
-        });
-        
-        // Calculate total amount in real-time
-        const cantidadInput = document.getElementById('{{ form.cantidad_torreros.id_for_label }}');
-        const diasInput = document.getElementById('{{ form.dias_solicitados.id_for_label }}');
-        const tarifaInput = document.getElementById('{{ form.tarifa_por_dia.id_for_label }}');
-        
-        function calcularMontoTotal() {
-            const cantidad = parseFloat(cantidadInput.value) || 0;
-            const dias = parseFloat(diasInput.value) || 0;
-            const tarifa = parseFloat(tarifaInput.value) || 0;
-            const total = cantidad * dias * tarifa;
-            
-            if (total > 0) {
-                // Show calculated total (you can add a display element)
-                console.log(`💰 Monto Total: Q${total.toFixed(2)}`);
+        input.addEventListener('blur', function() {
+            if (this.value.trim() !== '') {
+                this.style.borderColor = '#10b981';
+            } else {
+                this.style.borderColor = '#e5e7eb';
             }
-        }
-        
-        if (cantidadInput && diasInput && tarifaInput) {
-            [cantidadInput, diasInput, tarifaInput].forEach(input => {
-                input.addEventListener('input', calcularMontoTotal);
-            });
-        }
-        
-        // Date validation
-        const fechaInicio = document.getElementById('{{ form.fecha_inicio.id_for_label }}');
-        const fechaFin = document.getElementById('{{ form.fecha_fin_estimada.id_for_label }}');
-        
-        if (fechaInicio && fechaFin) {
-            fechaFin.addEventListener('change', function() {
-                if (new Date(fechaFin.value) < new Date(fechaInicio.value)) {
-                    fechaFin.style.borderColor = '#ef4444';
-                    alert('⚠️ La fecha de fin no puede ser anterior a la fecha de inicio');
-                } else {
-                    fechaFin.style.borderColor = '#10b981';
-                }
-            });
-        }
-        
-        // Smooth animations for form sections
-        const sections = document.querySelectorAll('.form-section');
-        const observer = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    entry.target.style.opacity = '1';
-                    entry.target.style.transform = 'translateY(0)';
-                }
-            });
-        }, { threshold: 0.1 });
-        
-        sections.forEach(section => {
-            section.style.opacity = '0';
-            section.style.transform = 'translateY(20px)';
-            section.style.transition = 'all 0.6s ease-out';
-            observer.observe(section);
         });
     });
+});
 </script>
 {% endblock %}
