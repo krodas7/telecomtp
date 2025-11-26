@@ -1371,6 +1371,16 @@ class ServicioTorreroForm(forms.ModelForm):
 
 class RegistroDiasTrabajarForm(forms.ModelForm):
     """Formulario para registrar días trabajados"""
+    # Campo para seleccionar múltiples torreros (no es parte del modelo, se maneja separadamente)
+    torreros = forms.ModelMultipleChoiceField(
+        queryset=Torrero.objects.filter(activo=True),
+        required=True,
+        widget=forms.CheckboxSelectMultiple(attrs={
+            'class': 'form-check-input'
+        }),
+        help_text="Selecciona los torreros que trabajaron en estos días"
+    )
+    
     class Meta:
         model = RegistroDiasTrabajados
         fields = [
@@ -1384,13 +1394,15 @@ class RegistroDiasTrabajarForm(forms.ModelForm):
             }),
             'dias_trabajados': forms.NumberInput(attrs={
                 'class': 'form-control',
-                'min': '1',
+                'min': '0.5',
+                'step': '0.5',
                 'value': '1'
             }),
             'torreros_presentes': forms.NumberInput(attrs={
                 'class': 'form-control',
                 'min': '1',
-                'value': '1'
+                'value': '1',
+                'readonly': 'readonly'
             }),
             'descripcion': forms.Textarea(attrs={
                 'class': 'form-control',
@@ -1403,6 +1415,25 @@ class RegistroDiasTrabajarForm(forms.ModelForm):
                 'placeholder': 'Observaciones adicionales (opcional)'
             })
         }
+    
+    def __init__(self, *args, **kwargs):
+        servicio = kwargs.pop('servicio', None)
+        super().__init__(*args, **kwargs)
+        
+        # Filtrar torreros activos
+        self.fields['torreros'].queryset = Torrero.objects.filter(activo=True).order_by('nombre')
+        
+        # Si hay un servicio, establecer fecha por defecto
+        if servicio and not self.instance.pk:
+            self.fields['fecha_registro'].initial = timezone.now().date()
+        
+        # Para edición, obtener torreros ya asignados al servicio
+        if servicio and self.instance.pk:
+            asignaciones = AsignacionTorrero.objects.filter(
+                servicio=servicio,
+                activo=True
+            ).select_related('torrero')
+            self.fields['torreros'].initial = [a.torrero.id for a in asignaciones]
 
 
 class PagoServicioTorreroForm(forms.ModelForm):

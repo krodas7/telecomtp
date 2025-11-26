@@ -391,41 +391,7 @@
                         </div>
                     </div>
                     
-                    <!-- Torreros -->
-                    <div class="form-section">
-                        <h3 class="section-title">
-                            <i class="fas fa-users"></i>
-                            Selección de Torreros
-                        </h3>
-                        
-                        <div class="torreros-selector">
-                            <div class="torreros-header">
-                                <h4>Torreros Asignados</h4>
-                                <button type="button" class="btn-add-torrero" onclick="abrirModalTorrero()">
-                                    <i class="fas fa-plus me-1"></i> Nuevo
-                                </button>
-                            </div>
-                            
-                            <div class="input-modern">
-                                <label>Seleccionar del Catálogo</label>
-                                <select id="selectorTorreros" style="width: 100%; padding: 0.75rem; border: 1px solid #d1d5db; border-radius: 8px;">
-                                    <option value="">-- Selecciona un torrero --</option>
-                                    {% for torrero in torreros_disponibles %}
-                                        <option value="{{ torrero.id }}" data-nombre="{{ torrero.nombre }}" data-tarifa="{{ torrero.tarifa_diaria }}">
-                                            {{ torrero.nombre }} - ${{ torrero.tarifa_diaria }}/día
-                                        </option>
-                                    {% endfor %}
-                                </select>
-                            </div>
-                            
-                            <div id="torrerrosSeleccionados" class="torreros-grid">
-                                <!-- Torreros seleccionados -->
-                            </div>
-                        </div>
-                        
-                        <input type="hidden" name="torreros_ids" id="torrerrosIdsInput">
-                        <input type="hidden" name="cantidad_torreros" id="cantidadTorrerrosInput" value="0">
-                    </div>
+                    <!-- Nota: Los torreros se asignarán al registrar días trabajados -->
                     
                     <!-- Periodo y Fechas -->
                     <div class="form-section">
@@ -499,8 +465,8 @@
                         <h4 class="summary-title">Resumen del Servicio</h4>
                         
                         <div class="summary-item">
-                            <span class="summary-label">Torreros:</span>
-                            <span class="summary-value" id="summaryTorreros">0</span>
+                            <span class="summary-label">Cantidad Torreros:</span>
+                            <span class="summary-value" id="summaryCantidadTorreros">0</span>
                         </div>
                         
                         <div class="summary-item">

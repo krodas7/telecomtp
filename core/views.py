@@ -10081,18 +10081,8 @@ def servicio_torrero_create(request):
                 
                 servicio.save()
                 
-                # Asignar torreros seleccionados
-                torreros_ids = request.POST.get('torreros_ids', '')
-                if torreros_ids:
-                    for torrero_id in torreros_ids.split(','):
-                        if torrero_id.strip():
-                            torrero = Torrero.objects.get(id=int(torrero_id))
-                            AsignacionTorrero.objects.create(
-                                servicio=servicio,
-                                torrero=torrero,
-                                tarifa_acordada=torrero.tarifa_diaria,
-                                asignado_por=request.user
-                            )
+                # Los torreros se asignarán cuando se registren días trabajados
+                # (no se asignan en la creación del servicio)
                 
                 # Log de actividad
                 LogActividad.objects.create(
@@ -10113,13 +10103,9 @@ def servicio_torrero_create(request):
     else:
         form = ServicioTorreroForm()
     
-    # Obtener torreros disponibles
-    torreros_disponibles = Torrero.objects.filter(activo=True).order_by('nombre')
-    
     context = {
         'form': form,
-        'titulo': 'Nuevo Servicio de Torrero',
-        'torreros_disponibles': torreros_disponibles
+        'titulo': 'Nuevo Servicio de Torrero'
     }
     
     return render(request, 'core/torreros/servicio_form.html', context)
@@ -10243,24 +10229,39 @@ def registro_dias_create(request, servicio_id):
     servicio = get_object_or_404(ServicioTorrero, pk=servicio_id)
     
     if request.method == 'POST':
-        form = RegistroDiasTrabajarForm(request.POST)
+        form = RegistroDiasTrabajarForm(request.POST, servicio=servicio)
         if form.is_valid():
             try:
                 registro = form.save(commit=False)
                 registro.servicio = servicio
                 registro.registrado_por = request.user
+                
+                # Actualizar torreros_presentes basado en los torreros seleccionados
+                torreros_seleccionados = form.cleaned_data.get('torreros', [])
+                registro.torreros_presentes = len(torreros_seleccionados)
                 registro.save()
+                
+                # Asignar torreros seleccionados al servicio (si no están ya asignados)
+                for torrero in torreros_seleccionados:
+                    AsignacionTorrero.objects.get_or_create(
+                        servicio=servicio,
+                        torrero=torrero,
+                        defaults={
+                            'tarifa_acordada': torrero.tarifa_diaria,
+                            'asignado_por': request.user,
+                            'activo': True
+                        }
+                    )
                 
                 # Log de actividad
                 LogActividad.objects.create(
                     usuario=request.user,
                     accion='crear',
-                    modelo='RegistroDiasTrabajados',
-                    objeto_id=registro.id,
-                    descripcion=f'Registró {registro.dias_trabajados} día(s) para {servicio.cliente.razon_social}'
+                    modulo='Servicios Torreros',
+                    descripcion=f'Registró {registro.dias_trabajados} día(s) con {len(torreros_seleccionados)} torrero(s) para {servicio.cliente.razon_social}'
                 )
                 
-                messages.success(request, '✅ Días trabajados registrados exitosamente')
+                messages.success(request, f'✅ {registro.dias_trabajados} día(s) registrado(s) con {len(torreros_seleccionados)} torrero(s) exitosamente')
                 return redirect('servicio_torrero_detail', pk=servicio.id)
                 
             except Exception as e:
@@ -10268,8 +10269,16 @@ def registro_dias_create(request, servicio_id):
                 messages.error(request, f'❌ Error al registrar días: {str(e)}')
         else:
             messages.error(request, '❌ Por favor corrige los errores del formulario')
+    else:
+        form = RegistroDiasTrabajarForm(servicio=servicio)
     
-    return redirect('servicio_torrero_detail', pk=servicio.id)
+    context = {
+        'form': form,
+        'servicio': servicio,
+        'titulo': f'Registrar Días Trabajados - {servicio.cliente.razon_social}'
+    }
+    
+    return render(request, 'core/torreros/registro_dias_form.html', context)
 
 
 @login_required

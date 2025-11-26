@@ -1,0 +1,250 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ titulo }} - Sistema ARCA{% endblock %}
+
+{% block extra_css %}
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+    
+    * {
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+    
+    body {
+        background: #fafafa;
+    }
+    
+    .hero-minimal {
+        background: #000;
+        color: white;
+        padding: 2rem 0;
+        margin: -2rem -2rem 2rem -2rem;
+    }
+    
+    .form-wrapper {
+        max-width: 800px;
+        margin: 0 auto;
+    }
+    
+    .form-card {
+        background: white;
+        border-radius: 16px;
+        padding: 2.5rem;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+    
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+    
+    .form-group label {
+        display: block;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        color: #1f2937;
+    }
+    
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+        width: 100%;
+        padding: 0.75rem;
+        border: 1px solid #d1d5db;
+        border-radius: 8px;
+        font-size: 1rem;
+    }
+    
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
+        outline: none;
+        border-color: #6366f1;
+        box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+    }
+    
+    .torreros-selection {
+        background: #f9fafb;
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-top: 1rem;
+    }
+    
+    .torreros-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 1rem;
+        margin-top: 1rem;
+    }
+    
+    .torrero-checkbox {
+        background: white;
+        border: 2px solid #e5e7eb;
+        border-radius: 8px;
+        padding: 1rem;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    
+    .torrero-checkbox:hover {
+        border-color: #6366f1;
+        background: #f0f4ff;
+    }
+    
+    .torrero-checkbox input[type="checkbox"] {
+        width: auto;
+        margin-right: 0.5rem;
+    }
+    
+    .torrero-checkbox label {
+        cursor: pointer;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        margin: 0;
+    }
+    
+    .btn-primary {
+        background: #000;
+        color: white;
+        border: none;
+        padding: 0.875rem 2rem;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    
+    .btn-primary:hover {
+        background: #1f2937;
+    }
+    
+    .btn-secondary {
+        background: white;
+        color: #6b7280;
+        border: 1px solid #d1d5db;
+        padding: 0.875rem 2rem;
+        border-radius: 8px;
+        font-weight: 600;
+        text-decoration: none;
+        display: inline-block;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="hero-minimal">
+    <div class="container">
+        <h1>{{ titulo }}</h1>
+        <p>Registra los días trabajados y selecciona los torreros que participaron</p>
+    </div>
+</div>
+
+<div class="container mt-4">
+    <div class="form-wrapper">
+        <div class="form-card">
+            <form method="post">
+                {% csrf_token %}
+                
+                <div class="form-group">
+                    <label for="{{ form.fecha_registro.id_for_label }}">Fecha de Registro *</label>
+                    {{ form.fecha_registro }}
+                    {% if form.fecha_registro.errors %}
+                        <div style="color: #dc2626; margin-top: 0.5rem; font-size: 0.875rem;">
+                            {{ form.fecha_registro.errors }}
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <div class="form-group">
+                    <label for="{{ form.dias_trabajados.id_for_label }}">Días Trabajados *</label>
+                    {{ form.dias_trabajados }}
+                    <small style="color: #6b7280;">Puede ser 0.5, 1, 1.5, etc.</small>
+                    {% if form.dias_trabajados.errors %}
+                        <div style="color: #dc2626; margin-top: 0.5rem; font-size: 0.875rem;">
+                            {{ form.dias_trabajados.errors }}
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <div class="torreros-selection">
+                    <label style="font-weight: 700; margin-bottom: 1rem; display: block;">
+                        Seleccionar Torreros que Trabajaron *
+                    </label>
+                    <div class="torreros-grid">
+                        {% for torrero in form.torreros %}
+                            <div class="torrero-checkbox">
+                                {{ torrero.tag }}
+                                <label for="{{ torrero.id_for_label }}">
+                                    {{ torrero.choice_label }}
+                                </label>
+                            </div>
+                        {% endfor %}
+                    </div>
+                    {% if form.torreros.errors %}
+                        <div style="color: #dc2626; margin-top: 1rem; font-size: 0.875rem;">
+                            {{ form.torreros.errors }}
+                        </div>
+                    {% endif %}
+                    <div style="color: #6b7280; margin-top: 1rem; font-size: 0.875rem;">
+                        <i class="fas fa-info-circle"></i>
+                        Los torreros seleccionados serán asignados automáticamente al servicio
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="{{ form.torreros_presentes.id_for_label }}">Cantidad de Torreros Presentes</label>
+                    {{ form.torreros_presentes }}
+                    <small style="color: #6b7280;">Se actualiza automáticamente según los torreros seleccionados</small>
+                </div>
+                
+                <div class="form-group">
+                    <label for="{{ form.descripcion.id_for_label }}">Descripción del Trabajo</label>
+                    {{ form.descripcion }}
+                    {% if form.descripcion.errors %}
+                        <div style="color: #dc2626; margin-top: 0.5rem; font-size: 0.875rem;">
+                            {{ form.descripcion.errors }}
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <div class="form-group">
+                    <label for="{{ form.observaciones.id_for_label }}">Observaciones</label>
+                    {{ form.observaciones }}
+                </div>
+                
+                <div style="display: flex; gap: 1rem; justify-content: flex-end; margin-top: 2rem; padding-top: 2rem; border-top: 1px solid #e5e7eb;">
+                    <a href="{% url 'servicio_torrero_detail' servicio.id %}" class="btn-secondary">Cancelar</a>
+                    <button type="submit" class="btn-primary">Guardar Registro</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Actualizar automáticamente torreros_presentes cuando cambian los checkboxes
+    const checkboxes = document.querySelectorAll('.torrero-checkbox input[type="checkbox"]');
+    const torrerosPresentesInput = document.getElementById('{{ form.torreros_presentes.id_for_label }}');
+    
+    checkboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            const checked = document.querySelectorAll('.torrero-checkbox input[type="checkbox"]:checked').length;
+            if (torrerosPresentesInput) {
+                torrerosPresentesInput.value = checked || 1;
+            }
+        });
+    });
+    
+    // Inicializar el valor si hay checkboxes ya seleccionados
+    const initialChecked = document.querySelectorAll('.torrero-checkbox input[type="checkbox"]:checked').length;
+    if (torrerosPresentesInput && initialChecked > 0) {
+        torrerosPresentesInput.value = initialChecked;
+    }
+});
+</script>
+{% endblock %}
+
