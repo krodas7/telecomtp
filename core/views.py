@@ -10867,6 +10867,7 @@ def servicio_torrero_pdf(request, pk):
     header_text = f"""
     <para align="center" spaceAfter="12">
         <font size="26" name="Helvetica-Bold" color="#0f172a">REPORTE DE SERVICIO</font><br/>
+        <br/>
         <font size="26" name="Helvetica-Bold" color="#6366f1">TORREROS</font>
     </para>
     """
