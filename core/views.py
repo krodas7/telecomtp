@@ -10002,6 +10002,9 @@ def torreros_dashboard(request):
             'servicio__cliente', 'registrado_por'
         ).order_by('-fecha_pago')[:10]
         
+        # Torreros activos para el modal
+        torreros_activos = Torrero.objects.filter(activo=True).order_by('nombre')
+        
         context = {
             'servicios_activos': servicios_activos[:10],
             'total_servicios_activos': total_servicios_activos,
@@ -10013,6 +10016,7 @@ def torreros_dashboard(request):
             'servicios_pago_pendiente': servicios_pago_pendiente,
             'ultimos_registros': ultimos_registros,
             'ultimos_pagos': ultimos_pagos,
+            'torreros_activos': torreros_activos,
         }
         
         return render(request, 'core/torreros/dashboard.html', context)
@@ -10308,36 +10312,68 @@ def registro_dias_quick(request, servicio_id):
             
             servicio = get_object_or_404(ServicioTorrero, pk=servicio_id)
             
+            # Obtener torreros seleccionados
+            torreros_ids = data.get('torreros', [])
+            if not torreros_ids:
+                return JsonResponse({
+                    'success': False,
+                    'message': 'Debes seleccionar al menos un torrero'
+                }, status=400)
+            
+            torreros_seleccionados = Torrero.objects.filter(
+                id__in=torreros_ids,
+                activo=True
+            )
+            
+            if not torreros_seleccionados.exists():
+                return JsonResponse({
+                    'success': False,
+                    'message': 'No se encontraron torreros válidos'
+                }, status=400)
+            
             # Crear registro
             from decimal import Decimal
             registro = RegistroDiasTrabajados.objects.create(
                 servicio=servicio,
                 fecha_registro=data.get('fecha_registro'),
                 dias_trabajados=Decimal(str(data.get('dias_trabajados', 1))),
-                torreros_presentes=servicio.cantidad_torreros,  # Cantidad de torreros del servicio
+                torreros_presentes=len(torreros_seleccionados),
                 observaciones=data.get('observaciones', ''),
                 registrado_por=request.user,
                 aprobado=True,  # Auto-aprobar registros rápidos
                 aprobado_por=request.user
             )
-            # Nota: El método save() del modelo RegistroDiasTrabajados ya actualiza 
-            # automáticamente servicio.dias_trabajados, no es necesario hacerlo aquí
+            
+            # Asignar torreros seleccionados al servicio (si no están ya asignados)
+            for torrero in torreros_seleccionados:
+                AsignacionTorrero.objects.get_or_create(
+                    servicio=servicio,
+                    torrero=torrero,
+                    defaults={
+                        'tarifa_acordada': torrero.tarifa_diaria,
+                        'asignado_por': request.user,
+                        'activo': True
+                    }
+                )
             
             # Log de actividad
+            torreros_nombres = ', '.join([t.nombre for t in torreros_seleccionados])
             LogActividad.objects.create(
                 usuario=request.user,
                 accion='crear',
                 modulo='Servicios Torreros',
-                descripcion=f'Registró {registro.dias_trabajados} día(s) para {servicio.cliente.razon_social}'
+                descripcion=f'Registró {registro.dias_trabajados} día(s) con {len(torreros_seleccionados)} torrero(s) ({torreros_nombres}) para {servicio.cliente.razon_social}'
             )
             
             return JsonResponse({
                 'success': True,
-                'message': f'✅ {registro.dias_trabajados} día(s) registrado(s) exitosamente'
+                'message': f'✅ {registro.dias_trabajados} día(s) registrado(s) con {len(torreros_seleccionados)} torrero(s) exitosamente'
             })
             
         except Exception as e:
             logger.error(f"Error en registro rápido: {str(e)}")
+            import traceback
+            logger.error(traceback.format_exc())
             return JsonResponse({
                 'success': False,
                 'message': f'Error: {str(e)}'

@@ -1202,6 +1202,47 @@
     // MODAL REGISTRO RÁPIDO DE DÍA
     // ============================================
     function abrirModalRegistroDia(servicioId, clienteNombre) {
+        // Obtener lista de torreros activos
+        const torreros = [
+            {% for torrero in torreros_activos %}
+            {id: {{ torrero.id }}, nombre: '{{ torrero.nombre|escapejs }}', tarifa: {{ torrero.tarifa_diaria }}},
+            {% endfor %}
+        ];
+        
+        // Generar HTML para checkboxes de torreros
+        let torrerosHTML = '';
+        if (torreros.length > 0) {
+            torrerosHTML = `
+                <div style="margin-top: 1.5rem; text-align: left;">
+                    <label style="display: block; font-size: 0.875rem; font-weight: 600; color: #374151; margin-bottom: 0.75rem;">
+                        <i class="fas fa-hard-hat" style="color: #6366f1;"></i> Torreros que trabajaron <span style="color: #ef4444;">*</span>
+                    </label>
+                    <div style="max-height: 200px; overflow-y: auto; border: 1px solid #e5e7eb; border-radius: 8px; padding: 0.75rem;">
+                        ${torreros.map(t => `
+                            <label style="display: flex; align-items: center; padding: 0.5rem; cursor: pointer; border-radius: 4px; transition: background 0.2s;" 
+                                   onmouseover="this.style.background='#f3f4f6'" 
+                                   onmouseout="this.style.background='transparent'">
+                                <input type="checkbox" name="torreros" value="${t.id}" 
+                                       style="margin-right: 0.75rem; width: 18px; height: 18px; cursor: pointer; accent-color: #6366f1;">
+                                <span style="flex: 1; font-size: 0.875rem; color: #374151;">
+                                    ${t.nombre} <span style="color: #9ca3af;">($${t.tarifa}/día)</span>
+                                </span>
+                            </label>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        } else {
+            torrerosHTML = `
+                <div style="margin-top: 1.5rem; padding: 1rem; background: #fef3c7; border-radius: 8px; text-align: center;">
+                    <i class="fas fa-exclamation-triangle" style="color: #f59e0b;"></i>
+                    <p style="margin: 0.5rem 0 0 0; font-size: 0.8125rem; color: #92400e;">
+                        No hay torreros activos. Debes registrar torreros primero.
+                    </p>
+                </div>
+            `;
+        }
+        
         Swal.fire({
             title: '<strong>Registrar Día Trabajado</strong>',
             html: `
@@ -1221,6 +1262,7 @@
                     <p style="color: #9ca3af; font-size: 0.8125rem; margin-top: 0.5rem;">
                         <i class="fas fa-info-circle"></i> Puedes usar medios días (0.5, 1.5, etc.)
                     </p>
+                    ${torrerosHTML}
                 </div>
             `,
             showCancelButton: true,
@@ -1228,7 +1270,7 @@
             cancelButtonText: '<i class="fas fa-times"></i> Cancelar',
             confirmButtonColor: '#10b981',
             cancelButtonColor: '#6b7280',
-            width: '400px',
+            width: '500px',
             customClass: {
                 confirmButton: 'btn-swal-confirm',
                 cancelButton: 'btn-swal-cancel'
@@ -1241,9 +1283,19 @@
                     return false;
                 }
                 
+                // Obtener torreros seleccionados
+                const checkboxes = document.querySelectorAll('input[name="torreros"]:checked');
+                const torrerosSeleccionados = Array.from(checkboxes).map(cb => parseInt(cb.value));
+                
+                if (torrerosSeleccionados.length === 0) {
+                    Swal.showValidationMessage('Debes seleccionar al menos un torrero');
+                    return false;
+                }
+                
                 return { 
                     fecha: new Date().toISOString().split('T')[0], 
                     dias, 
+                    torreros: torrerosSeleccionados,
                     observaciones: '' 
                 };
             }
@@ -1275,6 +1327,7 @@
             body: JSON.stringify({
                 fecha_registro: datos.fecha,
                 dias_trabajados: datos.dias,
+                torreros: datos.torreros || [],
                 observaciones: datos.observaciones
             })
         })
