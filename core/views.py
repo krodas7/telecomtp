@@ -11069,16 +11069,10 @@ def servicio_torrero_pdf(request, pk):
         leading=12
     )
     
-    footer_text = f"""
-    <para align="center" spaceAfter="4">
-        <font size="9" color="#64748b">
-            <b>Sistema ARCA</b> - Technology Panama INC.<br/>
-            Documento generado automáticamente por: <b>{request.user.get_full_name() or request.user.username}</b><br/>
-            <font size="8">Fecha de generación: {fecha_actual.strftime('%d/%m/%Y a las %I:%M:%S %p')}</font>
-        </font>
-    </para>
-    """
-    elements.append(Paragraph(footer_text, styles['Normal']))
+    footer_text = f"""Sistema ARCA - Technology Panama INC.<br/>
+Documento generado automáticamente por: {request.user.get_full_name() or request.user.username}<br/>
+Fecha de generación: {fecha_actual.strftime('%d/%m/%Y a las %I:%M:%S %p')}"""
+    elements.append(Paragraph(footer_text, footer_style))
     
     # Construir PDF
     doc.build(elements)
