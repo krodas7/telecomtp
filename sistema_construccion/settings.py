@@ -164,8 +164,12 @@ LOGIN_REDIRECT_URL = '/dashboard/'
 LOGOUT_REDIRECT_URL = '/login/'
 
 # Configuración de sesiones
-SESSION_COOKIE_AGE = 3600  # 1 hora
-SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+SESSION_COOKIE_AGE = 86400 * 7  # 7 días (en segundos)
+SESSION_EXPIRE_AT_BROWSER_CLOSE = False  # Mantener sesión activa después de cerrar navegador
+SESSION_SAVE_EVERY_REQUEST = True  # Refrescar sesión en cada request para evitar expiración durante uso
+SESSION_COOKIE_SECURE = False  # True en producción con HTTPS
+SESSION_COOKIE_HTTPONLY = True  # Protección XSS
+SESSION_COOKIE_SAMESITE = 'Lax'  # Protección CSRF
 
 # Configuración de Email para Notificaciones
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'

@@ -482,7 +482,7 @@
                                                data-trabajador-id="{{ trabajador.id }}"
                                                data-pago-diario="{{ trabajador.pago_diario }}"
                                                min="0"
-                                   step="1">
+                                   step="0.01">
                                     {% else %}
                                         <span class="text-muted">
                                 <i class="fas fa-lock"></i> {{ trabajador.total_dias_trabajados }}
@@ -601,11 +601,55 @@ document.addEventListener('DOMContentLoaded', function() {
     inputsDays.forEach(input => {
         let timeoutId;
         
+        // Calcular inmediatamente al cambiar el valor
         input.addEventListener('input', function() {
-            const trabajadorId = this.dataset.trabajadorId;
-            const pagoDiario = parseFloat(this.dataset.pagoDiario);
-            const diasTrabajados = parseInt(this.value) || 0;
+            const trabajadorId = this.dataset.trabajadorId || this.getAttribute('data-trabajador-id');
             
+            // Obtener pago diario - puede venir como dataset o como atributo
+            let pagoDiarioStr = this.dataset.pagoDiario || this.getAttribute('data-pago-diario') || '0';
+            // Limpiar formato si tiene separadores
+            pagoDiarioStr = pagoDiarioStr.toString().replace(',', '.');
+            const pagoDiario = parseFloat(pagoDiarioStr) || 0;
+            
+            const diasTrabajados = parseFloat(this.value) || 0;
+            
+            // Calcular y actualizar total bruto inmediatamente
+            const totalBruto = diasTrabajados * pagoDiario;
+            const totalBrutoCell = document.getElementById(`total-bruto-${trabajadorId}`);
+            if (totalBrutoCell) {
+                totalBrutoCell.textContent = `$${totalBruto.toFixed(2)}`;
+            }
+            
+            // Obtener anticipos
+            const anticiposCell = document.getElementById(`anticipos-${trabajadorId}`);
+            let anticiposValue = 0;
+            if (anticiposCell) {
+                const anticiposTexto = anticiposCell.textContent.trim();
+                const anticiposMatch = anticiposTexto.match(/\$?\s*([\d,.]+)/);
+                if (anticiposMatch) {
+                    const anticiposStr = anticiposMatch[1].replace(',', '.');
+                    anticiposValue = parseFloat(anticiposStr) || 0;
+                }
+            }
+            
+            // Calcular total a pagar
+            const totalNeto = totalBruto - anticiposValue;
+            const totalPagarCell = document.getElementById(`total-pagar-${trabajadorId}`);
+            if (totalPagarCell) {
+                totalPagarCell.textContent = `$${totalNeto.toFixed(2)}`;
+                if (totalNeto >= 0) {
+                    totalPagarCell.classList.remove('text-danger');
+                    totalPagarCell.classList.add('text-success');
+                } else {
+                    totalPagarCell.classList.remove('text-success');
+                    totalPagarCell.classList.add('text-danger');
+                }
+            }
+            
+            // Actualizar totales generales inmediatamente
+            actualizarTotalesGenerales();
+            
+            // Enviar al servidor después de 1 segundo sin cambios
             clearTimeout(timeoutId);
             timeoutId = setTimeout(() => {
                 actualizarDiasTrabajados(trabajadorId, diasTrabajados, pagoDiario);
@@ -632,28 +676,36 @@ function actualizarDiasTrabajados(trabajadorId, diasTrabajados, pagoDiario) {
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-            // Actualizar totales de la fila
-            const row = document.querySelector(`tr[data-trabajador-id="${trabajadorId}"]`);
+            // Actualizar totales de la fila con datos del servidor
             const totalBrutoCell = document.getElementById(`total-bruto-${trabajadorId}`);
             const totalPagarCell = document.getElementById(`total-pagar-${trabajadorId}`);
             
             // Obtener anticipos del trabajador
             const anticiposCell = document.getElementById(`anticipos-${trabajadorId}`);
-            const anticiposTexto = anticiposCell.textContent.trim();
-            const anticiposValue = parseFloat(anticiposTexto.replace('$', '').replace(',', '')) || 0;
+            let anticiposValue = 0;
+            if (anticiposCell) {
+                const anticiposTexto = anticiposCell.textContent.trim();
+                const anticiposMatch = anticiposTexto.match(/\$?\s*([\d,.]+)/);
+                if (anticiposMatch) {
+                    const anticiposStr = anticiposMatch[1].replace(',', '.');
+                    anticiposValue = parseFloat(anticiposStr) || 0;
+                }
+            }
             
-            // Calcular nuevos totales
-            const totalBruto = data.total_bruto || (diasTrabajados * pagoDiario);
+            // Calcular nuevos totales usando datos del servidor o cálculo local
+            const totalBruto = data.total_bruto !== undefined ? parseFloat(data.total_bruto) : (diasTrabajados * pagoDiario);
             const totalNeto = totalBruto - anticiposValue;
             
-            if (totalBrutoCell) totalBrutoCell.textContent = `$${totalBruto.toFixed(2)}`;
+            if (totalBrutoCell) {
+                totalBrutoCell.textContent = `$${totalBruto.toFixed(2)}`;
+            }
             if (totalPagarCell) {
                 totalPagarCell.textContent = `$${totalNeto.toFixed(2)}`;
                 // Cambiar color según si es positivo o negativo
                 if (totalNeto >= 0) {
                     totalPagarCell.classList.remove('text-danger');
                     totalPagarCell.classList.add('text-success');
-            } else {
+                } else {
                     totalPagarCell.classList.remove('text-success');
                     totalPagarCell.classList.add('text-danger');
                 }
@@ -663,10 +715,14 @@ function actualizarDiasTrabajados(trabajadorId, diasTrabajados, pagoDiario) {
             actualizarTotalesGenerales();
         } else {
             console.error('Error al actualizar días:', data.error);
+            // Mantener cálculo local aunque falle el servidor
+            actualizarTotalesGenerales();
             }
         })
         .catch(error => {
             console.error('Error en la petición:', error);
+            // Mantener cálculo local aunque falle el servidor
+            actualizarTotalesGenerales();
         });
     }
     
@@ -680,12 +736,28 @@ function actualizarTotalesGenerales() {
         const input = row.querySelector('.input-days');
         
         if (input) {
-            const dias = parseInt(input.value) || 0;
-            const pagoDiario = parseFloat(input.dataset.pagoDiario) || 0;
-            const anticiposCell = document.getElementById(`anticipos-${trabajadorId}`);
-            const anticiposTexto = anticiposCell ? anticiposCell.textContent.trim() : 'Q0.00';
-            const anticipos = parseFloat(anticiposTexto.replace('$', '').replace(',', '')) || 0;
+            const dias = parseFloat(input.value) || 0;
             
+            // Obtener pago diario - puede venir como dataset o como atributo
+            let pagoDiarioStr = input.dataset.pagoDiario || input.getAttribute('data-pago-diario') || '0';
+            // Limpiar formato si tiene separadores
+            pagoDiarioStr = pagoDiarioStr.toString().replace(',', '.');
+            const pagoDiario = parseFloat(pagoDiarioStr) || 0;
+            
+            // Obtener anticipos del texto de la celda
+            const anticiposCell = document.getElementById(`anticipos-${trabajadorId}`);
+            let anticipos = 0;
+            if (anticiposCell) {
+                const anticiposTexto = anticiposCell.textContent.trim();
+                // Extraer solo el número, manejar formato $X,XX o $X.XX
+                const anticiposMatch = anticiposTexto.match(/\$?\s*([\d,.]+)/);
+                if (anticiposMatch) {
+                    const anticiposStr = anticiposMatch[1].replace(',', '.');
+                    anticipos = parseFloat(anticiposStr) || 0;
+                }
+            }
+            
+            // Calcular bruto directamente desde el input
             const bruto = dias * pagoDiario;
             totalBruto += bruto;
             totalAnticipos += anticipos;
@@ -694,10 +766,14 @@ function actualizarTotalesGenerales() {
     });
     
     // Actualizar displays
-    document.getElementById('total-bruto-display').textContent = `$${totalBruto.toFixed(2)}`;
-    document.getElementById('total-anticipos-display').textContent = `$${totalAnticipos.toFixed(2)}`;
-    document.getElementById('total-neto-display').textContent = `$${totalNeto.toFixed(2)}`;
+    const totalBrutoDisplay = document.getElementById('total-bruto-display');
+    const totalAnticiposDisplay = document.getElementById('total-anticipos-display');
+    const totalNetoDisplay = document.getElementById('total-neto-display');
     const totalTabla = document.getElementById('total-general-tabla');
+    
+    if (totalBrutoDisplay) totalBrutoDisplay.textContent = `$${totalBruto.toFixed(2)}`;
+    if (totalAnticiposDisplay) totalAnticiposDisplay.textContent = `$${totalAnticipos.toFixed(2)}`;
+    if (totalNetoDisplay) totalNetoDisplay.textContent = `$${totalNeto.toFixed(2)}`;
     if (totalTabla) totalTabla.textContent = `$${totalNeto.toFixed(2)}`;
 }
 
