@@ -6664,21 +6664,28 @@ def editar_anticipo(request, anticipo_id):
 
 @login_required
 def eliminar_anticipo(request, anticipo_id):
-    """Eliminar un anticipo"""
-    anticipo = get_object_or_404(Anticipo, id=anticipo_id)
-    proyecto_id = anticipo.proyecto.id
-    
-    if request.method == 'POST':
-        numero_anticipo = anticipo.numero_anticipo
-        anticipo.delete()
-        messages.success(request, f'Anticipo {numero_anticipo} eliminado exitosamente')
-        return redirect('anticipos_list')
-    
-    context = {
-        'anticipo': anticipo,
-    }
-    
-    return render(request, 'core/anticipos/delete.html', context)
+    """Eliminar un anticipo - Maneja tanto Anticipo como AnticipoProyecto"""
+    # Primero intentar buscar como AnticipoProyecto (para planillas de proyectos)
+    try:
+        anticipo_proyecto = AnticipoProyecto.objects.get(id=anticipo_id)
+        # Si existe, redirigir a la vista específica para anticipos de proyecto
+        return eliminar_anticipo_proyecto(request, anticipo_id)
+    except AnticipoProyecto.DoesNotExist:
+        # Si no es AnticipoProyecto, buscar como Anticipo (anticipos regulares)
+        anticipo = get_object_or_404(Anticipo, id=anticipo_id)
+        proyecto_id = anticipo.proyecto.id
+        
+        if request.method == 'POST':
+            numero_anticipo = anticipo.numero_anticipo
+            anticipo.delete()
+            messages.success(request, f'Anticipo {numero_anticipo} eliminado exitosamente')
+            return redirect('anticipos_list')
+        
+        context = {
+            'anticipo': anticipo,
+        }
+        
+        return render(request, 'core/anticipos/delete.html', context)
 
 
 @login_required
