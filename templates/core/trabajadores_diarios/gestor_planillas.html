@@ -307,7 +307,7 @@
                 <i class="fas fa-file-invoice-dollar"></i>
                 Lista de Planillas
             </h3>
-            <button type="button" class="btn-modern btn-modern-primary" data-bs-toggle="modal" data-bs-target="#crearPlanillaModal">
+            <button type="button" class="btn-modern btn-modern-primary" onclick="abrirModalCrearPlanilla()">
                 <i class="fas fa-plus"></i>
                 <span>Crear Planilla</span>
             </button>
@@ -394,47 +394,49 @@
     </div>
 </div>
 
-<!-- Modal para Crear Planilla -->
-<div class="modal fade" id="crearPlanillaModal" tabindex="-1" aria-labelledby="crearPlanillaModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="crearPlanillaModalLabel">
-                    <i class="fas fa-plus-circle text-primary me-2"></i>Crear Nueva Planilla
-                </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+<!-- Modal Personalizado para Crear Planilla -->
+<div id="modalCrearPlanillaOverlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 9999; backdrop-filter: blur(5px);">
+    <div style="display: flex; align-items: center; justify-content: center; height: 100%; padding: 1rem;">
+        <div id="modalCrearPlanillaContent" style="background: white; border-radius: 20px; max-width: 600px; width: 100%; box-shadow: 0 20px 60px rgba(0,0,0,0.3); animation: slideIn 0.3s ease-out; max-height: 90vh; overflow-y: auto;">
+            <div style="background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); color: white; padding: 1.5rem 2rem; border-radius: 20px 20px 0 0; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 1;">
+                <h5 style="margin: 0; font-weight: 700;"><i class="fas fa-plus-circle me-2"></i>Crear Nueva Planilla</h5>
+                <button type="button" onclick="cerrarModalCrearPlanilla()" style="background: rgba(255,255,255,0.2); border: none; color: white; width: 32px; height: 32px; border-radius: 50%; cursor: pointer; font-size: 1.25rem; display: flex; align-items: center; justify-content: center;">
+                    ×
+                </button>
             </div>
-            <div class="modal-body">
-                <p class="mb-3">Selecciona un proyecto para crear una nueva planilla de trabajadores diarios:</p>
-                <div class="list-group">
+            <div style="padding: 2rem;">
+                <p style="margin-bottom: 1.5rem; color: #6b7280;">Selecciona un proyecto para crear una nueva planilla de trabajadores diarios:</p>
+                <div style="display: flex; flex-direction: column; gap: 0.75rem;">
                     {% for proyecto in todos_proyectos %}
                     <a href="{% url 'planilla_trabajadores_diarios_create' proyecto.id %}" 
-                       class="list-group-item list-group-item-action">
-                        <div class="d-flex w-100 justify-content-between align-items-center">
+                       style="display: block; padding: 1rem 1.5rem; background: #f9fafb; border: 2px solid #e5e7eb; border-radius: 12px; text-decoration: none; transition: all 0.2s; cursor: pointer;"
+                       onmouseover="this.style.background='#f3f4f6'; this.style.borderColor='#6366f1'; this.style.transform='translateX(4px)';"
+                       onmouseout="this.style.background='#f9fafb'; this.style.borderColor='#e5e7eb'; this.style.transform='translateX(0)';">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
                             <div>
-                                <h6 class="mb-1">
-                                    <i class="fas fa-building text-primary me-2"></i>{{ proyecto.nombre }}
+                                <h6 style="margin: 0 0 0.25rem 0; font-weight: 600; color: #1f2937; display: flex; align-items: center; gap: 0.5rem;">
+                                    <i class="fas fa-building" style="color: #6366f1;"></i>{{ proyecto.nombre }}
                                 </h6>
                                 {% if proyecto.activo %}
-                                <small class="text-success">
-                                    <i class="fas fa-check-circle me-1"></i>Activo
+                                <small style="color: #10b981; font-weight: 600; display: flex; align-items: center; gap: 0.25rem;">
+                                    <i class="fas fa-check-circle"></i>Activo
                                 </small>
                                 {% endif %}
                             </div>
-                            <i class="fas fa-chevron-right text-muted"></i>
+                            <i class="fas fa-chevron-right" style="color: #9ca3af;"></i>
                         </div>
                     </a>
                     {% empty %}
-                    <div class="list-group-item">
-                        <p class="text-muted mb-0">
-                            <i class="fas fa-info-circle me-2"></i>No hay proyectos activos disponibles
-                        </p>
+                    <div style="padding: 2rem; text-align: center; background: #fef3c7; border: 2px solid #fbbf24; border-radius: 12px;">
+                        <i class="fas fa-info-circle" style="font-size: 2rem; color: #f59e0b; margin-bottom: 1rem;"></i>
+                        <p style="margin: 0; color: #92400e; font-weight: 600;">No hay proyectos activos disponibles</p>
+                        <p style="margin: 0.5rem 0 0 0; color: #78350f; font-size: 0.875rem;">Activa un proyecto para poder crear planillas</p>
                     </div>
                     {% endfor %}
                 </div>
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+            <div style="padding: 1.5rem 2rem; display: flex; justify-content: flex-end; border-top: 1px solid #e5e7eb;">
+                <button type="button" onclick="cerrarModalCrearPlanilla()" style="background: #e5e7eb; color: #374151; border: none; border-radius: 12px; padding: 0.75rem 1.5rem; font-weight: 600; cursor: pointer;">
                     <i class="fas fa-times me-1"></i>Cancelar
                 </button>
             </div>
@@ -442,17 +444,20 @@
     </div>
 </div>
 
-<script>
-// Inicializar modal cuando se carga la página
-document.addEventListener('DOMContentLoaded', function() {
-    // Verificar que Bootstrap esté disponible
-    if (typeof bootstrap !== 'undefined') {
-        console.log('Bootstrap 5 disponible');
-    } else {
-        console.error('Bootstrap 5 no está disponible');
+<style>
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-30px);
     }
-});
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+</style>
 
+<script>
 function getCookie(name) {
     let cookieValue = null;
     if (document.cookie && document.cookie !== '') {
@@ -468,28 +473,41 @@ function getCookie(name) {
     return cookieValue;
 }
 
+// Funciones para el modal personalizado
 function abrirModalCrearPlanilla() {
-    // Fallback para abrir el modal si Bootstrap no funciona
-    const modal = document.getElementById('crearPlanillaModal');
-    if (modal) {
-        // Intentar usar Bootstrap 5
-        if (typeof bootstrap !== 'undefined') {
-            const bsModal = new bootstrap.Modal(modal);
-            bsModal.show();
-        } else {
-            // Fallback: mostrar modal manualmente
-            modal.style.display = 'block';
-            modal.classList.add('show');
-            document.body.classList.add('modal-open');
-            const backdrop = document.createElement('div');
-            backdrop.className = 'modal-backdrop fade show';
-            backdrop.id = 'modalBackdrop';
-            document.body.appendChild(backdrop);
-        }
-    } else {
-        console.error('Modal no encontrado');
+    const overlay = document.getElementById('modalCrearPlanillaOverlay');
+    if (overlay) {
+        overlay.style.display = 'block';
+        document.body.style.overflow = 'hidden';
     }
 }
+
+function cerrarModalCrearPlanilla() {
+    const overlay = document.getElementById('modalCrearPlanillaOverlay');
+    if (overlay) {
+        overlay.style.display = 'none';
+        document.body.style.overflow = 'auto';
+    }
+}
+
+// Cerrar con ESC
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        cerrarModalCrearPlanilla();
+    }
+});
+
+// Cerrar al hacer click fuera del modal
+document.addEventListener('DOMContentLoaded', function() {
+    const overlay = document.getElementById('modalCrearPlanillaOverlay');
+    if (overlay) {
+        overlay.addEventListener('click', function(e) {
+            if (e.target === this) {
+                cerrarModalCrearPlanilla();
+            }
+        });
+    }
+});
 
 function reabrirPlanilla(proyectoId, planillaId) {
     if (confirm('¿Estás seguro de que quieres reabrir esta planilla? Los trabajadores se reactivarán.')) {
