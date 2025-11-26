@@ -38,6 +38,7 @@ urlpatterns = [
     path('proyectos/<int:proyecto_id>/administrar-anticipos/', views.administrar_anticipos_proyecto, name='administrar_anticipos_proyecto'),
     path('anticipos/<int:anticipo_id>/editar/', views.editar_anticipo, name='editar_anticipo'),
     path('anticipos/<int:anticipo_id>/eliminar/', views.eliminar_anticipo, name='eliminar_anticipo'),
+    path('anticipos-proyecto/<int:anticipo_id>/eliminar/', views.eliminar_anticipo_proyecto, name='eliminar_anticipo_proyecto'),
     path('anticipos/<int:anticipo_id>/cambiar-estado/', views.cambiar_estado_anticipo, name='cambiar_estado_anticipo'),
     path('proyectos/<int:proyecto_id>/anticipo-masivo/', views.crear_anticipo_masivo, name='crear_anticipo_masivo'),
     path('proyectos/<int:proyecto_id>/anticipo-individual/', views.crear_anticipo_individual, name='crear_anticipo_individual'),
