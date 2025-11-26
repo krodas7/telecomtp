@@ -490,10 +490,16 @@
                                 </a>
                                 {% for anticipo in anticipos %}
                                     {% if anticipo.colaborador.id == colaborador.id and anticipo.estado == 'pendiente' %}
-                                        <form method="post" action="{% url 'liquidar_anticipo' anticipo.id %}" style="display: inline;">
+                                        <form method="post" action="{% url 'liquidar_anticipo' anticipo.id %}" style="display: inline;" onsubmit="return confirm('¿Estás seguro de liquidar este anticipo?');">
                                             {% csrf_token %}
                                             <button type="submit" class="btn btn-success btn-sm" style="font-size: 0.75rem; padding: 0.35rem 0.75rem;" title="Liquidar Anticipo">
                                                 <i class="fas fa-check"></i>
+                                            </button>
+                                        </form>
+                                        <form method="post" action="{% url 'eliminar_anticipo_proyecto' anticipo.id %}" style="display: inline;" onsubmit="return confirm('¿Estás seguro de eliminar este anticipo? Esta acción no se puede deshacer.');">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn btn-danger btn-sm" style="font-size: 0.75rem; padding: 0.35rem 0.75rem;" title="Eliminar Anticipo">
+                                                <i class="fas fa-trash"></i>
                                             </button>
                                         </form>
                                     {% endif %}

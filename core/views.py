@@ -6440,6 +6440,37 @@ def crear_anticipo_individual(request, proyecto_id):
 
 
 @login_required
+def eliminar_anticipo_proyecto(request, anticipo_id):
+    """Eliminar un anticipo de proyecto"""
+    anticipo = get_object_or_404(AnticipoProyecto, id=anticipo_id)
+    proyecto_id = anticipo.proyecto.id
+    
+    if request.method == 'POST':
+        colaborador_nombre = anticipo.colaborador.nombre
+        monto = anticipo.monto
+        
+        # Log de actividad antes de eliminar
+        LogActividad.objects.create(
+            usuario=request.user,
+            accion='eliminar',
+            modulo='Planilla de Proyecto',
+            descripcion=f'Eliminó anticipo de ${monto} para {colaborador_nombre} en proyecto {anticipo.proyecto.nombre}',
+            ip_address=request.META.get('REMOTE_ADDR')
+        )
+        
+        anticipo.delete()
+        messages.success(request, f'Anticipo de ${monto} para {colaborador_nombre} eliminado exitosamente')
+        return redirect('planilla_proyecto', proyecto_id=proyecto_id)
+    
+    context = {
+        'anticipo': anticipo,
+        'proyecto': anticipo.proyecto,
+    }
+    
+    return render(request, 'core/proyectos/eliminar_anticipo_confirm.html', context)
+
+
+@login_required
 def liquidar_anticipo(request, anticipo_id):
     """Liquidar un anticipo específico"""
     anticipo = get_object_or_404(AnticipoProyecto, id=anticipo_id)
