@@ -10890,20 +10890,20 @@ def servicio_torrero_pdf(request, pk):
     elements.append(info_heading)
     
     info_data = [
-        ['<b>Cliente:</b>', servicio.cliente.razon_social],
-        ['<b>Proyecto:</b>', servicio.proyecto.nombre if servicio.proyecto else 'No asignado'],
-        ['<b>Descripción:</b>', servicio.descripcion or 'Sin descripción'],
-        ['<b>Estado del Servicio:</b>', Paragraph(f"<b>{'PAGADO' if servicio.esta_pagado else 'PENDIENTE'}</b>", ParagraphStyle('EstadoStyle', parent=styles['Normal'], textColor=colors.HexColor('#10b981') if servicio.esta_pagado else colors.HexColor('#f59e0b')))],
+        ['Cliente:', servicio.cliente.razon_social],
+        ['Proyecto:', servicio.proyecto.nombre if servicio.proyecto else 'No asignado'],
+        ['Descripción:', servicio.descripcion or 'Sin descripción'],
+        ['Estado del Servicio:', Paragraph(f"{'PAGADO' if servicio.esta_pagado else 'PENDIENTE'}", ParagraphStyle('EstadoStyle', parent=styles['Normal'], textColor=colors.HexColor('#10b981') if servicio.esta_pagado else colors.HexColor('#f59e0b'), fontName='Helvetica-Bold'))],
         ['', ''],  # Separador
-        ['<b>Días Solicitados:</b>', f"<b>{servicio.dias_solicitados}</b> día(s)"],
-        ['<b>Días Trabajados:</b>', f"<b>{servicio.dias_trabajados}</b> día(s)"],
-        ['<b>Días Restantes:</b>', f"<b>{servicio.dias_restantes}</b> día(s)"],
-        ['<b>Progreso:</b>', f"<b>{servicio.porcentaje_completado}%</b>"],
+        ['Días Solicitados:', f"{servicio.dias_solicitados} día(s)"],
+        ['Días Trabajados:', f"{servicio.dias_trabajados} día(s)"],
+        ['Días Restantes:', f"{servicio.dias_restantes} día(s)"],
+        ['Progreso:', f"{servicio.porcentaje_completado}%"],
         ['', ''],  # Separador
-        ['<b>Tarifa Diaria:</b>', f"<b>${servicio.tarifa_por_dia:,.2f}</b>"],
-        ['<b>Monto Total:</b>', Paragraph(f"<b>${servicio.monto_total:,.2f}</b>", ParagraphStyle('MontoStyle', parent=styles['Normal'], textColor=colors.HexColor('#1e40af')))],
-        ['<b>Total Pagado:</b>', Paragraph(f"<b>${servicio.monto_pagado:,.2f}</b>", ParagraphStyle('MontoStyle', parent=styles['Normal'], textColor=colors.HexColor('#10b981')))],
-        ['<b>Saldo Pendiente:</b>', Paragraph(f"<b>${servicio.saldo_pendiente:,.2f}</b>", ParagraphStyle('MontoStyle', parent=styles['Normal'], textColor=colors.HexColor('#dc2626')))],
+        ['Tarifa Diaria:', f"${servicio.tarifa_por_dia:,.2f}"],
+        ['Monto Total:', Paragraph(f"${servicio.monto_total:,.2f}", ParagraphStyle('MontoStyle', parent=styles['Normal'], textColor=colors.HexColor('#1e40af'), fontName='Helvetica-Bold'))],
+        ['Total Pagado:', Paragraph(f"${servicio.monto_pagado:,.2f}", ParagraphStyle('MontoStyle', parent=styles['Normal'], textColor=colors.HexColor('#10b981'), fontName='Helvetica-Bold'))],
+        ['Saldo Pendiente:', Paragraph(f"${servicio.saldo_pendiente:,.2f}", ParagraphStyle('MontoStyle', parent=styles['Normal'], textColor=colors.HexColor('#dc2626'), fontName='Helvetica-Bold'))],
     ]
     
     info_table = Table(info_data, colWidths=[2.2*inch, 4.3*inch])
@@ -10994,10 +10994,10 @@ def servicio_torrero_pdf(request, pk):
         # Resumen mejorado de días trabajados
         elements.append(Paragraph("RESUMEN DE DÍAS", heading_style))
         resumen_dias_data = [
-            ['Total Días Solicitados:', Paragraph(f"<b>{servicio.dias_solicitados} día(s)</b>", styles['Normal'])],
-            ['Total Días Trabajados:', Paragraph(f"<b>{servicio.dias_trabajados} día(s)</b>", styles['Normal'])],
-            ['Días Restantes:', Paragraph(f"<b>{servicio.dias_restantes} día(s)</b>", styles['Normal'])],
-            ['Progreso:', Paragraph(f"<b>{servicio.porcentaje_completado}%</b>", ParagraphStyle('ProgressStyle', parent=styles['Normal'], textColor=colors.HexColor('#10b981')))],
+            ['Total Días Solicitados:', f"{servicio.dias_solicitados} día(s)"],
+            ['Total Días Trabajados:', f"{servicio.dias_trabajados} día(s)"],
+            ['Días Restantes:', f"{servicio.dias_restantes} día(s)"],
+            ['Progreso:', Paragraph(f"{servicio.porcentaje_completado}%", ParagraphStyle('ProgressStyle', parent=styles['Normal'], textColor=colors.HexColor('#10b981'), fontName='Helvetica-Bold'))],
         ]
         
         resumen_dias_table = Table(resumen_dias_data, colWidths=[3*inch, 3.5*inch])
