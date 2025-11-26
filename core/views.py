@@ -6061,11 +6061,8 @@ def planilla_proyecto_pdf(request, proyecto_id):
     except:
         logo = Paragraph("<b>TELECOM</b><br/>Technology Panama INC.", styles['Normal'])
     
-    # Fecha de generación
-    from datetime import datetime
-    import pytz
-    guatemala_tz = pytz.timezone('America/Guatemala')
-    fecha_generacion = datetime.now(guatemala_tz).strftime('%d/%m/%Y %H:%M')
+    # Fecha de generación usando django.utils.timezone (ya importado)
+    fecha_generacion = timezone.localtime(timezone.now()).strftime('%d/%m/%Y %H:%M')
     
     # Header con logo y fecha
     header_data = [[
@@ -8064,10 +8061,8 @@ def trabajadores_diarios_pdf(request, proyecto_id):
         story.append(Paragraph(f"<b>Planilla:</b> {planilla_seleccionada.nombre}", normal_style))
         if planilla_seleccionada.fecha_inicio and planilla_seleccionada.fecha_fin:
             story.append(Paragraph(f"<b>Período:</b> {planilla_seleccionada.fecha_inicio.strftime('%d/%m/%Y')} - {planilla_seleccionada.fecha_fin.strftime('%d/%m/%Y')}", normal_style))
-    # Obtener fecha local de Guatemala
-    import pytz
-    guatemala_tz = pytz.timezone('America/Guatemala')
-    fecha_generacion = timezone.now().astimezone(guatemala_tz)
+    # Obtener fecha local usando django.utils.timezone (ya importado)
+    fecha_generacion = timezone.localtime(timezone.now())
     story.append(Paragraph(f"<b>Fecha de Generación:</b> {fecha_generacion.strftime('%d/%m/%Y %H:%M')} (Guatemala)", normal_style))
     story.append(Spacer(1, 20))
     
