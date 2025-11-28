@@ -1603,9 +1603,8 @@ class SubproyectoForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         
         # Filtrar cotizaciones solo del proyecto actual
+        # Mostrar TODAS las cotizaciones del proyecto sin restricción de estado
         if proyecto:
-            # Mostrar todas las cotizaciones del proyecto, independientemente del estado
-            # para que el usuario pueda seleccionar cualquier cotización
             self.fields['cotizacion'].queryset = Cotizacion.objects.filter(
                 proyecto=proyecto
             ).order_by('-fecha_creacion')
