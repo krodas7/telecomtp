@@ -130,6 +130,13 @@
                 </li>
                 
                 <li class="nav-item">
+                    <a class="nav-link {% if 'bitacora' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'bitacora_dashboard' %}">
+                        <i class="fas fa-book"></i>
+                        <span>Bitácora</span>
+                    </a>
+                </li>
+                
+                <li class="nav-item">
                     <a class="nav-link {% if 'clientes' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'clientes_list' %}">
                         <i class="fas fa-users"></i>
                         <span>Clientes</span>

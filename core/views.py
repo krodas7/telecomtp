@@ -12102,3 +12102,12 @@ def planillas_trabajadores_diarios_gestor(request):
     }
     
     return render(request, 'core/trabajadores_diarios/gestor_planillas.html', context)
+
+
+@login_required
+def bitacora_dashboard(request):
+    """Dashboard principal del módulo de Bitácora"""
+    context = {
+        'titulo': 'Bitácora',
+    }
+    return render(request, 'core/bitacora/dashboard.html', context)
