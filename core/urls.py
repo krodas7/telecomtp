@@ -30,6 +30,7 @@ urlpatterns = [
     path('proyecto/<int:proyecto_id>/planilla/liquidar/', views.liquidar_y_generar_planilla, name='liquidar_y_generar_planilla'),
     path('proyecto/<int:proyecto_id>/planilla/pdf/', views.planilla_proyecto_pdf, name='planilla_proyecto_pdf'),
     path('proyecto/<int:proyecto_id>/planilla/configurar/', views.configurar_planilla_proyecto, name='configurar_planilla_proyecto'),
+    path('proyecto/<int:proyecto_id>/planilla/colaborador/<int:colaborador_id>/pdf/', views.planilla_colaborador_pdf, name='planilla_colaborador_pdf'),
     
     # Historial de Planillas Liquidadas
     path('planillas/historial/', views.planillas_liquidadas_historial, name='planillas_liquidadas_historial'),

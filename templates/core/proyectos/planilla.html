@@ -485,6 +485,9 @@
                          </td>
                         <td style="text-align: center;">
                             <div class="btn-group btn-group-sm" role="group">
+                                <a href="{% url 'planilla_colaborador_pdf' proyecto.id colaborador.id %}" class="btn btn-outline-info btn-sm" style="font-size: 0.75rem; padding: 0.35rem 0.75rem;" title="Imprimir Planilla Individual">
+                                    <i class="fas fa-print"></i>
+                                </a>
                                 <a href="{% url 'colaborador_detail' colaborador.id %}" class="btn btn-outline-primary btn-sm" style="font-size: 0.75rem; padding: 0.35rem 0.75rem;" title="Ver Detalle">
                                     <i class="fas fa-eye"></i>
                                 </a>

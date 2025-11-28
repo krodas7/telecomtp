@@ -11650,6 +11650,327 @@ def planilla_liquidada_pdf(request, planilla_id):
 
 
 @login_required
+def planilla_colaborador_pdf(request, proyecto_id, colaborador_id):
+    """Generar PDF de planilla individual por colaborador"""
+    proyecto = get_object_or_404(Proyecto, id=proyecto_id)
+    colaborador = get_object_or_404(Colaborador, id=colaborador_id)
+    
+    # Verificar que el colaborador esté asignado al proyecto
+    if colaborador not in proyecto.colaboradores.all():
+        messages.error(request, 'El colaborador no está asignado a este proyecto')
+        return redirect('planilla_proyecto', proyecto_id=proyecto_id)
+    
+    # Obtener configuración de planilla
+    try:
+        configuracion_planilla = proyecto.configuracion_planilla
+    except ConfiguracionPlanilla.DoesNotExist:
+        configuracion_planilla = ConfiguracionPlanilla.objects.create(
+            proyecto=proyecto,
+            retencion_seguro_social=Decimal('0'),
+            retencion_seguro_educativo=Decimal('0'),
+            bono_general=Decimal('0'),
+            bono_produccion=Decimal('0'),
+            aplicar_retenciones=True,
+            aplicar_bonos=True
+        )
+    
+    # Obtener anticipos del colaborador
+    anticipos = AnticipoProyecto.objects.filter(
+        proyecto=proyecto,
+        colaborador=colaborador
+    ).order_by('-fecha_anticipo')
+    
+    anticipos_pendientes = anticipos.filter(estado='pendiente').aggregate(total=Sum('monto'))['total'] or Decimal('0')
+    anticipos_liquidados = anticipos.filter(estado='liquidado').aggregate(total=Sum('monto'))['total'] or Decimal('0')
+    total_anticipos_colaborador = anticipos_pendientes + anticipos_liquidados
+    
+    # Calcular salarios
+    salario_colaborador = colaborador.salario or Decimal('0')
+    salario_colaborador_decimal = Decimal(str(salario_colaborador))
+    
+    # Calcular retenciones y bonos
+    retenciones_monto = Decimal('0')
+    if colaborador.aplica_retenciones and configuracion_planilla.aplicar_retenciones:
+        retenciones_monto = Decimal(str(configuracion_planilla.calcular_retenciones(salario_colaborador)))
+    
+    bonos_monto = Decimal('0')
+    bonos_detalle = []
+    if configuracion_planilla.aplicar_bonos:
+        if colaborador.aplica_bono_general:
+            bono_gen = Decimal(str(configuracion_planilla.bono_general))
+            bonos_monto += bono_gen
+            bonos_detalle.append(('Bono General', bono_gen))
+        if colaborador.aplica_bono_produccion:
+            bono_prod = Decimal(str(configuracion_planilla.bono_produccion))
+            bonos_monto += bono_prod
+            bonos_detalle.append(('Bono de Producción', bono_prod))
+    
+    salario_bruto = salario_colaborador_decimal + bonos_monto
+    
+    # Valores quincenales
+    salario_quincenal = salario_colaborador_decimal / Decimal('2')
+    bonos_quincenal = bonos_monto / Decimal('2')
+    retenciones_quincenal = retenciones_monto / Decimal('2')
+    salario_quincenal_bruto = salario_quincenal + bonos_quincenal
+    total_anticipos_decimal = Decimal(str(total_anticipos_colaborador))
+    salario_quincenal_neto = salario_quincenal + bonos_quincenal - retenciones_quincenal - total_anticipos_decimal
+    
+    # Crear el PDF
+    buffer = BytesIO()
+    doc = SimpleDocTemplate(
+        buffer, 
+        pagesize=A4,
+        leftMargin=0.5*inch,
+        rightMargin=0.5*inch,
+        topMargin=0.5*inch,
+        bottomMargin=0.5*inch
+    )
+    elements = []
+    
+    # Estilos
+    styles = getSampleStyleSheet()
+    
+    header_style = ParagraphStyle(
+        'HeaderStyle',
+        parent=styles['Heading1'],
+        fontSize=20,
+        spaceAfter=10,
+        alignment=TA_CENTER,
+        textColor=colors.HexColor('#1e3a8a'),
+        fontName='Helvetica-Bold',
+        leading=24
+    )
+    
+    subtitle_style = ParagraphStyle(
+        'SubtitleStyle',
+        parent=styles['Normal'],
+        fontSize=12,
+        spaceAfter=15,
+        textColor=colors.HexColor('#374151'),
+        fontName='Helvetica'
+    )
+    
+    section_style = ParagraphStyle(
+        'SectionStyle',
+        parent=styles['Normal'],
+        fontSize=11,
+        spaceAfter=8,
+        textColor=colors.HexColor('#1e3a8a'),
+        fontName='Helvetica-Bold'
+    )
+    
+    # Logo y encabezado
+    try:
+        logo_path = os.path.join(settings.BASE_DIR, 'static', 'images', 'LOGO-TELECOM-small.png')
+        if os.path.exists(logo_path):
+            logo = Image(logo_path, width=100, height=50)
+        else:
+            logo = Paragraph("<b>TELECOM</b><br/>Technology Panama INC.", styles['Normal'])
+    except:
+        logo = Paragraph("<b>TELECOM</b><br/>Technology Panama INC.", styles['Normal'])
+    
+    fecha_generacion = timezone.localtime(timezone.now()).strftime('%d/%m/%Y %H:%M')
+    
+    header_data = [[
+        logo,
+        Paragraph(
+            f'<b>PLANILLA INDIVIDUAL QUINCENAL</b><br/>'
+            f'<font size="9">Generado: {fecha_generacion}</font>',
+            ParagraphStyle('HeaderRight', parent=styles['Normal'], fontSize=10, alignment=TA_RIGHT)
+        )
+    ]]
+    header_table = Table(header_data, colWidths=[2.5*inch, 5.5*inch])
+    header_table.setStyle(TableStyle([
+        ('ALIGN', (0, 0), (0, 0), 'LEFT'),
+        ('ALIGN', (1, 0), (1, 0), 'RIGHT'),
+        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+    ]))
+    elements.append(header_table)
+    elements.append(Spacer(1, 15))
+    
+    # Información del proyecto y RUC
+    elements.append(Paragraph(f"<b>PROYECTO: {proyecto.nombre.upper()}</b>", header_style))
+    if proyecto.cliente:
+        elements.append(Paragraph(f'<b>Cliente:</b> {proyecto.cliente.razon_social}', subtitle_style))
+    elements.append(Paragraph(f'<b>RUC:</b> 155668382-2-2018', subtitle_style))
+    elements.append(Spacer(1, 15))
+    
+    # Información del colaborador
+    elements.append(Paragraph('<b>INFORMACIÓN DEL COLABORADOR</b>', section_style))
+    
+    colaborador_data = [
+        ['Nombre:', colaborador.nombre],
+        ['DPI:', colaborador.dpi or 'No registrado'],
+        ['Teléfono:', colaborador.telefono or 'No registrado'],
+        ['Email:', colaborador.email or 'No registrado'],
+        ['Dirección:', colaborador.direccion or 'No registrada'],
+    ]
+    
+    colaborador_table = Table(colaborador_data, colWidths=[2*inch, 6*inch])
+    colaborador_table.setStyle(TableStyle([
+        ('FONTSIZE', (0, 0), (-1, -1), 10),
+        ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
+        ('LEFTPADDING', (0, 0), (-1, -1), 5),
+        ('TOPPADDING', (0, 0), (-1, -1), 3),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 3),
+        ('GRID', (0, 0), (-1, -1), 1, colors.HexColor('#e5e7eb')),
+    ]))
+    elements.append(colaborador_table)
+    elements.append(Spacer(1, 15))
+    
+    # Desglose de salarios - Mensual
+    elements.append(Paragraph('<b>DESGLOSE MENSUAL</b>', section_style))
+    
+    mensual_data = [
+        ['CONCEPTO', 'MONTO'],
+        ['Salario Base Mensual', f"${salario_colaborador:,.2f}"],
+    ]
+    
+    # Agregar bonos
+    if bonos_detalle:
+        for nombre, monto in bonos_detalle:
+            mensual_data.append([nombre, f"${monto:,.2f}"])
+    else:
+        mensual_data.append(['Bonos', '$0.00'])
+    
+    mensual_data.extend([
+        ['Total Bonos', f"${bonos_monto:,.2f}"],
+        ['Salario Bruto Mensual', f"${salario_bruto:,.2f}"],
+    ])
+    
+    # Agregar retenciones
+    if retenciones_monto > 0:
+        mensual_data.extend([
+            ['Retenciones:', ''],
+            ['  • Seguro Social', f"${configuracion_planilla.retencion_seguro_social:,.2f}"],
+            ['  • Seguro Educativo', f"${configuracion_planilla.retencion_seguro_educativo:,.2f}"],
+            ['Total Retenciones', f"${retenciones_monto:,.2f}"],
+        ])
+    else:
+        mensual_data.append(['Total Retenciones', '$0.00'])
+    
+    mensual_table = Table(mensual_data, colWidths=[4*inch, 4*inch])
+    mensual_table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#1e3a8a')),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, 0), 11),
+        ('FONTSIZE', (0, 1), (-1, -1), 10),
+        ('ALIGN', (1, 0), (1, -1), 'RIGHT'),
+        ('GRID', (0, 0), (-1, -1), 1, colors.HexColor('#1e3a8a')),
+        ('TOPPADDING', (0, 0), (-1, -1), 5),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 5),
+    ]))
+    elements.append(mensual_table)
+    elements.append(Spacer(1, 15))
+    
+    # Desglose quincenal
+    elements.append(Paragraph('<b>DESGLOSE QUINCENAL</b>', section_style))
+    
+    quincenal_data = [
+        ['CONCEPTO', 'MONTO'],
+        ['Salario Base Quincenal (50%)', f"${salario_quincenal:,.2f}"],
+        ['Bonos Quincenales (50%)', f"${bonos_quincenal:,.2f}"],
+        ['Subtotal (Sin Descuentos)', f"${salario_quincenal_bruto:,.2f}"],
+        ['Retenciones Quincenales', f"-${retenciones_quincenal:,.2f}"],
+    ]
+    
+    # Anticipos
+    if total_anticipos_colaborador > 0:
+        quincenal_data.append(['Anticipos a Descontar', f"-${total_anticipos_colaborador:,.2f}"])
+    else:
+        quincenal_data.append(['Anticipos a Descontar', '$0.00'])
+    
+    quincenal_data.append(['TOTAL A PAGAR QUINCENAL', f"${salario_quincenal_neto:,.2f}"])
+    
+    quincenal_table = Table(quincenal_data, colWidths=[4*inch, 4*inch])
+    quincenal_table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#1e3a8a')),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, 0), 11),
+        ('FONTSIZE', (0, 1), (-1, -1), 10),
+        ('FONTNAME', (0, -1), (-1, -1), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, -1), (-1, -1), 12),
+        ('BACKGROUND', (0, -1), (-1, -1), colors.HexColor('#dbeafe')),
+        ('ALIGN', (1, 0), (1, -1), 'RIGHT'),
+        ('GRID', (0, 0), (-1, -1), 1, colors.HexColor('#1e3a8a')),
+        ('TOPPADDING', (0, 0), (-1, -1), 5),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 5),
+    ]))
+    elements.append(quincenal_table)
+    elements.append(Spacer(1, 15))
+    
+    # Anticipos detallados
+    if anticipos.exists():
+        elements.append(Paragraph('<b>HISTORIAL DE ANTICIPOS</b>', section_style))
+        
+        anticipos_headers = [['Fecha', 'Concepto', 'Monto', 'Estado']]
+        anticipos_rows = []
+        for anticipo in anticipos:
+            estado_display = dict(AnticipoProyecto.ESTADO_CHOICES).get(anticipo.estado, anticipo.estado)
+            anticipos_rows.append([
+                anticipo.fecha_anticipo.strftime('%d/%m/%Y'),
+                anticipo.concepto[:30] if anticipo.concepto else 'Sin concepto',
+                f"${anticipo.monto:,.2f}",
+                estado_display
+            ])
+        
+        anticipos_table_data = anticipos_headers + anticipos_rows
+        anticipos_table = Table(anticipos_table_data, colWidths=[1.5*inch, 3*inch, 1.5*inch, 2*inch])
+        anticipos_table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#f3f4f6')),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, 0), 9),
+            ('FONTSIZE', (0, 1), (-1, -1), 8),
+            ('ALIGN', (2, 0), (2, -1), 'RIGHT'),
+            ('GRID', (0, 0), (-1, -1), 1, colors.HexColor('#e5e7eb')),
+            ('TOPPADDING', (0, 0), (-1, -1), 3),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 3),
+        ]))
+        elements.append(anticipos_table)
+        elements.append(Spacer(1, 10))
+        
+        # Resumen de anticipos
+        resumen_anticipos = [
+            ['Total Anticipos Pendientes', f"${anticipos_pendientes:,.2f}"],
+            ['Total Anticipos Liquidados', f"${anticipos_liquidados:,.2f}"],
+            ['Total Anticipos', f"${total_anticipos_colaborador:,.2f}"],
+        ]
+        resumen_anticipos_table = Table(resumen_anticipos, colWidths=[4*inch, 4*inch])
+        resumen_anticipos_table.setStyle(TableStyle([
+            ('FONTSIZE', (0, 0), (-1, -1), 10),
+            ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
+            ('ALIGN', (1, 0), (1, -1), 'RIGHT'),
+            ('GRID', (0, 0), (-1, -1), 1, colors.HexColor('#e5e7eb')),
+        ]))
+        elements.append(resumen_anticipos_table)
+        elements.append(Spacer(1, 15))
+    
+    # Footer
+    footer_text = f"<i>TELECOM PANAMA - Planilla Individual - {timezone.localtime(timezone.now()).strftime('%d/%m/%Y %H:%M')}</i>"
+    elements.append(Spacer(1, 20))
+    elements.append(Paragraph(footer_text, ParagraphStyle(
+        'FooterStyle',
+        parent=styles['Normal'],
+        fontSize=8,
+        alignment=TA_CENTER,
+        textColor=colors.HexColor('#6b7280'),
+    )))
+    
+    # Construir PDF
+    doc.build(elements)
+    
+    # Preparar respuesta
+    buffer.seek(0)
+    response = HttpResponse(buffer.read(), content_type='application/pdf')
+    filename = f"planilla_{colaborador.nombre.replace(' ', '_')}_{proyecto.nombre.replace(' ', '_')}.pdf"
+    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+    
+    return response
+
+
+@login_required
 def trabajadores_diarios_dashboard(request):
     """Dashboard principal del módulo de Trabajadores Diarios"""
     from django.db.models import Sum, Count, Q
