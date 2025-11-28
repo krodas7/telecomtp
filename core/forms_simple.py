@@ -1604,8 +1604,15 @@ class SubproyectoForm(forms.ModelForm):
         
         # Filtrar cotizaciones solo del proyecto actual
         if proyecto:
+            # Mostrar todas las cotizaciones del proyecto, independientemente del estado
+            # para que el usuario pueda seleccionar cualquier cotización
             self.fields['cotizacion'].queryset = Cotizacion.objects.filter(
                 proyecto=proyecto
-            ).exclude(
-                estado__in=['cancelada', 'rechazada', 'vencida']
             ).order_by('-fecha_creacion')
+        else:
+            # Si no hay proyecto, mostrar todas las cotizaciones disponibles
+            self.fields['cotizacion'].queryset = Cotizacion.objects.all().order_by('-fecha_creacion')
+        
+        # Hacer el campo opcional
+        self.fields['cotizacion'].required = False
+        self.fields['cotizacion'].empty_label = "Seleccionar cotización (opcional)"
