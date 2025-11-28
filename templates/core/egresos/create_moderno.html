@@ -592,6 +592,23 @@
                             <i class="fas fa-hand-point-right"></i>
                             Selecciona el proyecto al que pertenece este egreso
                         </div>
+                        
+                        <!-- Subproyectos (se muestran dinámicamente) -->
+                        <div id="subproyecto-container" class="mt-3" style="display: none;">
+                            <label for="{{ form.subproyecto.id_for_label }}" class="form-label" style="font-size: 0.9rem; color: #6c757d;">
+                                <i class="fas fa-project-diagram"></i>
+                                Subproyecto (Opcional)
+                            </label>
+                            {{ form.subproyecto }}
+                            {% if form.subproyecto.errors %}
+                                <div class="invalid-feedback">
+                                    {{ form.subproyecto.errors.0 }}
+                                </div>
+                            {% endif %}
+                            <div class="help-text" style="font-size: 0.85rem; color: #6c757d;">
+                                Selecciona un subproyecto si este egreso pertenece a uno específico
+                            </div>
+                        </div>
                     </div>
                 </div>
                 
@@ -853,6 +870,128 @@
         sections.forEach((section, index) => {
             section.style.animationDelay = `${index * 0.1}s`;
         });
+        
+        // ==================== FUNCIONALIDAD DE SUBPROYECTOS ====================
+        console.log('🚀 Inicializando selector de subproyectos...');
+        
+        // Función para actualizar subproyectos cuando cambia el proyecto
+        function actualizarSubproyectosGasto() {
+            // Usar los IDs estándar de Django
+            const proyectoSelect = document.getElementById('id_proyecto');
+            const subproyectoSelect = document.getElementById('id_subproyecto');
+            const subproyectoContainer = document.getElementById('subproyecto-container');
+            
+            console.log('🔍 Buscando elementos:', {
+                proyecto: !!proyectoSelect,
+                subproyecto: !!subproyectoSelect,
+                container: !!subproyectoContainer
+            });
+            
+            if (!proyectoSelect) {
+                console.error('❌ No se encontró el selector de proyecto');
+                return;
+            }
+            
+            if (!subproyectoSelect) {
+                console.error('❌ No se encontró el selector de subproyecto');
+                return;
+            }
+            
+            if (!subproyectoContainer) {
+                console.error('❌ No se encontró el contenedor de subproyectos');
+                return;
+            }
+            
+            const proyectoId = proyectoSelect.value;
+            console.log('📌 Proyecto seleccionado:', proyectoId);
+            
+            // Limpiar opciones actuales
+            subproyectoSelect.innerHTML = '<option value="">Seleccionar subproyecto (opcional)</option>';
+            
+            // Ocultar contenedor si no hay proyecto seleccionado
+            if (!proyectoId) {
+                subproyectoContainer.style.display = 'none';
+                return;
+            }
+            
+            console.log('🔄 Haciendo petición AJAX para obtener subproyectos...');
+            // Hacer petición AJAX para obtener subproyectos
+            fetch(`/api/proyectos/${proyectoId}/subproyectos/`, {
+                method: 'GET',
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken'),
+                    'Content-Type': 'application/json',
+                },
+            })
+            .then(response => {
+                console.log('📥 Respuesta recibida:', response.status);
+                return response.json();
+            })
+            .then(data => {
+                console.log('📊 Datos recibidos:', data);
+                if (data.success && data.subproyectos && data.subproyectos.length > 0) {
+                    console.log(`✅ Encontrados ${data.subproyectos.length} subproyectos`);
+                    // Agregar subproyectos al selector
+                    data.subproyectos.forEach(subproyecto => {
+                        const option = document.createElement('option');
+                        option.value = subproyecto.id;
+                        option.textContent = subproyecto.nombre + (subproyecto.codigo ? ` (${subproyecto.codigo})` : '');
+                        subproyectoSelect.appendChild(option);
+                    });
+                    // Mostrar el contenedor de subproyectos
+                    subproyectoContainer.style.display = 'block';
+                    console.log('✅ Contenedor de subproyectos mostrado');
+                } else {
+                    console.log('ℹ️ No hay subproyectos disponibles');
+                    // Ocultar si no hay subproyectos
+                    subproyectoContainer.style.display = 'none';
+                }
+            })
+            .catch(error => {
+                console.error('❌ Error al cargar subproyectos:', error);
+                subproyectoContainer.style.display = 'none';
+            });
+        }
+        
+        // Función auxiliar para obtener cookie CSRF
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+        
+        // Agregar event listener al selector de proyecto
+        const proyectoSelect = document.getElementById('id_proyecto');
+        if (proyectoSelect) {
+            console.log('✅ Selector de proyecto encontrado');
+            proyectoSelect.addEventListener('change', function() {
+                console.log('🔄 Evento change detectado en selector de proyecto');
+                actualizarSubproyectosGasto();
+            });
+            // Cargar subproyectos si ya hay un proyecto seleccionado
+            if (proyectoSelect.value) {
+                console.log('📋 Proyecto ya seleccionado, cargando subproyectos...');
+                actualizarSubproyectosGasto();
+            }
+        } else {
+            console.error('❌ No se encontró el selector de proyecto con ID: id_proyecto');
+            // Intentar encontrar el selector con otros métodos
+            const allSelects = document.querySelectorAll('select');
+            console.log('🔍 Todos los selectores encontrados:', Array.from(allSelects).map(s => ({
+                id: s.id,
+                name: s.name,
+                classes: s.className
+            })));
+        }
         
         console.log('Formulario moderno de egresos inicializado correctamente');
     });
