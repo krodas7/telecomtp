@@ -12121,8 +12121,45 @@ def bitacora_dashboard(request):
 @login_required
 def bitacora_planificacion(request):
     """Formulario de planificación para la bitácora"""
-    # TODO: Implementar formulario de planificación
+    proyectos = Proyecto.objects.filter(activo=True).order_by('nombre')
+    
+    colaboradores = []
+    trabajadores_diarios = []
+    proyecto_seleccionado = None
+    
+    if request.method == 'POST':
+        proyecto_id = request.POST.get('proyecto')
+        if proyecto_id:
+            try:
+                proyecto_seleccionado = Proyecto.objects.get(id=proyecto_id, activo=True)
+                # Obtener colaboradores del proyecto
+                colaboradores = proyecto_seleccionado.colaboradores.filter(activo=True).order_by('nombre')
+                # Obtener trabajadores diarios activos del proyecto
+                trabajadores_diarios = TrabajadorDiario.objects.filter(
+                    proyecto=proyecto_seleccionado,
+                    activo=True
+                ).order_by('nombre')
+            except Proyecto.DoesNotExist:
+                messages.error(request, 'Proyecto no encontrado')
+    
+    # Si hay un proyecto_id en GET, cargar los trabajadores
+    proyecto_id = request.GET.get('proyecto_id')
+    if proyecto_id and not proyecto_seleccionado:
+        try:
+            proyecto_seleccionado = Proyecto.objects.get(id=proyecto_id, activo=True)
+            colaboradores = proyecto_seleccionado.colaboradores.filter(activo=True).order_by('nombre')
+            trabajadores_diarios = TrabajadorDiario.objects.filter(
+                proyecto=proyecto_seleccionado,
+                activo=True
+            ).order_by('nombre')
+        except Proyecto.DoesNotExist:
+            pass
+    
     context = {
         'titulo': 'Planificación - Bitácora',
+        'proyectos': proyectos,
+        'colaboradores': colaboradores,
+        'trabajadores_diarios': trabajadores_diarios,
+        'proyecto_seleccionado': proyecto_seleccionado,
     }
     return render(request, 'core/bitacora/planificacion.html', context)

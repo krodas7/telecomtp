@@ -59,7 +59,7 @@
         padding: 2.5rem;
         box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         border: 1px solid #e5e7eb;
-        max-width: 900px;
+        max-width: 1200px;
         margin: 0 auto;
     }
     
@@ -110,6 +110,7 @@
         padding: 0.75rem 1rem;
         font-size: 1rem;
         transition: all 0.2s;
+        width: 100%;
     }
     
     .form-control:focus,
@@ -117,6 +118,84 @@
         border-color: #6366f1;
         box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
         outline: none;
+    }
+    
+    /* Checklist Container */
+    .checklist-container {
+        background: white;
+        border: 2px solid #e5e7eb;
+        border-radius: 12px;
+        padding: 1.5rem;
+        max-height: 400px;
+        overflow-y: auto;
+    }
+    
+    .checklist-container::-webkit-scrollbar {
+        width: 8px;
+    }
+    
+    .checklist-container::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 10px;
+    }
+    
+    .checklist-container::-webkit-scrollbar-thumb {
+        background: #6366f1;
+        border-radius: 10px;
+    }
+    
+    .checklist-container::-webkit-scrollbar-thumb:hover {
+        background: #4f46e5;
+    }
+    
+    .checklist-item {
+        display: flex;
+        align-items: center;
+        padding: 0.75rem;
+        margin-bottom: 0.5rem;
+        background: #f9fafb;
+        border-radius: 8px;
+        border: 1px solid #e5e7eb;
+        transition: all 0.2s;
+    }
+    
+    .checklist-item:hover {
+        background: #f3f4f6;
+        border-color: #6366f1;
+    }
+    
+    .checklist-item input[type="checkbox"] {
+        width: 20px;
+        height: 20px;
+        margin-right: 1rem;
+        cursor: pointer;
+        accent-color: #6366f1;
+    }
+    
+    .checklist-item label {
+        flex: 1;
+        cursor: pointer;
+        font-weight: 500;
+        color: #374151;
+        margin: 0;
+    }
+    
+    .checklist-item-info {
+        font-size: 0.875rem;
+        color: #6b7280;
+        margin-left: 2.5rem;
+    }
+    
+    .empty-checklist {
+        text-align: center;
+        padding: 2rem;
+        color: #6b7280;
+    }
+    
+    .empty-checklist i {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+        opacity: 0.5;
     }
     
     .btn-group {
@@ -136,6 +215,7 @@
         display: inline-flex;
         align-items: center;
         gap: 0.5rem;
+        text-decoration: none;
     }
     
     .btn-primary {
@@ -146,6 +226,8 @@
     .btn-primary:hover {
         transform: translateY(-2px);
         box-shadow: 0 8px 16px rgba(99, 102, 241, 0.3);
+        color: white;
+        text-decoration: none;
     }
     
     .btn-secondary {
@@ -155,10 +237,37 @@
     
     .btn-secondary:hover {
         background: #4b5563;
+        color: white;
+        text-decoration: none;
+    }
+    
+    .btn-load {
+        background: #6366f1;
+        color: white;
+        padding: 0.5rem 1.5rem;
+        border-radius: 8px;
+        font-weight: 600;
+        border: none;
+        cursor: pointer;
+        transition: all 0.2s;
+        margin-top: 0.5rem;
+    }
+    
+    .btn-load:hover {
+        background: #4f46e5;
     }
     
     .required {
         color: #ef4444;
+    }
+    
+    .alert-info {
+        background: #dbeafe;
+        border: 1px solid #93c5fd;
+        color: #1e40af;
+        padding: 1rem;
+        border-radius: 8px;
+        margin-bottom: 1.5rem;
     }
 </style>
 {% endblock %}
@@ -175,27 +284,146 @@
 </div>
 
 <div class="container">
-    <div class="form-container">
-        <div class="empty-state">
-            <div class="empty-icon">
-                <i class="fas fa-clipboard-list"></i>
+    <form method="POST" id="planificacionForm">
+        {% csrf_token %}
+        
+        <div class="form-container">
+            <!-- Selección de Proyecto -->
+            <div class="form-section">
+                <h3 class="form-section-title">
+                    <i class="fas fa-building"></i>
+                    Seleccionar Proyecto
+                </h3>
+                
+                <div class="form-group">
+                    <label class="form-label" for="proyecto">
+                        <i class="fas fa-project-diagram"></i>
+                        Proyecto <span class="required">*</span>
+                    </label>
+                    <select name="proyecto" id="proyecto" class="form-select" required onchange="cargarTrabajadores()">
+                        <option value="">-- Seleccione un proyecto --</option>
+                        {% for proyecto in proyectos %}
+                            <option value="{{ proyecto.id }}" {% if proyecto_seleccionado and proyecto_seleccionado.id == proyecto.id %}selected{% endif %}>
+                                {{ proyecto.nombre }} - {{ proyecto.cliente.razon_social }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <button type="submit" name="cargar" class="btn-load" style="display: none;">
+                    <i class="fas fa-sync"></i> Cargar Trabajadores
+                </button>
             </div>
-            <h3 class="empty-title">Formulario en construcción</h3>
-            <p class="empty-text">El formulario de planificación será implementado próximamente.</p>
-            <div class="btn-group">
-                <a href="{% url 'bitacora_dashboard' %}" class="btn btn-secondary">
-                    <i class="fas fa-arrow-left"></i>
-                    <span>Volver al Dashboard</span>
-                </a>
-            </div>
+            
+            {% if proyecto_seleccionado %}
+                <!-- Checklist de Colaboradores (Trabajadores en Planilla) -->
+                <div class="form-section">
+                    <h3 class="form-section-title">
+                        <i class="fas fa-users"></i>
+                        Trabajadores en Planilla
+                    </h3>
+                    
+                    {% if colaboradores %}
+                        <div class="checklist-container">
+                            {% for colaborador in colaboradores %}
+                                <div class="checklist-item">
+                                    <input type="checkbox" 
+                                           name="colaboradores" 
+                                           id="colaborador_{{ colaborador.id }}" 
+                                           value="{{ colaborador.id }}">
+                                    <label for="colaborador_{{ colaborador.id }}">
+                                        {{ colaborador.nombre }}
+                                    </label>
+                                    {% if colaborador.telefono %}
+                                        <span class="checklist-item-info">
+                                            <i class="fas fa-phone"></i> {{ colaborador.telefono }}
+                                        </span>
+                                    {% endif %}
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="empty-checklist">
+                            <i class="fas fa-user-slash"></i>
+                            <p>No hay colaboradores asignados a este proyecto</p>
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <!-- Checklist de Trabajadores Diarios -->
+                <div class="form-section">
+                    <h3 class="form-section-title">
+                        <i class="fas fa-hammer"></i>
+                        Trabajadores Diarios
+                    </h3>
+                    
+                    {% if trabajadores_diarios %}
+                        <div class="checklist-container">
+                            {% for trabajador in trabajadores_diarios %}
+                                <div class="checklist-item">
+                                    <input type="checkbox" 
+                                           name="trabajadores_diarios" 
+                                           id="trabajador_{{ trabajador.id }}" 
+                                           value="{{ trabajador.id }}">
+                                    <label for="trabajador_{{ trabajador.id }}">
+                                        {{ trabajador.nombre }}
+                                    </label>
+                                    <span class="checklist-item-info">
+                                        <i class="fas fa-dollar-sign"></i> ${{ trabajador.pago_diario|floatformat:2 }}
+                                    </span>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="empty-checklist">
+                            <i class="fas fa-user-slash"></i>
+                            <p>No hay trabajadores diarios registrados en este proyecto</p>
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <!-- Botones de Acción -->
+                <div class="btn-group">
+                    <a href="{% url 'bitacora_dashboard' %}" class="btn btn-secondary">
+                        <i class="fas fa-times"></i>
+                        <span>Cancelar</span>
+                    </a>
+                    <button type="submit" name="guardar" class="btn btn-primary">
+                        <i class="fas fa-save"></i>
+                        <span>Guardar Planificación</span>
+                    </button>
+                </div>
+            {% else %}
+                <div class="alert-info">
+                    <i class="fas fa-info-circle"></i>
+                    <strong>Instrucciones:</strong> Selecciona un proyecto para ver los trabajadores disponibles.
+                </div>
+            {% endif %}
         </div>
-    </div>
+    </form>
 </div>
 {% endblock %}
 
 {% block extra_js %}
 <script>
+    function cargarTrabajadores() {
+        const proyectoSelect = document.getElementById('proyecto');
+        const proyectoId = proyectoSelect.value;
+        
+        if (proyectoId) {
+            // Redirigir a la misma página con el proyecto_id en GET
+            window.location.href = '{% url "bitacora_planificacion" %}?proyecto_id=' + proyectoId;
+        }
+    }
+    
+    // Auto-submit cuando se selecciona un proyecto (opcional)
+    document.getElementById('proyecto')?.addEventListener('change', function() {
+        if (this.value) {
+            // Opcional: auto-cargar sin recargar la página usando AJAX
+            // Por ahora, usamos el método de redirección
+        }
+    });
+    
     console.log('Planificación bitácora cargado');
 </script>
 {% endblock %}
-
