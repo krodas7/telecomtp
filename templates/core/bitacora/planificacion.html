@@ -120,70 +120,117 @@
         outline: none;
     }
     
-    /* Checklist Container */
-    .checklist-container {
-        background: white;
-        border: 2px solid #e5e7eb;
-        border-radius: 12px;
-        padding: 1.5rem;
-        max-height: 400px;
-        overflow-y: auto;
+    /* Select Multiple Container */
+    .select-multiple-container {
+        position: relative;
     }
     
-    .checklist-container::-webkit-scrollbar {
+    .select-multiple-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0.5rem;
+    }
+    
+    .select-multiple-info {
+        font-size: 0.875rem;
+        color: #6b7280;
+        font-weight: 500;
+    }
+    
+    .select-multiple-count {
+        background: #6366f1;
+        color: white;
+        padding: 0.25rem 0.75rem;
+        border-radius: 12px;
+        font-size: 0.75rem;
+        font-weight: 700;
+    }
+    
+    .select-multiple {
+        width: 100%;
+        min-height: 150px;
+        max-height: 250px;
+        padding: 0.75rem;
+        border: 2px solid #e5e7eb;
+        border-radius: 8px;
+        font-size: 0.9375rem;
+        background: white;
+        overflow-y: auto;
+        transition: all 0.2s;
+    }
+    
+    .select-multiple:focus {
+        border-color: #6366f1;
+        box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+        outline: none;
+    }
+    
+    .select-multiple option {
+        padding: 0.5rem;
+        border-bottom: 1px solid #f3f4f6;
+        cursor: pointer;
+    }
+    
+    .select-multiple option:hover {
+        background: #f3f4f6;
+    }
+    
+    .select-multiple option:checked {
+        background: #6366f1;
+        color: white;
+    }
+    
+    .select-multiple::-webkit-scrollbar {
         width: 8px;
     }
     
-    .checklist-container::-webkit-scrollbar-track {
+    .select-multiple::-webkit-scrollbar-track {
         background: #f1f1f1;
         border-radius: 10px;
     }
     
-    .checklist-container::-webkit-scrollbar-thumb {
+    .select-multiple::-webkit-scrollbar-thumb {
         background: #6366f1;
         border-radius: 10px;
     }
     
-    .checklist-container::-webkit-scrollbar-thumb:hover {
+    .select-multiple::-webkit-scrollbar-thumb:hover {
         background: #4f46e5;
     }
     
-    .checklist-item {
+    /* Selected Tags Display */
+    .selected-tags {
         display: flex;
-        align-items: center;
-        padding: 0.75rem;
-        margin-bottom: 0.5rem;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        margin-top: 0.75rem;
+        min-height: 2.5rem;
+        padding: 0.5rem;
         background: #f9fafb;
         border-radius: 8px;
-        border: 1px solid #e5e7eb;
-        transition: all 0.2s;
+        border: 1px dashed #d1d5db;
     }
     
-    .checklist-item:hover {
-        background: #f3f4f6;
-        border-color: #6366f1;
-    }
-    
-    .checklist-item input[type="checkbox"] {
-        width: 20px;
-        height: 20px;
-        margin-right: 1rem;
-        cursor: pointer;
-        accent-color: #6366f1;
-    }
-    
-    .checklist-item label {
-        flex: 1;
-        cursor: pointer;
-        font-weight: 500;
-        color: #374151;
-        margin: 0;
-    }
-    
-    .checklist-item-info {
+    .selected-tag {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+        color: white;
+        padding: 0.375rem 0.75rem;
+        border-radius: 6px;
         font-size: 0.875rem;
-        color: #6b7280;
-        margin-left: 2.5rem;
+        font-weight: 500;
+    }
+    
+    .selected-tag i {
+        font-size: 0.75rem;
+        cursor: pointer;
+    }
+    
+    .selected-tag i:hover {
+        opacity: 0.8;
     }
     
     .empty-checklist {
@@ -324,23 +371,26 @@
                     </h3>
                     
                     {% if colaboradores %}
-                        <div class="checklist-container">
-                            {% for colaborador in colaboradores %}
-                                <div class="checklist-item">
-                                    <input type="checkbox" 
-                                           name="colaboradores" 
-                                           id="colaborador_{{ colaborador.id }}" 
-                                           value="{{ colaborador.id }}">
-                                    <label for="colaborador_{{ colaborador.id }}">
-                                        {{ colaborador.nombre }}
-                                    </label>
-                                    {% if colaborador.telefono %}
-                                        <span class="checklist-item-info">
-                                            <i class="fas fa-phone"></i> {{ colaborador.telefono }}
-                                        </span>
-                                    {% endif %}
-                                </div>
-                            {% endfor %}
+                        <div class="select-multiple-container">
+                            <div class="select-multiple-header">
+                                <span class="select-multiple-info">
+                                    <i class="fas fa-info-circle"></i> 
+                                    Mantén presionado Ctrl (Cmd en Mac) para seleccionar múltiples trabajadores
+                                </span>
+                                <span class="select-multiple-count" id="count_colaboradores">0 seleccionados</span>
+                            </div>
+                            <select name="colaboradores" 
+                                    id="colaboradores" 
+                                    class="select-multiple" 
+                                    multiple
+                                    onchange="updateSelectedCount('colaboradores', 'count_colaboradores', {{ colaboradores|length }})">
+                                {% for colaborador in colaboradores %}
+                                    <option value="{{ colaborador.id }}">
+                                        {{ colaborador.nombre }}{% if colaborador.telefono %} - Tel: {{ colaborador.telefono }}{% endif %}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                            <div class="selected-tags" id="tags_colaboradores"></div>
                         </div>
                     {% else %}
                         <div class="empty-checklist">
@@ -358,21 +408,26 @@
                     </h3>
                     
                     {% if trabajadores_diarios %}
-                        <div class="checklist-container">
-                            {% for trabajador in trabajadores_diarios %}
-                                <div class="checklist-item">
-                                    <input type="checkbox" 
-                                           name="trabajadores_diarios" 
-                                           id="trabajador_{{ trabajador.id }}" 
-                                           value="{{ trabajador.id }}">
-                                    <label for="trabajador_{{ trabajador.id }}">
-                                        {{ trabajador.nombre }}
-                                    </label>
-                                    <span class="checklist-item-info">
-                                        <i class="fas fa-dollar-sign"></i> ${{ trabajador.pago_diario|floatformat:2 }}
-                                    </span>
-                                </div>
-                            {% endfor %}
+                        <div class="select-multiple-container">
+                            <div class="select-multiple-header">
+                                <span class="select-multiple-info">
+                                    <i class="fas fa-info-circle"></i> 
+                                    Mantén presionado Ctrl (Cmd en Mac) para seleccionar múltiples trabajadores
+                                </span>
+                                <span class="select-multiple-count" id="count_trabajadores_diarios">0 seleccionados</span>
+                            </div>
+                            <select name="trabajadores_diarios" 
+                                    id="trabajadores_diarios" 
+                                    class="select-multiple" 
+                                    multiple
+                                    onchange="updateSelectedCount('trabajadores_diarios', 'count_trabajadores_diarios', {{ trabajadores_diarios|length }})">
+                                {% for trabajador in trabajadores_diarios %}
+                                    <option value="{{ trabajador.id }}">
+                                        {{ trabajador.nombre }} - ${{ trabajador.pago_diario|floatformat:2 }}/día
+                                    </option>
+                                {% endfor %}
+                            </select>
+                            <div class="selected-tags" id="tags_trabajadores_diarios"></div>
                         </div>
                     {% else %}
                         <div class="empty-checklist">
@@ -416,12 +471,57 @@
         }
     }
     
-    // Auto-submit cuando se selecciona un proyecto (opcional)
-    document.getElementById('proyecto')?.addEventListener('change', function() {
-        if (this.value) {
-            // Opcional: auto-cargar sin recargar la página usando AJAX
-            // Por ahora, usamos el método de redirección
+    function updateSelectedCount(selectId, countId, total) {
+        const select = document.getElementById(selectId);
+        const countElement = document.getElementById(countId);
+        const tagsContainer = document.getElementById('tags_' + selectId);
+        
+        if (!select || !countElement) return;
+        
+        const selectedOptions = Array.from(select.selectedOptions);
+        const count = selectedOptions.length;
+        
+        // Actualizar contador
+        countElement.textContent = count + ' seleccionado' + (count !== 1 ? 's' : '');
+        
+        // Actualizar tags visuales
+        if (tagsContainer) {
+            tagsContainer.innerHTML = '';
+            selectedOptions.forEach(option => {
+                const tag = document.createElement('span');
+                tag.className = 'selected-tag';
+                tag.innerHTML = option.text + ' <i class="fas fa-times" onclick="deselectOption(\'' + selectId + '\', \'' + option.value + '\')"></i>';
+                tagsContainer.appendChild(tag);
+            });
         }
+    }
+    
+    function deselectOption(selectId, value) {
+        const select = document.getElementById(selectId);
+        if (!select) return;
+        
+        const option = select.querySelector(`option[value="${value}"]`);
+        if (option) {
+            option.selected = false;
+            
+            // Actualizar contador y tags
+            if (selectId === 'colaboradores') {
+                updateSelectedCount('colaboradores', 'count_colaboradores', {{ colaboradores|length }});
+            } else if (selectId === 'trabajadores_diarios') {
+                updateSelectedCount('trabajadores_diarios', 'count_trabajadores_diarios', {{ trabajadores_diarios|length }});
+            }
+        }
+    }
+    
+    // Inicializar contadores al cargar la página
+    document.addEventListener('DOMContentLoaded', function() {
+        {% if colaboradores %}
+            updateSelectedCount('colaboradores', 'count_colaboradores', {{ colaboradores|length }});
+        {% endif %}
+        
+        {% if trabajadores_diarios %}
+            updateSelectedCount('trabajadores_diarios', 'count_trabajadores_diarios', {{ trabajadores_diarios|length }});
+        {% endif %}
     });
     
     console.log('Planificación bitácora cargado');
