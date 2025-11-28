@@ -5645,10 +5645,9 @@ def planilla_proyecto(request, proyecto_id):
             if colaborador.aplica_bono_general:
                 bonos_monto += Decimal(str(configuracion_planilla.bono_general))
             
-            # Bono de producción
+            # Bono de producción (ahora es monto fijo)
             if colaborador.aplica_bono_produccion:
-                bono_prod = (Decimal(str(salario_colaborador)) * Decimal(str(configuracion_planilla.bono_produccion))) / Decimal('100')
-                bonos_monto += bono_prod
+                bonos_monto += Decimal(str(configuracion_planilla.bono_produccion))
         
         # Salario con bonos y retenciones (todo en Decimal)
         salario_colaborador_decimal = Decimal(str(salario_colaborador))
@@ -5981,7 +5980,7 @@ def planilla_proyecto_pdf(request, proyecto_id):
             if colaborador.aplica_bono_general:
                 bonos_monto += configuracion_planilla.bono_general
             if colaborador.aplica_bono_produccion:
-                bonos_monto += (salario_colaborador * configuracion_planilla.bono_produccion) / Decimal('100')
+                bonos_monto += configuracion_planilla.bono_produccion
         
         # Salario quincenal (todo dividido entre 2)
         salario_quincenal = salario_colaborador / Decimal('2')
@@ -6117,7 +6116,7 @@ def planilla_proyecto_pdf(request, proyecto_id):
         ['• Seguro Educativo:', f'${configuracion_planilla.retencion_seguro_educativo:,.2f} mensuales'],
         ['Bonos', ''],
         ['• Bono General:', f'${configuracion_planilla.bono_general:,.2f} mensuales'],
-        ['• Bono de Producción:', f'{configuracion_planilla.bono_produccion}% sobre salario base'],
+        ['• Bono de Producción:', f'${configuracion_planilla.bono_produccion:,.2f} mensuales'],
     ]
     
     config_details_table = Table(config_details, colWidths=[2.5*inch, 7.5*inch])

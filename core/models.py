@@ -1825,7 +1825,7 @@ class ConfiguracionPlanilla(models.Model):
     
     # Bonos
     bono_general = models.DecimalField(max_digits=10, decimal_places=2, default=0, verbose_name="Bono General", help_text="Monto fijo mensual")
-    bono_produccion = models.DecimalField(max_digits=5, decimal_places=2, default=0, verbose_name="Bono de Producción (%)", help_text="Porcentaje sobre el salario")
+    bono_produccion = models.DecimalField(max_digits=10, decimal_places=2, default=0, verbose_name="Bono de Producción ($)", help_text="Monto fijo mensual")
     
     # Configuración
     aplicar_retenciones = models.BooleanField(default=True, verbose_name="Aplicar Retenciones")
@@ -1862,8 +1862,8 @@ class ConfiguracionPlanilla(models.Model):
             return 0
         
         bono_fijo = self.bono_general
-        bono_porcentaje = (salario_base * self.bono_produccion) / 100
-        return bono_fijo + bono_porcentaje
+        bono_produccion = self.bono_produccion  # Ahora es monto fijo, no porcentaje
+        return bono_fijo + bono_produccion
 
 
 class IngresoProyecto(models.Model):
