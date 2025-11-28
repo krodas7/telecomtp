@@ -639,11 +639,17 @@
         
         // Función para actualizar subproyectos cuando cambia el proyecto
         function actualizarSubproyectosGasto() {
-            const proyectoSelect = document.getElementById('id_proyecto_gasto');
-            const subproyectoSelect = document.getElementById('id_subproyecto_gasto');
+            // Usar los IDs estándar de Django
+            const proyectoSelect = document.getElementById('id_proyecto');
+            const subproyectoSelect = document.getElementById('id_subproyecto');
             const subproyectoContainer = document.getElementById('subproyecto-container');
             
             if (!proyectoSelect || !subproyectoSelect || !subproyectoContainer) {
+                console.log('Elementos no encontrados:', {
+                    proyecto: !!proyectoSelect,
+                    subproyecto: !!subproyectoSelect,
+                    container: !!subproyectoContainer
+                });
                 return;
             }
             
@@ -706,13 +712,15 @@
         }
         
         // Agregar event listener al selector de proyecto
-        const proyectoSelect = document.getElementById('id_proyecto_gasto');
+        const proyectoSelect = document.getElementById('id_proyecto');
         if (proyectoSelect) {
             proyectoSelect.addEventListener('change', actualizarSubproyectosGasto);
             // Cargar subproyectos si ya hay un proyecto seleccionado
             if (proyectoSelect.value) {
                 actualizarSubproyectosGasto();
             }
+        } else {
+            console.error('No se encontró el selector de proyecto con ID: id_proyecto');
         }
         
         // Formatear campo de monto

@@ -328,13 +328,10 @@ class GastoForm(forms.ModelForm):
         ]
         widgets = {
             'proyecto': forms.Select(attrs={
-                'class': 'form-select',
-                'id': 'id_proyecto_gasto',
-                'onchange': 'actualizarSubproyectosGasto()'
+                'class': 'form-select'
             }),
             'subproyecto': forms.Select(attrs={
-                'class': 'form-select',
-                'id': 'id_subproyecto_gasto'
+                'class': 'form-select'
             }),
             'categoria': forms.Select(attrs={
                 'class': 'form-select'
