@@ -271,10 +271,6 @@ class Subproyecto(models.Model):
     fecha_fin_real = models.DateField(null=True, blank=True, 
                                      help_text="Fecha real de finalización")
     
-    # Financiero
-    monto_cotizado = models.DecimalField(max_digits=12, decimal_places=2, default=0,
-                                        help_text="Monto de la cotización asociada")
-    
     # Estado
     estado = models.CharField(max_length=20, choices=ESTADO_CHOICES, default='pendiente')
     porcentaje_avance = models.DecimalField(max_digits=5, decimal_places=2, default=0,
@@ -300,9 +296,7 @@ class Subproyecto(models.Model):
         return f"{self.codigo} - {self.nombre}"
     
     def save(self, *args, **kwargs):
-        # Si hay cotización asociada, actualizar monto_cotizado
-        if self.cotizacion:
-            self.monto_cotizado = self.cotizacion.monto_total
+        # El monto_cotizado se calcula dinámicamente desde la cotización asociada
         super().save(*args, **kwargs)
     
     @property
