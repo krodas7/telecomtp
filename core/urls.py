@@ -251,6 +251,9 @@ urlpatterns = [
     path('api/notificaciones/no-leidas/', views.api_notificaciones_no_leidas, name='api_notificaciones_no_leidas'),
     path('api/notificacion/<int:notificacion_id>/marcar-leida/', views.api_marcar_leida, name='api_marcar_leida'),
     
+    # API para subproyectos
+    path('api/proyectos/<int:proyecto_id>/subproyectos/', views.get_subproyectos_by_proyecto, name='get_subproyectos_by_proyecto'),
+    
     # Administración de notificaciones (solo superusuarios)
     path('admin/notificaciones/sistema/', views.admin_notificaciones_sistema, name='admin_notificaciones_sistema'),
     path('admin/notificaciones/ejecutar-verificaciones/', views.admin_ejecutar_verificaciones, name='admin_ejecutar_verificaciones'),

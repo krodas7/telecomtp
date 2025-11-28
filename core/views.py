@@ -11971,6 +11971,36 @@ def planilla_colaborador_pdf(request, proyecto_id, colaborador_id):
 
 
 @login_required
+def get_subproyectos_by_proyecto(request, proyecto_id):
+    """Vista AJAX para obtener subproyectos de un proyecto específico"""
+    try:
+        proyecto = get_object_or_404(Proyecto, id=proyecto_id)
+        subproyectos = Subproyecto.objects.filter(
+            proyecto=proyecto,
+            activo=True
+        ).order_by('nombre')
+        
+        subproyectos_data = [
+            {
+                'id': sub.id,
+                'nombre': sub.nombre,
+                'codigo': sub.codigo or '',
+            }
+            for sub in subproyectos
+        ]
+        
+        return JsonResponse({
+            'success': True,
+            'subproyectos': subproyectos_data
+        })
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=400)
+
+
+@login_required
 def trabajadores_diarios_dashboard(request):
     """Dashboard principal del módulo de Trabajadores Diarios"""
     from django.db.models import Sum, Count, Q

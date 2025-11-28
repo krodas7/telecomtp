@@ -8,6 +8,7 @@ from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
 from django.utils import timezone
 from .models import *
+from .models import Subproyecto  # Importar explícitamente para usar en formularios
 
 
 class ClienteForm(forms.ModelForm):
@@ -166,11 +167,24 @@ class FacturaForm(forms.ModelForm):
         # Establecer valor por defecto para estado
         if not self.instance.pk:  # Solo para nuevas instancias
             self.fields['estado'].initial = 'emitida'
+        
+        # Hacer el campo subproyecto opcional
+        self.fields['subproyecto'].required = False
+        self.fields['subproyecto'].empty_label = "Seleccionar subproyecto (opcional)"
+        
+        # Filtrar subproyectos según el proyecto seleccionado
+        if self.instance.pk and self.instance.proyecto:
+            self.fields['subproyecto'].queryset = Subproyecto.objects.filter(
+                proyecto=self.instance.proyecto,
+                activo=True
+            ).order_by('nombre')
+        else:
+            self.fields['subproyecto'].queryset = Subproyecto.objects.none()
     
     class Meta:
         model = Factura
         fields = [
-            'numero_factura', 'proyecto', 'cliente', 'tipo', 'estado',
+            'numero_factura', 'proyecto', 'subproyecto', 'cliente', 'tipo', 'estado',
             'fecha_emision', 'fecha_vencimiento', 'monto_subtotal',
             'porcentaje_itbms', 'monto_iva', 'monto_total', 'descripcion_servicios',
             'porcentaje_avance', 'metodo_pago', 'referencia_pago',
@@ -182,7 +196,13 @@ class FacturaForm(forms.ModelForm):
                 'placeholder': 'F001-2025'
             }),
             'proyecto': forms.Select(attrs={
-                'class': 'form-select'
+                'class': 'form-select',
+                'id': 'id_proyecto_factura',
+                'onchange': 'actualizarSubproyectosFactura()'
+            }),
+            'subproyecto': forms.Select(attrs={
+                'class': 'form-select',
+                'id': 'id_subproyecto_factura'
             }),
             'cliente': forms.Select(attrs={
                 'class': 'form-select'
@@ -261,6 +281,19 @@ class GastoForm(forms.ModelForm):
         if not self.instance.pk:
             from datetime import date
             self.fields['fecha_gasto'].initial = date.today()
+        
+        # Hacer el campo subproyecto opcional
+        self.fields['subproyecto'].required = False
+        self.fields['subproyecto'].empty_label = "Seleccionar subproyecto (opcional)"
+        
+        # Filtrar subproyectos según el proyecto seleccionado
+        if self.instance.pk and self.instance.proyecto:
+            self.fields['subproyecto'].queryset = Subproyecto.objects.filter(
+                proyecto=self.instance.proyecto,
+                activo=True
+            ).order_by('nombre')
+        else:
+            self.fields['subproyecto'].queryset = Subproyecto.objects.none()
     
     def clean_monto(self):
         monto = self.cleaned_data.get('monto')
@@ -289,13 +322,19 @@ class GastoForm(forms.ModelForm):
     class Meta:
         model = Gasto
         fields = [
-            'proyecto', 'categoria', 'descripcion', 'monto', 
+            'proyecto', 'subproyecto', 'categoria', 'descripcion', 'monto', 
             'fecha_gasto', 'aprobado', 
             'observaciones', 'comprobante'
         ]
         widgets = {
             'proyecto': forms.Select(attrs={
-                'class': 'form-select'
+                'class': 'form-select',
+                'id': 'id_proyecto_gasto',
+                'onchange': 'actualizarSubproyectosGasto()'
+            }),
+            'subproyecto': forms.Select(attrs={
+                'class': 'form-select',
+                'id': 'id_subproyecto_gasto'
             }),
             'categoria': forms.Select(attrs={
                 'class': 'form-select'

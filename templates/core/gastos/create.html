@@ -460,6 +460,20 @@
                     {% endif %}
                     <div class="help-text">Selecciona el proyecto al que pertenece este egreso</div>
                 </div>
+                
+                <div class="form-group">
+                    <label for="{{ form.subproyecto.id_for_label }}" class="form-label">
+                        <i class="fas fa-project-diagram"></i>
+                        Subproyecto (Opcional)
+                    </label>
+                    {{ form.subproyecto }}
+                    {% if form.subproyecto.errors %}
+                        <div class="invalid-feedback">
+                            {{ form.subproyecto.errors.0 }}
+                        </div>
+                    {% endif %}
+                    <div class="help-text">Selecciona un subproyecto si este egreso pertenece a uno específico</div>
+                </div>
             </div>
             
             <!-- Fechas y Estado -->
@@ -630,6 +644,74 @@
             setTimeout(() => {
                 alertDiv.remove();
             }, 5000);
+        }
+        
+        // Función para actualizar subproyectos cuando cambia el proyecto
+        function actualizarSubproyectosGasto() {
+            const proyectoSelect = document.getElementById('id_proyecto_gasto');
+            const subproyectoSelect = document.getElementById('id_subproyecto_gasto');
+            
+            if (!proyectoSelect || !subproyectoSelect) {
+                return;
+            }
+            
+            const proyectoId = proyectoSelect.value;
+            
+            // Limpiar opciones actuales
+            subproyectoSelect.innerHTML = '<option value="">Seleccionar subproyecto (opcional)</option>';
+            
+            if (!proyectoId) {
+                return;
+            }
+            
+            // Hacer petición AJAX para obtener subproyectos
+            fetch(`/api/proyectos/${proyectoId}/subproyectos/`, {
+                method: 'GET',
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken'),
+                    'Content-Type': 'application/json',
+                },
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success && data.subproyectos) {
+                    data.subproyectos.forEach(subproyecto => {
+                        const option = document.createElement('option');
+                        option.value = subproyecto.id;
+                        option.textContent = subproyecto.nombre + (subproyecto.codigo ? ` (${subproyecto.codigo})` : '');
+                        subproyectoSelect.appendChild(option);
+                    });
+                }
+            })
+            .catch(error => {
+                console.error('Error al cargar subproyectos:', error);
+            });
+        }
+        
+        // Función auxiliar para obtener cookie CSRF
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+        
+        // Agregar event listener al selector de proyecto
+        const proyectoSelect = document.getElementById('id_proyecto_gasto');
+        if (proyectoSelect) {
+            proyectoSelect.addEventListener('change', actualizarSubproyectosGasto);
+            // Cargar subproyectos si ya hay un proyecto seleccionado
+            if (proyectoSelect.value) {
+                actualizarSubproyectosGasto();
+            }
         }
         
         // Formatear campo de monto

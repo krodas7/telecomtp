@@ -298,6 +298,23 @@
                             {% endif %}
                         </div>
                 </div>
+                
+                <!-- Subproyecto -->
+                <div class="form-group">
+                    <label for="{{ form.subproyecto.id_for_label }}" class="form-label">
+                        <i class="fas fa-project-diagram"></i>
+                        Subproyecto (Opcional)
+                    </label>
+                    {{ form.subproyecto }}
+                    {% if form.subproyecto.errors %}
+                        <div class="text-danger small mt-1">
+                            {% for error in form.subproyecto.errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                    <div class="help-text">Selecciona un subproyecto si esta factura pertenece a uno específico</div>
+                </div>
 
                     <!-- Estado -->
                     <div class="form-group">
@@ -552,6 +569,74 @@ document.addEventListener('DOMContentLoaded', function() {
     if (porcentajeItbmsSelect) {
         porcentajeItbmsSelect.addEventListener('change', calcularFactura);
         console.log('✅ Event listeners agregados al campo porcentaje ITBMS');
+    }
+    
+    // Función para actualizar subproyectos cuando cambia el proyecto
+    function actualizarSubproyectosFactura() {
+        const proyectoSelect = document.getElementById('id_proyecto_factura');
+        const subproyectoSelect = document.getElementById('id_subproyecto_factura');
+        
+        if (!proyectoSelect || !subproyectoSelect) {
+            return;
+        }
+        
+        const proyectoId = proyectoSelect.value;
+        
+        // Limpiar opciones actuales
+        subproyectoSelect.innerHTML = '<option value="">Seleccionar subproyecto (opcional)</option>';
+        
+        if (!proyectoId) {
+            return;
+        }
+        
+        // Hacer petición AJAX para obtener subproyectos
+        fetch(`/api/proyectos/${proyectoId}/subproyectos/`, {
+            method: 'GET',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken'),
+                'Content-Type': 'application/json',
+            },
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success && data.subproyectos) {
+                data.subproyectos.forEach(subproyecto => {
+                    const option = document.createElement('option');
+                    option.value = subproyecto.id;
+                    option.textContent = subproyecto.nombre + (subproyecto.codigo ? ` (${subproyecto.codigo})` : '');
+                    subproyectoSelect.appendChild(option);
+                });
+            }
+        })
+        .catch(error => {
+            console.error('Error al cargar subproyectos:', error);
+        });
+    }
+    
+    // Función auxiliar para obtener cookie CSRF
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+    
+    // Agregar event listener al selector de proyecto
+    const proyectoSelectFactura = document.getElementById('id_proyecto_factura');
+    if (proyectoSelectFactura) {
+        proyectoSelectFactura.addEventListener('change', actualizarSubproyectosFactura);
+        // Cargar subproyectos si ya hay un proyecto seleccionado
+        if (proyectoSelectFactura.value) {
+            actualizarSubproyectosFactura();
+        }
     }
     
     // Establecer fecha de emisión por defecto
