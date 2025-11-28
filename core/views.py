@@ -6091,6 +6091,12 @@ def planilla_proyecto_pdf(request, proyecto_id):
             subtitle_style
         ))
     
+    # RUC de la empresa
+    elements.append(Paragraph(
+        f'<b>RUC:</b> 155668382-2-2018', 
+        subtitle_style
+    ))
+    
     elements.append(Spacer(1, 15))
     
     # Resumen de configuración de planilla
