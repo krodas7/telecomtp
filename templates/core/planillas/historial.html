@@ -241,6 +241,17 @@
         border-color: #ef4444;
     }
     
+    .btn-action-sm.text-primary {
+        color: #3b82f6;
+        border-color: #dbeafe;
+    }
+    
+    .btn-action-sm.text-primary:hover {
+        background: #dbeafe;
+        border-color: #3b82f6;
+        color: #1e40af;
+    }
+    
     /* Pagination */
     .pagination {
         display: flex;
@@ -483,12 +494,19 @@
                         <td>{{ planilla.liquidada_por.get_full_name|default:planilla.liquidada_por.username }}</td>
                         <td>{{ planilla.fecha_liquidacion|date:"d/m/Y H:i" }}</td>
                         <td class="text-center">
-                            <a href="{% url 'planilla_liquidada_delete' planilla.id %}" 
-                               class="btn-action-sm text-danger" 
-                               title="Eliminar Planilla"
-                               onclick="return confirm('¿Estás seguro de que quieres eliminar esta planilla liquidada?\\n\\nProyecto: {{ planilla.proyecto.nombre }}\\nPeríodo: {{ planilla.get_mes_display }} {{ planilla.año }}\\nTotal: {{ planilla.total_planilla|currency_gtq }}\\n\\nEsta acción afectará los cálculos del dashboard del proyecto.');">
-                                <i class="fas fa-trash"></i>
-                            </a>
+                            <div style="display: inline-flex; gap: 0.5rem;">
+                                <a href="{% url 'planilla_liquidada_pdf' planilla.id %}" 
+                                   class="btn-action-sm text-primary" 
+                                   title="Imprimir Planilla">
+                                    <i class="fas fa-print"></i>
+                                </a>
+                                <a href="{% url 'planilla_liquidada_delete' planilla.id %}" 
+                                   class="btn-action-sm text-danger" 
+                                   title="Eliminar Planilla"
+                                   onclick="return confirm('¿Estás seguro de que quieres eliminar esta planilla liquidada?\\n\\nProyecto: {{ planilla.proyecto.nombre }}\\nPeríodo: {{ planilla.get_mes_display }} {{ planilla.año }}\\nTotal: {{ planilla.total_planilla|currency_gtq }}\\n\\nEsta acción afectará los cálculos del dashboard del proyecto.');">
+                                    <i class="fas fa-trash"></i>
+                                </a>
+                            </div>
                         </td>
                     </tr>
                     {% endfor %}

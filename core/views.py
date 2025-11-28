@@ -11468,6 +11468,188 @@ def planilla_liquidada_delete(request, planilla_id):
 
 
 @login_required
+def planilla_liquidada_pdf(request, planilla_id):
+    """Generar PDF de una planilla liquidada específica"""
+    planilla = get_object_or_404(PlanillaLiquidada, id=planilla_id)
+    proyecto = planilla.proyecto
+    
+    # Crear el PDF en orientación horizontal
+    buffer = BytesIO()
+    doc = SimpleDocTemplate(
+        buffer, 
+        pagesize=landscape(A4),
+        leftMargin=0.5*inch,
+        rightMargin=0.5*inch,
+        topMargin=0.5*inch,
+        bottomMargin=0.5*inch
+    )
+    elements = []
+    
+    # Estilos personalizados
+    styles = getSampleStyleSheet()
+    
+    # Estilo para el encabezado principal
+    header_style = ParagraphStyle(
+        'HeaderStyle',
+        parent=styles['Heading1'],
+        fontSize=24,
+        spaceAfter=10,
+        alignment=TA_CENTER,
+        textColor=colors.HexColor('#1e3a8a'),
+        fontName='Helvetica-Bold',
+        leading=28
+    )
+    
+    # Estilo para subtítulo
+    subtitle_style = ParagraphStyle(
+        'SubtitleStyle',
+        parent=styles['Normal'],
+        fontSize=14,
+        spaceAfter=20,
+        alignment=TA_CENTER,
+        textColor=colors.HexColor('#3b82f6'),
+        fontName='Helvetica-Bold'
+    )
+    
+    # Estilo para secciones
+    section_style = ParagraphStyle(
+        'SectionStyle',
+        parent=styles['Normal'],
+        fontSize=12,
+        spaceAfter=10,
+        textColor=colors.HexColor('#1e3a8a'),
+        fontName='Helvetica-Bold'
+    )
+    
+    # Logo y encabezado
+    try:
+        logo_path = os.path.join(settings.BASE_DIR, 'static', 'images', 'LOGO-TELECOM-small.png')
+        if os.path.exists(logo_path):
+            logo = Image(logo_path, width=120, height=60)
+        else:
+            logo = Paragraph("<b>TELECOM</b><br/>Technology Panama INC.", styles['Normal'])
+    except:
+        logo = Paragraph("<b>TELECOM</b><br/>Technology Panama INC.", styles['Normal'])
+    
+    # Fecha de generación
+    fecha_generacion = timezone.localtime(timezone.now()).strftime('%d/%m/%Y %H:%M')
+    
+    # Header con logo y fecha
+    header_data = [[
+        logo,
+        Paragraph(
+            f'<b>PLANILLA DE PERSONAL QUINCENAL LIQUIDADA</b><br/>'
+            f'<font size="10">Generado: {fecha_generacion}</font>',
+            ParagraphStyle('HeaderRight', parent=styles['Normal'], fontSize=12, alignment=TA_RIGHT)
+        )
+    ]]
+    header_table = Table(header_data, colWidths=[3*inch, 7*inch])
+    header_table.setStyle(TableStyle([
+        ('ALIGN', (0, 0), (0, 0), 'LEFT'),
+        ('ALIGN', (1, 0), (1, 0), 'RIGHT'),
+        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+    ]))
+    elements.append(header_table)
+    elements.append(Spacer(1, 20))
+    
+    # Título del proyecto
+    elements.append(Paragraph(f"<b>PROYECTO: {proyecto.nombre.upper()}</b>", header_style))
+    
+    # Cliente
+    if proyecto.cliente:
+        elements.append(Paragraph(
+            f'<b>Cliente:</b> {proyecto.cliente.razon_social}', 
+            subtitle_style
+        ))
+    
+    # RUC de la empresa
+    elements.append(Paragraph(
+        f'<b>RUC:</b> 155668382-2-2018', 
+        subtitle_style
+    ))
+    
+    elements.append(Spacer(1, 15))
+    
+    # Información del período
+    periodo_data = [
+        ['PERÍODO DE LIQUIDACIÓN', ''],
+        ['Mes:', planilla.get_mes_display()],
+        ['Año:', str(planilla.año)],
+        ['Quincena:', planilla.get_quincena_display()],
+        ['Fecha de Liquidación:', planilla.fecha_liquidacion.strftime('%d/%m/%Y %H:%M')],
+        ['Liquidada por:', planilla.liquidada_por.get_full_name() or planilla.liquidada_por.username],
+    ]
+    
+    periodo_table = Table(periodo_data, colWidths=[2.5*inch, 7.5*inch])
+    periodo_table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#e0e7ff')),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, -1), 10),
+        ('LEFTPADDING', (0, 0), (-1, -1), 10),
+        ('TOPPADDING', (0, 0), (-1, -1), 5),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 5),
+        ('GRID', (0, 0), (-1, -1), 1, colors.HexColor('#d1d5db')),
+    ]))
+    elements.append(periodo_table)
+    elements.append(Spacer(1, 20))
+    
+    # Resumen financiero
+    resumen_data = [
+        ['CONCEPTO', 'MONTO'],
+        ['Total Salarios Quincenales', f"${planilla.total_salarios:,.2f}"],
+        ['Total Anticipos Descontados', f"${planilla.total_anticipos:,.2f}"],
+        ['TOTAL A PAGAR', f"${planilla.total_planilla:,.2f}"],
+        ['Cantidad de Personal', str(planilla.cantidad_personal)],
+    ]
+    
+    resumen_table = Table(resumen_data, colWidths=[5*inch, 5*inch])
+    resumen_table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#1e3a8a')),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+        ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+        ('ALIGN', (1, 0), (1, -1), 'RIGHT'),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, 0), 12),
+        ('FONTSIZE', (0, 1), (-1, -1), 10),
+        ('FONTNAME', (0, 3), (1, 3), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 3), (1, 3), 14),
+        ('BACKGROUND', (0, 3), (-1, 3), colors.HexColor('#dbeafe')),
+        ('GRID', (0, 0), (-1, -1), 1, colors.HexColor('#1e3a8a')),
+        ('TOPPADDING', (0, 0), (-1, -1), 8),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
+    ]))
+    elements.append(resumen_table)
+    elements.append(Spacer(1, 20))
+    
+    # Observaciones si existen
+    if planilla.observaciones:
+        elements.append(Paragraph('<b>OBSERVACIONES</b>', section_style))
+        elements.append(Paragraph(planilla.observaciones, styles['Normal']))
+        elements.append(Spacer(1, 20))
+    
+    # Footer
+    footer_text = f"<i>TELECOM PANAMA - Planilla Liquidada</i>"
+    elements.append(Spacer(1, 20))
+    elements.append(Paragraph(footer_text, ParagraphStyle(
+        'FooterStyle',
+        parent=styles['Normal'],
+        fontSize=8,
+        alignment=TA_CENTER,
+        textColor=colors.HexColor('#6b7280'),
+    )))
+    
+    # Construir PDF
+    doc.build(elements)
+    
+    # Preparar respuesta
+    buffer.seek(0)
+    response = HttpResponse(buffer.read(), content_type='application/pdf')
+    response['Content-Disposition'] = f'attachment; filename="planilla_liquidada_{planilla.proyecto.nombre}_{planilla.get_mes_display()}_{planilla.año}_Q{planilla.quincena}.pdf"'
+    
+    return response
+
+
+@login_required
 def trabajadores_diarios_dashboard(request):
     """Dashboard principal del módulo de Trabajadores Diarios"""
     from django.db.models import Sum, Count, Q
