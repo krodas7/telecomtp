@@ -281,6 +281,25 @@
                             {% endfor %}
                                 </div>
                             {% endif %}
+                            
+                            <!-- Subproyectos (se muestran dinámicamente) -->
+                            <div id="subproyecto-container-factura" class="mt-3" style="display: none;">
+                                <label for="{{ form.subproyecto.id_for_label }}" class="form-label" style="font-size: 0.9rem; color: #6c757d;">
+                                    <i class="fas fa-project-diagram"></i>
+                                    Subproyecto (Opcional)
+                                </label>
+                                {{ form.subproyecto }}
+                                {% if form.subproyecto.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {% for error in form.subproyecto.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                                <div class="help-text" style="font-size: 0.85rem; color: #6c757d;">
+                                    Selecciona un subproyecto si esta factura pertenece a uno específico
+                                </div>
+                            </div>
                     </div>
                     
                     <div class="form-group">
@@ -297,23 +316,6 @@
                                 </div>
                             {% endif %}
                         </div>
-                </div>
-                
-                <!-- Subproyecto -->
-                <div class="form-group">
-                    <label for="{{ form.subproyecto.id_for_label }}" class="form-label">
-                        <i class="fas fa-project-diagram"></i>
-                        Subproyecto (Opcional)
-                    </label>
-                    {{ form.subproyecto }}
-                    {% if form.subproyecto.errors %}
-                        <div class="text-danger small mt-1">
-                            {% for error in form.subproyecto.errors %}
-                                {{ error }}
-                            {% endfor %}
-                        </div>
-                    {% endif %}
-                    <div class="help-text">Selecciona un subproyecto si esta factura pertenece a uno específico</div>
                 </div>
 
                     <!-- Estado -->
@@ -575,8 +577,9 @@ document.addEventListener('DOMContentLoaded', function() {
     function actualizarSubproyectosFactura() {
         const proyectoSelect = document.getElementById('id_proyecto_factura');
         const subproyectoSelect = document.getElementById('id_subproyecto_factura');
+        const subproyectoContainer = document.getElementById('subproyecto-container-factura');
         
-        if (!proyectoSelect || !subproyectoSelect) {
+        if (!proyectoSelect || !subproyectoSelect || !subproyectoContainer) {
             return;
         }
         
@@ -585,7 +588,9 @@ document.addEventListener('DOMContentLoaded', function() {
         // Limpiar opciones actuales
         subproyectoSelect.innerHTML = '<option value="">Seleccionar subproyecto (opcional)</option>';
         
+        // Ocultar contenedor si no hay proyecto seleccionado
         if (!proyectoId) {
+            subproyectoContainer.style.display = 'none';
             return;
         }
         
@@ -599,17 +604,24 @@ document.addEventListener('DOMContentLoaded', function() {
         })
         .then(response => response.json())
         .then(data => {
-            if (data.success && data.subproyectos) {
+            if (data.success && data.subproyectos && data.subproyectos.length > 0) {
+                // Agregar subproyectos al selector
                 data.subproyectos.forEach(subproyecto => {
                     const option = document.createElement('option');
                     option.value = subproyecto.id;
                     option.textContent = subproyecto.nombre + (subproyecto.codigo ? ` (${subproyecto.codigo})` : '');
                     subproyectoSelect.appendChild(option);
                 });
+                // Mostrar el contenedor de subproyectos
+                subproyectoContainer.style.display = 'block';
+            } else {
+                // Ocultar si no hay subproyectos
+                subproyectoContainer.style.display = 'none';
             }
         })
         .catch(error => {
             console.error('Error al cargar subproyectos:', error);
+            subproyectoContainer.style.display = 'none';
         });
     }
     
