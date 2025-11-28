@@ -12107,7 +12107,22 @@ def planillas_trabajadores_diarios_gestor(request):
 @login_required
 def bitacora_dashboard(request):
     """Dashboard principal del módulo de Bitácora"""
+    # TODO: Agregar estadísticas reales cuando se implemente el modelo
     context = {
         'titulo': 'Bitácora',
+        'total_registros': 0,
+        'actividades_programadas': 0,
+        'completadas': 0,
+        'en_progreso': 0,
     }
     return render(request, 'core/bitacora/dashboard.html', context)
+
+
+@login_required
+def bitacora_planificacion(request):
+    """Formulario de planificación para la bitácora"""
+    # TODO: Implementar formulario de planificación
+    context = {
+        'titulo': 'Planificación - Bitácora',
+    }
+    return render(request, 'core/bitacora/planificacion.html', context)

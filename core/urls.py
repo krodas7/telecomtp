@@ -38,6 +38,7 @@ urlpatterns = [
     
     # Bitácora
     path('bitacora/', views.bitacora_dashboard, name='bitacora_dashboard'),
+    path('bitacora/planificacion/', views.bitacora_planificacion, name='bitacora_planificacion'),
     path('planillas/<int:planilla_id>/pdf/', views.planilla_liquidada_pdf, name='planilla_liquidada_pdf'),
     path('proyecto/<int:proyecto_id>/historico-nomina/reset/', views.resetear_historico_nomina, name='resetear_historico_nomina'),
     path('proyectos/<int:proyecto_id>/administrar-anticipos/', views.administrar_anticipos_proyecto, name='administrar_anticipos_proyecto'),
