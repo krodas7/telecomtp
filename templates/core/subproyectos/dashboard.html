@@ -317,7 +317,7 @@
         </div>
         
         <div class="stat-card">
-            <div class="stat-label">Gastos Totales</div>
+            <div class="stat-label">Egresos Totales</div>
             <div class="stat-value">{{ total_gastos|currency_gtq }}</div>
         </div>
         
@@ -338,7 +338,7 @@
         </div>
         
         <div class="chart-card">
-            <h3><i class="fas fa-chart-pie me-2"></i>Distribución de Gastos</h3>
+            <h3><i class="fas fa-chart-pie me-2"></i>Distribución de Egresos</h3>
             <canvas id="gastosChart"></canvas>
         </div>
     </div>
@@ -355,7 +355,7 @@
                         <th>Nombre</th>
                         <th>Cotizado</th>
                         <th>Ingresos</th>
-                        <th>Gastos</th>
+                        <th>Egresos</th>
                         <th>Rentabilidad</th>
                         <th>Margen %</th>
                         <th>Avance</th>
@@ -445,7 +445,7 @@
                         backgroundColor: '#10b981',
                     },
                     {
-                        label: 'Gastos',
+                        label: 'Egresos',
                         data: subproyectosData.map(s => s.total_gastos),
                         backgroundColor: '#ef4444',
                     },

@@ -644,16 +644,29 @@
             const subproyectoSelect = document.getElementById('id_subproyecto');
             const subproyectoContainer = document.getElementById('subproyecto-container');
             
-            if (!proyectoSelect || !subproyectoSelect || !subproyectoContainer) {
-                console.log('Elementos no encontrados:', {
-                    proyecto: !!proyectoSelect,
-                    subproyecto: !!subproyectoSelect,
-                    container: !!subproyectoContainer
-                });
+            console.log('🔍 Buscando elementos:', {
+                proyecto: !!proyectoSelect,
+                subproyecto: !!subproyectoSelect,
+                container: !!subproyectoContainer
+            });
+            
+            if (!proyectoSelect) {
+                console.error('❌ No se encontró el selector de proyecto');
+                return;
+            }
+            
+            if (!subproyectoSelect) {
+                console.error('❌ No se encontró el selector de subproyecto');
+                return;
+            }
+            
+            if (!subproyectoContainer) {
+                console.error('❌ No se encontró el contenedor de subproyectos');
                 return;
             }
             
             const proyectoId = proyectoSelect.value;
+            console.log('📌 Proyecto seleccionado:', proyectoId);
             
             // Limpiar opciones actuales
             subproyectoSelect.innerHTML = '<option value="">Seleccionar subproyecto (opcional)</option>';
@@ -664,6 +677,7 @@
                 return;
             }
             
+            console.log('🔄 Haciendo petición AJAX para obtener subproyectos...');
             // Hacer petición AJAX para obtener subproyectos
             fetch(`/api/proyectos/${proyectoId}/subproyectos/`, {
                 method: 'GET',
@@ -672,9 +686,14 @@
                     'Content-Type': 'application/json',
                 },
             })
-            .then(response => response.json())
+            .then(response => {
+                console.log('📥 Respuesta recibida:', response.status);
+                return response.json();
+            })
             .then(data => {
+                console.log('📊 Datos recibidos:', data);
                 if (data.success && data.subproyectos && data.subproyectos.length > 0) {
+                    console.log(`✅ Encontrados ${data.subproyectos.length} subproyectos`);
                     // Agregar subproyectos al selector
                     data.subproyectos.forEach(subproyecto => {
                         const option = document.createElement('option');
@@ -684,13 +703,15 @@
                     });
                     // Mostrar el contenedor de subproyectos
                     subproyectoContainer.style.display = 'block';
+                    console.log('✅ Contenedor de subproyectos mostrado');
                 } else {
+                    console.log('ℹ️ No hay subproyectos disponibles');
                     // Ocultar si no hay subproyectos
                     subproyectoContainer.style.display = 'none';
                 }
             })
             .catch(error => {
-                console.error('Error al cargar subproyectos:', error);
+                console.error('❌ Error al cargar subproyectos:', error);
                 subproyectoContainer.style.display = 'none';
             });
         }
@@ -712,15 +733,28 @@
         }
         
         // Agregar event listener al selector de proyecto
+        console.log('🚀 Inicializando selector de subproyectos...');
         const proyectoSelect = document.getElementById('id_proyecto');
         if (proyectoSelect) {
-            proyectoSelect.addEventListener('change', actualizarSubproyectosGasto);
+            console.log('✅ Selector de proyecto encontrado');
+            proyectoSelect.addEventListener('change', function() {
+                console.log('🔄 Evento change detectado en selector de proyecto');
+                actualizarSubproyectosGasto();
+            });
             // Cargar subproyectos si ya hay un proyecto seleccionado
             if (proyectoSelect.value) {
+                console.log('📋 Proyecto ya seleccionado, cargando subproyectos...');
                 actualizarSubproyectosGasto();
             }
         } else {
-            console.error('No se encontró el selector de proyecto con ID: id_proyecto');
+            console.error('❌ No se encontró el selector de proyecto con ID: id_proyecto');
+            // Intentar encontrar el selector con otros métodos
+            const allSelects = document.querySelectorAll('select');
+            console.log('🔍 Todos los selectores encontrados:', Array.from(allSelects).map(s => ({
+                id: s.id,
+                name: s.name,
+                classes: s.className
+            })));
         }
         
         // Formatear campo de monto
