@@ -120,20 +120,42 @@
     }
     
     .form-control,
-    .form-select {
+    .form-select,
+    textarea.form-control {
         border: 2px solid #e5e7eb;
         border-radius: 8px;
         padding: 0.75rem 1rem;
         font-size: 1rem;
         transition: all 0.2s;
         width: 100%;
+        font-family: inherit;
+    }
+    
+    textarea.form-control {
+        resize: vertical;
+        min-height: 200px;
     }
     
     .form-control:focus,
-    .form-select:focus {
+    .form-select:focus,
+    textarea.form-control:focus {
         border-color: #6366f1;
         box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
         outline: none;
+    }
+    
+    @media (max-width: 1024px) {
+        .form-content-wrapper {
+            grid-template-columns: 1fr;
+        }
+        
+        .form-sections-column {
+            max-width: 100%;
+        }
+        
+        .description-column {
+            position: static;
+        }
     }
     
     /* Custom Dropdown */
@@ -388,30 +410,32 @@
         {% csrf_token %}
         
         <div class="form-container">
-            <!-- Selección de Proyecto -->
-            <div class="form-section">
-                <h3 class="form-section-title">
-                    <i class="fas fa-building"></i>
-                    Seleccionar Proyecto
-                </h3>
-                
-                <div class="form-group">
-                    <label class="form-label" for="proyecto">
-                        <i class="fas fa-project-diagram"></i>
-                        Proyecto <span class="required">*</span>
-                    </label>
-                    <select name="proyecto" id="proyecto" class="form-select" required onchange="cargarTrabajadores()">
-                        <option value="">-- Seleccione un proyecto --</option>
-                        {% for proyecto in proyectos %}
-                            <option value="{{ proyecto.id }}" {% if proyecto_seleccionado and proyecto_seleccionado.id == proyecto.id %}selected{% endif %}>
-                                {{ proyecto.nombre }} - {{ proyecto.cliente.razon_social }}
-                            </option>
-                        {% endfor %}
-                    </select>
-                </div>
-            </div>
-            
-            {% if proyecto_seleccionado %}
+            <div class="form-content-wrapper">
+                <div class="form-sections-column">
+                    <!-- Selección de Proyecto -->
+                    <div class="form-section">
+                        <h3 class="form-section-title">
+                            <i class="fas fa-building"></i>
+                            Seleccionar Proyecto
+                        </h3>
+                        
+                        <div class="form-group">
+                            <label class="form-label" for="proyecto">
+                                <i class="fas fa-project-diagram"></i>
+                                Proyecto <span class="required">*</span>
+                            </label>
+                            <select name="proyecto" id="proyecto" class="form-select" required onchange="cargarTrabajadores()">
+                                <option value="">-- Seleccione un proyecto --</option>
+                                {% for proyecto in proyectos %}
+                                    <option value="{{ proyecto.id }}" {% if proyecto_seleccionado and proyecto_seleccionado.id == proyecto.id %}selected{% endif %}>
+                                        {{ proyecto.nombre }} - {{ proyecto.cliente.razon_social }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    
+                    {% if proyecto_seleccionado %}
                 <!-- Dropdown de Colaboradores (Trabajadores en Planilla) -->
                 <div class="form-section">
                     <h3 class="form-section-title">
@@ -515,18 +539,43 @@
                     {% endif %}
                 </div>
                 
-                <!-- Botones de Acción -->
-                <div class="btn-group">
-                    <a href="{% url 'bitacora_dashboard' %}" class="btn btn-secondary">
-                        <i class="fas fa-times"></i>
-                        <span>Cancelar</span>
-                    </a>
-                    <button type="submit" name="guardar" class="btn btn-primary">
-                        <i class="fas fa-save"></i>
-                        <span>Guardar Planificación</span>
-                    </button>
+                    <!-- Botones de Acción -->
+                    <div class="btn-group">
+                        <a href="{% url 'bitacora_dashboard' %}" class="btn btn-secondary">
+                            <i class="fas fa-times"></i>
+                            <span>Cancelar</span>
+                        </a>
+                        <button type="submit" name="guardar" class="btn btn-primary">
+                            <i class="fas fa-save"></i>
+                            <span>Guardar Planificación</span>
+                        </button>
+                    </div>
+                    {% endif %}
                 </div>
-            {% else %}
+                
+                <!-- Columna de Descripción -->
+                <div class="description-column">
+                    <div class="form-section">
+                        <h3 class="form-section-title">
+                            <i class="fas fa-info-circle"></i>
+                            Descripción de la Planificación
+                        </h3>
+                        <div class="form-group">
+                            <label class="form-label" for="descripcion">
+                                <i class="fas fa-align-left"></i>
+                                Descripción
+                            </label>
+                            <textarea name="descripcion" 
+                                      id="descripcion" 
+                                      class="form-control" 
+                                      rows="10" 
+                                      placeholder="Describe la planificación, actividades a realizar, objetivos, etc..."></textarea>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            {% if not proyecto_seleccionado %}
                 <div class="alert-info">
                     <i class="fas fa-info-circle"></i>
                     <strong>Instrucciones:</strong> Selecciona un proyecto para ver los trabajadores disponibles.
