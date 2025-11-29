@@ -426,7 +426,7 @@
                                 <i class="fas fa-heading"></i>
                                 Título <span class="required">*</span>
                             </label>
-                            <input type="text" name="titulo" id="titulo" class="form-control" required placeholder="Ej: Mantenimiento de torres - Semana 1">
+                            <input type="text" name="titulo" id="titulo" class="form-control" required placeholder="Ej: Mantenimiento de torres - Semana 1" value="{% if form_data.titulo %}{{ form_data.titulo }}{% endif %}">
                         </div>
                         
                         <div class="form-group">
@@ -567,7 +567,7 @@
                                           id="descripcion" 
                                           class="form-control" 
                                           rows="5" 
-                                          placeholder="Describe la planificación, actividades a realizar, objetivos, etc..."></textarea>
+                                          placeholder="Describe la planificación, actividades a realizar, objetivos, etc...">{% if form_data.descripcion %}{{ form_data.descripcion }}{% endif %}</textarea>
                             </div>
                             
                             <div class="form-group">
@@ -575,7 +575,7 @@
                                     <i class="fas fa-calendar-alt"></i>
                                     Fecha de Inicio <span class="required">*</span>
                                 </label>
-                                <input type="date" name="fecha_inicio" id="fecha_inicio" class="form-control" required>
+                                <input type="date" name="fecha_inicio" id="fecha_inicio" class="form-control" required value="{% if form_data.fecha_inicio %}{{ form_data.fecha_inicio }}{% endif %}">
                             </div>
                             
                             <div class="form-group">
@@ -583,7 +583,7 @@
                                     <i class="fas fa-calendar-check"></i>
                                     Fecha de Fin
                                 </label>
-                                <input type="date" name="fecha_fin" id="fecha_fin" class="form-control">
+                                <input type="date" name="fecha_fin" id="fecha_fin" class="form-control" value="{% if form_data.fecha_fin %}{{ form_data.fecha_fin }}{% endif %}">
                             </div>
                             
                             <div class="form-group">
@@ -592,10 +592,10 @@
                                     Estado
                                 </label>
                                 <select name="estado" id="estado" class="form-select">
-                                    <option value="programada">Programada</option>
-                                    <option value="en_progreso">En Progreso</option>
-                                    <option value="completada">Completada</option>
-                                    <option value="cancelada">Cancelada</option>
+                                    <option value="programada" {% if form_data.estado == 'programada' or not form_data %}selected{% endif %}>Programada</option>
+                                    <option value="en_progreso" {% if form_data.estado == 'en_progreso' %}selected{% endif %}>En Progreso</option>
+                                    <option value="completada" {% if form_data.estado == 'completada' %}selected{% endif %}>Completada</option>
+                                    <option value="cancelada" {% if form_data.estado == 'cancelada' %}selected{% endif %}>Cancelada</option>
                                 </select>
                             </div>
                             
@@ -605,9 +605,9 @@
                                     Prioridad
                                 </label>
                                 <select name="prioridad" id="prioridad" class="form-select">
-                                    <option value="baja">Baja</option>
-                                    <option value="media" selected>Media</option>
-                                    <option value="alta">Alta</option>
+                                    <option value="baja" {% if form_data.prioridad == 'baja' %}selected{% endif %}>Baja</option>
+                                    <option value="media" {% if form_data.prioridad == 'media' or not form_data %}selected{% endif %}>Media</option>
+                                    <option value="alta" {% if form_data.prioridad == 'alta' %}selected{% endif %}>Alta</option>
                                 </select>
                             </div>
                         </div>
@@ -834,6 +834,27 @@
         }, true);
         
         console.log('✅ Inicialización de formulario completada');
+        
+        // Restaurar checkboxes seleccionados si hay datos del formulario (errores de validación)
+        {% if form_data.colaboradores_ids %}
+            {% for colaborador_id in form_data.colaboradores_ids %}
+                const checkboxColab = document.getElementById('colaborador_{{ colaborador_id }}');
+                if (checkboxColab) {
+                    checkboxColab.checked = true;
+                    updateSelected('colaboradores', checkboxColab);
+                }
+            {% endfor %}
+        {% endif %}
+        
+        {% if form_data.trabajadores_diarios_ids %}
+            {% for trabajador_id in form_data.trabajadores_diarios_ids %}
+                const checkboxTrab = document.getElementById('trabajador_{{ trabajador_id }}');
+                if (checkboxTrab) {
+                    checkboxTrab.checked = true;
+                    updateSelected('trabajadores_diarios', checkboxTrab);
+                }
+            {% endfor %}
+        {% endif %}
     });
     
     console.log('📄 Script de planificación bitácora cargado');

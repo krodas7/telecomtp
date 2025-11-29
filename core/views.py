@@ -12127,6 +12127,12 @@ def bitacora_planificacion(request):
     trabajadores_diarios = []
     proyecto_seleccionado = None
     
+    # Inicializar variables del contexto
+    colaboradores = []
+    trabajadores_diarios = []
+    proyecto_seleccionado = None
+    form_data = {}  # Para preservar datos del formulario en caso de errores
+    
     if request.method == 'POST' and request.POST.get('guardar'):
         # Procesar guardado de planificación
         proyecto_id = request.POST.get('proyecto')
@@ -12138,6 +12144,18 @@ def bitacora_planificacion(request):
         prioridad = request.POST.get('prioridad', 'media')
         colaboradores_ids = request.POST.getlist('colaboradores')
         trabajadores_diarios_ids = request.POST.getlist('trabajadores_diarios')
+        
+        # Guardar datos del formulario para preservarlos en caso de error
+        form_data = {
+            'titulo': titulo,
+            'descripcion': descripcion,
+            'fecha_inicio': fecha_inicio,
+            'fecha_fin': fecha_fin,
+            'estado': estado,
+            'prioridad': prioridad,
+            'colaboradores_ids': colaboradores_ids,
+            'trabajadores_diarios_ids': trabajadores_diarios_ids,
+        }
         
         # Validar campos requeridos
         errors = []
@@ -12151,6 +12169,17 @@ def bitacora_planificacion(request):
         if errors:
             for error in errors:
                 messages.error(request, error)
+            # Mantener el proyecto seleccionado para mostrar los trabajadores
+            if proyecto_id:
+                try:
+                    proyecto_seleccionado = Proyecto.objects.get(id=proyecto_id, activo=True)
+                    colaboradores = proyecto_seleccionado.colaboradores.filter(activo=True).order_by('nombre')
+                    trabajadores_diarios = TrabajadorDiario.objects.filter(
+                        proyecto=proyecto_seleccionado,
+                        activo=True
+                    ).order_by('nombre')
+                except Proyecto.DoesNotExist:
+                    pass
         else:
             try:
                 proyecto_seleccionado = Proyecto.objects.get(id=proyecto_id, activo=True)
@@ -12188,27 +12217,46 @@ def bitacora_planificacion(request):
                 return redirect('bitacora_dashboard')
             except Proyecto.DoesNotExist:
                 messages.error(request, 'El proyecto seleccionado no existe o no está activo')
+                if proyecto_id:
+                    try:
+                        proyecto_seleccionado = Proyecto.objects.get(id=proyecto_id, activo=True)
+                        colaboradores = proyecto_seleccionado.colaboradores.filter(activo=True).order_by('nombre')
+                        trabajadores_diarios = TrabajadorDiario.objects.filter(
+                            proyecto=proyecto_seleccionado,
+                            activo=True
+                        ).order_by('nombre')
+                    except:
+                        pass
             except Exception as e:
                 import traceback
                 error_detail = traceback.format_exc()
                 messages.error(request, f'Error al crear planificación: {str(e)}')
                 print(f"Error al crear planificación: {error_detail}")
-    
-    # Obtener proyecto_id de GET o POST
-    proyecto_id = request.GET.get('proyecto_id') or request.POST.get('proyecto')
-    
-    if proyecto_id:
-        try:
-            proyecto_seleccionado = Proyecto.objects.get(id=proyecto_id, activo=True)
-            # Obtener colaboradores del proyecto usando select_related para optimización
-            colaboradores = proyecto_seleccionado.colaboradores.filter(activo=True).order_by('nombre')
-            # Obtener trabajadores diarios activos del proyecto
-            trabajadores_diarios = TrabajadorDiario.objects.filter(
-                proyecto=proyecto_seleccionado,
-                activo=True
-            ).order_by('nombre')
-        except Proyecto.DoesNotExist:
-            messages.error(request, 'Proyecto no encontrado')
+                # Mantener el proyecto seleccionado en caso de error
+                if proyecto_id:
+                    try:
+                        proyecto_seleccionado = Proyecto.objects.get(id=proyecto_id, activo=True)
+                        colaboradores = proyecto_seleccionado.colaboradores.filter(activo=True).order_by('nombre')
+                        trabajadores_diarios = TrabajadorDiario.objects.filter(
+                            proyecto=proyecto_seleccionado,
+                            activo=True
+                        ).order_by('nombre')
+                    except:
+                        pass
+    else:
+        # Obtener proyecto_id de GET
+        proyecto_id = request.GET.get('proyecto_id')
+        
+        if proyecto_id:
+            try:
+                proyecto_seleccionado = Proyecto.objects.get(id=proyecto_id, activo=True)
+                colaboradores = proyecto_seleccionado.colaboradores.filter(activo=True).order_by('nombre')
+                trabajadores_diarios = TrabajadorDiario.objects.filter(
+                    proyecto=proyecto_seleccionado,
+                    activo=True
+                ).order_by('nombre')
+            except Proyecto.DoesNotExist:
+                messages.error(request, 'Proyecto no encontrado')
     
     context = {
         'titulo': 'Planificación - Bitácora',
@@ -12216,6 +12264,7 @@ def bitacora_planificacion(request):
         'colaboradores': colaboradores,
         'trabajadores_diarios': trabajadores_diarios,
         'proyecto_seleccionado': proyecto_seleccionado,
+        'form_data': form_data,  # Pasar datos del formulario para preservarlos
     }
     return render(request, 'core/bitacora/planificacion.html', context)
 
