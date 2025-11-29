@@ -12134,6 +12134,11 @@ def bitacora_planificacion(request):
     form_data = {}  # Para preservar datos del formulario en caso de errores
     
     if request.method == 'POST' and request.POST.get('guardar'):
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.info(f"POST recibido para crear planificación. Usuario: {request.user.username}")
+        logger.info(f"Datos POST: {dict(request.POST)}")
+        
         # Procesar guardado de planificación
         proyecto_id = request.POST.get('proyecto')
         titulo = request.POST.get('titulo', '').strip()
@@ -12144,6 +12149,8 @@ def bitacora_planificacion(request):
         prioridad = request.POST.get('prioridad', 'media')
         colaboradores_ids = request.POST.getlist('colaboradores')
         trabajadores_diarios_ids = request.POST.getlist('trabajadores_diarios')
+        
+        logger.info(f"Procesando planificación - Proyecto: {proyecto_id}, Título: {titulo}, Fecha inicio: {fecha_inicio}")
         
         # Guardar datos del formulario para preservarlos en caso de error
         form_data = {
