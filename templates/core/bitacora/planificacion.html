@@ -63,12 +63,28 @@
         margin: 0 auto;
     }
     
+    .form-content-wrapper {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 2rem;
+        align-items: start;
+    }
+    
+    .form-sections-column {
+        max-width: 500px;
+    }
+    
     .form-section {
         margin-bottom: 1.5rem;
         padding: 1rem;
         background: #f9fafb;
         border-radius: 12px;
         border-left: 4px solid #6366f1;
+    }
+    
+    .description-column {
+        position: sticky;
+        top: 2rem;
     }
     
     .form-section-title {
@@ -124,7 +140,6 @@
     .custom-dropdown {
         position: relative;
         width: 100%;
-        max-width: 300px;
         z-index: 1;
     }
     
