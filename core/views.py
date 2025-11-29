@@ -25,7 +25,7 @@ from .models import (
     TrabajadorDiario, RegistroTrabajo, AnticipoTrabajadorDiario, PlanillaLiquidada, PlanillaTrabajadoresDiarios,
     ItemCotizacion, ItemReutilizable, ConfiguracionPlanilla,
     ServicioTorrero, RegistroDiasTrabajados, PagoServicioTorrero, Torrero, AsignacionTorrero,
-    Subproyecto, NotaPostit, CajaMenuda
+    Subproyecto, NotaPostit, CajaMenuda, PlanificacionBitacora
 )
 from .forms_simple import (
     ClienteForm, ProyectoForm, ColaboradorForm, FacturaForm, 
@@ -12127,6 +12127,64 @@ def bitacora_planificacion(request):
     trabajadores_diarios = []
     proyecto_seleccionado = None
     
+    if request.method == 'POST' and request.POST.get('guardar'):
+        # Procesar guardado de planificación
+        proyecto_id = request.POST.get('proyecto')
+        titulo = request.POST.get('titulo', 'Planificación sin título')
+        descripcion = request.POST.get('descripcion', '')
+        fecha_inicio = request.POST.get('fecha_inicio')
+        fecha_fin = request.POST.get('fecha_fin')
+        hora_inicio = request.POST.get('hora_inicio')
+        hora_fin = request.POST.get('hora_fin')
+        estado = request.POST.get('estado', 'programada')
+        prioridad = request.POST.get('prioridad', 'media')
+        ubicacion = request.POST.get('ubicacion', '')
+        colaboradores_ids = request.POST.getlist('colaboradores')
+        trabajadores_diarios_ids = request.POST.getlist('trabajadores_diarios')
+        
+        if proyecto_id and fecha_inicio:
+            try:
+                proyecto_seleccionado = Proyecto.objects.get(id=proyecto_id, activo=True)
+                
+                # Crear planificación
+                planificacion = PlanificacionBitacora.objects.create(
+                    proyecto=proyecto_seleccionado,
+                    titulo=titulo,
+                    descripcion=descripcion,
+                    fecha_inicio=fecha_inicio,
+                    fecha_fin=fecha_fin if fecha_fin else None,
+                    hora_inicio=hora_inicio if hora_inicio else None,
+                    hora_fin=hora_fin if hora_fin else None,
+                    estado=estado,
+                    prioridad=prioridad,
+                    ubicacion=ubicacion,
+                    creado_por=request.user
+                )
+                
+                # Asignar colaboradores
+                if colaboradores_ids:
+                    planificacion.colaboradores.set(Colaborador.objects.filter(id__in=colaboradores_ids))
+                
+                # Asignar trabajadores diarios
+                if trabajadores_diarios_ids:
+                    planificacion.trabajadores_diarios.set(TrabajadorDiario.objects.filter(id__in=trabajadores_diarios_ids))
+                
+                # Registrar actividad
+                LogActividad.objects.create(
+                    usuario=request.user,
+                    accion='Crear',
+                    modulo='Bitácora',
+                    descripcion=f'Planificación creada: {planificacion.titulo} - {planificacion.proyecto.nombre}',
+                    ip_address=request.META.get('REMOTE_ADDR')
+                )
+                
+                messages.success(request, 'Planificación creada exitosamente')
+                return redirect('bitacora_calendario')
+            except Exception as e:
+                messages.error(request, f'Error al crear planificación: {str(e)}')
+        else:
+            messages.error(request, 'Por favor completa todos los campos requeridos')
+    
     # Obtener proyecto_id de GET o POST
     proyecto_id = request.GET.get('proyecto_id') or request.POST.get('proyecto')
     
@@ -12151,3 +12209,108 @@ def bitacora_planificacion(request):
         'proyecto_seleccionado': proyecto_seleccionado,
     }
     return render(request, 'core/bitacora/planificacion.html', context)
+
+
+@login_required
+def bitacora_calendario(request):
+    """Vista de calendario mensual/semanal de planificaciones"""
+    # Obtener filtros
+    proyecto_id = request.GET.get('proyecto')
+    estado = request.GET.get('estado')
+    
+    # Filtrar planificaciones
+    planificaciones = PlanificacionBitacora.objects.all()
+    
+    if proyecto_id:
+        planificaciones = planificaciones.filter(proyecto_id=proyecto_id)
+    
+    if estado:
+        planificaciones = planificaciones.filter(estado=estado)
+    
+    # Convertir a formato de calendario
+    eventos_calendario = [plan.to_calendar_event() for plan in planificaciones]
+    
+    proyectos = Proyecto.objects.filter(activo=True).order_by('nombre')
+    
+    context = {
+        'titulo': 'Calendario - Bitácora',
+        'eventos_calendario': json.dumps(eventos_calendario, ensure_ascii=False),
+        'proyectos': proyectos,
+        'proyecto_seleccionado': proyecto_id,
+        'estado_seleccionado': estado,
+    }
+    return render(request, 'core/bitacora/calendario.html', context)
+
+
+@login_required
+def bitacora_kanban(request):
+    """Vista Kanban por estado de planificaciones"""
+    # Obtener filtros
+    proyecto_id = request.GET.get('proyecto')
+    
+    # Filtrar planificaciones
+    planificaciones = PlanificacionBitacora.objects.all().select_related('proyecto', 'creado_por').prefetch_related('colaboradores', 'trabajadores_diarios')
+    
+    if proyecto_id:
+        planificaciones = planificaciones.filter(proyecto_id=proyecto_id)
+    
+    # Agrupar por estado
+    planificaciones_por_estado = {
+        'programada': planificaciones.filter(estado='programada').order_by('fecha_inicio'),
+        'en_progreso': planificaciones.filter(estado='en_progreso').order_by('fecha_inicio'),
+        'completada': planificaciones.filter(estado='completada').order_by('-fecha_inicio'),
+        'cancelada': planificaciones.filter(estado='cancelada').order_by('-fecha_inicio'),
+    }
+    
+    proyectos = Proyecto.objects.filter(activo=True).order_by('nombre')
+    
+    context = {
+        'titulo': 'Kanban - Bitácora',
+        'planificaciones_por_estado': planificaciones_por_estado,
+        'proyectos': proyectos,
+        'proyecto_seleccionado': proyecto_id,
+    }
+    return render(request, 'core/bitacora/kanban.html', context)
+
+
+@login_required
+def bitacora_timeline(request):
+    """Vista Timeline/Gantt de planificaciones"""
+    # Obtener filtros
+    proyecto_id = request.GET.get('proyecto')
+    fecha_inicio = request.GET.get('fecha_inicio')
+    fecha_fin = request.GET.get('fecha_fin')
+    
+    # Filtrar planificaciones
+    planificaciones = PlanificacionBitacora.objects.all().select_related('proyecto', 'creado_por').prefetch_related('colaboradores', 'trabajadores_diarios')
+    
+    if proyecto_id:
+        planificaciones = planificaciones.filter(proyecto_id=proyecto_id)
+    
+    if fecha_inicio:
+        planificaciones = planificaciones.filter(fecha_inicio__gte=fecha_inicio)
+    
+    if fecha_fin:
+        planificaciones = planificaciones.filter(fecha_fin__lte=fecha_fin if fecha_fin else planificaciones.filter(fecha_inicio__lte=fecha_fin))
+    
+    # Agrupar por proyecto para el timeline
+    proyectos_con_planificaciones = {}
+    for plan in planificaciones.order_by('proyecto', 'fecha_inicio'):
+        if plan.proyecto.id not in proyectos_con_planificaciones:
+            proyectos_con_planificaciones[plan.proyecto.id] = {
+                'proyecto': plan.proyecto,
+                'planificaciones': []
+            }
+        proyectos_con_planificaciones[plan.proyecto.id]['planificaciones'].append(plan)
+    
+    proyectos = Proyecto.objects.filter(activo=True).order_by('nombre')
+    
+    context = {
+        'titulo': 'Timeline - Bitácora',
+        'proyectos_con_planificaciones': proyectos_con_planificaciones,
+        'proyectos': proyectos,
+        'proyecto_seleccionado': proyecto_id,
+        'fecha_inicio': fecha_inicio,
+        'fecha_fin': fecha_fin,
+    }
+    return render(request, 'core/bitacora/timeline.html', context)

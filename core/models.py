@@ -2196,6 +2196,106 @@ class CajaMenuda(models.Model):
         return f"{self.folio} - ${self.monto} ({self.fecha})"
 
 
+# ===== MODELO PARA PLANIFICACIONES DE BITÁCORA =====
+
+class PlanificacionBitacora(models.Model):
+    """Modelo para planificaciones de la bitácora"""
+    ESTADO_CHOICES = [
+        ('programada', 'Programada'),
+        ('en_progreso', 'En Progreso'),
+        ('completada', 'Completada'),
+        ('cancelada', 'Cancelada'),
+    ]
+    
+    PRIORIDAD_CHOICES = [
+        ('alta', 'Alta'),
+        ('media', 'Media'),
+        ('baja', 'Baja'),
+    ]
+    
+    # Información básica
+    proyecto = models.ForeignKey('Proyecto', on_delete=models.CASCADE, related_name='planificaciones_bitacora')
+    titulo = models.CharField(max_length=200, verbose_name="Título")
+    descripcion = models.TextField(blank=True, null=True, verbose_name="Descripción")
+    
+    # Fechas y tiempos
+    fecha_inicio = models.DateField(verbose_name="Fecha de Inicio")
+    fecha_fin = models.DateField(blank=True, null=True, verbose_name="Fecha de Fin")
+    hora_inicio = models.TimeField(blank=True, null=True, verbose_name="Hora de Inicio")
+    hora_fin = models.TimeField(blank=True, null=True, verbose_name="Hora de Fin")
+    
+    # Estado y prioridad
+    estado = models.CharField(max_length=20, choices=ESTADO_CHOICES, default='programada', verbose_name="Estado")
+    prioridad = models.CharField(max_length=20, choices=PRIORIDAD_CHOICES, default='media', verbose_name="Prioridad")
+    
+    # Ubicación
+    ubicacion = models.CharField(max_length=500, blank=True, null=True, verbose_name="Ubicación/Dirección")
+    
+    # Trabajadores
+    colaboradores = models.ManyToManyField('Colaborador', blank=True, related_name='planificaciones_bitacora', verbose_name="Trabajadores en Planilla")
+    trabajadores_diarios = models.ManyToManyField('TrabajadorDiario', blank=True, related_name='planificaciones_bitacora', verbose_name="Trabajadores Diarios")
+    
+    # Auditoría
+    creado_por = models.ForeignKey(User, on_delete=models.CASCADE, related_name='planificaciones_creadas', verbose_name="Creado por")
+    creado_en = models.DateTimeField(auto_now_add=True, verbose_name="Creado en")
+    actualizado_en = models.DateTimeField(auto_now=True, verbose_name="Actualizado en")
+    
+    class Meta:
+        verbose_name = 'Planificación de Bitácora'
+        verbose_name_plural = 'Planificaciones de Bitácora'
+        ordering = ['-fecha_inicio', '-creado_en']
+        indexes = [
+            models.Index(fields=['proyecto', 'estado']),
+            models.Index(fields=['fecha_inicio', 'estado']),
+        ]
+    
+    def __str__(self):
+        return f"{self.titulo} - {self.proyecto.nombre} ({self.get_estado_display()})"
+    
+    @property
+    def total_trabajadores(self):
+        """Retorna el total de trabajadores asignados"""
+        return self.colaboradores.count() + self.trabajadores_diarios.count()
+    
+    def to_calendar_event(self):
+        """Convierte la planificación a formato compatible con FullCalendar"""
+        event_data = {
+            'id': self.id,
+            'title': self.titulo,
+            'start': self.fecha_inicio.isoformat(),
+            'backgroundColor': self.get_color_por_estado(),
+            'borderColor': self.get_color_por_estado(),
+            'extendedProps': {
+                'tipo': 'planificacion',
+                'descripcion': self.descripcion or '',
+                'estado': self.estado,
+                'prioridad': self.prioridad,
+                'proyecto_id': self.proyecto.id,
+                'proyecto_nombre': self.proyecto.nombre,
+            }
+        }
+        
+        if self.fecha_fin:
+            event_data['end'] = self.fecha_fin.isoformat()
+        
+        if self.hora_inicio:
+            event_data['start'] = f"{self.fecha_inicio.isoformat()}T{self.hora_inicio.isoformat()}"
+            if self.hora_fin:
+                event_data['end'] = f"{self.fecha_fin.isoformat() if self.fecha_fin else self.fecha_inicio.isoformat()}T{self.hora_fin.isoformat()}"
+        
+        return event_data
+    
+    def get_color_por_estado(self):
+        """Retorna el color según el estado"""
+        colores = {
+            'programada': '#667eea',
+            'en_progreso': '#ffc107',
+            'completada': '#28a745',
+            'cancelada': '#dc3545',
+        }
+        return colores.get(self.estado, '#667eea')
+
+
 class Torrero(models.Model):
     """Modelo para el catálogo de torreros"""
     # Información personal

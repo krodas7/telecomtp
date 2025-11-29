@@ -420,6 +420,14 @@
                         </h3>
                         
                         <div class="form-group">
+                            <label class="form-label" for="titulo">
+                                <i class="fas fa-heading"></i>
+                                Título <span class="required">*</span>
+                            </label>
+                            <input type="text" name="titulo" id="titulo" class="form-control" required placeholder="Ej: Mantenimiento de torres - Semana 1">
+                        </div>
+                        
+                        <div class="form-group">
                             <label class="form-label" for="proyecto">
                                 <i class="fas fa-project-diagram"></i>
                                 Proyecto <span class="required">*</span>
@@ -553,26 +561,91 @@
                     {% endif %}
                 </div>
                 
-                <!-- Columna de Descripción -->
-                <div class="description-column">
-                    <div class="form-section">
-                        <h3 class="form-section-title">
-                            <i class="fas fa-info-circle"></i>
-                            Descripción de la Planificación
-                        </h3>
-                        <div class="form-group">
-                            <label class="form-label" for="descripcion">
-                                <i class="fas fa-align-left"></i>
-                                Descripción
-                            </label>
-                            <textarea name="descripcion" 
-                                      id="descripcion" 
-                                      class="form-control" 
-                                      rows="10" 
-                                      placeholder="Describe la planificación, actividades a realizar, objetivos, etc..."></textarea>
+                    <!-- Columna de Descripción -->
+                    <div class="description-column">
+                        <div class="form-section">
+                            <h3 class="form-section-title">
+                                <i class="fas fa-info-circle"></i>
+                                Descripción de la Planificación
+                            </h3>
+                            <div class="form-group">
+                                <label class="form-label" for="descripcion">
+                                    <i class="fas fa-align-left"></i>
+                                    Descripción
+                                </label>
+                                <textarea name="descripcion" 
+                                          id="descripcion" 
+                                          class="form-control" 
+                                          rows="5" 
+                                          placeholder="Describe la planificación, actividades a realizar, objetivos, etc..."></textarea>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label" for="fecha_inicio">
+                                    <i class="fas fa-calendar-alt"></i>
+                                    Fecha de Inicio <span class="required">*</span>
+                                </label>
+                                <input type="date" name="fecha_inicio" id="fecha_inicio" class="form-control" required>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label" for="fecha_fin">
+                                    <i class="fas fa-calendar-check"></i>
+                                    Fecha de Fin
+                                </label>
+                                <input type="date" name="fecha_fin" id="fecha_fin" class="form-control">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label" for="hora_inicio">
+                                    <i class="fas fa-clock"></i>
+                                    Hora de Inicio
+                                </label>
+                                <input type="time" name="hora_inicio" id="hora_inicio" class="form-control">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label" for="hora_fin">
+                                    <i class="fas fa-clock"></i>
+                                    Hora de Fin
+                                </label>
+                                <input type="time" name="hora_fin" id="hora_fin" class="form-control">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label" for="ubicacion">
+                                    <i class="fas fa-map-marker-alt"></i>
+                                    Ubicación
+                                </label>
+                                <input type="text" name="ubicacion" id="ubicacion" class="form-control" placeholder="Dirección o ubicación">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label" for="estado">
+                                    <i class="fas fa-tasks"></i>
+                                    Estado
+                                </label>
+                                <select name="estado" id="estado" class="form-select">
+                                    <option value="programada">Programada</option>
+                                    <option value="en_progreso">En Progreso</option>
+                                    <option value="completada">Completada</option>
+                                    <option value="cancelada">Cancelada</option>
+                                </select>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label" for="prioridad">
+                                    <i class="fas fa-exclamation-circle"></i>
+                                    Prioridad
+                                </label>
+                                <select name="prioridad" id="prioridad" class="form-select">
+                                    <option value="baja">Baja</option>
+                                    <option value="media" selected>Media</option>
+                                    <option value="alta">Alta</option>
+                                </select>
+                            </div>
                         </div>
                     </div>
-                </div>
             </div>
             
             {% if not proyecto_seleccionado %}
