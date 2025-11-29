@@ -2296,6 +2296,35 @@ class PlanificacionBitacora(models.Model):
         return colores.get(self.estado, '#667eea')
 
 
+class AvancePlanificacion(models.Model):
+    """Modelo para registrar avances de una planificación"""
+    planificacion = models.ForeignKey('PlanificacionBitacora', on_delete=models.CASCADE, related_name='avances', verbose_name="Planificación")
+    fecha_avance = models.DateTimeField(default=timezone.now, verbose_name="Fecha del Avance")
+    descripcion = models.TextField(verbose_name="Descripción del Avance")
+    
+    # Trabajadores que participaron en este avance
+    colaboradores = models.ManyToManyField('Colaborador', blank=True, related_name='avances_planificacion', verbose_name="Colaboradores")
+    trabajadores_diarios = models.ManyToManyField('TrabajadorDiario', blank=True, related_name='avances_planificacion', verbose_name="Trabajadores Diarios")
+    
+    # Archivos adjuntos (opcional)
+    # archivos = models.ManyToManyField('ArchivoProyecto', blank=True, related_name='avances_planificacion')
+    
+    # Auditoría
+    registrado_por = models.ForeignKey(User, on_delete=models.CASCADE, related_name='avances_registrados', verbose_name="Registrado por")
+    creado_en = models.DateTimeField(auto_now_add=True, verbose_name="Creado en")
+    
+    class Meta:
+        verbose_name = 'Avance de Planificación'
+        verbose_name_plural = 'Avances de Planificaciones'
+        ordering = ['-fecha_avance', '-creado_en']
+        indexes = [
+            models.Index(fields=['planificacion', 'fecha_avance']),
+        ]
+    
+    def __str__(self):
+        return f"Avance de {self.planificacion.titulo} - {self.fecha_avance.strftime('%d/%m/%Y %H:%M')}"
+
+
 class Torrero(models.Model):
     """Modelo para el catálogo de torreros"""
     # Información personal

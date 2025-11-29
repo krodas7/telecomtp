@@ -25,7 +25,7 @@ from .models import (
     TrabajadorDiario, RegistroTrabajo, AnticipoTrabajadorDiario, PlanillaLiquidada, PlanillaTrabajadoresDiarios,
     ItemCotizacion, ItemReutilizable, ConfiguracionPlanilla,
     ServicioTorrero, RegistroDiasTrabajados, PagoServicioTorrero, Torrero, AsignacionTorrero,
-    Subproyecto, NotaPostit, CajaMenuda, PlanificacionBitacora
+    Subproyecto, NotaPostit, CajaMenuda, PlanificacionBitacora, AvancePlanificacion, AvancePlanificacion
 )
 from .forms_simple import (
     ClienteForm, ProyectoForm, ColaboradorForm, FacturaForm, 
@@ -12134,11 +12134,8 @@ def bitacora_planificacion(request):
         descripcion = request.POST.get('descripcion', '')
         fecha_inicio = request.POST.get('fecha_inicio')
         fecha_fin = request.POST.get('fecha_fin')
-        hora_inicio = request.POST.get('hora_inicio')
-        hora_fin = request.POST.get('hora_fin')
         estado = request.POST.get('estado', 'programada')
         prioridad = request.POST.get('prioridad', 'media')
-        ubicacion = request.POST.get('ubicacion', '')
         colaboradores_ids = request.POST.getlist('colaboradores')
         trabajadores_diarios_ids = request.POST.getlist('trabajadores_diarios')
         
@@ -12153,11 +12150,8 @@ def bitacora_planificacion(request):
                     descripcion=descripcion,
                     fecha_inicio=fecha_inicio,
                     fecha_fin=fecha_fin if fecha_fin else None,
-                    hora_inicio=hora_inicio if hora_inicio else None,
-                    hora_fin=hora_fin if hora_fin else None,
                     estado=estado,
                     prioridad=prioridad,
-                    ubicacion=ubicacion,
                     creado_por=request.user
                 )
                 
@@ -12179,7 +12173,7 @@ def bitacora_planificacion(request):
                 )
                 
                 messages.success(request, 'Planificación creada exitosamente')
-                return redirect('bitacora_calendario')
+                return redirect('bitacora_planificacion_detail', planificacion_id=planificacion.id)
             except Exception as e:
                 messages.error(request, f'Error al crear planificación: {str(e)}')
         else:
@@ -12314,3 +12308,82 @@ def bitacora_timeline(request):
         'fecha_fin': fecha_fin,
     }
     return render(request, 'core/bitacora/timeline.html', context)
+
+
+@login_required
+def bitacora_planificacion_detail(request, planificacion_id):
+    """Vista de detalle de una planificación (ticket)"""
+    planificacion = get_object_or_404(
+        PlanificacionBitacora.objects.select_related('proyecto', 'creado_por')
+        .prefetch_related('colaboradores', 'trabajadores_diarios'),
+        id=planificacion_id
+    )
+    
+    # Obtener avances ordenados por fecha
+    avances = planificacion.avances.all().select_related('registrado_por').prefetch_related('colaboradores', 'trabajadores_diarios').order_by('-fecha_avance', '-creado_en')
+    
+    # Obtener trabajadores disponibles del proyecto para el formulario de avances
+    colaboradores = planificacion.proyecto.colaboradores.filter(activo=True).order_by('nombre')
+    trabajadores_diarios = TrabajadorDiario.objects.filter(
+        proyecto=planificacion.proyecto,
+        activo=True
+    ).order_by('nombre')
+    
+    context = {
+        'planificacion': planificacion,
+        'avances': avances,
+        'colaboradores': colaboradores,
+        'trabajadores_diarios': trabajadores_diarios,
+    }
+    return render(request, 'core/bitacora/planificacion_detail.html', context)
+
+
+@login_required
+def bitacora_avance_create(request, planificacion_id):
+    """Crear un avance para una planificación"""
+    planificacion = get_object_or_404(PlanificacionBitacora, id=planificacion_id)
+    
+    if request.method == 'POST':
+        descripcion = request.POST.get('descripcion', '').strip()
+        colaboradores_ids = request.POST.getlist('colaboradores')
+        trabajadores_diarios_ids = request.POST.getlist('trabajadores_diarios')
+        
+        if descripcion:
+            try:
+                # Crear avance con fecha/hora actual
+                avance = AvancePlanificacion.objects.create(
+                    planificacion=planificacion,
+                    descripcion=descripcion,
+                    fecha_avance=timezone.localtime(timezone.now()),
+                    registrado_por=request.user
+                )
+                
+                # Asignar colaboradores
+                if colaboradores_ids:
+                    avance.colaboradores.set(Colaborador.objects.filter(id__in=colaboradores_ids))
+                
+                # Asignar trabajadores diarios
+                if trabajadores_diarios_ids:
+                    avance.trabajadores_diarios.set(TrabajadorDiario.objects.filter(id__in=trabajadores_diarios_ids))
+                
+                # Si la planificación estaba programada, cambiar a en progreso
+                if planificacion.estado == 'programada':
+                    planificacion.estado = 'en_progreso'
+                    planificacion.save()
+                
+                # Registrar actividad
+                LogActividad.objects.create(
+                    usuario=request.user,
+                    accion='Crear',
+                    modulo='Bitácora',
+                    descripcion=f'Avance registrado en planificación: {planificacion.titulo}',
+                    ip_address=request.META.get('REMOTE_ADDR')
+                )
+                
+                messages.success(request, 'Avance registrado exitosamente')
+            except Exception as e:
+                messages.error(request, f'Error al registrar avance: {str(e)}')
+        else:
+            messages.error(request, 'La descripción del avance es obligatoria')
+    
+    return redirect('bitacora_planificacion_detail', planificacion_id=planificacion_id)

@@ -39,9 +39,13 @@ urlpatterns = [
     # Bitácora
     path('bitacora/', views.bitacora_dashboard, name='bitacora_dashboard'),
     path('bitacora/planificacion/', views.bitacora_planificacion, name='bitacora_planificacion'),
+    path('bitacora/planificacion/<int:planificacion_id>/', views.bitacora_planificacion_detail, name='bitacora_planificacion_detail'),
+    path('bitacora/planificacion/<int:planificacion_id>/avance/', views.bitacora_avance_create, name='bitacora_avance_create'),
     path('bitacora/calendario/', views.bitacora_calendario, name='bitacora_calendario'),
     path('bitacora/kanban/', views.bitacora_kanban, name='bitacora_kanban'),
     path('bitacora/timeline/', views.bitacora_timeline, name='bitacora_timeline'),
+    path('bitacora/planificacion/<int:planificacion_id>/', views.bitacora_planificacion_detail, name='bitacora_planificacion_detail'),
+    path('bitacora/planificacion/<int:planificacion_id>/avance/', views.bitacora_avance_create, name='bitacora_avance_create'),
     path('planillas/<int:planilla_id>/pdf/', views.planilla_liquidada_pdf, name='planilla_liquidada_pdf'),
     path('proyecto/<int:proyecto_id>/historico-nomina/reset/', views.resetear_historico_nomina, name='resetear_historico_nomina'),
     path('proyectos/<int:proyecto_id>/administrar-anticipos/', views.administrar_anticipos_proyecto, name='administrar_anticipos_proyecto'),

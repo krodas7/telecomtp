@@ -1,0 +1,533 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Ticket #{{ planificacion.id }} - Bitácora{% endblock %}
+
+{% block extra_css %}
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+    
+    * {
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    }
+    
+    body {
+        background: #fafafa;
+    }
+    
+    .hero-section {
+        background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
+        color: white;
+        padding: 3rem 0;
+        margin: -2rem -2rem 2rem -2rem;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .hero-section::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: radial-gradient(circle at 20% 50%, rgba(99, 102, 241, 0.15) 0%, transparent 50%);
+    }
+    
+    .hero-content {
+        position: relative;
+        z-index: 1;
+    }
+    
+    .ticket-container {
+        max-width: 1000px;
+        margin: 0 auto;
+    }
+    
+    .ticket-card {
+        background: white;
+        border-radius: 16px;
+        padding: 2.5rem;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        border: 1px solid #e5e7eb;
+        margin-bottom: 2rem;
+    }
+    
+    .ticket-header {
+        border-bottom: 2px solid #e5e7eb;
+        padding-bottom: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    
+    .ticket-id {
+        display: inline-block;
+        background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+        color: white;
+        padding: 0.5rem 1rem;
+        border-radius: 8px;
+        font-weight: 700;
+        font-size: 0.875rem;
+        margin-bottom: 1rem;
+    }
+    
+    .ticket-title {
+        font-size: 2rem;
+        font-weight: 900;
+        color: #111827;
+        margin-bottom: 0.5rem;
+    }
+    
+    .ticket-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1.5rem;
+        margin-top: 1rem;
+    }
+    
+    .meta-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.9375rem;
+        color: #6b7280;
+    }
+    
+    .meta-item i {
+        color: #6366f1;
+    }
+    
+    .badge-estado {
+        display: inline-block;
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-weight: 700;
+        font-size: 0.875rem;
+    }
+    
+    .badge-programada {
+        background: #dbeafe;
+        color: #1e40af;
+    }
+    
+    .badge-en_progreso {
+        background: #fef3c7;
+        color: #92400e;
+    }
+    
+    .badge-completada {
+        background: #d1fae5;
+        color: #065f46;
+    }
+    
+    .badge-cancelada {
+        background: #fee2e2;
+        color: #991b1b;
+    }
+    
+    .badge-prioridad {
+        display: inline-block;
+        padding: 0.25rem 0.75rem;
+        border-radius: 12px;
+        font-weight: 600;
+        font-size: 0.75rem;
+    }
+    
+    .prioridad-alta {
+        background: #fee2e2;
+        color: #991b1b;
+    }
+    
+    .prioridad-media {
+        background: #fef3c7;
+        color: #92400e;
+    }
+    
+    .prioridad-baja {
+        background: #dbeafe;
+        color: #1e40af;
+    }
+    
+    .ticket-section {
+        margin-bottom: 2rem;
+    }
+    
+    .section-title {
+        font-size: 1.125rem;
+        font-weight: 700;
+        color: #111827;
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .section-title i {
+        color: #6366f1;
+    }
+    
+    .ticket-description {
+        background: #f9fafb;
+        border-radius: 8px;
+        padding: 1.5rem;
+        color: #374151;
+        line-height: 1.6;
+    }
+    
+    .trabajadores-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+    }
+    
+    .trabajador-tag {
+        background: #f3f4f6;
+        border-radius: 8px;
+        padding: 0.75rem 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .trabajador-tag i {
+        color: #6366f1;
+    }
+    
+    /* Avances Section */
+    .avances-section {
+        margin-top: 3rem;
+    }
+    
+    .avance-card {
+        background: white;
+        border-left: 4px solid #6366f1;
+        border-radius: 8px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    
+    .avance-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 1rem;
+    }
+    
+    .avance-author {
+        font-weight: 600;
+        color: #111827;
+    }
+    
+    .avance-date {
+        font-size: 0.875rem;
+        color: #6b7280;
+    }
+    
+    .avance-description {
+        color: #374151;
+        line-height: 1.6;
+        margin-bottom: 1rem;
+    }
+    
+    .avance-trabajadores {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        margin-top: 1rem;
+    }
+    
+    .trabajador-mini-tag {
+        background: #e5e7eb;
+        padding: 0.25rem 0.75rem;
+        border-radius: 12px;
+        font-size: 0.75rem;
+        color: #374151;
+    }
+    
+    .form-avance {
+        background: #f9fafb;
+        border-radius: 12px;
+        padding: 2rem;
+        border: 2px dashed #e5e7eb;
+        margin-top: 2rem;
+    }
+    
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+    
+    .form-label {
+        font-weight: 600;
+        color: #374151;
+        margin-bottom: 0.5rem;
+        display: block;
+    }
+    
+    .form-control,
+    textarea.form-control {
+        width: 100%;
+        padding: 0.75rem;
+        border: 2px solid #e5e7eb;
+        border-radius: 8px;
+        font-size: 1rem;
+        transition: all 0.2s;
+    }
+    
+    .form-control:focus,
+    textarea.form-control:focus {
+        border-color: #6366f1;
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+    }
+    
+    textarea.form-control {
+        min-height: 120px;
+        resize: vertical;
+    }
+    
+    .btn {
+        padding: 0.75rem 2rem;
+        border-radius: 8px;
+        font-weight: 600;
+        border: none;
+        cursor: pointer;
+        transition: all 0.2s;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .btn-primary {
+        background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+        color: white;
+    }
+    
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 16px rgba(99, 102, 241, 0.3);
+    }
+    
+    .btn-secondary {
+        background: #6b7280;
+        color: white;
+    }
+    
+    .btn-secondary:hover {
+        background: #4b5563;
+    }
+    
+    .empty-avances {
+        text-align: center;
+        padding: 3rem;
+        color: #6b7280;
+    }
+    
+    .empty-avances i {
+        font-size: 4rem;
+        margin-bottom: 1rem;
+        opacity: 0.5;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="hero-section">
+    <div class="container hero-content">
+        <h1 class="hero-title" style="font-size: 2.5rem; margin-bottom: 0.5rem;">
+            <i class="fas fa-ticket-alt me-3"></i>Ticket de Planificación
+        </h1>
+    </div>
+</div>
+
+<div class="container">
+    <div class="ticket-container">
+        <!-- Ticket Card -->
+        <div class="ticket-card">
+            <div class="ticket-header">
+                <span class="ticket-id">TICKET #{{ planificacion.id }}</span>
+                <h1 class="ticket-title">{{ planificacion.titulo }}</h1>
+                
+                <div class="ticket-meta">
+                    <div class="meta-item">
+                        <i class="fas fa-building"></i>
+                        <span><strong>Proyecto:</strong> {{ planificacion.proyecto.nombre }}</span>
+                    </div>
+                    <div class="meta-item">
+                        <i class="fas fa-calendar"></i>
+                        <span><strong>Fecha Inicio:</strong> {{ planificacion.fecha_inicio|date:"d/m/Y" }}</span>
+                    </div>
+                    {% if planificacion.fecha_fin %}
+                    <div class="meta-item">
+                        <i class="fas fa-calendar-check"></i>
+                        <span><strong>Fecha Fin:</strong> {{ planificacion.fecha_fin|date:"d/m/Y" }}</span>
+                    </div>
+                    {% endif %}
+                    <div class="meta-item">
+                        <span class="badge-estado badge-{{ planificacion.estado }}">{{ planificacion.get_estado_display }}</span>
+                        <span class="badge-prioridad prioridad-{{ planificacion.prioridad }}">{{ planificacion.get_prioridad_display }}</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Descripción -->
+            {% if planificacion.descripcion %}
+            <div class="ticket-section">
+                <h3 class="section-title">
+                    <i class="fas fa-align-left"></i>
+                    Descripción
+                </h3>
+                <div class="ticket-description">
+                    {{ planificacion.descripcion|linebreaks }}
+                </div>
+            </div>
+            {% endif %}
+            
+            <!-- Trabajadores Asignados -->
+            <div class="ticket-section">
+                <h3 class="section-title">
+                    <i class="fas fa-users"></i>
+                    Trabajadores Asignados
+                </h3>
+                <div class="trabajadores-grid">
+                    {% for colaborador in planificacion.colaboradores.all %}
+                        <div class="trabajador-tag">
+                            <i class="fas fa-user-tie"></i>
+                            <span>{{ colaborador.nombre }}</span>
+                        </div>
+                    {% endfor %}
+                    {% for trabajador in planificacion.trabajadores_diarios.all %}
+                        <div class="trabajador-tag">
+                            <i class="fas fa-hammer"></i>
+                            <span>{{ trabajador.nombre }}</span>
+                        </div>
+                    {% endfor %}
+                    {% if planificacion.total_trabajadores == 0 %}
+                        <p style="color: #6b7280; grid-column: 1 / -1;">No hay trabajadores asignados</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Sección de Avances -->
+        <div class="avances-section">
+            <div class="ticket-card">
+                <h2 class="section-title">
+                    <i class="fas fa-tasks"></i>
+                    Registro de Avances
+                </h2>
+                
+                <!-- Lista de Avances -->
+                {% if avances %}
+                    {% for avance in avances %}
+                        <div class="avance-card">
+                            <div class="avance-header">
+                                <div>
+                                    <div class="avance-author">
+                                        <i class="fas fa-user"></i> {{ avance.registrado_por.get_full_name|default:avance.registrado_por.username }}
+                                    </div>
+                                    <div class="avance-date">
+                                        {{ avance.fecha_avance|date:"d/m/Y H:i" }}
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="avance-description">
+                                {{ avance.descripcion|linebreaks }}
+                            </div>
+                            
+                            {% if avance.colaboradores.exists or avance.trabajadores_diarios.exists %}
+                                <div class="avance-trabajadores">
+                                    <strong style="font-size: 0.875rem; color: #6b7280; margin-right: 0.5rem;">Participaron:</strong>
+                                    {% for colaborador in avance.colaboradores.all %}
+                                        <span class="trabajador-mini-tag">
+                                            <i class="fas fa-user-tie"></i> {{ colaborador.nombre }}
+                                        </span>
+                                    {% endfor %}
+                                    {% for trabajador in avance.trabajadores_diarios.all %}
+                                        <span class="trabajador-mini-tag">
+                                            <i class="fas fa-hammer"></i> {{ trabajador.nombre }}
+                                        </span>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="empty-avances">
+                        <i class="fas fa-inbox"></i>
+                        <p>No hay avances registrados aún</p>
+                    </div>
+                {% endif %}
+                
+                <!-- Formulario para Registrar Avance -->
+                <div class="form-avance">
+                    <h3 class="section-title">
+                        <i class="fas fa-plus-circle"></i>
+                        Registrar Nuevo Avance
+                    </h3>
+                    
+                    <form method="POST" action="{% url 'bitacora_avance_create' planificacion.id %}">
+                        {% csrf_token %}
+                        
+                        <div class="form-group">
+                            <label class="form-label" for="descripcion_avance">
+                                Descripción del Avance <span style="color: #ef4444;">*</span>
+                            </label>
+                            <textarea name="descripcion" id="descripcion_avance" class="form-control" required placeholder="Describe el avance realizado..."></textarea>
+                        </div>
+                        
+                        {% if colaboradores %}
+                        <div class="form-group">
+                            <label class="form-label">
+                                Colaboradores que participaron (opcional)
+                            </label>
+                            <div style="display: flex; flex-wrap: wrap; gap: 0.75rem;">
+                                {% for colaborador in colaboradores %}
+                                    <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                                        <input type="checkbox" name="colaboradores" value="{{ colaborador.id }}">
+                                        <span>{{ colaborador.nombre }}</span>
+                                    </label>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        {% endif %}
+                        
+                        {% if trabajadores_diarios %}
+                        <div class="form-group">
+                            <label class="form-label">
+                                Trabajadores Diarios que participaron (opcional)
+                            </label>
+                            <div style="display: flex; flex-wrap: wrap; gap: 0.75rem;">
+                                {% for trabajador in trabajadores_diarios %}
+                                    <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                                        <input type="checkbox" name="trabajadores_diarios" value="{{ trabajador.id }}">
+                                        <span>{{ trabajador.nombre }}</span>
+                                    </label>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        {% endif %}
+                        
+                        <div style="display: flex; gap: 1rem; justify-content: flex-end;">
+                            <a href="{% url 'bitacora_dashboard' %}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left"></i>
+                                Volver
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i>
+                                Registrar Avance
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    console.log('Ticket de planificación cargado');
+</script>
+{% endblock %}
+
