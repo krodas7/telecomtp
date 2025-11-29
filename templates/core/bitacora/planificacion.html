@@ -722,86 +722,120 @@
         }
     }
     
-    // Cerrar dropdowns al hacer click fuera
-    document.addEventListener('click', function(event) {
-        const clickedInside = event.target.closest('.custom-dropdown');
-        if (!clickedInside) {
-            document.querySelectorAll('.dropdown-menu').forEach(menu => {
-                menu.classList.remove('show');
-            });
-            document.querySelectorAll('.dropdown-trigger').forEach(trigger => {
-                trigger.classList.remove('active');
-            });
-        }
-    });
-    
-    // Prevenir cierre cuando se hace click dentro del dropdown menu
-    document.addEventListener('click', function(event) {
-        // No prevenir el comportamiento si es un botón de submit
-        if (event.target.closest('button[type="submit"]') || event.target.closest('a.btn')) {
+    // Agregar handler explícito para el submit del formulario PRIMERO
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('🔧 DOM cargado, inicializando formulario...');
+        
+        const form = document.getElementById('planificacionForm');
+        if (!form) {
+            console.error('❌ No se encontró el formulario con ID planificacionForm');
             return;
         }
-        if (event.target.closest('.dropdown-menu')) {
-            event.stopPropagation();
-        }
-    }, true);
-    
-    // Agregar handler explícito para el submit del formulario
-    document.addEventListener('DOMContentLoaded', function() {
-        const form = document.getElementById('planificacionForm');
-        if (form) {
-            form.addEventListener('submit', function(e) {
-                console.log('Formulario siendo enviado...');
-                
-                // Validar campos requeridos antes de enviar
-                const proyecto = document.getElementById('proyecto');
-                const titulo = document.getElementById('titulo');
-                const fechaInicio = document.getElementById('fecha_inicio');
-                
-                if (!proyecto || !proyecto.value) {
-                    e.preventDefault();
-                    alert('Por favor selecciona un proyecto');
-                    console.error('Error: Proyecto no seleccionado');
-                    return false;
-                }
-                
-                if (!titulo || !titulo.value.trim()) {
-                    e.preventDefault();
-                    alert('Por favor ingresa un título');
-                    console.error('Error: Título vacío');
-                    return false;
-                }
-                
-                if (!fechaInicio || !fechaInicio.value) {
-                    e.preventDefault();
-                    alert('Por favor selecciona una fecha de inicio');
-                    console.error('Error: Fecha de inicio no seleccionada');
-                    return false;
-                }
-                
-                console.log('Validación pasada, enviando formulario...');
-                console.log('Datos del formulario:', {
-                    proyecto: proyecto.value,
-                    titulo: titulo.value,
-                    fecha_inicio: fechaInicio.value
-                });
-                
-                // Permitir que el formulario se envíe normalmente
-                return true;
+        
+        console.log('✅ Formulario encontrado');
+        
+        // Handler para el submit del formulario
+        form.addEventListener('submit', function(e) {
+            console.log('📤 === INTENTO DE ENVÍO DE FORMULARIO ===');
+            
+            // Validar campos requeridos antes de enviar
+            const proyecto = document.getElementById('proyecto');
+            const titulo = document.getElementById('titulo');
+            const fechaInicio = document.getElementById('fecha_inicio');
+            
+            console.log('🔍 Validando campos:', {
+                proyecto: proyecto ? proyecto.value : 'NO ENCONTRADO',
+                titulo: titulo ? titulo.value : 'NO ENCONTRADO',
+                fechaInicio: fechaInicio ? fechaInicio.value : 'NO ENCONTRADO'
             });
             
-            // Agregar listener al botón de guardar
-            const guardarBtn = form.querySelector('button[name="guardar"]');
-            if (guardarBtn) {
-                guardarBtn.addEventListener('click', function(e) {
-                    console.log('Botón Guardar clickeado');
+            if (!proyecto || !proyecto.value) {
+                e.preventDefault();
+                e.stopPropagation();
+                alert('Por favor selecciona un proyecto');
+                console.error('❌ Error: Proyecto no seleccionado');
+                return false;
+            }
+            
+            if (!titulo || !titulo.value.trim()) {
+                e.preventDefault();
+                e.stopPropagation();
+                alert('Por favor ingresa un título');
+                console.error('❌ Error: Título vacío');
+                return false;
+            }
+            
+            if (!fechaInicio || !fechaInicio.value) {
+                e.preventDefault();
+                e.stopPropagation();
+                alert('Por favor selecciona una fecha de inicio');
+                console.error('❌ Error: Fecha de inicio no seleccionada');
+                return false;
+            }
+            
+            console.log('✅ Validación pasada, enviando formulario...');
+            console.log('📋 Datos del formulario:', {
+                proyecto: proyecto.value,
+                titulo: titulo.value,
+                fecha_inicio: fechaInicio.value,
+                descripcion: document.getElementById('descripcion') ? document.getElementById('descripcion').value : '',
+                estado: document.getElementById('estado') ? document.getElementById('estado').value : '',
+                prioridad: document.getElementById('prioridad') ? document.getElementById('prioridad').value : ''
+            });
+            
+            // Permitir que el formulario se envíe normalmente
+            return true;
+        });
+        
+        // Agregar listener al botón de guardar para debugging
+        const guardarBtn = form.querySelector('button[name="guardar"]');
+        if (guardarBtn) {
+            guardarBtn.addEventListener('click', function(e) {
+                console.log('🖱️ Botón Guardar clickeado');
+                // No prevenir el comportamiento por defecto
+            }, false);
+        } else {
+            console.error('❌ No se encontró el botón de guardar');
+        }
+        
+        // Cerrar dropdowns al hacer click fuera - CON EXCEPCIÓN PARA EL FORMULARIO
+        document.addEventListener('click', function(event) {
+            // NO interferir con el submit del formulario o botones
+            if (event.target.type === 'submit' || 
+                event.target.closest('button[type="submit"]') || 
+                event.target.closest('form') && (event.target.type === 'submit' || event.target.tagName === 'BUTTON')) {
+                console.log('🔘 Click en botón de submit, ignorando cierre de dropdowns');
+                return;
+            }
+            
+            const clickedInside = event.target.closest('.custom-dropdown');
+            if (!clickedInside) {
+                document.querySelectorAll('.dropdown-menu').forEach(menu => {
+                    menu.classList.remove('show');
+                });
+                document.querySelectorAll('.dropdown-trigger').forEach(trigger => {
+                    trigger.classList.remove('active');
                 });
             }
-        } else {
-            console.error('No se encontró el formulario con ID planificacionForm');
-        }
+        }, false);
+        
+        // Prevenir cierre cuando se hace click dentro del dropdown menu - CON EXCEPCIÓN PARA SUBMIT
+        document.addEventListener('click', function(event) {
+            // NO interferir con el submit del formulario
+            if (event.target.type === 'submit' || 
+                event.target.closest('button[type="submit"]') || 
+                (event.target.closest('form') && (event.target.type === 'submit' || event.target.tagName === 'BUTTON'))) {
+                return;
+            }
+            
+            if (event.target.closest('.dropdown-menu')) {
+                event.stopPropagation();
+            }
+        }, true);
+        
+        console.log('✅ Inicialización de formulario completada');
     });
     
-    console.log('Planificación bitácora cargado');
+    console.log('📄 Script de planificación bitácora cargado');
 </script>
 {% endblock %}
