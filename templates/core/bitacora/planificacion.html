@@ -737,10 +737,70 @@
     
     // Prevenir cierre cuando se hace click dentro del dropdown menu
     document.addEventListener('click', function(event) {
+        // No prevenir el comportamiento si es un botón de submit
+        if (event.target.closest('button[type="submit"]') || event.target.closest('a.btn')) {
+            return;
+        }
         if (event.target.closest('.dropdown-menu')) {
             event.stopPropagation();
         }
     }, true);
+    
+    // Agregar handler explícito para el submit del formulario
+    document.addEventListener('DOMContentLoaded', function() {
+        const form = document.getElementById('planificacionForm');
+        if (form) {
+            form.addEventListener('submit', function(e) {
+                console.log('Formulario siendo enviado...');
+                
+                // Validar campos requeridos antes de enviar
+                const proyecto = document.getElementById('proyecto');
+                const titulo = document.getElementById('titulo');
+                const fechaInicio = document.getElementById('fecha_inicio');
+                
+                if (!proyecto || !proyecto.value) {
+                    e.preventDefault();
+                    alert('Por favor selecciona un proyecto');
+                    console.error('Error: Proyecto no seleccionado');
+                    return false;
+                }
+                
+                if (!titulo || !titulo.value.trim()) {
+                    e.preventDefault();
+                    alert('Por favor ingresa un título');
+                    console.error('Error: Título vacío');
+                    return false;
+                }
+                
+                if (!fechaInicio || !fechaInicio.value) {
+                    e.preventDefault();
+                    alert('Por favor selecciona una fecha de inicio');
+                    console.error('Error: Fecha de inicio no seleccionada');
+                    return false;
+                }
+                
+                console.log('Validación pasada, enviando formulario...');
+                console.log('Datos del formulario:', {
+                    proyecto: proyecto.value,
+                    titulo: titulo.value,
+                    fecha_inicio: fechaInicio.value
+                });
+                
+                // Permitir que el formulario se envíe normalmente
+                return true;
+            });
+            
+            // Agregar listener al botón de guardar
+            const guardarBtn = form.querySelector('button[name="guardar"]');
+            if (guardarBtn) {
+                guardarBtn.addEventListener('click', function(e) {
+                    console.log('Botón Guardar clickeado');
+                });
+            }
+        } else {
+            console.error('No se encontró el formulario con ID planificacionForm');
+        }
+    });
     
     console.log('Planificación bitácora cargado');
 </script>
