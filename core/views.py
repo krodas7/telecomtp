@@ -12130,8 +12130,8 @@ def bitacora_planificacion(request):
     if request.method == 'POST' and request.POST.get('guardar'):
         # Procesar guardado de planificación
         proyecto_id = request.POST.get('proyecto')
-        titulo = request.POST.get('titulo', 'Planificación sin título')
-        descripcion = request.POST.get('descripcion', '')
+        titulo = request.POST.get('titulo', '').strip()
+        descripcion = request.POST.get('descripcion', '').strip()
         fecha_inicio = request.POST.get('fecha_inicio')
         fecha_fin = request.POST.get('fecha_fin')
         estado = request.POST.get('estado', 'programada')
@@ -12139,7 +12139,19 @@ def bitacora_planificacion(request):
         colaboradores_ids = request.POST.getlist('colaboradores')
         trabajadores_diarios_ids = request.POST.getlist('trabajadores_diarios')
         
-        if proyecto_id and fecha_inicio:
+        # Validar campos requeridos
+        errors = []
+        if not proyecto_id:
+            errors.append('Debes seleccionar un proyecto')
+        if not titulo:
+            errors.append('El título es obligatorio')
+        if not fecha_inicio:
+            errors.append('La fecha de inicio es obligatoria')
+        
+        if errors:
+            for error in errors:
+                messages.error(request, error)
+        else:
             try:
                 proyecto_seleccionado = Proyecto.objects.get(id=proyecto_id, activo=True)
                 
@@ -12147,7 +12159,7 @@ def bitacora_planificacion(request):
                 planificacion = PlanificacionBitacora.objects.create(
                     proyecto=proyecto_seleccionado,
                     titulo=titulo,
-                    descripcion=descripcion,
+                    descripcion=descripcion if descripcion else None,
                     fecha_inicio=fecha_inicio,
                     fecha_fin=fecha_fin if fecha_fin else None,
                     estado=estado,
@@ -12173,11 +12185,14 @@ def bitacora_planificacion(request):
                 )
                 
                 messages.success(request, 'Planificación creada exitosamente')
-                return redirect('bitacora_planificacion_detail', planificacion_id=planificacion.id)
+                return redirect('bitacora_dashboard')
+            except Proyecto.DoesNotExist:
+                messages.error(request, 'El proyecto seleccionado no existe o no está activo')
             except Exception as e:
+                import traceback
+                error_detail = traceback.format_exc()
                 messages.error(request, f'Error al crear planificación: {str(e)}')
-        else:
-            messages.error(request, 'Por favor completa todos los campos requeridos')
+                print(f"Error al crear planificación: {error_detail}")
     
     # Obtener proyecto_id de GET o POST
     proyecto_id = request.GET.get('proyecto_id') or request.POST.get('proyecto')
