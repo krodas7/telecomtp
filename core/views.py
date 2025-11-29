@@ -12127,33 +12127,21 @@ def bitacora_planificacion(request):
     trabajadores_diarios = []
     proyecto_seleccionado = None
     
-    if request.method == 'POST':
-        proyecto_id = request.POST.get('proyecto')
-        if proyecto_id:
-            try:
-                proyecto_seleccionado = Proyecto.objects.get(id=proyecto_id, activo=True)
-                # Obtener colaboradores del proyecto
-                colaboradores = proyecto_seleccionado.colaboradores.filter(activo=True).order_by('nombre')
-                # Obtener trabajadores diarios activos del proyecto
-                trabajadores_diarios = TrabajadorDiario.objects.filter(
-                    proyecto=proyecto_seleccionado,
-                    activo=True
-                ).order_by('nombre')
-            except Proyecto.DoesNotExist:
-                messages.error(request, 'Proyecto no encontrado')
+    # Obtener proyecto_id de GET o POST
+    proyecto_id = request.GET.get('proyecto_id') or request.POST.get('proyecto')
     
-    # Si hay un proyecto_id en GET, cargar los trabajadores
-    proyecto_id = request.GET.get('proyecto_id')
-    if proyecto_id and not proyecto_seleccionado:
+    if proyecto_id:
         try:
             proyecto_seleccionado = Proyecto.objects.get(id=proyecto_id, activo=True)
+            # Obtener colaboradores del proyecto usando select_related para optimización
             colaboradores = proyecto_seleccionado.colaboradores.filter(activo=True).order_by('nombre')
+            # Obtener trabajadores diarios activos del proyecto
             trabajadores_diarios = TrabajadorDiario.objects.filter(
                 proyecto=proyecto_seleccionado,
                 activo=True
             ).order_by('nombre')
         except Proyecto.DoesNotExist:
-            pass
+            messages.error(request, 'Proyecto no encontrado')
     
     context = {
         'titulo': 'Planificación - Bitácora',
