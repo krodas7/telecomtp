@@ -394,13 +394,16 @@
                     <h3 class="form-section-title">
                         <i class="fas fa-users"></i>
                         Trabajadores en Planilla
+                        <span style="font-size: 0.75rem; font-weight: normal; color: #6b7280; margin-left: 0.5rem;">
+                            (Proyecto: {{ proyecto_seleccionado.nombre }})
+                        </span>
                     </h3>
                     
                     {% if colaboradores %}
                         <div class="form-group">
                             <label class="form-label">
                                 <i class="fas fa-user-check"></i>
-                                Seleccionar Colaboradores
+                                Seleccionar Colaboradores ({{ colaboradores.count }} disponibles)
                             </label>
                             <div class="custom-dropdown" id="dropdown_colaboradores">
                                 <div class="dropdown-trigger" onclick="toggleDropdown('colaboradores')">
@@ -434,7 +437,8 @@
                     {% else %}
                         <div class="empty-checklist">
                             <i class="fas fa-user-slash"></i>
-                            <p>No hay colaboradores asignados a este proyecto</p>
+                            <p>No hay colaboradores asignados a este proyecto.</p>
+                            <p style="font-size: 0.875rem; margin-top: 0.5rem;">Proyecto seleccionado: <strong>{{ proyecto_seleccionado.nombre }}</strong></p>
                         </div>
                     {% endif %}
                 </div>
@@ -450,7 +454,7 @@
                         <div class="form-group">
                             <label class="form-label">
                                 <i class="fas fa-user-check"></i>
-                                Seleccionar Trabajadores Diarios
+                                Seleccionar Trabajadores Diarios ({{ trabajadores_diarios.count }} disponibles)
                             </label>
                             <div class="custom-dropdown" id="dropdown_trabajadores_diarios">
                                 <div class="dropdown-trigger" onclick="toggleDropdown('trabajadores_diarios')">
@@ -482,7 +486,8 @@
                     {% else %}
                         <div class="empty-checklist">
                             <i class="fas fa-user-slash"></i>
-                            <p>No hay trabajadores diarios registrados en este proyecto</p>
+                            <p>No hay trabajadores diarios registrados en este proyecto.</p>
+                            <p style="font-size: 0.875rem; margin-top: 0.5rem;">Proyecto seleccionado: <strong>{{ proyecto_seleccionado.nombre }}</strong></p>
                         </div>
                     {% endif %}
                 </div>
