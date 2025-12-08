@@ -11543,7 +11543,7 @@ def planillas_liquidadas_historial(request):
                     dias_trabajados = trabajador.total_dias_trabajados
                     total_bruto = dias_trabajados * trabajador.pago_diario
                     anticipos = AnticipoTrabajadorDiario.objects.filter(trabajador=trabajador, estado='aplicado')
-                    total_anticipos = anticipos.aggregate(total=Sum('monto_aplicado'))['total'] or Decimal('0.00')
+                    total_anticipos = anticipos.aggregate(total=Sum('monto'))['total'] or Decimal('0.00')
                     total_neto = total_bruto - total_anticipos
                     planillas = PlanillaLiquidada.objects.filter(proyecto=trabajador.proyecto, observaciones__icontains='trabajadores diarios').order_by('-fecha_liquidacion')
                     
@@ -11696,7 +11696,7 @@ def consultar_pagos_persona(request):
                 )
                 
                 total_anticipos = anticipos.aggregate(
-                    total=Sum('monto_aplicado')
+                    total=Sum('monto')
                 )['total'] or Decimal('0.00')
                 
                 total_neto = total_bruto - total_anticipos
