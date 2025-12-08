@@ -5661,9 +5661,12 @@ def planilla_proyecto(request, proyecto_id):
             if colaborador.aplica_bono_general:
                 bonos_monto += Decimal(str(configuracion_planilla.bono_general))
             
-            # Bono de producción (ahora es monto fijo)
+            # Bono de producción: usar individual si existe y > 0, sino usar el general
             if colaborador.aplica_bono_produccion:
-                bonos_monto += Decimal(str(configuracion_planilla.bono_produccion))
+                if colaborador.bono_produccion_individual and colaborador.bono_produccion_individual > 0:
+                    bonos_monto += colaborador.bono_produccion_individual
+                else:
+                    bonos_monto += Decimal(str(configuracion_planilla.bono_produccion))
         
         # Salario con bonos y retenciones (todo en Decimal)
         salario_colaborador_decimal = Decimal(str(salario_colaborador))
