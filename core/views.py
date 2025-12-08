@@ -11430,6 +11430,9 @@ def planillas_liquidadas_historial(request):
         planillas_liquidadas__isnull=False
     ).distinct().order_by('nombre')
     
+    # Obtener proyectos activos para el filtro de consultar pagos
+    proyectos_para_pagos = Proyecto.objects.filter(activo=True).order_by('nombre')
+    
     # Obtener años disponibles
     años = PlanillaLiquidada.objects.values_list('año', flat=True).distinct().order_by('-año')
     
