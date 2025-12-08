@@ -602,7 +602,7 @@
                     <div class="file-list-meta">Creada el {{ carpeta.fecha_creacion|date:"d/m/Y H:i" }}</div>
                 </div>
                 <div class="file-list-actions">
-                    <a href="{% url 'carpeta_detail' proyecto.id carpeta.id %}" class="file-action-btn" title="Abrir">
+                    <a href="{% url 'carpeta_detail' carpeta.id %}" class="file-action-btn" title="Abrir">
                         <i class="fas fa-folder-open"></i>
                     </a>
                     <a href="{% url 'carpeta_delete' proyecto.id carpeta.id %}" class="file-action-btn delete" title="Eliminar">
