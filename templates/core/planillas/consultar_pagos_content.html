@@ -226,7 +226,7 @@
 
 <!-- Results -->
 {% if nombre_buscado_pagos or nombre_buscado %}
-    {% with resultados=resultados_pagos nombre_buscado=nombre_buscado_pagos|default:nombre_buscado %}
+    {% with resultados=resultados_pagos nombre_buscado=nombre_buscado_pagos %}
         {% if resultados.colaboradores or resultados.trabajadores_diarios %}
             <!-- Colaboradores -->
             {% for item in resultados.colaboradores %}
