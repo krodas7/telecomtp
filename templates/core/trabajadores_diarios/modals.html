@@ -60,65 +60,117 @@
 </div>
 
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    const form = document.getElementById('finalizarPlanillaForm');
-    const btn = document.getElementById('finalizarPlanillaBtn');
-    const overlay = document.getElementById('finalizarPlanillaOverlay');
-    const modal = document.getElementById('finalizarPlanillaModal');
+(function() {
+    'use strict';
+    
     let isSubmitting = false;
     
-    if (form && btn) {
-        form.addEventListener('submit', function(e) {
-            // Prevenir múltiples envíos
+    // Esperar a que todo esté completamente cargado
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initModalHandler);
+    } else {
+        // Si ya está cargado, ejecutar inmediatamente
+        setTimeout(initModalHandler, 100);
+    }
+    
+    function initModalHandler() {
+        try {
+            const modalElement = document.getElementById('finalizarPlanillaModal');
+            if (!modalElement) {
+                console.warn('Modal finalizarPlanillaModal no encontrado');
+                return;
+            }
+            
+            // Configurar handler del formulario solo cuando el modal se muestre
+            modalElement.addEventListener('shown.bs.modal', function() {
+                setupFormHandler();
+            });
+            
+            // Limpiar estado cuando el modal se cierre
+            modalElement.addEventListener('hidden.bs.modal', function() {
+                if (!isSubmitting) {
+                    resetButtonState();
+                }
+            });
+            
+            // Restaurar estado al cargar página
+            window.addEventListener('load', function() {
+                const overlay = document.getElementById('finalizarPlanillaOverlay');
+                if (overlay) overlay.style.display = 'none';
+                isSubmitting = false;
+                resetButtonState();
+            });
+        } catch (error) {
+            console.error('Error inicializando modal handler:', error);
+        }
+    }
+    
+    function setupFormHandler() {
+        const form = document.getElementById('finalizarPlanillaForm');
+        const btn = document.getElementById('finalizarPlanillaBtn');
+        
+        if (!form || !btn) return;
+        
+        // Reiniciar estado
+        isSubmitting = false;
+        resetButtonState();
+        
+        // Remover handlers anteriores si existen
+        const newForm = form.cloneNode(true);
+        form.parentNode.replaceChild(newForm, form);
+        
+        // Agregar nuevo handler
+        newForm.addEventListener('submit', function(e) {
             if (isSubmitting) {
                 e.preventDefault();
+                e.stopPropagation();
                 return false;
             }
             
             isSubmitting = true;
+            const submitBtn = document.getElementById('finalizarPlanillaBtn');
+            const overlay = document.getElementById('finalizarPlanillaOverlay');
             
-            // Deshabilitar botón
-            btn.disabled = true;
-            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>Procesando...';
-            btn.style.opacity = '0.6';
-            btn.style.cursor = 'not-allowed';
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>Procesando...';
+                submitBtn.style.opacity = '0.6';
+                submitBtn.style.cursor = 'not-allowed';
+            }
             
-            // Mostrar overlay de carga
             if (overlay) {
                 overlay.style.display = 'flex';
             }
             
-            // Cerrar modal después de un pequeño delay para que se vea el overlay
-            if (modal) {
-                const bsModal = bootstrap.Modal.getInstance(modal);
-                if (bsModal) {
-                    setTimeout(function() {
-                        bsModal.hide();
-                    }, 100);
+            // Cerrar modal después de un breve delay
+            try {
+                const modalEl = document.getElementById('finalizarPlanillaModal');
+                if (modalEl && typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+                    const bsModal = bootstrap.Modal.getInstance(modalEl);
+                    if (bsModal) {
+                        setTimeout(function() {
+                            bsModal.hide();
+                        }, 200);
+                    }
                 }
+            } catch (e) {
+                console.warn('No se pudo cerrar modal:', e);
             }
-            
-            // El formulario se enviará normalmente
-            // Si hay un error, el overlay se ocultará cuando la página se recargue
-            // Si es exitoso, se redirigirá y el overlay se ocultará automáticamente
             
             return true;
         });
-        
-        // Si la página se recarga y hay mensajes, ocultar overlay
-        window.addEventListener('load', function() {
-            if (overlay) {
-                overlay.style.display = 'none';
-            }
-            if (btn) {
-                btn.disabled = false;
-                btn.innerHTML = '<i class="fas fa-check-circle me-1"></i>Finalizar Planilla';
-                btn.style.opacity = '1';
-                btn.style.cursor = 'pointer';
-            }
-        });
     }
-});
+    
+    function resetButtonState() {
+        const btn = document.getElementById('finalizarPlanillaBtn');
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-check-circle me-1"></i>Finalizar Planilla';
+            btn.style.opacity = '1';
+            btn.style.cursor = 'pointer';
+        }
+    }
+})();
 </script>
 
 <!-- Modal de Reactivar Todos -->
