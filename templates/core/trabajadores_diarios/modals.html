@@ -43,57 +43,6 @@
     </div>
 </div>
 
-
-<script>
-// Handler directo en el botón - sin ejecutarse al cargar la página
-(function() {
-    'use strict';
-    
-    // Solo ejecutar cuando se hace click en el botón
-    document.addEventListener('click', function(e) {
-        const btn = e.target.closest('#finalizarPlanillaBtn');
-        if (!btn || btn.type !== 'submit') return;
-        
-        const form = document.getElementById('finalizarPlanillaForm');
-        if (!form) return;
-        
-        // Prevenir doble submit
-        if (form.dataset.submitting === 'true') {
-            e.preventDefault();
-            return false;
-        }
-        
-        form.dataset.submitting = 'true';
-        btn.disabled = true;
-        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Procesando...';
-        
-        // Crear overlay
-        const overlay = document.createElement('div');
-        overlay.id = 'finalizarPlanillaOverlay';
-        overlay.style.cssText = 'display: flex; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.7); z-index: 9999; align-items: center; justify-content: center;';
-        overlay.innerHTML = `
-            <div style="background: white; padding: 2rem; border-radius: 10px; text-align: center; max-width: 400px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
-                <div class="spinner-border text-warning" role="status" style="width: 3rem; height: 3rem; margin-bottom: 1rem;">
-                    <span class="visually-hidden">Cargando...</span>
-                </div>
-                <h5 style="color: #333; margin-bottom: 0.5rem;">Finalizando Planilla</h5>
-                <p style="color: #666; margin-bottom: 0;">Por favor espera, esto puede tomar unos momentos...</p>
-            </div>
-        `;
-        document.body.appendChild(overlay);
-        
-        // Cerrar modal
-        const modal = document.getElementById('finalizarPlanillaModal');
-        if (modal && typeof bootstrap !== 'undefined') {
-            try {
-                const bsModal = bootstrap.Modal.getInstance(modal);
-                if (bsModal) setTimeout(() => bsModal.hide(), 200);
-            } catch(err) {}
-        }
-    }, true);
-})();
-</script>
-
 <!-- Modal de Reactivar Todos -->
 <div class="modal fade" id="reactivarTodosModal" tabindex="-1" aria-labelledby="reactivarTodosModalLabel" aria-hidden="true">
     <div class="modal-dialog">
