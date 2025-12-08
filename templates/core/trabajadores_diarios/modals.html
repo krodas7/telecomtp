@@ -43,34 +43,39 @@
     </div>
 </div>
 
-<!-- Overlay de carga para finalizar planilla -->
-<div id="finalizarPlanillaOverlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.7); z-index: 9999; align-items: center; justify-content: center;">
-    <div style="background: white; padding: 2rem; border-radius: 10px; text-align: center; max-width: 400px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
-        <div class="spinner-border text-warning" role="status" style="width: 3rem; height: 3rem; margin-bottom: 1rem;">
-            <span class="visually-hidden">Cargando...</span>
-        </div>
-        <h5 style="color: #333; margin-bottom: 0.5rem;">Finalizando Planilla</h5>
-        <p style="color: #666; margin-bottom: 0;">Por favor espera, esto puede tomar unos momentos...</p>
-        <p style="color: #999; font-size: 0.875rem; margin-top: 0.5rem;">
-            <i class="fas fa-file-pdf me-1"></i>Generando PDF...<br>
-            <i class="fas fa-save me-1"></i>Guardando archivo...<br>
-            <i class="fas fa-database me-1"></i>Procesando datos...
-        </p>
-    </div>
-</div>
 
 <script>
-// Script mínimo - solo se ejecuta cuando es necesario
+// Script mínimo - crear overlay dinámicamente solo cuando se necesite
 (function() {
     'use strict';
     let isSubmitting = false;
     
-    // Solo ejecutar cuando el DOM esté listo
+    function createOverlay() {
+        const overlay = document.createElement('div');
+        overlay.id = 'finalizarPlanillaOverlay';
+        overlay.style.cssText = 'display: flex; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.7); z-index: 9999; align-items: center; justify-content: center;';
+        overlay.innerHTML = `
+            <div style="background: white; padding: 2rem; border-radius: 10px; text-align: center; max-width: 400px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+                <div class="spinner-border text-warning" role="status" style="width: 3rem; height: 3rem; margin-bottom: 1rem;">
+                    <span class="visually-hidden">Cargando...</span>
+                </div>
+                <h5 style="color: #333; margin-bottom: 0.5rem;">Finalizando Planilla</h5>
+                <p style="color: #666; margin-bottom: 0;">Por favor espera, esto puede tomar unos momentos...</p>
+                <p style="color: #999; font-size: 0.875rem; margin-top: 0.5rem;">
+                    <i class="fas fa-file-pdf me-1"></i>Generando PDF...<br>
+                    <i class="fas fa-save me-1"></i>Guardando archivo...<br>
+                    <i class="fas fa-database me-1"></i>Procesando datos...
+                </p>
+            </div>
+        `;
+        document.body.appendChild(overlay);
+        return overlay;
+    }
+    
     function setup() {
         const form = document.getElementById('finalizarPlanillaForm');
         if (!form) return;
         
-        // Handler simple en el formulario directamente
         form.onsubmit = function(e) {
             if (isSubmitting) {
                 e.preventDefault();
@@ -79,7 +84,6 @@
             
             isSubmitting = true;
             const btn = document.getElementById('finalizarPlanillaBtn');
-            const overlay = document.getElementById('finalizarPlanillaOverlay');
             const modal = document.getElementById('finalizarPlanillaModal');
             
             if (btn) {
@@ -87,10 +91,10 @@
                 btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Procesando...';
             }
             
-            if (overlay) {
-                overlay.style.display = 'flex';
-            }
+            // Crear overlay solo cuando se necesite
+            const overlay = createOverlay();
             
+            // Cerrar modal
             if (modal && typeof bootstrap !== 'undefined') {
                 try {
                     const bsModal = bootstrap.Modal.getInstance(modal);
@@ -102,7 +106,6 @@
         };
     }
     
-    // Ejecutar después de que la página cargue completamente
     if (document.readyState === 'complete') {
         setup();
     } else {
