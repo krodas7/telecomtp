@@ -223,7 +223,7 @@
                 <label class="form-label" for="proyecto_pagos">Proyecto (Opcional)</label>
                 <select name="proyecto_pagos" id="proyecto_pagos" class="form-select">
                     <option value="">Todos los proyectos</option>
-                    {% for proyecto in proyectos %}
+                    {% for proyecto in proyectos_para_pagos|default:proyectos %}
                     <option value="{{ proyecto.id }}" {% if proyecto_selected_pagos == proyecto.id|stringformat:"s" or proyecto.id == proyecto_selected_pagos %}selected{% endif %}>
                         {{ proyecto.nombre }}
                     </option>
