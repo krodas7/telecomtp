@@ -29,7 +29,7 @@
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
                     <i class="fas fa-times me-1"></i>Cancelar
                 </button>
-                <form method="post" action="{% url 'finalizar_planilla_trabajadores' proyecto.id %}" style="display: inline;">
+                <form method="post" action="{% url 'finalizar_planilla_trabajadores' proyecto.id %}" style="display: inline;" id="finalizarPlanillaForm">
                     {% csrf_token %}
                     {% if planilla_seleccionada %}
                     <input type="hidden" name="planilla_id" value="{{ planilla_seleccionada.id }}">
@@ -42,6 +42,84 @@
         </div>
     </div>
 </div>
+
+<!-- Overlay de carga para finalizar planilla -->
+<div id="finalizarPlanillaOverlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.7); z-index: 9999; align-items: center; justify-content: center;">
+    <div style="background: white; padding: 2rem; border-radius: 10px; text-align: center; max-width: 400px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+        <div class="spinner-border text-warning" role="status" style="width: 3rem; height: 3rem; margin-bottom: 1rem;">
+            <span class="visually-hidden">Cargando...</span>
+        </div>
+        <h5 style="color: #333; margin-bottom: 0.5rem;">Finalizando Planilla</h5>
+        <p style="color: #666; margin-bottom: 0;">Por favor espera, esto puede tomar unos momentos...</p>
+        <p style="color: #999; font-size: 0.875rem; margin-top: 0.5rem;">
+            <i class="fas fa-file-pdf me-1"></i>Generando PDF...<br>
+            <i class="fas fa-save me-1"></i>Guardando archivo...<br>
+            <i class="fas fa-database me-1"></i>Procesando datos...
+        </p>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('finalizarPlanillaForm');
+    const btn = document.getElementById('finalizarPlanillaBtn');
+    const overlay = document.getElementById('finalizarPlanillaOverlay');
+    const modal = document.getElementById('finalizarPlanillaModal');
+    let isSubmitting = false;
+    
+    if (form && btn) {
+        form.addEventListener('submit', function(e) {
+            // Prevenir múltiples envíos
+            if (isSubmitting) {
+                e.preventDefault();
+                return false;
+            }
+            
+            isSubmitting = true;
+            
+            // Deshabilitar botón
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>Procesando...';
+            btn.style.opacity = '0.6';
+            btn.style.cursor = 'not-allowed';
+            
+            // Mostrar overlay de carga
+            if (overlay) {
+                overlay.style.display = 'flex';
+            }
+            
+            // Cerrar modal después de un pequeño delay para que se vea el overlay
+            if (modal) {
+                const bsModal = bootstrap.Modal.getInstance(modal);
+                if (bsModal) {
+                    setTimeout(function() {
+                        bsModal.hide();
+                    }, 100);
+                }
+            }
+            
+            // El formulario se enviará normalmente
+            // Si hay un error, el overlay se ocultará cuando la página se recargue
+            // Si es exitoso, se redirigirá y el overlay se ocultará automáticamente
+            
+            return true;
+        });
+        
+        // Si la página se recarga y hay mensajes, ocultar overlay
+        window.addEventListener('load', function() {
+            if (overlay) {
+                overlay.style.display = 'none';
+            }
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-check-circle me-1"></i>Finalizar Planilla';
+                btn.style.opacity = '1';
+                btn.style.cursor = 'pointer';
+            }
+        });
+    }
+});
+</script>
 
 <!-- Modal de Reactivar Todos -->
 <div class="modal fade" id="reactivarTodosModal" tabindex="-1" aria-labelledby="reactivarTodosModalLabel" aria-hidden="true">
