@@ -7581,11 +7581,18 @@ def finalizar_planilla_trabajadores(request, proyecto_id):
         carpeta, created = CarpetaProyecto.objects.get_or_create(
             proyecto=proyecto,
             nombre='Trabajadores Diarios',
+            carpeta_padre=None,  # Asegurar que es carpeta raíz
             defaults={
                 'creada_por': request.user,
-                'descripcion': 'Carpeta para almacenar planillas de trabajadores diarios'
+                'descripcion': 'Carpeta para almacenar planillas de trabajadores diarios',
+                'activa': True
             }
         )
+        
+        # Si la carpeta ya existía pero estaba inactiva, reactivarla
+        if not created and not carpeta.activa:
+            carpeta.activa = True
+            carpeta.save()
         
         if created:
             print(f"✅ Carpeta 'Trabajadores Diarios' creada para proyecto {proyecto.nombre}")
@@ -7654,8 +7661,15 @@ def finalizar_planilla_trabajadores(request, proyecto_id):
             ip_address=request.META.get('REMOTE_ADDR')
         )
         
-        # 7. Mostrar mensaje de éxito
-        messages.success(request, f'Planilla finalizada exitosamente. Archivo guardado como "{nombre_archivo}". Se procesaron {trabajadores_eliminados} trabajadores.')
+        # 7. Mostrar mensaje de éxito con enlace a la carpeta
+        from django.urls import reverse
+        archivos_url = reverse('archivos_proyecto_list', args=[proyecto_id]) + f'?carpeta={carpeta.id}'
+        messages.success(
+            request, 
+            f'Planilla finalizada exitosamente. Archivo guardado como "{nombre_archivo}" en la carpeta "Trabajadores Diarios". '
+            f'Se procesaron {trabajadores_eliminados} trabajadores. '
+            f'<a href="{archivos_url}" class="alert-link">Ver archivo en carpeta</a>'
+        )
         
         return redirect('trabajadores_diarios_list', proyecto_id=proyecto_id)
         
