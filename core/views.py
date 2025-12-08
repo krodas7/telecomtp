@@ -7491,20 +7491,29 @@ def finalizar_planilla_trabajadores(request, proyecto_id):
         story.append(Paragraph(f"<b>Fecha de Generación:</b> {timezone.now().strftime('%d/%m/%Y %H:%M')}", normal_style))
         story.append(Spacer(1, 20))
         
-        # Calcular totales con anticipos
-        total_trabajadores = trabajadores.count()
+        # Calcular totales con anticipos (solo trabajadores con días trabajados)
         total_bruto_general = 0
         total_anticipos_general = 0
         total_neto_general = 0
+        contador = 0  # Contador para trabajadores con días trabajados
         
         # Crear tabla con columnas de anticipos
         data = [['No.', 'Nombre del Trabajador', 'Pago Diario', 'Días Trabajados', 'Total Bruto', 'Anticipos', 'Total Neto']]
         
-        for i, trabajador in enumerate(trabajadores, 1):
+        contador = 0  # Contador solo para trabajadores con días trabajados
+        for trabajador in trabajadores:
+            # Calcular días trabajados desde los registros
             dias_trabajados = sum(registro.dias_trabajados for registro in trabajador.registros_trabajo.all())
-            if dias_trabajados == 0:
-                dias_trabajados = 1  # Valor por defecto si no hay registros
             
+            # Si no hay registros, usar el total_dias_trabajados del trabajador si existe
+            if dias_trabajados == 0:
+                dias_trabajados = trabajador.total_dias_trabajados or 0
+            
+            # SOLO incluir trabajadores con días trabajados > 0
+            if dias_trabajados <= 0:
+                continue  # Saltar trabajadores sin días trabajados
+            
+            contador += 1
             total_bruto = float(trabajador.pago_diario) * dias_trabajados
             
             # Calcular anticipos del trabajador
@@ -7523,7 +7532,7 @@ def finalizar_planilla_trabajadores(request, proyecto_id):
             total_neto_general += total_neto
             
             data.append([
-                str(i),
+                str(contador),
                 trabajador.nombre,
                 f"${trabajador.pago_diario:.2f}",
                 str(dias_trabajados),
