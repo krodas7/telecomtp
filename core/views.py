@@ -11455,6 +11455,118 @@ def planillas_liquidadas_historial(request):
         'total_general_trabajadores_diarios': total_general_trabajadores_diarios,
     }
     
+    # Agregar contexto de consultar pagos si se está accediendo desde el historial
+    consultar_pagos_context = {}
+    nombre_buscado = request.GET.get('nombre_pagos', '').strip()
+    proyecto_id_pagos = request.GET.get('proyecto_pagos')
+    tipo_persona_pagos = request.GET.get('tipo_pagos', 'todos')
+    
+    if nombre_buscado or request.GET.get('tab') == 'pagos':
+        # Si hay búsqueda de pagos, procesarla
+        resultados_pagos = {
+            'colaboradores': [],
+            'trabajadores_diarios': [],
+        }
+        total_colab = Decimal('0.00')
+        total_trab = Decimal('0.00')
+        
+        if nombre_buscado:
+            from core.models import AnticipoProyecto
+            
+            if tipo_persona_pagos in ['todos', 'colaboradores']:
+                colaboradores_query = Colaborador.objects.filter(
+                    nombre__icontains=nombre_buscado,
+                    activo=True
+                ).prefetch_related('proyectos', 'anticipos_proyecto')
+                
+                if proyecto_id_pagos:
+                    colaboradores_query = colaboradores_query.filter(proyectos__id=proyecto_id_pagos).distinct()
+                
+                for colaborador in colaboradores_query:
+                    anticipos_query = AnticipoProyecto.objects.filter(colaborador=colaborador)
+                    if proyecto_id_pagos:
+                        anticipos_query = anticipos_query.filter(proyecto_id=proyecto_id_pagos)
+                    anticipos = anticipos_query.select_related('proyecto')
+                    total_anticipos = anticipos.aggregate(total=Sum('monto'))['total'] or Decimal('0.00')
+                    
+                    proyectos_colab = colaborador.proyectos.all()
+                    if proyecto_id_pagos:
+                        proyectos_colab = proyectos_colab.filter(id=proyecto_id_pagos)
+                    
+                    pagos_planilla = []
+                    for proyecto in proyectos_colab:
+                        planillas_proyecto = PlanillaLiquidada.objects.filter(proyecto=proyecto).exclude(observaciones__icontains='trabajadores diarios')
+                        for planilla in planillas_proyecto:
+                            if planilla.cantidad_personal > 0:
+                                promedio_pago = planilla.total_salarios / planilla.cantidad_personal
+                                pagos_planilla.append({
+                                    'fecha': planilla.fecha_liquidacion,
+                                    'mes': dict(PlanillaLiquidada.MESES_CHOICES).get(planilla.mes, ''),
+                                    'año': planilla.año,
+                                    'quincena': dict(PlanillaLiquidada.QUINCENA_CHOICES).get(planilla.quincena, ''),
+                                    'proyecto': proyecto.nombre,
+                                    'proyecto_id': proyecto.id,
+                                    'monto_estimado': promedio_pago,
+                                    'planilla_id': planilla.id,
+                                })
+                    
+                    total_pagos = sum(p['monto_estimado'] for p in pagos_planilla)
+                    total_gen = total_anticipos + total_pagos
+                    
+                    if anticipos.exists() or pagos_planilla:
+                        total_colab += total_gen
+                        resultados_pagos['colaboradores'].append({
+                            'colaborador': colaborador,
+                            'proyectos': proyectos_colab,
+                            'anticipos': anticipos,
+                            'total_anticipos': total_anticipos,
+                            'pagos_planilla': pagos_planilla,
+                            'total_pagos_planilla': total_pagos,
+                            'total_general': total_gen,
+                        })
+            
+            if tipo_persona_pagos in ['todos', 'trabajadores_diarios']:
+                from core.models import AnticipoTrabajadorDiario
+                trabajadores_query = TrabajadorDiario.objects.filter(nombre__icontains=nombre_buscado).select_related('proyecto', 'planilla')
+                if proyecto_id_pagos:
+                    trabajadores_query = trabajadores_query.filter(proyecto_id=proyecto_id_pagos)
+                
+                for trabajador in trabajadores_query:
+                    dias_trabajados = trabajador.total_dias_trabajados
+                    total_bruto = dias_trabajados * trabajador.pago_diario
+                    anticipos = AnticipoTrabajadorDiario.objects.filter(trabajador=trabajador, estado='aplicado')
+                    total_anticipos = anticipos.aggregate(total=Sum('monto_aplicado'))['total'] or Decimal('0.00')
+                    total_neto = total_bruto - total_anticipos
+                    planillas = PlanillaLiquidada.objects.filter(proyecto=trabajador.proyecto, observaciones__icontains='trabajadores diarios').order_by('-fecha_liquidacion')
+                    
+                    if dias_trabajados > 0 or anticipos.exists() or planillas.exists():
+                        total_trab += total_neto
+                        resultados_pagos['trabajadores_diarios'].append({
+                            'trabajador': trabajador,
+                            'proyecto': trabajador.proyecto,
+                            'planilla': trabajador.planilla,
+                            'dias_trabajados': dias_trabajados,
+                            'pago_diario': trabajador.pago_diario,
+                            'total_bruto': total_bruto,
+                            'anticipos': anticipos,
+                            'total_anticipos': total_anticipos,
+                            'total_neto': total_neto,
+                            'planillas_relacionadas': planillas[:10],
+                            'activo': trabajador.activo,
+                        })
+        
+        consultar_pagos_context = {
+            'nombre_buscado': nombre_buscado,
+            'proyecto_selected_pagos': proyecto_id_pagos,
+            'tipo_selected_pagos': tipo_persona_pagos,
+            'resultados_pagos': resultados_pagos,
+            'total_colaboradores_pagos': total_colab,
+            'total_trabajadores_diarios_pagos': total_trab,
+            'total_general_pagos': total_colab + total_trab,
+        }
+    
+    context.update(consultar_pagos_context)
+    
     return render(request, 'core/planillas/historial.html', context)
 
 

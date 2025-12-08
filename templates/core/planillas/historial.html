@@ -581,7 +581,7 @@
         
         <!-- Tab 2: Consultar Pagos por Persona -->
         <div class="tab-pane fade" id="pagos" role="tabpanel" aria-labelledby="pagos-tab">
-            <iframe src="{% url 'consultar_pagos_persona' %}" style="width: 100%; min-height: 800px; border: none; border-radius: 12px;"></iframe>
+            {% include 'core/planillas/consultar_pagos_content.html' %}
         </div>
     </div>
 </div>

@@ -1,0 +1,456 @@
+{% load custom_filters %}
+
+<style>
+.search-card {
+    background: white;
+    border-radius: 12px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    border: 1px solid #e5e7eb;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.form-label {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 0.5rem;
+    display: block;
+}
+
+.form-control, .form-select {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border: 1.5px solid #e5e7eb;
+    border-radius: 8px;
+    font-size: 0.9375rem;
+    transition: all 0.2s;
+}
+
+.form-control:focus, .form-select:focus {
+    outline: none;
+    border-color: #6366f1;
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+}
+
+.btn-search {
+    background: #6366f1;
+    color: white;
+    padding: 0.75rem 2rem;
+    border-radius: 8px;
+    border: none;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-search:hover {
+    background: #4f46e5;
+}
+
+.results-card {
+    background: white;
+    border-radius: 12px;
+    padding: 2rem;
+    border: 1px solid #e5e7eb;
+    margin-bottom: 1.5rem;
+}
+
+.person-header {
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+    color: white;
+    padding: 1.5rem;
+    border-radius: 12px;
+    margin-bottom: 1.5rem;
+}
+
+.person-name {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+}
+
+.person-type {
+    font-size: 0.875rem;
+    opacity: 0.9;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.summary-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.summary-card {
+    background: #f9fafb;
+    border-radius: 8px;
+    padding: 1.5rem;
+    border: 1px solid #e5e7eb;
+}
+
+.summary-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #6b7280;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.5rem;
+}
+
+.summary-value {
+    font-size: 1.5rem;
+    font-weight: 900;
+    color: #111827;
+}
+
+.table-modern {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1rem;
+}
+
+.table-modern thead {
+    background: #f9fafb;
+}
+
+.table-modern th {
+    padding: 1rem;
+    font-weight: 600;
+    font-size: 0.875rem;
+    color: #6b7280;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border-bottom: 2px solid #e5e7eb;
+    text-align: left;
+}
+
+.table-modern td {
+    padding: 1rem;
+    border-bottom: 1px solid #f3f4f6;
+    vertical-align: middle;
+}
+
+.table-modern tr:hover {
+    background: #f9fafb;
+}
+
+.badge-project {
+    padding: 0.375rem 0.75rem;
+    border-radius: 6px;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    background: #dbeafe;
+    color: #1e40af;
+}
+
+.badge-active {
+    background: #d1fae5;
+    color: #065f46;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.75rem;
+}
+
+.badge-inactive {
+    background: #fee2e2;
+    color: #991b1b;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.75rem;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 4rem 2rem;
+}
+
+.empty-icon {
+    width: 120px;
+    height: 120px;
+    margin: 0 auto 2rem;
+    background: #f3f4f6;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 3rem;
+    color: #9ca3af;
+}
+</style>
+
+<!-- Search Form -->
+<div class="search-card">
+    <h3 class="mb-4"><i class="fas fa-search me-2"></i>Buscar Pagos</h3>
+    <form method="get" action="{% url 'planillas_liquidadas_historial' %}">
+        <input type="hidden" name="tab" value="pagos">
+        <div class="row g-3">
+            <div class="col-md-4">
+                <label class="form-label" for="nombre_pagos">Nombre de la Persona</label>
+                <input type="text" 
+                       name="nombre_pagos" 
+                       id="nombre_pagos" 
+                       class="form-control" 
+                       placeholder="Ej: Juan Pérez"
+                       value="{{ nombre_buscado|default:nombre_buscado_pagos|default:'' }}">
+            </div>
+            <div class="col-md-3">
+                <label class="form-label" for="proyecto_pagos">Proyecto (Opcional)</label>
+                <select name="proyecto_pagos" id="proyecto_pagos" class="form-select">
+                    <option value="">Todos los proyectos</option>
+                    {% for proyecto in proyectos %}
+                    <option value="{{ proyecto.id }}" {% if proyecto_selected_pagos == proyecto.id|stringformat:"s" or proyecto.id == proyecto_selected_pagos %}selected{% endif %}>
+                        {{ proyecto.nombre }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label" for="tipo_pagos">Tipo de Persona</label>
+                <select name="tipo_pagos" id="tipo_pagos" class="form-select">
+                    <option value="todos" {% if tipo_selected_pagos == 'todos' %}selected{% endif %}>Todos</option>
+                    <option value="colaboradores" {% if tipo_selected_pagos == 'colaboradores' %}selected{% endif %}>Colaboradores</option>
+                    <option value="trabajadores_diarios" {% if tipo_selected_pagos == 'trabajadores_diarios' %}selected{% endif %}>Trabajadores Diarios</option>
+                </select>
+            </div>
+            <div class="col-md-2 d-flex align-items-end">
+                <button type="submit" class="btn-search w-100">
+                    <i class="fas fa-search me-1"></i>Buscar
+                </button>
+            </div>
+        </div>
+    </form>
+</div>
+
+<!-- Results -->
+{% if nombre_buscado_pagos or nombre_buscado %}
+    {% with resultados=resultados_pagos nombre_buscado=nombre_buscado_pagos|default:nombre_buscado %}
+        {% if resultados.colaboradores or resultados.trabajadores_diarios %}
+            <!-- Colaboradores -->
+            {% for item in resultados.colaboradores %}
+            <div class="results-card">
+                <div class="person-header">
+                    <div class="person-name">{{ item.colaborador.nombre }}</div>
+                    <div class="person-type">
+                        <i class="fas fa-user-tie me-1"></i>Colaborador
+                    </div>
+                </div>
+                
+                <div class="summary-grid">
+                    <div class="summary-card">
+                        <div class="summary-label">Total Anticipos</div>
+                        <div class="summary-value text-primary">${{ item.total_anticipos|floatformat:2 }}</div>
+                    </div>
+                    <div class="summary-card">
+                        <div class="summary-label">Total Pagos Planilla</div>
+                        <div class="summary-value text-success">${{ item.total_pagos_planilla|floatformat:2 }}</div>
+                    </div>
+                    <div class="summary-card">
+                        <div class="summary-label">Total General</div>
+                        <div class="summary-value text-success">${{ item.total_general|floatformat:2 }}</div>
+                    </div>
+                </div>
+                
+                <h5 class="mb-3"><i class="fas fa-building me-2"></i>Proyectos:</h5>
+                <div class="mb-4">
+                    {% for proyecto in item.proyectos %}
+                    <span class="badge-project me-2">{{ proyecto.nombre }}</span>
+                    {% endfor %}
+                </div>
+                
+                {% if item.anticipos %}
+                <h5 class="mb-3"><i class="fas fa-money-bill-wave me-2"></i>Anticipos:</h5>
+                <table class="table-modern">
+                    <thead>
+                        <tr>
+                            <th>Proyecto</th>
+                            <th>Monto</th>
+                            <th>Fecha</th>
+                            <th>Estado</th>
+                            <th>Concepto</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for anticipo in item.anticipos %}
+                        <tr>
+                            <td>{{ anticipo.proyecto.nombre }}</td>
+                            <td><strong>${{ anticipo.monto|floatformat:2 }}</strong></td>
+                            <td>{{ anticipo.fecha_anticipo|date:"d/m/Y" }}</td>
+                            <td>
+                                <span class="{% if anticipo.estado == 'liquidado' %}badge-active{% else %}badge-inactive{% endif %}">
+                                    {{ anticipo.get_estado_display }}
+                                </span>
+                            </td>
+                            <td>{{ anticipo.concepto }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% endif %}
+                
+                {% if item.pagos_planilla %}
+                <h5 class="mb-3 mt-4"><i class="fas fa-file-invoice-dollar me-2"></i>Pagos en Planillas:</h5>
+                <table class="table-modern">
+                    <thead>
+                        <tr>
+                            <th>Fecha</th>
+                            <th>Período</th>
+                            <th>Proyecto</th>
+                            <th>Monto Estimado</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for pago in item.pagos_planilla %}
+                        <tr>
+                            <td>{{ pago.fecha|date:"d/m/Y" }}</td>
+                            <td>{{ pago.mes }} {{ pago.año }} - {{ pago.quincena }}</td>
+                            <td>{{ pago.proyecto }}</td>
+                            <td><strong>${{ pago.monto_estimado|floatformat:2 }}</strong></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% endif %}
+            </div>
+            {% endfor %}
+            
+            <!-- Trabajadores Diarios -->
+            {% for item in resultados.trabajadores_diarios %}
+            <div class="results-card">
+                <div class="person-header" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);">
+                    <div class="person-name">{{ item.trabajador.nombre }}</div>
+                    <div class="person-type">
+                        <i class="fas fa-user-clock me-1"></i>Trabajador Diario
+                        {% if item.activo %}
+                        <span class="badge-active ms-2">Activo</span>
+                        {% else %}
+                        <span class="badge-inactive ms-2">Inactivo</span>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="summary-grid">
+                    <div class="summary-card">
+                        <div class="summary-label">Días Trabajados</div>
+                        <div class="summary-value">{{ item.dias_trabajados }}</div>
+                    </div>
+                    <div class="summary-card">
+                        <div class="summary-label">Pago Diario</div>
+                        <div class="summary-value">${{ item.pago_diario|floatformat:2 }}</div>
+                    </div>
+                    <div class="summary-card">
+                        <div class="summary-label">Total Bruto</div>
+                        <div class="summary-value text-primary">${{ item.total_bruto|floatformat:2 }}</div>
+                    </div>
+                    <div class="summary-card">
+                        <div class="summary-label">Anticipos</div>
+                        <div class="summary-value text-warning">${{ item.total_anticipos|floatformat:2 }}</div>
+                    </div>
+                    <div class="summary-card">
+                        <div class="summary-label">Total Neto</div>
+                        <div class="summary-value text-success">${{ item.total_neto|floatformat:2 }}</div>
+                    </div>
+                </div>
+                
+                <div class="mb-4">
+                    <strong>Proyecto:</strong> 
+                    <span class="badge-project">{{ item.proyecto.nombre }}</span>
+                    {% if item.planilla %}
+                    <span class="badge-project ms-2">Planilla: {{ item.planilla.nombre }}</span>
+                    {% endif %}
+                </div>
+                
+                {% if item.anticipos %}
+                <h5 class="mb-3"><i class="fas fa-money-bill-wave me-2"></i>Anticipos:</h5>
+                <table class="table-modern">
+                    <thead>
+                        <tr>
+                            <th>Monto</th>
+                            <th>Fecha</th>
+                            <th>Estado</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for anticipo in item.anticipos %}
+                        <tr>
+                            <td><strong>${{ anticipo.monto|floatformat:2 }}</strong></td>
+                            <td>{{ anticipo.fecha_creacion|date:"d/m/Y" }}</td>
+                            <td>
+                                <span class="{% if anticipo.estado == 'aplicado' %}badge-active{% else %}badge-inactive{% endif %}">
+                                    {{ anticipo.get_estado_display }}
+                                </span>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% endif %}
+                
+                {% if item.planillas_relacionadas %}
+                <h5 class="mb-3 mt-4"><i class="fas fa-file-invoice-dollar me-2"></i>Planillas Relacionadas:</h5>
+                <table class="table-modern">
+                    <thead>
+                        <tr>
+                            <th>Fecha</th>
+                            <th>Período</th>
+                            <th>Total Planilla</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for planilla in item.planillas_relacionadas %}
+                        <tr>
+                            <td>{{ planilla.fecha_liquidacion|date:"d/m/Y" }}</td>
+                            <td>{{ planilla.get_mes_display }} {{ planilla.año }} - {{ planilla.get_quincena_display }}</td>
+                            <td><strong>${{ planilla.total_planilla|floatformat:2 }}</strong></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% endif %}
+            </div>
+            {% endfor %}
+            
+            <!-- Totales Generales -->
+            {% if resultados.colaboradores or resultados.trabajadores_diarios %}
+            <div class="results-card" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white;">
+                <h3 class="mb-3">
+                    <i class="fas fa-calculator me-2"></i>Resumen General
+                </h3>
+                <div class="summary-grid">
+                    <div>
+                        <div class="summary-label" style="color: rgba(255,255,255,0.8);">Total Colaboradores</div>
+                        <div class="summary-value" style="color: white;">${{ total_colaboradores_pagos|floatformat:2 }}</div>
+                    </div>
+                    <div>
+                        <div class="summary-label" style="color: rgba(255,255,255,0.8);">Total Trabajadores Diarios</div>
+                        <div class="summary-value" style="color: white;">${{ total_trabajadores_diarios_pagos|floatformat:2 }}</div>
+                    </div>
+                    <div>
+                        <div class="summary-label" style="color: rgba(255,255,255,0.8);">Total General</div>
+                        <div class="summary-value" style="color: white; font-size: 2rem;">${{ total_general_pagos|floatformat:2 }}</div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        {% else %}
+            <div class="empty-state">
+                <div class="empty-icon">
+                    <i class="fas fa-user-slash"></i>
+                </div>
+                <h3>No se encontraron resultados</h3>
+                <p class="text-muted">No hay pagos registrados para "{{ nombre_buscado }}" con los filtros seleccionados</p>
+            </div>
+        {% endif %}
+    {% endwith %}
+{% else %}
+    <div class="empty-state">
+        <div class="empty-icon">
+            <i class="fas fa-search"></i>
+        </div>
+        <h3>Busca pagos por persona</h3>
+        <p class="text-muted">Ingresa el nombre de la persona para consultar sus pagos en todos los proyectos</p>
+    </div>
+{% endif %}
+
