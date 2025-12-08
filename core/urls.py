@@ -34,6 +34,7 @@ urlpatterns = [
     
     # Historial de Planillas Liquidadas
     path('planillas/historial/', views.planillas_liquidadas_historial, name='planillas_liquidadas_historial'),
+    path('planillas/consultar-pagos/', views.consultar_pagos_persona, name='consultar_pagos_persona'),
     path('planillas/<int:planilla_id>/eliminar/', views.planilla_liquidada_delete, name='planilla_liquidada_delete'),
     
     # Bitácora
