@@ -7571,8 +7571,8 @@ def finalizar_planilla_trabajadores(request, proyecto_id):
         story.append(table)
         story.append(Spacer(1, 30))
         
-        # Información adicional
-        story.append(Paragraph(f"<b>Total de Trabajadores:</b> {total_trabajadores}", normal_style))
+        # Información adicional - usar contador de trabajadores con días
+        story.append(Paragraph(f"<b>Total de Trabajadores con Días:</b> {contador}", normal_style))
         story.append(Paragraph(f"<b>Total Bruto a Pagar:</b> ${total_bruto_general:.2f}", normal_style))
         story.append(Paragraph(f"<b>Total Anticipos Aplicados:</b> ${total_anticipos_general:.2f}", normal_style))
         story.append(Paragraph(f"<b>Total Neto a Pagar:</b> ${total_neto_general:.2f}", normal_style))
@@ -7642,7 +7642,7 @@ def finalizar_planilla_trabajadores(request, proyecto_id):
             total_salarios=Decimal(str(total_neto_general)),
             total_anticipos=Decimal(str(total_anticipos_general)),
             total_planilla=Decimal(str(total_neto_general)),
-            cantidad_personal=trabajadores.count(),
+            cantidad_personal=contador,  # Solo trabajadores con días trabajados
             liquidada_por=request.user,
             observaciones=f'Planilla de trabajadores diarios finalizada - Total: ${total_neto_general:.2f}'
         )
