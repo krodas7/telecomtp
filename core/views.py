@@ -2661,11 +2661,11 @@ def archivos_proyecto_list(request, proyecto_id):
     # Obtener archivos
     if carpeta_actual:
         archivos = ArchivoProyecto.objects.filter(proyecto=proyecto, carpeta=carpeta_actual, activo=True)
-        subcarpetas = carpeta_actual.get_subcarpetas_activas()
+        carpetas = carpeta_actual.get_subcarpetas_activas()
     else:
         # Carpeta raíz - archivos sin carpeta y carpetas raíz
         archivos = ArchivoProyecto.objects.filter(proyecto=proyecto, carpeta__isnull=True, activo=True)
-        subcarpetas = CarpetaProyecto.objects.filter(proyecto=proyecto, carpeta_padre__isnull=True, activa=True)
+        carpetas = CarpetaProyecto.objects.filter(proyecto=proyecto, carpeta_padre__isnull=True, activa=True)
     
     # Filtros
     tipo = request.GET.get('tipo')
@@ -2675,16 +2675,32 @@ def archivos_proyecto_list(request, proyecto_id):
     # Obtener todas las carpetas del proyecto para el breadcrumb
     todas_carpetas = CarpetaProyecto.objects.filter(proyecto=proyecto, activa=True).order_by('nombre')
     
+    # Calcular total de carpetas para estadísticas
+    total_carpetas = todas_carpetas.count()
+    
+    # Calcular tamaño total de archivos
+    total_size = sum(archivo.archivo.size for archivo in archivos if archivo.archivo)
+    # Convertir a formato legible
+    if total_size < 1024:
+        total_size_str = f"{total_size} B"
+    elif total_size < 1024 * 1024:
+        total_size_str = f"{total_size / 1024:.2f} KB"
+    elif total_size < 1024 * 1024 * 1024:
+        total_size_str = f"{total_size / (1024 * 1024):.2f} MB"
+    else:
+        total_size_str = f"{total_size / (1024 * 1024 * 1024):.2f} GB"
+    
     context = {
         'proyecto': proyecto,
         'carpeta_actual': carpeta_actual,
         'carpeta_filtrada': carpeta_actual,  # Para el template
         'archivos': archivos,
-        'subcarpetas': subcarpetas,
+        'carpetas': carpetas,  # Cambiar de subcarpetas a carpetas para que coincida con el template
         'todas_carpetas': todas_carpetas,
         'tipos': ArchivoProyecto.TIPO_CHOICES,
         'total_archivos': archivos.count(),
-        'total_subcarpetas': subcarpetas.count(),
+        'total_carpetas': total_carpetas,
+        'total_size': total_size_str,
     }
     
     return render(request, 'core/archivos/list.html', context)
