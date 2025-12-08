@@ -7663,13 +7663,14 @@ def finalizar_planilla_trabajadores(request, proyecto_id):
         
         # 7. Mostrar mensaje de éxito con enlace a la carpeta
         from django.urls import reverse
+        from django.utils.safestring import mark_safe
         archivos_url = reverse('archivos_proyecto_list', args=[proyecto_id]) + f'?carpeta={carpeta.id}'
-        messages.success(
-            request, 
-            f'Planilla finalizada exitosamente. Archivo guardado como "{nombre_archivo}" en la carpeta "Trabajadores Diarios". '
+        mensaje = mark_safe(
+            f'Planilla finalizada exitosamente. Archivo guardado como "<strong>{nombre_archivo}</strong>" en la carpeta "Trabajadores Diarios". '
             f'Se procesaron {trabajadores_eliminados} trabajadores. '
-            f'<a href="{archivos_url}" class="alert-link">Ver archivo en carpeta</a>'
+            f'<a href="{archivos_url}" class="alert-link" style="font-weight: bold; text-decoration: underline;">Ver archivo en carpeta →</a>'
         )
+        messages.success(request, mensaje)
         
         return redirect('trabajadores_diarios_list', proyecto_id=proyecto_id)
         
