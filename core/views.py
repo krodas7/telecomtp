@@ -11475,7 +11475,7 @@ def planillas_liquidadas_historial(request):
             
             if tipo_persona_pagos in ['todos', 'colaboradores']:
                 colaboradores_query = Colaborador.objects.filter(
-                    nombre__icontains=nombre_buscado,
+                    nombre__icontains=nombre_buscado_pagos,
                     activo=True
                 ).prefetch_related('proyectos', 'anticipos_proyecto')
                 
@@ -11527,7 +11527,7 @@ def planillas_liquidadas_historial(request):
             
             if tipo_persona_pagos in ['todos', 'trabajadores_diarios']:
                 from core.models import AnticipoTrabajadorDiario
-                trabajadores_query = TrabajadorDiario.objects.filter(nombre__icontains=nombre_buscado).select_related('proyecto', 'planilla')
+                trabajadores_query = TrabajadorDiario.objects.filter(nombre__icontains=nombre_buscado_pagos).select_related('proyecto', 'planilla')
                 if proyecto_id_pagos:
                     trabajadores_query = trabajadores_query.filter(proyecto_id=proyecto_id_pagos)
                 
@@ -11556,7 +11556,7 @@ def planillas_liquidadas_historial(request):
                         })
         
         consultar_pagos_context = {
-            'nombre_buscado': nombre_buscado,
+            'nombre_buscado_pagos': nombre_buscado_pagos,
             'proyecto_selected_pagos': proyecto_id_pagos,
             'tipo_selected_pagos': tipo_persona_pagos,
             'resultados_pagos': resultados_pagos,
