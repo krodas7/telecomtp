@@ -7676,7 +7676,7 @@ def finalizar_planilla_trabajadores(request, proyecto_id):
         archivos_url = reverse('archivos_proyecto_list', args=[proyecto_id]) + f'?carpeta={carpeta.id}'
         mensaje = mark_safe(
             f'Planilla finalizada exitosamente. Archivo guardado como "<strong>{nombre_archivo}</strong>" en la carpeta "Trabajadores Diarios". '
-            f'Se procesaron {trabajadores_eliminados} trabajadores. '
+            f'Se procesaron {contador} trabajador{"es" if contador != 1 else ""} con días trabajados. Total: ${total_neto_general:.2f}. '
             f'<a href="{archivos_url}" class="alert-link" style="font-weight: bold; text-decoration: underline;">Ver archivo en carpeta →</a>'
         )
         messages.success(request, mensaje)
