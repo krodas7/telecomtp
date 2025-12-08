@@ -194,7 +194,7 @@
                        id="nombre_pagos" 
                        class="form-control" 
                        placeholder="Ej: Juan Pérez"
-                       value="{{ nombre_buscado|default:nombre_buscado_pagos|default:'' }}">
+                       value="{{ nombre_buscado_pagos|default:'' }}">
             </div>
             <div class="col-md-3">
                 <label class="form-label" for="proyecto_pagos">Proyecto (Opcional)</label>
@@ -225,7 +225,7 @@
 </div>
 
 <!-- Results -->
-{% if nombre_buscado_pagos or nombre_buscado %}
+{% if nombre_buscado_pagos %}
     {% with resultados=resultados_pagos nombre_buscado=nombre_buscado_pagos %}
         {% if resultados.colaboradores or resultados.trabajadores_diarios %}
             <!-- Colaboradores -->
