@@ -11457,11 +11457,11 @@ def planillas_liquidadas_historial(request):
     
     # Agregar contexto de consultar pagos si se está accediendo desde el historial
     consultar_pagos_context = {}
-    nombre_buscado = request.GET.get('nombre_pagos', '').strip()
+    nombre_buscado_pagos = request.GET.get('nombre_pagos', '').strip()
     proyecto_id_pagos = request.GET.get('proyecto_pagos')
     tipo_persona_pagos = request.GET.get('tipo_pagos', 'todos')
     
-    if nombre_buscado or request.GET.get('tab') == 'pagos':
+    if nombre_buscado_pagos or request.GET.get('tab') == 'pagos':
         # Si hay búsqueda de pagos, procesarla
         resultados_pagos = {
             'colaboradores': [],
@@ -11470,7 +11470,7 @@ def planillas_liquidadas_historial(request):
         total_colab = Decimal('0.00')
         total_trab = Decimal('0.00')
         
-        if nombre_buscado:
+        if nombre_buscado_pagos:
             from core.models import AnticipoProyecto
             
             if tipo_persona_pagos in ['todos', 'colaboradores']:
