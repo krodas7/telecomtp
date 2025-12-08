@@ -160,6 +160,7 @@ class Colaborador(models.Model):
     # Bonos y retenciones individuales
     aplica_bono_general = models.BooleanField(default=True, verbose_name="Aplica Bono General", help_text="Si este colaborador recibe el bono general")
     aplica_bono_produccion = models.BooleanField(default=True, verbose_name="Aplica Bono de Producción", help_text="Si este colaborador recibe bono de producción")
+    bono_produccion_individual = models.DecimalField(max_digits=10, decimal_places=2, default=0, null=True, blank=True, verbose_name="Bono de Producción Individual ($)", help_text="Monto fijo mensual individual para este colaborador. Si está en 0, se usa el bono general del proyecto.")
     aplica_retenciones = models.BooleanField(default=True, verbose_name="Aplica Retenciones", help_text="Si este colaborador tiene retenciones de ley")
     
     activo = models.BooleanField(default=True)

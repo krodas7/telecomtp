@@ -5912,9 +5912,17 @@ def configurar_planilla_proyecto(request, proyecto_id):
             aplica_bono_general = f'bono_general_{colaborador.id}' in request.POST
             aplica_bono_produccion = f'bono_produccion_{colaborador.id}' in request.POST
             
+            # Obtener bono de producción individual
+            bono_produccion_monto = request.POST.get(f'bono_produccion_monto_{colaborador.id}', '0')
+            try:
+                bono_produccion_individual = Decimal(str(bono_produccion_monto)) if bono_produccion_monto else Decimal('0')
+            except (ValueError, InvalidOperation):
+                bono_produccion_individual = Decimal('0')
+            
             # Actualizar colaborador
             colaborador.aplica_bono_general = aplica_bono_general
             colaborador.aplica_bono_produccion = aplica_bono_produccion
+            colaborador.bono_produccion_individual = bono_produccion_individual
             colaborador.aplica_retenciones = True  # Retenciones SIEMPRE para todos
             colaborador.save()
         
@@ -5995,8 +6003,12 @@ def planilla_proyecto_pdf(request, proyecto_id):
         if configuracion_planilla.aplicar_bonos:
             if colaborador.aplica_bono_general:
                 bonos_monto += configuracion_planilla.bono_general
+            # Bono de producción: usar individual si existe, sino usar el general
             if colaborador.aplica_bono_produccion:
-                bonos_monto += configuracion_planilla.bono_produccion
+                if colaborador.bono_produccion_individual and colaborador.bono_produccion_individual > 0:
+                    bonos_monto += colaborador.bono_produccion_individual
+                else:
+                    bonos_monto += configuracion_planilla.bono_produccion
         
         # Salario quincenal (todo dividido entre 2)
         salario_quincenal = salario_colaborador / Decimal('2')
@@ -6194,8 +6206,12 @@ def planilla_proyecto_pdf(request, proyecto_id):
             if configuracion_planilla.aplicar_bonos:
                 if colaborador.aplica_bono_general:
                     bonos_monto += configuracion_planilla.bono_general
+                # Bono de producción: usar individual si existe, sino usar el general
                 if colaborador.aplica_bono_produccion:
-                    bonos_monto += (salario_colaborador * configuracion_planilla.bono_produccion) / Decimal('100')
+                    if colaborador.bono_produccion_individual and colaborador.bono_produccion_individual > 0:
+                        bonos_monto += colaborador.bono_produccion_individual
+                    else:
+                        bonos_monto += configuracion_planilla.bono_produccion
             
             # Valores quincenales
             salario_quincenal = salario_colaborador / Decimal('2')
@@ -12022,8 +12038,12 @@ def planilla_colaborador_pdf(request, proyecto_id, colaborador_id):
             bono_gen = Decimal(str(configuracion_planilla.bono_general))
             bonos_monto += bono_gen
             bonos_detalle.append(('Bono General', bono_gen))
+        # Bono de producción: usar individual si existe, sino usar el general
         if colaborador.aplica_bono_produccion:
-            bono_prod = Decimal(str(configuracion_planilla.bono_produccion))
+            if colaborador.bono_produccion_individual and colaborador.bono_produccion_individual > 0:
+                bono_prod = colaborador.bono_produccion_individual
+            else:
+                bono_prod = Decimal(str(configuracion_planilla.bono_produccion))
             bonos_monto += bono_prod
             bonos_detalle.append(('Bono de Producción', bono_prod))
     
