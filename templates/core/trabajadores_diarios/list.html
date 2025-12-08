@@ -405,10 +405,16 @@
             
             {% if planilla_seleccionada and planilla_seleccionada.estado == 'activa' and total_trabajadores > 0 %}
             <div class="mt-3">
-                <button type="button" class="btn-modern" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: white;" data-bs-toggle="modal" data-bs-target="#finalizarPlanillaModal">
-                    <i class="fas fa-check-circle"></i>
-                    <span>Finalizar Planilla</span>
-                </button>
+                <form method="post" action="{% url 'finalizar_planilla_trabajadores' proyecto.id %}" style="display: inline;" id="finalizarPlanillaFormDirect">
+                    {% csrf_token %}
+                    {% if planilla_seleccionada %}
+                    <input type="hidden" name="planilla_id" value="{{ planilla_seleccionada.id }}">
+                    {% endif %}
+                    <button type="submit" class="btn-modern" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: white;" id="finalizarPlanillaBtnDirect">
+                        <i class="fas fa-check-circle"></i>
+                        <span>Finalizar Planilla</span>
+                    </button>
+                </form>
             </div>
             {% endif %}
         </div>
@@ -870,61 +876,52 @@ function reabrirPlanilla(planillaId) {
 </form>
 
 <script>
-// Handler para finalizar planilla - solo se ejecuta cuando se hace click
+// Handler directo para finalizar planilla - sin modal de confirmación
 (function() {
     'use strict';
     
-    // Event delegation - solo se ejecuta cuando se hace click
-    document.addEventListener('click', function(e) {
-        // Solo procesar si es el botón de finalizar planilla
-        if (!e.target.closest('#finalizarPlanillaBtn')) return;
-        
-        const btn = e.target.closest('#finalizarPlanillaBtn');
-        if (!btn || btn.type !== 'submit') return;
-        
-        const form = document.getElementById('finalizarPlanillaForm');
-        if (!form) return;
-        
+    const form = document.getElementById('finalizarPlanillaFormDirect');
+    if (!form) return;
+    
+    form.addEventListener('submit', function(e) {
         // Prevenir doble submit
         if (form.dataset.submitting === 'true') {
             e.preventDefault();
-            e.stopPropagation();
             return false;
         }
         
         // Marcar como enviando
         form.dataset.submitting = 'true';
-        btn.disabled = true;
-        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Procesando...';
         
-        // Crear overlay de carga
+        const btn = document.getElementById('finalizarPlanillaBtnDirect');
+        if (btn) {
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Finalizando...';
+        }
+        
+        // Crear overlay de carga inmediatamente
         const overlay = document.createElement('div');
         overlay.id = 'finalizarPlanillaOverlay';
-        overlay.style.cssText = 'display: flex; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.7); z-index: 9999; align-items: center; justify-content: center;';
+        overlay.style.cssText = 'display: flex; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.8); z-index: 99999; align-items: center; justify-content: center;';
         overlay.innerHTML = `
-            <div style="background: white; padding: 2rem; border-radius: 10px; text-align: center; max-width: 400px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
-                <div class="spinner-border text-warning" role="status" style="width: 3rem; height: 3rem; margin-bottom: 1rem;">
+            <div style="background: white; padding: 2.5rem; border-radius: 12px; text-align: center; max-width: 450px; box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);">
+                <div class="spinner-border text-warning" role="status" style="width: 4rem; height: 4rem; margin-bottom: 1.5rem; border-width: 0.3em;">
                     <span class="visually-hidden">Cargando...</span>
                 </div>
-                <h5 style="color: #333; margin-bottom: 0.5rem;">Finalizando Planilla</h5>
-                <p style="color: #666;">Por favor espera, esto puede tomar unos momentos...</p>
+                <h4 style="color: #333; margin-bottom: 0.75rem; font-weight: 600;">Finalizando Planilla</h4>
+                <p style="color: #666; margin-bottom: 1rem; font-size: 1rem;">Por favor espera, esto puede tomar unos momentos...</p>
+                <div style="color: #999; font-size: 0.875rem; text-align: left; margin-top: 1rem;">
+                    <div style="margin-bottom: 0.5rem;"><i class="fas fa-file-pdf text-success me-2"></i>Generando PDF...</div>
+                    <div style="margin-bottom: 0.5rem;"><i class="fas fa-folder-plus text-primary me-2"></i>Creando carpeta...</div>
+                    <div><i class="fas fa-save text-info me-2"></i>Guardando archivo...</div>
+                </div>
             </div>
         `;
         document.body.appendChild(overlay);
         
-        // Cerrar modal después de un breve delay
-        setTimeout(function() {
-            const modal = document.getElementById('finalizarPlanillaModal');
-            if (modal && typeof bootstrap !== 'undefined') {
-                try {
-                    const bsModal = bootstrap.Modal.getInstance(modal);
-                    if (bsModal) bsModal.hide();
-                } catch(err) {
-                    console.warn('Error cerrando modal:', err);
-                }
-            }
-        }, 200);
-    }, true);
+        // El formulario se enviará normalmente
+        return true;
+    });
 })();
 </script>
 {% endblock %}
