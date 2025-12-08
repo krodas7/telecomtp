@@ -189,12 +189,35 @@
         <div class="row g-3">
             <div class="col-md-4">
                 <label class="form-label" for="nombre_pagos">Nombre de la Persona</label>
-                <input type="text" 
-                       name="nombre_pagos" 
-                       id="nombre_pagos" 
-                       class="form-control" 
-                       placeholder="Ej: Juan Pérez"
-                       value="{{ nombre_buscado_pagos|default:'' }}">
+                <select name="nombre_pagos" 
+                        id="nombre_pagos" 
+                        class="form-select">
+                    <option value="">Seleccionar persona...</option>
+                    {% if colaboradores_disponibles %}
+                    <optgroup label="👔 Colaboradores">
+                        {% for colaborador in colaboradores_disponibles %}
+                        <option value="{{ colaborador.nombre }}" 
+                                {% if nombre_buscado_pagos == colaborador.nombre %}selected{% endif %}
+                                data-tipo="colaborador">
+                            {{ colaborador.nombre }}
+                            {% if colaborador.telefono %} - {{ colaborador.telefono }}{% endif %}
+                        </option>
+                        {% endfor %}
+                    </optgroup>
+                    {% endif %}
+                    {% if trabajadores_diarios_disponibles %}
+                    <optgroup label="👷 Trabajadores Diarios">
+                        {% for trabajador in trabajadores_diarios_disponibles %}
+                        <option value="{{ trabajador.nombre }}" 
+                                {% if nombre_buscado_pagos == trabajador.nombre %}selected{% endif %}
+                                data-tipo="trabajador_diario">
+                            {{ trabajador.nombre }}
+                            {% if trabajador.proyecto %} - {{ trabajador.proyecto.nombre }}{% endif %}
+                        </option>
+                        {% endfor %}
+                    </optgroup>
+                    {% endif %}
+                </select>
             </div>
             <div class="col-md-3">
                 <label class="form-label" for="proyecto_pagos">Proyecto (Opcional)</label>

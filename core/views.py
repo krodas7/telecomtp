@@ -11453,9 +11453,14 @@ def planillas_liquidadas_historial(request):
         'total_planillas_trabajadores_diarios': total_planillas_trabajadores_diarios,
         'total_general_personal': total_general_personal,
         'total_general_trabajadores_diarios': total_general_trabajadores_diarios,
+        'proyectos_para_pagos': proyectos_para_pagos,
     }
     
     # Agregar contexto de consultar pagos si se está accediendo desde el historial
+    # Cargar todas las personas disponibles (colaboradores y trabajadores diarios)
+    colaboradores_disponibles = Colaborador.objects.filter(activo=True).order_by('nombre')
+    trabajadores_diarios_disponibles = TrabajadorDiario.objects.all().order_by('nombre')
+    
     consultar_pagos_context = {}
     nombre_buscado_pagos = request.GET.get('nombre_pagos', '').strip()
     proyecto_id_pagos = request.GET.get('proyecto_pagos')
@@ -11563,6 +11568,14 @@ def planillas_liquidadas_historial(request):
             'total_colaboradores_pagos': total_colab,
             'total_trabajadores_diarios_pagos': total_trab,
             'total_general_pagos': total_colab + total_trab,
+            'colaboradores_disponibles': colaboradores_disponibles,
+            'trabajadores_diarios_disponibles': trabajadores_diarios_disponibles,
+        }
+    else:
+        # Incluir las listas de personas incluso si no hay búsqueda activa
+        consultar_pagos_context = {
+            'colaboradores_disponibles': colaboradores_disponibles,
+            'trabajadores_diarios_disponibles': trabajadores_diarios_disponibles,
         }
     
     context.update(consultar_pagos_context)
