@@ -545,7 +545,7 @@
         <div class="files-grid active" id="gridView">
             <!-- Carpetas -->
             {% for carpeta in carpetas %}
-            <div class="file-card" onclick="window.location.href='{% url 'carpeta_detail' proyecto.id carpeta.id %}'">
+            <div class="file-card" onclick="window.location.href='{% url 'carpeta_detail' carpeta.id %}'">
                 <div class="file-icon file-icon-folder">
                     <i class="fas fa-folder"></i>
                 </div>
@@ -554,7 +554,7 @@
                     <span><i class="fas fa-calendar"></i> {{ carpeta.fecha_creacion|date:"d/m/Y" }}</span>
                 </div>
                 <div class="file-actions" onclick="event.stopPropagation()">
-                    <a href="{% url 'carpeta_detail' proyecto.id carpeta.id %}" class="file-action-btn" title="Abrir">
+                    <a href="{% url 'carpeta_detail' carpeta.id %}" class="file-action-btn" title="Abrir">
                         <i class="fas fa-folder-open"></i>
                     </a>
                     <a href="{% url 'carpeta_delete' proyecto.id carpeta.id %}" class="file-action-btn delete" title="Eliminar">
