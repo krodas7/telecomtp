@@ -1423,6 +1423,197 @@ def gastos_list(request):
 
 
 @login_required
+def gastos_exportar_pdf(request):
+    """Exportar lista de gastos a PDF con filtros aplicados"""
+    try:
+        from django.http import HttpResponse
+        from io import BytesIO
+        from datetime import datetime
+        
+        # Obtener todos los gastos con información relacionada
+        gastos = Gasto.objects.select_related(
+            'proyecto', 'categoria', 'aprobado_por'
+        ).order_by('-fecha_gasto')
+        
+        # Aplicar los mismos filtros que en gastos_list
+        filtro_estado = request.GET.get('estado', 'todos')
+        filtro_categoria = request.GET.get('categoria', '')
+        filtro_proyecto = request.GET.get('proyecto', '')
+        filtro_fecha_desde = request.GET.get('fecha_desde', '')
+        filtro_fecha_hasta = request.GET.get('fecha_hasta', '')
+        
+        # Aplicar filtros
+        if filtro_estado == 'aprobados':
+            gastos = gastos.filter(aprobado=True)
+        elif filtro_estado == 'pendientes':
+            gastos = gastos.filter(aprobado=False)
+        
+        if filtro_categoria:
+            gastos = gastos.filter(categoria_id=filtro_categoria)
+        
+        if filtro_proyecto:
+            gastos = gastos.filter(proyecto_id=filtro_proyecto)
+        
+        if filtro_fecha_desde:
+            gastos = gastos.filter(fecha_gasto__gte=filtro_fecha_desde)
+        
+        if filtro_fecha_hasta:
+            gastos = gastos.filter(fecha_gasto__lte=filtro_fecha_hasta)
+        
+        # Calcular estadísticas
+        total_gastos = gastos.count()
+        total_monto = gastos.aggregate(total=Sum('monto'))['total'] or Decimal('0.00')
+        
+        # Crear PDF
+        buffer = BytesIO()
+        doc = SimpleDocTemplate(buffer, pagesize=A4)
+        styles = getSampleStyleSheet()
+        story = []
+        
+        # Título
+        title_style = ParagraphStyle(
+            'CustomTitle',
+            parent=styles['Heading1'],
+            fontSize=18,
+            spaceAfter=20,
+            alignment=TA_CENTER,
+            textColor=colors.HexColor('#1e3a8a')
+        )
+        story.append(Paragraph("Reporte de Egresos/Gastos", title_style))
+        story.append(Spacer(1, 12))
+        
+        # Información de filtros aplicados
+        filtros_texto = []
+        if filtro_estado != 'todos':
+            estado_texto = 'Aprobados' if filtro_estado == 'aprobados' else 'Pendientes'
+            filtros_texto.append(f"Estado: {estado_texto}")
+        
+        if filtro_proyecto:
+            try:
+                proyecto = Proyecto.objects.get(id=filtro_proyecto)
+                filtros_texto.append(f"Proyecto: {proyecto.nombre}")
+            except Proyecto.DoesNotExist:
+                pass
+        
+        if filtro_categoria:
+            try:
+                categoria = CategoriaGasto.objects.get(id=filtro_categoria)
+                filtros_texto.append(f"Categoría: {categoria.nombre}")
+            except CategoriaGasto.DoesNotExist:
+                pass
+        
+        if filtro_fecha_desde:
+            filtros_texto.append(f"Desde: {filtro_fecha_desde}")
+        
+        if filtro_fecha_hasta:
+            filtros_texto.append(f"Hasta: {filtro_fecha_hasta}")
+        
+        if filtros_texto:
+            filtros_parrafo = "Filtros aplicados: " + " | ".join(filtros_texto)
+            story.append(Paragraph(filtros_parrafo, styles['Normal']))
+        else:
+            story.append(Paragraph("Todos los gastos", styles['Normal']))
+        
+        story.append(Paragraph(f"Fecha de generación: {datetime.now().strftime('%d/%m/%Y %H:%M')}", styles['Normal']))
+        story.append(Spacer(1, 20))
+        
+        # Resumen
+        summary_style = ParagraphStyle(
+            'SummaryStyle',
+            parent=styles['Normal'],
+            fontSize=11,
+            spaceAfter=15
+        )
+        story.append(Paragraph(f"<b>Total de gastos:</b> {total_gastos}", summary_style))
+        story.append(Paragraph(f"<b>Monto total:</b> Q{total_monto:,.2f}", summary_style))
+        story.append(Spacer(1, 20))
+        
+        # Tabla de gastos
+        if total_gastos > 0:
+            headers = ['Fecha', 'Descripción', 'Proyecto', 'Categoría', 'Monto (Q)', 'Estado']
+            data = [headers]
+            
+            for gasto in gastos:
+                estado_texto = 'Aprobado' if gasto.aprobado else 'Pendiente'
+                proyecto_nombre = gasto.proyecto.nombre if gasto.proyecto else 'Sin proyecto'
+                categoria_nombre = gasto.categoria.nombre if gasto.categoria else 'Sin categoría'
+                descripcion = gasto.descripcion[:50] + '...' if len(gasto.descripcion) > 50 else gasto.descripcion
+                
+                data.append([
+                    gasto.fecha_gasto.strftime('%d/%m/%Y'),
+                    descripcion,
+                    proyecto_nombre[:30] + '...' if len(proyecto_nombre) > 30 else proyecto_nombre,
+                    categoria_nombre[:20] + '...' if len(categoria_nombre) > 20 else categoria_nombre,
+                    f"Q{gasto.monto:,.2f}",
+                    estado_texto
+                ])
+            
+            # Crear tabla
+            table = Table(data, colWidths=[0.9*inch, 2.2*inch, 1.3*inch, 1.2*inch, 1*inch, 0.9*inch])
+            table.setStyle(TableStyle([
+                # Encabezados
+                ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#1e3a8a')),
+                ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+                ('ALIGN', (0, 0), (-1, 0), 'CENTER'),
+                ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+                ('FONTSIZE', (0, 0), (-1, 0), 9),
+                ('BOTTOMPADDING', (0, 0), (-1, 0), 10),
+                ('TOPPADDING', (0, 0), (-1, 0), 10),
+                
+                # Fila de totales (si hay datos)
+                ('BACKGROUND', (0, 1), (-1, -1), colors.white),
+                ('FONTSIZE', (0, 1), (-1, -1), 8),
+                ('ALIGN', (4, 1), (4, -1), 'RIGHT'),  # Alinear montos a la derecha
+                ('ALIGN', (0, 1), (3, -1), 'LEFT'),
+                ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+                ('LEFTPADDING', (0, 1), (-1, -1), 6),
+                ('RIGHTPADDING', (0, 1), (-1, -1), 6),
+                ('TOPPADDING', (0, 1), (-1, -1), 6),
+                ('BOTTOMPADDING', (0, 1), (-1, -1), 6),
+                
+                # Colores alternos en filas
+                ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#f8f9fa')]),
+                
+                # Bordes
+                ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#d1d5db')),
+                ('BOX', (0, 0), (-1, -1), 1.5, colors.HexColor('#1e3a8a')),
+            ]))
+            
+            story.append(table)
+            
+            # Agregar fila de totales al final
+            story.append(Spacer(1, 15))
+            total_style = ParagraphStyle(
+                'TotalStyle',
+                parent=styles['Normal'],
+                fontSize=11,
+                alignment=TA_RIGHT,
+                textColor=colors.HexColor('#1e3a8a'),
+                fontName='Helvetica-Bold'
+            )
+            story.append(Paragraph(f"<b>TOTAL: Q{total_monto:,.2f}</b>", total_style))
+        else:
+            story.append(Paragraph("No hay gastos que mostrar con los filtros aplicados.", styles['Normal']))
+        
+        # Construir PDF
+        doc.build(story)
+        buffer.seek(0)
+        
+        # Crear respuesta
+        response = HttpResponse(buffer.getvalue(), content_type='application/pdf')
+        fecha_str = datetime.now().strftime('%Y%m%d_%H%M%S')
+        filename = f"egresos_{fecha_str}.pdf"
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+        
+        return response
+        
+    except Exception as e:
+        logger.error(f'Error al exportar PDF de gastos: {e}')
+        messages.error(request, 'Error al generar el reporte PDF')
+        return redirect('egresos_list')
+
+
+@login_required
 def gastos_dashboard(request):
     """Dashboard del módulo de gastos"""
     try:

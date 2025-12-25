@@ -456,6 +456,9 @@
                 </button>
             </div>
             <div class="col-12 d-flex gap-2 align-items-center flex-wrap mt-2">
+                <a href="{% url 'egresos_exportar_pdf' %}?{% if filtro_estado and filtro_estado != 'todos' %}estado={{ filtro_estado }}&{% endif %}{% if filtro_proyecto %}proyecto={{ filtro_proyecto }}&{% endif %}{% if filtro_categoria %}categoria={{ filtro_categoria }}&{% endif %}{% if filtro_fecha_desde %}fecha_desde={{ filtro_fecha_desde }}&{% endif %}{% if filtro_fecha_hasta %}fecha_hasta={{ filtro_fecha_hasta }}&{% endif %}" class="btn btn-danger btn-sm" target="_blank">
+                    <i class="fas fa-file-pdf me-1"></i>Descargar PDF
+                </a>
                 {% if mostrar_todos %}
                     <a href="?{% if filtro_estado and filtro_estado != 'todos' %}estado={{ filtro_estado }}&{% endif %}{% if filtro_proyecto %}proyecto={{ filtro_proyecto }}&{% endif %}{% if filtro_categoria %}categoria={{ filtro_categoria }}&{% endif %}{% if filtro_fecha_desde %}fecha_desde={{ filtro_fecha_desde }}&{% endif %}{% if filtro_fecha_hasta %}fecha_hasta={{ filtro_fecha_hasta }}&{% endif %}" class="btn btn-info btn-sm">
                         <i class="fas fa-list me-1"></i>Ver Paginado (20 por página)

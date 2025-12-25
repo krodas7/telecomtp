@@ -159,6 +159,7 @@ urlpatterns = [
     # Egresos
     path('egresos/dashboard/', views.gastos_dashboard, name='egresos_dashboard'),
     path('egresos/', views.gastos_list, name='egresos_list'),
+    path('egresos/exportar/pdf/', views.gastos_exportar_pdf, name='egresos_exportar_pdf'),
     path('egresos/crear/', views.gasto_create, name='egreso_create'),
     path('egresos/<int:gasto_id>/', views.gasto_detail, name='egreso_detail'),
     path('egresos/<int:gasto_id>/editar/', views.gasto_edit, name='egreso_edit'),
