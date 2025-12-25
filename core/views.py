@@ -1525,12 +1525,12 @@ def gastos_exportar_pdf(request):
             spaceAfter=15
         )
         story.append(Paragraph(f"<b>Total de gastos:</b> {total_gastos}", summary_style))
-        story.append(Paragraph(f"<b>Monto total:</b> Q{total_monto:,.2f}", summary_style))
+        story.append(Paragraph(f"<b>Monto total:</b> ${total_monto:,.2f}", summary_style))
         story.append(Spacer(1, 20))
         
         # Tabla de gastos
         if total_gastos > 0:
-            headers = ['Fecha', 'Descripción', 'Proyecto', 'Categoría', 'Monto (Q)', 'Estado']
+            headers = ['Fecha', 'Descripción', 'Proyecto', 'Categoría', 'Monto (USD)', 'Estado']
             data = [headers]
             
             for gasto in gastos:
@@ -1544,7 +1544,7 @@ def gastos_exportar_pdf(request):
                     descripcion,
                     proyecto_nombre[:30] + '...' if len(proyecto_nombre) > 30 else proyecto_nombre,
                     categoria_nombre[:20] + '...' if len(categoria_nombre) > 20 else categoria_nombre,
-                    f"Q{gasto.monto:,.2f}",
+                    f"${gasto.monto:,.2f}",
                     estado_texto
                 ])
             
@@ -1591,7 +1591,7 @@ def gastos_exportar_pdf(request):
                 textColor=colors.HexColor('#1e3a8a'),
                 fontName='Helvetica-Bold'
             )
-            story.append(Paragraph(f"<b>TOTAL: Q{total_monto:,.2f}</b>", total_style))
+            story.append(Paragraph(f"<b>TOTAL: ${total_monto:,.2f}</b>", total_style))
         else:
             story.append(Paragraph("No hay gastos que mostrar con los filtros aplicados.", styles['Normal']))
         
