@@ -1344,24 +1344,61 @@ def gastos_list(request):
         if filtro_fecha_hasta:
             gastos = gastos.filter(fecha_gasto__lte=filtro_fecha_hasta)
         
-        # Paginación
-        from django.core.paginator import Paginator
-        paginator = Paginator(gastos, 20)  # 20 gastos por página
-        page_number = request.GET.get('page')
-        page_obj = paginator.get_page(page_number)
-        
         # Obtener opciones para filtros
         categorias = CategoriaGasto.objects.all().order_by('nombre')
         proyectos = Proyecto.objects.all().order_by('nombre')
         
-        # Estadísticas para la página
+        # Estadísticas para la página (calcular antes de paginar)
         total_gastos = gastos.count()
         total_monto = gastos.aggregate(total=Sum('monto'))['total'] or Decimal('0.00')
         gastos_aprobados = gastos.filter(aprobado=True).count()
         gastos_pendientes = gastos.filter(aprobado=False).count()
         
+        # Paginación - permitir mostrar todos los gastos
+        mostrar_todos = request.GET.get('todos', '') == '1'
+        page_obj = None
+        paginator = None
+        
+        if mostrar_todos:
+            # Si se solicita ver todos, no paginar
+            egresos_lista = list(gastos)
+            # Crear un objeto similar a page_obj para mantener compatibilidad con el template
+            class FakePage:
+                def __init__(self, object_list):
+                    self.object_list = object_list
+                    self.number = 1
+                    self.paginator = None
+                    self.has_other_pages = False
+                    self.has_previous = False
+                    self.has_next = False
+                
+                def start_index(self):
+                    return 1
+                
+                def end_index(self):
+                    return len(self.object_list)
+                
+                def __iter__(self):
+                    return iter(self.object_list)
+                
+                def __len__(self):
+                    return len(self.object_list)
+                
+                def __getitem__(self, index):
+                    return self.object_list[index]
+            
+            page_obj = FakePage(egresos_lista)
+        else:
+            # Paginación normal
+            from django.core.paginator import Paginator
+            per_page = int(request.GET.get('per_page', 20))  # Permitir cambiar tamaño de página
+            paginator = Paginator(gastos, per_page)
+            page_number = request.GET.get('page', 1)
+            page_obj = paginator.get_page(page_number)
+        
         context = {
             'page_obj': page_obj,
+            'paginator': paginator,
             'egresos': page_obj,  # Cambiado de 'gastos' a 'egresos' para coincidir con el template
             'categorias': categorias,
             'proyectos': proyectos,
@@ -1374,6 +1411,7 @@ def gastos_list(request):
             'total_monto': total_monto,
             'egresos_aprobados': gastos_aprobados,  # Cambiado para consistencia
             'egresos_pendientes': gastos_pendientes,  # Cambiado para consistencia
+            'mostrar_todos': mostrar_todos,
         }
         
         return render(request, 'core/egresos/list.html', context)  # Cambiado de list_moderno.html a list.html

@@ -356,7 +356,7 @@
         <!-- Estadísticas Rápidas -->
         <div class="hero-stats">
             <div class="hero-stat">
-                <span class="hero-stat-number">{{ egresos.count }}</span>
+                <span class="hero-stat-number">{{ total_gastos }}</span>
                 <span class="hero-stat-label">Total Egresos</span>
             </div>
             <div class="hero-stat">
@@ -368,7 +368,7 @@
                 <span class="hero-stat-label">Pendientes</span>
             </div>
             <div class="hero-stat">
-                <span class="hero-stat-number">${{ total_egresos|floatformat:0 }}</span>
+                <span class="hero-stat-number">{{ total_monto|currency_gtq }}</span>
                 <span class="hero-stat-label">Total Monto</span>
             </div>
         </div>
@@ -408,14 +408,70 @@
                 </div>
                 <h4 class="card-header-title mb-0">Lista de Egresos</h4>
             </div>
-            <div class="d-flex gap-2">
-                <select id="filtroEstado" class="form-select form-select-sm" style="width: auto;">
-                    <option value="todos">Todos los Estados</option>
-                    <option value="aprobado">Solo Aprobados</option>
-                    <option value="pendiente">Solo Pendientes</option>
+        </div>
+    </div>
+    
+    <!-- Sección de Filtros -->
+    <div style="background: #f8f9fa; padding: 1.5rem; border-radius: 10px; margin-bottom: 1.5rem;">
+        <form method="get" id="filtrosForm" class="row g-3 align-items-end">
+            <div class="col-md-3">
+                <label for="filtroEstado" class="form-label" style="font-weight: 600; margin-bottom: 0.5rem;">
+                    <i class="fas fa-filter me-1"></i>Estado
+                </label>
+                <select name="estado" id="filtroEstado" class="form-select form-select-sm">
+                    <option value="todos" {% if filtro_estado == 'todos' or not filtro_estado %}selected{% endif %}>Todos los Estados</option>
+                    <option value="aprobados" {% if filtro_estado == 'aprobados' %}selected{% endif %}>Solo Aprobados</option>
+                    <option value="pendientes" {% if filtro_estado == 'pendientes' %}selected{% endif %}>Solo Pendientes</option>
                 </select>
             </div>
-        </div>
+            <div class="col-md-4">
+                <label for="filtroProyecto" class="form-label" style="font-weight: 600; margin-bottom: 0.5rem;">
+                    <i class="fas fa-building me-1"></i>Proyecto
+                </label>
+                <select name="proyecto" id="filtroProyecto" class="form-select form-select-sm">
+                    <option value="">Todos los Proyectos</option>
+                    {% for proyecto in proyectos %}
+                        <option value="{{ proyecto.id }}" {% if filtro_proyecto == proyecto.id|stringformat:"s" %}selected{% endif %}>
+                            {{ proyecto.nombre }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label for="filtroCategoria" class="form-label" style="font-weight: 600; margin-bottom: 0.5rem;">
+                    <i class="fas fa-tags me-1"></i>Categoría
+                </label>
+                <select name="categoria" id="filtroCategoria" class="form-select form-select-sm">
+                    <option value="">Todas las Categorías</option>
+                    {% for categoria in categorias %}
+                        <option value="{{ categoria.id }}" {% if filtro_categoria == categoria.id|stringformat:"s" %}selected{% endif %}>
+                            {{ categoria.nombre }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-primary btn-sm w-100" style="margin-top: 1.7rem;">
+                    <i class="fas fa-search me-1"></i>Filtrar
+                </button>
+            </div>
+            <div class="col-12 d-flex gap-2 align-items-center flex-wrap mt-2">
+                {% if mostrar_todos %}
+                    <a href="?{% if filtro_estado and filtro_estado != 'todos' %}estado={{ filtro_estado }}&{% endif %}{% if filtro_proyecto %}proyecto={{ filtro_proyecto }}&{% endif %}{% if filtro_categoria %}categoria={{ filtro_categoria }}&{% endif %}{% if filtro_fecha_desde %}fecha_desde={{ filtro_fecha_desde }}&{% endif %}{% if filtro_fecha_hasta %}fecha_hasta={{ filtro_fecha_hasta }}&{% endif %}" class="btn btn-info btn-sm">
+                        <i class="fas fa-list me-1"></i>Ver Paginado (20 por página)
+                    </a>
+                {% else %}
+                    <a href="?todos=1{% if filtro_estado and filtro_estado != 'todos' %}&estado={{ filtro_estado }}{% endif %}{% if filtro_proyecto %}&proyecto={{ filtro_proyecto }}{% endif %}{% if filtro_categoria %}&categoria={{ filtro_categoria }}{% endif %}{% if filtro_fecha_desde %}&fecha_desde={{ filtro_fecha_desde }}{% endif %}{% if filtro_fecha_hasta %}&fecha_hasta={{ filtro_fecha_hasta }}{% endif %}" class="btn btn-success btn-sm">
+                        <i class="fas fa-th-list me-1"></i>Ver Todos los Gastos
+                    </a>
+                {% endif %}
+                {% if filtro_estado != 'todos' or filtro_proyecto or filtro_categoria or filtro_fecha_desde or filtro_fecha_hasta %}
+                    <a href="{% url 'egresos_list' %}{% if mostrar_todos %}?todos=1{% endif %}" class="btn btn-secondary btn-sm">
+                        <i class="fas fa-times me-1"></i>Limpiar Filtros
+                    </a>
+                {% endif %}
+            </div>
+        </form>
     </div>
     
     {% if egresos %}
@@ -490,6 +546,54 @@
                 </tbody>
             </table>
         </div>
+        
+        <!-- Paginación -->
+        {% if paginator and page_obj.has_other_pages %}
+        <nav aria-label="Paginación de egresos" style="margin-top: 1.5rem;">
+            <ul class="pagination justify-content-center">
+                {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page=1{% if filtro_estado and filtro_estado != 'todos' %}&estado={{ filtro_estado }}{% endif %}{% if filtro_proyecto %}&proyecto={{ filtro_proyecto }}{% endif %}{% if filtro_categoria %}&categoria={{ filtro_categoria }}{% endif %}{% if filtro_fecha_desde %}&fecha_desde={{ filtro_fecha_desde }}{% endif %}{% if filtro_fecha_hasta %}&fecha_hasta={{ filtro_fecha_hasta }}{% endif %}">
+                            <i class="fas fa-angle-double-left"></i>
+                        </a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if filtro_estado and filtro_estado != 'todos' %}&estado={{ filtro_estado }}{% endif %}{% if filtro_proyecto %}&proyecto={{ filtro_proyecto }}{% endif %}{% if filtro_categoria %}&categoria={{ filtro_categoria }}{% endif %}{% if filtro_fecha_desde %}&fecha_desde={{ filtro_fecha_desde }}{% endif %}{% if filtro_fecha_hasta %}&fecha_hasta={{ filtro_fecha_hasta }}{% endif %}">
+                            <i class="fas fa-angle-left"></i>
+                        </a>
+                    </li>
+                {% endif %}
+                
+                {% for num in page_obj.paginator.page_range %}
+                    {% if page_obj.number == num %}
+                        <li class="page-item active">
+                            <span class="page-link">{{ num }}</span>
+                        </li>
+                    {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ num }}{% if filtro_estado and filtro_estado != 'todos' %}&estado={{ filtro_estado }}{% endif %}{% if filtro_proyecto %}&proyecto={{ filtro_proyecto }}{% endif %}{% if filtro_categoria %}&categoria={{ filtro_categoria }}{% endif %}{% if filtro_fecha_desde %}&fecha_desde={{ filtro_fecha_desde }}{% endif %}{% if filtro_fecha_hasta %}&fecha_hasta={{ filtro_fecha_hasta }}{% endif %}">{{ num }}</a>
+                        </li>
+                    {% endif %}
+                {% endfor %}
+                
+                {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if filtro_estado and filtro_estado != 'todos' %}&estado={{ filtro_estado }}{% endif %}{% if filtro_proyecto %}&proyecto={{ filtro_proyecto }}{% endif %}{% if filtro_categoria %}&categoria={{ filtro_categoria }}{% endif %}{% if filtro_fecha_desde %}&fecha_desde={{ filtro_fecha_desde }}{% endif %}{% if filtro_fecha_hasta %}&fecha_hasta={{ filtro_fecha_hasta }}{% endif %}">
+                            <i class="fas fa-angle-right"></i>
+                        </a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if filtro_estado and filtro_estado != 'todos' %}&estado={{ filtro_estado }}{% endif %}{% if filtro_proyecto %}&proyecto={{ filtro_proyecto }}{% endif %}{% if filtro_categoria %}&categoria={{ filtro_categoria }}{% endif %}{% if filtro_fecha_desde %}&fecha_desde={{ filtro_fecha_desde }}{% endif %}{% if filtro_fecha_hasta %}&fecha_hasta={{ filtro_fecha_hasta }}{% endif %}">
+                            <i class="fas fa-angle-double-right"></i>
+                        </a>
+                    </li>
+                {% endif %}
+            </ul>
+            <div class="text-center text-muted mt-2">
+                Mostrando {{ page_obj.start_index }} - {{ page_obj.end_index }} de {{ page_obj.paginator.count }} egresos
+            </div>
+        </nav>
+        {% endif %}
     {% else %}
         <div class="empty-state">
             <i class="fas fa-money-bill-wave"></i>
@@ -546,41 +650,31 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
     
-    // Filtros de egresos
+    // El formulario de filtros se enviará automáticamente al servidor cuando cambien los valores
+    // Opcionalmente, se puede hacer auto-submit al cambiar los selectores
+    const filtrosForm = document.getElementById('filtrosForm');
+    const filtroProyecto = document.getElementById('filtroProyecto');
+    const filtroCategoria = document.getElementById('filtroCategoria');
     const filtroEstado = document.getElementById('filtroEstado');
-    const filasEgresos = document.querySelectorAll('.table-modern tbody tr');
     
-    function aplicarFiltros() {
-        const estadoSeleccionado = filtroEstado ? filtroEstado.value : 'todos';
-        let egresosVisibles = 0;
-        
-        filasEgresos.forEach(fila => {
-            const estadoEgreso = fila.querySelector('td:nth-child(6) .badge-modern').textContent.trim();
-            let mostrar = true;
-            
-            // Filtro por estado
-            if (estadoSeleccionado === 'aprobado') {
-                mostrar = estadoEgreso.includes('Aprobado');
-            } else if (estadoSeleccionado === 'pendiente') {
-                mostrar = estadoEgreso.includes('Pendiente');
-            }
-            // Si es 'todos', mostrar = true (por defecto)
-            
-            fila.style.display = mostrar ? '' : 'none';
-            if (mostrar) egresosVisibles++;
-        });
-        
-        // Actualizar contador en el hero (solo el primer elemento que es "Total Egresos")
-        const totalEgresosElements = document.querySelectorAll('.hero-stat-number');
-        if (totalEgresosElements.length > 0) {
-            totalEgresosElements[0].textContent = egresosVisibles;
-        }
-    }
-    
-    // Event listeners para los filtros
-    if (filtroEstado) {
-        filtroEstado.addEventListener('change', aplicarFiltros);
-    }
+    // Auto-submit al cambiar cualquier filtro (opcional - comentado para permitir selección múltiple)
+    // if (filtroProyecto) {
+    //     filtroProyecto.addEventListener('change', function() {
+    //         filtrosForm.submit();
+    //     });
+    // }
+    // 
+    // if (filtroCategoria) {
+    //     filtroCategoria.addEventListener('change', function() {
+    //         filtrosForm.submit();
+    //     });
+    // }
+    // 
+    // if (filtroEstado) {
+    //     filtroEstado.addEventListener('change', function() {
+    //         filtrosForm.submit();
+    //     });
+    // }
     
     // Función para obtener el token CSRF
     function getCSRFToken() {
