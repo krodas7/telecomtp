@@ -2063,7 +2063,7 @@ def gasto_edit(request, gasto_id):
     gasto = get_object_or_404(Gasto, id=gasto_id)
     
     if request.method == 'POST':
-        form = GastoForm(request.POST, instance=gasto)
+        form = GastoForm(request.POST, request.FILES, instance=gasto)
         if form.is_valid():
             gasto = form.save()
             
