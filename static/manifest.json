@@ -1,6 +1,6 @@
 {
-  "name": "Sistema ARCA Construcción",
-  "short_name": "ARCA",
+  "name": "Telecom Technology",
+  "short_name": "Telecom",
   "description": "Sistema integral de gestión de construcción con capacidades móviles y PWA",
   "start_url": "/dashboard/",
   "display": "standalone",

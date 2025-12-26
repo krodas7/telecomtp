@@ -327,7 +327,7 @@ self.addEventListener('push', (event) => {
     };
     
     event.waitUntil(
-        self.registration.showNotification('Sistema ARCA', options)
+        self.registration.showNotification('Telecom Technology', options)
     );
 });
 
