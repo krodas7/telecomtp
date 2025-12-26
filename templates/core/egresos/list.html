@@ -944,6 +944,15 @@ document.addEventListener('DOMContentLoaded', function() {
             const isImage = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'].includes(extension);
             const isPdf = extension === 'pdf';
             
+            // Agregar event listener para limpiar al cerrar el modal
+            modalElement.addEventListener('hidden.bs.modal', function() {
+                // Limpiar al cerrar
+                if (iframe) iframe.src = '';
+                if (image) image.src = '';
+                if (image.onload) image.onload = null;
+                if (image.onerror) image.onerror = null;
+            }, { once: true });
+            
             // Abrir modal primero
             modal.show();
             
