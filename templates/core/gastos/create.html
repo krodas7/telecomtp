@@ -918,24 +918,48 @@
                 }
                 
                 comprobantePreview.style.display = 'block';
+                // Mostrar botón de eliminar
+                const clearBtn = document.getElementById('clear-comprobante-btn');
+                if (clearBtn) clearBtn.style.display = 'block';
             } else {
                 comprobantePreview.style.display = 'none';
+                // Ocultar botón de eliminar
+                const clearBtn = document.getElementById('clear-comprobante-btn');
+                if (clearBtn) clearBtn.style.display = 'none';
             }
         }
         
         // Función para remover preview
         window.removeComprobantePreview = function() {
+            clearComprobanteFile();
+        }
+        
+        // Función para limpiar el campo de archivo
+        function clearComprobanteFile() {
             const comprobanteField = document.getElementById('id_comprobante');
+            const clearBtn = document.getElementById('clear-comprobante-btn');
+            
             if (comprobanteField) {
                 comprobanteField.value = '';
+                // También necesitamos resetear el input file (crear uno nuevo)
+                const newInput = comprobanteField.cloneNode(true);
+                comprobanteField.parentNode.replaceChild(newInput, comprobanteField);
+                // Reasignar el event listener
+                document.getElementById('id_comprobante').addEventListener('change', function() {
+                    handleComprobantePreview(this);
+                });
             }
-            comprobantePreview.style.display = 'none';
-            previewImage.src = '';
-            previewImage.style.display = 'none';
-            previewIcon.style.display = 'flex';
-            previewFileName.textContent = '';
-            previewFileSize.textContent = '';
-            previewFileType.textContent = '';
+            
+            if (comprobantePreview) comprobantePreview.style.display = 'none';
+            if (previewImage) {
+                previewImage.src = '';
+                previewImage.style.display = 'none';
+            }
+            if (previewIcon) previewIcon.style.display = 'flex';
+            if (previewFileName) previewFileName.textContent = '';
+            if (previewFileSize) previewFileSize.textContent = '';
+            if (previewFileType) previewFileType.textContent = '';
+            if (clearBtn) clearBtn.style.display = 'none';
         }
         
         // Si hay un archivo ya seleccionado (edición), mostrar preview

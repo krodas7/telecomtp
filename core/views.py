@@ -2065,6 +2065,12 @@ def gasto_edit(request, gasto_id):
     if request.method == 'POST':
         form = GastoForm(request.POST, request.FILES, instance=gasto)
         if form.is_valid():
+            # Si se marcó el checkbox para eliminar el comprobante
+            if request.POST.get('comprobante-clear'):
+                if gasto.comprobante:
+                    gasto.comprobante.delete(save=False)
+                    gasto.comprobante = None
+            
             gasto = form.save()
             
             # Registrar actividad
