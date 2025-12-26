@@ -635,7 +635,12 @@
                         Comprobante
                     </label>
                     <div class="file-upload-wrapper">
-                        {{ form.comprobante }}
+                        <div class="d-flex align-items-center gap-2">
+                            {{ form.comprobante }}
+                            <button type="button" class="btn btn-sm btn-outline-danger" onclick="clearComprobanteFile()" id="clear-comprobante-btn" style="display: none;" title="Eliminar archivo seleccionado">
+                                <i class="fas fa-times"></i> Eliminar
+                            </button>
+                        </div>
                         {% if form.comprobante.errors %}
                             <div class="invalid-feedback">
                                 {{ form.comprobante.errors.0 }}
