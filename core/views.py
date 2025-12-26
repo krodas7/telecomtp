@@ -7521,7 +7521,7 @@ def facturas_reporte_pdf(request):
     elements.append(Spacer(1, 30))
     fecha_generacion = timezone.now().strftime('%d/%m/%Y %H:%M')
     elements.append(Paragraph(f"Reporte generado el: {fecha_generacion}", styles['Normal']))
-        elements.append(Paragraph(f"Telecom Technology", styles['Normal']))
+    elements.append(Paragraph(f"Telecom Technology", styles['Normal']))
     
     # Generar PDF
     doc.build(elements)
