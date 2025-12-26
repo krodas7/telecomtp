@@ -347,10 +347,13 @@ class GastoForm(forms.ModelForm):
                 'placeholder': '0.00',
                 'pattern': '[0-9]+(\.[0-9]{1,2})?'
             }),
-            'fecha_gasto': forms.DateInput(attrs={
-                'class': 'form-control',
-                'type': 'date'
-            }),
+            'fecha_gasto': forms.DateInput(
+                format='%Y-%m-%d',
+                attrs={
+                    'class': 'form-control',
+                    'type': 'date'
+                }
+            ),
             'aprobado': forms.CheckboxInput(attrs={
                 'class': 'form-check-input'
             }),
