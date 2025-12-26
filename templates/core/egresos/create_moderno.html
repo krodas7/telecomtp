@@ -490,7 +490,7 @@
         
         <!-- Tarjeta del formulario -->
         <div class="form-card">
-            <form method="post" id="egresoForm" novalidate>
+            <form method="post" id="egresoForm" novalidate enctype="multipart/form-data">
                 {% csrf_token %}
                 
                 <!-- Mostrar errores del formulario -->
