@@ -530,7 +530,7 @@
                         </td>
                         <td>
                             <div class="d-flex gap-2 justify-content-center">
-                                {% if egreso.comprobante %}
+                                {% if egreso.comprobante and egreso.comprobante.name %}
                                     <button type="button" class="btn btn-info btn-sm" title="Ver Comprobante" onclick="previsualizarComprobante('{{ egreso.comprobante.url }}', '{{ egreso.comprobante.name|escapejs }}')">
                                         <i class="fas fa-file-pdf"></i>
                                     </button>
