@@ -531,9 +531,9 @@
                         <td>
                             <div class="d-flex gap-2 justify-content-center">
                                 {% if egreso.comprobante %}
-                                    <button type="button" class="btn btn-info btn-sm" title="Ver Comprobante" onclick="previsualizarComprobante('{{ egreso.comprobante.url }}', '{{ egreso.comprobante.name|default:"Comprobante"|escapejs }}')">
+                                    <a href="{{ egreso.comprobante.url }}" target="_blank" rel="noopener noreferrer" class="btn btn-info btn-sm" title="Ver Comprobante">
                                         <i class="fas fa-file-pdf"></i>
-                                    </button>
+                                    </a>
                                 {% else %}
                                     <button type="button" class="btn btn-info btn-sm" title="Sin comprobante" disabled style="opacity: 0.5; cursor: not-allowed;">
                                         <i class="fas fa-file-pdf"></i>
@@ -897,11 +897,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     };
     
-    // Función para previsualizar comprobante - Abre directamente en nueva pestaña para evitar bloqueos
-    window.previsualizarComprobante = function(comprobanteUrl, comprobanteNombre) {
-        // Abrir directamente en nueva pestaña sin usar modal para evitar bloqueos
-        window.open(comprobanteUrl, '_blank', 'noopener,noreferrer');
-    };
 });
 </script>
 {% endblock %}
