@@ -531,15 +531,9 @@
                         <td>
                             <div class="d-flex gap-2 justify-content-center">
                                 {% if egreso.comprobante %}
-                                    {% if egreso.comprobante.url %}
-                                        <button type="button" class="btn btn-info btn-sm" title="Ver Comprobante" onclick="previsualizarComprobante('{{ egreso.comprobante.url }}', '{{ egreso.comprobante.name|default:"Comprobante"|escapejs }}')">
-                                            <i class="fas fa-file-pdf"></i>
-                                        </button>
-                                    {% else %}
-                                        <button type="button" class="btn btn-info btn-sm" title="Sin comprobante" disabled style="opacity: 0.5; cursor: not-allowed;">
-                                            <i class="fas fa-file-pdf"></i>
-                                        </button>
-                                    {% endif %}
+                                    <button type="button" class="btn btn-info btn-sm" title="Ver Comprobante" onclick="previsualizarComprobante('{{ egreso.comprobante.url }}', '{{ egreso.comprobante.name|default:"Comprobante"|escapejs }}')">
+                                        <i class="fas fa-file-pdf"></i>
+                                    </button>
                                 {% else %}
                                     <button type="button" class="btn btn-info btn-sm" title="Sin comprobante" disabled style="opacity: 0.5; cursor: not-allowed;">
                                         <i class="fas fa-file-pdf"></i>
