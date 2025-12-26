@@ -295,6 +295,106 @@
         color: #212529;
     }
     
+    /* Vista previa de comprobante */
+    .file-upload-wrapper {
+        position: relative;
+    }
+    
+    .current-file {
+        padding: 0.5rem;
+        background: #e7f3ff;
+        border-radius: 5px;
+    }
+    
+    .current-file a {
+        color: #0066cc;
+        text-decoration: none;
+    }
+    
+    .current-file a:hover {
+        text-decoration: underline;
+    }
+    
+    .comprobante-preview {
+        background: #f8f9fa;
+        border: 2px dashed #20bf6b;
+        border-radius: 10px;
+        padding: 1.5rem;
+    }
+    
+    .preview-container {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        position: relative;
+    }
+    
+    .preview-image-container {
+        width: 120px;
+        height: 120px;
+        border-radius: 10px;
+        overflow: hidden;
+        background: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 2px solid #e9ecef;
+        flex-shrink: 0;
+    }
+    
+    .preview-image {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    
+    .preview-icon {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        height: 100%;
+    }
+    
+    .preview-info {
+        flex: 1;
+        min-width: 0;
+    }
+    
+    .preview-file-name {
+        font-weight: 600;
+        color: #495057;
+        margin-bottom: 0.5rem;
+        word-break: break-word;
+    }
+    
+    .preview-file-size,
+    .preview-file-type {
+        font-size: 0.875rem;
+        color: #6c757d;
+        margin-bottom: 0.25rem;
+    }
+    
+    .btn-remove-preview {
+        background: #dc3545;
+        color: white;
+        border: none;
+        border-radius: 50%;
+        width: 35px;
+        height: 35px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        flex-shrink: 0;
+    }
+    
+    .btn-remove-preview:hover {
+        background: #c82333;
+        transform: scale(1.1);
+    }
+    
     /* Responsive */
     @media (max-width: 768px) {
         .form-row {
@@ -303,6 +403,16 @@
         
         .hero-title {
             font-size: 1.5rem;
+        }
+        
+        .preview-container {
+            flex-direction: column;
+            text-align: center;
+        }
+        
+        .preview-image-container {
+            width: 100px;
+            height: 100px;
         }
     }
 </style>
@@ -331,7 +441,7 @@
                 <h4 class="form-header-title">Editar Información del Egreso</h4>
             </div>
             
-            <form method="post">
+            <form method="post" enctype="multipart/form-data">
                 {% csrf_token %}
                 
                 <!-- Sección de Información Básica -->
@@ -389,13 +499,13 @@
                         </div>
                         
                         <div class="form-group">
-                            <label for="{{ form.fecha_egreso.id_for_label }}" class="form-label">
-                                <i class="fas fa-calendar me-1"></i>{{ form.fecha_egreso.label }}
+                            <label for="{{ form.fecha_gasto.id_for_label }}" class="form-label">
+                                <i class="fas fa-calendar me-1"></i>{{ form.fecha_gasto.label }}
                             </label>
-                            {{ form.fecha_egreso }}
-                            {% if form.fecha_egreso.errors %}
+                            {{ form.fecha_gasto }}
+                            {% if form.fecha_gasto.errors %}
                                 <div class="invalid-feedback d-block">
-                                    {% for error in form.fecha_egreso.errors %}
+                                    {% for error in form.fecha_gasto.errors %}
                                         {{ error }}
                                     {% endfor %}
                                 </div>
@@ -417,20 +527,65 @@
                         {% endif %}
                     </div>
                     
-                    <div class="form-group">
-                        <label for="{{ form.observaciones.id_for_label }}" class="form-label">
-                            <i class="fas fa-sticky-note me-1"></i>{{ form.observaciones.label }}
-                        </label>
-                        {{ form.observaciones }}
-                        {% if form.observaciones.errors %}
-                            <div class="invalid-feedback d-block">
-                                {% for error in form.observaciones.errors %}
-                                    {{ error }}
-                                {% endfor %}
+                        <div class="form-group">
+                            <label for="{{ form.observaciones.id_for_label }}" class="form-label">
+                                <i class="fas fa-sticky-note me-1"></i>{{ form.observaciones.label }}
+                            </label>
+                            {{ form.observaciones }}
+                            {% if form.observaciones.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.observaciones.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="{{ form.comprobante.id_for_label }}" class="form-label">
+                                <i class="fas fa-file-upload me-1"></i>Comprobante
+                            </label>
+                            <div class="file-upload-wrapper">
+                                {{ form.comprobante }}
+                                {% if form.comprobante.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.comprobante.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                                {% if gasto.comprobante %}
+                                    <div class="current-file mt-2">
+                                        <small class="text-muted">Archivo actual: 
+                                            <a href="{{ gasto.comprobante.url }}" target="_blank">
+                                                <i class="fas fa-file"></i> {{ gasto.comprobante.name|slice:":50" }}
+                                            </a>
+                                        </small>
+                                    </div>
+                                {% endif %}
+                                
+                                <!-- Vista previa del archivo -->
+                                <div id="comprobantePreview" class="comprobante-preview" style="display: none; margin-top: 1rem;">
+                                    <div class="preview-container">
+                                        <div class="preview-image-container">
+                                            <img id="previewComprobanteImage" src="" alt="Vista previa" class="preview-image" style="display: none;">
+                                            <div id="previewComprobanteIcon" class="preview-icon">
+                                                <i class="fas fa-file-pdf" style="font-size: 3rem; color: #dc3545;"></i>
+                                            </div>
+                                        </div>
+                                        <div class="preview-info">
+                                            <h6 id="previewComprobanteFileName" class="preview-file-name"></h6>
+                                            <p id="previewComprobanteFileSize" class="preview-file-size"></p>
+                                            <p id="previewComprobanteFileType" class="preview-file-type"></p>
+                                        </div>
+                                        <button type="button" class="btn-remove-preview" onclick="removeComprobantePreview()" title="Quitar archivo">
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
-                        {% endif %}
+                        </div>
                     </div>
-                </div>
                 
                 <div class="d-flex gap-3 flex-wrap">
                     <button type="submit" class="btn btn-success">
@@ -529,6 +684,95 @@ document.addEventListener('DOMContentLoaded', function() {
                 this.classList.add('is-valid');
             }
         });
+    }
+    
+    // Vista previa de comprobante
+    const comprobanteField = document.getElementById('id_comprobante');
+    const comprobantePreview = document.getElementById('comprobantePreview');
+    const previewImage = document.getElementById('previewComprobanteImage');
+    const previewIcon = document.getElementById('previewComprobanteIcon');
+    const previewFileName = document.getElementById('previewComprobanteFileName');
+    const previewFileSize = document.getElementById('previewComprobanteFileSize');
+    const previewFileType = document.getElementById('previewComprobanteFileType');
+    
+    if (comprobanteField) {
+        comprobanteField.addEventListener('change', function() {
+            handleComprobantePreview(this);
+        });
+    }
+    
+    function handleComprobantePreview(input) {
+        const file = input.files[0];
+        if (file) {
+            // Validar tamaño (50MB)
+            const maxSize = 50 * 1024 * 1024;
+            if (file.size > maxSize) {
+                alert('El archivo no puede ser mayor a 50MB');
+                input.value = '';
+                comprobantePreview.style.display = 'none';
+                return;
+            }
+            
+            // Validar tipo de archivo
+            const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'application/pdf'];
+            if (!allowedTypes.includes(file.type)) {
+                alert('Solo se permiten archivos PDF, JPG o PNG');
+                input.value = '';
+                comprobantePreview.style.display = 'none';
+                return;
+            }
+            
+            // Mostrar información del archivo
+            previewFileName.textContent = file.name;
+            const fileSizeMB = (file.size / (1024 * 1024)).toFixed(2);
+            previewFileSize.textContent = `Tamaño: ${fileSizeMB} MB`;
+            previewFileType.textContent = `Tipo: ${file.type || 'Desconocido'}`;
+            
+            // Si es una imagen, mostrar preview
+            if (file.type.startsWith('image/')) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    previewImage.src = e.target.result;
+                    previewImage.style.display = 'block';
+                    previewIcon.style.display = 'none';
+                };
+                reader.readAsDataURL(file);
+            } else {
+                // Si es PDF, mostrar icono
+                previewImage.style.display = 'none';
+                previewIcon.style.display = 'flex';
+                // Cambiar icono según el tipo
+                const iconElement = previewIcon.querySelector('i');
+                if (file.type === 'application/pdf') {
+                    iconElement.className = 'fas fa-file-pdf';
+                    iconElement.style.color = '#dc3545';
+                }
+            }
+            
+            comprobantePreview.style.display = 'block';
+        } else {
+            comprobantePreview.style.display = 'none';
+        }
+    }
+    
+    // Función para remover preview
+    window.removeComprobantePreview = function() {
+        const comprobanteField = document.getElementById('id_comprobante');
+        if (comprobanteField) {
+            comprobanteField.value = '';
+        }
+        comprobantePreview.style.display = 'none';
+        previewImage.src = '';
+        previewImage.style.display = 'none';
+        previewIcon.style.display = 'flex';
+        previewFileName.textContent = '';
+        previewFileSize.textContent = '';
+        previewFileType.textContent = '';
+    }
+    
+    // Si hay un archivo ya seleccionado (edición), mostrar preview
+    if (comprobanteField && comprobanteField.files.length > 0) {
+        handleComprobantePreview(comprobanteField);
     }
 });
 

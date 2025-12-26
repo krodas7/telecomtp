@@ -25,7 +25,8 @@ from .models import (
     TrabajadorDiario, RegistroTrabajo, AnticipoTrabajadorDiario, PlanillaLiquidada, PlanillaTrabajadoresDiarios,
     ItemCotizacion, ItemReutilizable, ConfiguracionPlanilla,
     ServicioTorrero, RegistroDiasTrabajados, PagoServicioTorrero, Torrero, AsignacionTorrero,
-    Subproyecto, NotaPostit, CajaMenuda, PlanificacionBitacora, AvancePlanificacion, AvancePlanificacion
+    Subproyecto, NotaPostit, CajaMenuda, PlanificacionBitacora, AvancePlanificacion, AvancePlanificacion,
+    ArchivoAdjunto
 )
 from .forms_simple import (
     ClienteForm, ProyectoForm, ColaboradorForm, FacturaForm, 
@@ -1611,6 +1612,226 @@ def gastos_exportar_pdf(request):
         logger.error(f'Error al exportar PDF de gastos: {e}')
         messages.error(request, 'Error al generar el reporte PDF')
         return redirect('egresos_list')
+
+
+@login_required
+def gastos_reporte_contable(request):
+    """Vista para formulario de reporte contable por período"""
+    if request.method == 'POST':
+        fecha_inicio = request.POST.get('fecha_inicio')
+        fecha_fin = request.POST.get('fecha_fin')
+        incluir_facturas = request.POST.get('incluir_facturas', 'no') == 'si'
+        
+        if fecha_inicio and fecha_fin:
+            # Redirigir a la generación del ZIP
+            params = f"?fecha_inicio={fecha_inicio}&fecha_fin={fecha_fin}"
+            if incluir_facturas:
+                params += "&incluir_facturas=si"
+            return redirect(f"{reverse('egresos_reporte_contable_zip')}{params}")
+        else:
+            messages.error(request, 'Por favor, selecciona ambas fechas')
+    
+    # Fechas por defecto (último mes)
+    from datetime import timedelta
+    fecha_fin_default = timezone.now().date()
+    fecha_inicio_default = fecha_fin_default - timedelta(days=30)
+    
+    context = {
+        'fecha_inicio_default': fecha_inicio_default.strftime('%Y-%m-%d'),
+        'fecha_fin_default': fecha_fin_default.strftime('%Y-%m-%d'),
+    }
+    
+    return render(request, 'core/egresos/reporte_contable.html', context)
+
+
+@login_required
+def gastos_reporte_contable_zip(request):
+    """Generar ZIP con reporte de gastos, facturas y comprobantes por período"""
+    try:
+        import zipfile
+        from django.conf import settings
+        from pathlib import Path
+        
+        fecha_inicio = request.GET.get('fecha_inicio')
+        fecha_fin = request.GET.get('fecha_fin')
+        incluir_facturas = request.GET.get('incluir_facturas', 'no') == 'si'
+        
+        if not fecha_inicio or not fecha_fin:
+            messages.error(request, 'Debes especificar las fechas del período')
+            return redirect('egresos_reporte_contable')
+        
+        # Crear buffer para el ZIP
+        zip_buffer = BytesIO()
+        zip_file = zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED)
+        
+        # 1. Obtener gastos del período
+        gastos = Gasto.objects.select_related(
+            'proyecto', 'categoria', 'aprobado_por'
+        ).filter(
+            fecha_gasto__gte=fecha_inicio,
+            fecha_gasto__lte=fecha_fin
+        ).order_by('-fecha_gasto')
+        
+        # 2. Generar PDF de reporte de gastos
+        total_gastos = gastos.count()
+        total_monto = gastos.aggregate(total=Sum('monto'))['total'] or Decimal('0.00')
+        
+        # Generar PDF usando la misma lógica que gastos_exportar_pdf pero en memoria
+        pdf_buffer = BytesIO()
+        doc = SimpleDocTemplate(pdf_buffer, pagesize=A4)
+        styles = getSampleStyleSheet()
+        story = []
+        
+        # Título
+        title_style = ParagraphStyle(
+            'CustomTitle',
+            parent=styles['Heading1'],
+            fontSize=18,
+            spaceAfter=20,
+            alignment=TA_CENTER,
+            textColor=colors.HexColor('#1e3a8a')
+        )
+        story.append(Paragraph("Reporte de Egresos/Gastos", title_style))
+        story.append(Spacer(1, 12))
+        
+        # Información del período
+        periodo_text = f"Período: {fecha_inicio} a {fecha_fin}"
+        story.append(Paragraph(periodo_text, styles['Normal']))
+        story.append(Paragraph(f"Fecha de generación: {datetime.now().strftime('%d/%m/%Y %H:%M')}", styles['Normal']))
+        story.append(Spacer(1, 20))
+        
+        # Resumen
+        summary_style = ParagraphStyle(
+            'SummaryStyle',
+            parent=styles['Normal'],
+            fontSize=11,
+            spaceAfter=15
+        )
+        story.append(Paragraph(f"<b>Total de gastos:</b> {total_gastos}", summary_style))
+        story.append(Paragraph(f"<b>Monto total:</b> ${total_monto:,.2f}", summary_style))
+        story.append(Spacer(1, 20))
+        
+        # Tabla de gastos
+        if total_gastos > 0:
+            headers = ['Fecha', 'Descripción', 'Proyecto', 'Categoría', 'Monto (USD)', 'Estado']
+            data = [headers]
+            
+            for gasto in gastos:
+                estado_texto = 'Aprobado' if gasto.aprobado else 'Pendiente'
+                proyecto_nombre = gasto.proyecto.nombre if gasto.proyecto else 'Sin proyecto'
+                categoria_nombre = gasto.categoria.nombre if gasto.categoria else 'Sin categoría'
+                descripcion = gasto.descripcion[:50] + '...' if len(gasto.descripcion) > 50 else gasto.descripcion
+                
+                data.append([
+                    gasto.fecha_gasto.strftime('%d/%m/%Y'),
+                    descripcion,
+                    proyecto_nombre[:30] + '...' if len(proyecto_nombre) > 30 else proyecto_nombre,
+                    categoria_nombre[:20] + '...' if len(categoria_nombre) > 20 else categoria_nombre,
+                    f"${gasto.monto:,.2f}",
+                    estado_texto
+                ])
+            
+            table = Table(data, colWidths=[0.9*inch, 2.2*inch, 1.3*inch, 1.2*inch, 1*inch, 0.9*inch])
+            table.setStyle(TableStyle([
+                ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#1e3a8a')),
+                ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+                ('ALIGN', (0, 0), (-1, 0), 'CENTER'),
+                ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+                ('FONTSIZE', (0, 0), (-1, 0), 9),
+                ('BOTTOMPADDING', (0, 0), (-1, 0), 10),
+                ('TOPPADDING', (0, 0), (-1, 0), 10),
+                ('BACKGROUND', (0, 1), (-1, -1), colors.white),
+                ('FONTSIZE', (0, 1), (-1, -1), 8),
+                ('ALIGN', (4, 1), (4, -1), 'RIGHT'),
+                ('ALIGN', (0, 1), (3, -1), 'LEFT'),
+                ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+                ('LEFTPADDING', (0, 1), (-1, -1), 6),
+                ('RIGHTPADDING', (0, 1), (-1, -1), 6),
+                ('TOPPADDING', (0, 1), (-1, -1), 6),
+                ('BOTTOMPADDING', (0, 1), (-1, -1), 6),
+                ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#f8f9fa')]),
+                ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#d1d5db')),
+                ('BOX', (0, 0), (-1, -1), 1.5, colors.HexColor('#1e3a8a')),
+            ]))
+            
+            story.append(table)
+            story.append(Spacer(1, 15))
+            total_style = ParagraphStyle(
+                'TotalStyle',
+                parent=styles['Normal'],
+                fontSize=11,
+                alignment=TA_RIGHT,
+                textColor=colors.HexColor('#1e3a8a'),
+                fontName='Helvetica-Bold'
+            )
+            story.append(Paragraph(f"<b>TOTAL: ${total_monto:,.2f}</b>", total_style))
+        
+        doc.build(story)
+        pdf_buffer.seek(0)
+        zip_file.writestr('01_reporte_gastos.pdf', pdf_buffer.getvalue())
+        pdf_buffer.close()
+        
+        # 3. Agregar comprobantes de gastos
+        comprobantes_count = 0
+        for gasto in gastos:
+            if gasto.comprobante:
+                try:
+                    comprobante_path = gasto.comprobante.path
+                    if os.path.exists(comprobante_path):
+                        filename = f"comprobante_gasto_{gasto.id}_{os.path.basename(comprobante_path)}"
+                        zip_file.write(comprobante_path, f"03_comprobantes_gastos/{filename}")
+                        comprobantes_count += 1
+                except (ValueError, Exception) as e:
+                    # Si el archivo no existe en el sistema de archivos, continuar
+                    logger.warning(f"No se pudo agregar comprobante del gasto {gasto.id}: {e}")
+                    continue
+        
+        # 4. Si se solicita, incluir facturas relacionadas
+        if incluir_facturas:
+            # Obtener proyectos únicos de los gastos
+            proyectos_ids = gastos.values_list('proyecto_id', flat=True).distinct()
+            
+            # Obtener facturas de esos proyectos en el mismo período (o todas las facturas del proyecto)
+            facturas = Factura.objects.filter(
+                proyecto_id__in=proyectos_ids,
+                fecha_emision__gte=fecha_inicio,
+                fecha_emision__lte=fecha_fin
+            ).select_related('proyecto', 'cliente').order_by('fecha_emision')
+            
+            facturas_count = 0
+            for factura in facturas:
+                # Agregar archivos adjuntos de la factura
+                archivos_adjuntos = factura.archivos_adjuntos.all()
+                for archivo_adjunto in archivos_adjuntos:
+                    try:
+                        archivo_path = archivo_adjunto.archivo.path
+                        if os.path.exists(archivo_path):
+                            filename = f"factura_{factura.numero_factura.replace('/', '_')}_{os.path.basename(archivo_path)}"
+                            zip_file.write(archivo_path, f"02_facturas/{filename}")
+                            facturas_count += 1
+                    except (ValueError, Exception) as e:
+                        logger.warning(f"No se pudo agregar archivo adjunto de factura {factura.id}: {e}")
+                        continue
+        
+        # Cerrar el ZIP
+        zip_file.close()
+        zip_buffer.seek(0)
+        
+        # Crear respuesta HTTP
+        response = HttpResponse(zip_buffer.getvalue(), content_type='application/zip')
+        fecha_inicio_str = fecha_inicio.replace('-', '')
+        fecha_fin_str = fecha_fin.replace('-', '')
+        filename = f"reporte_contable_{fecha_inicio_str}_{fecha_fin_str}.zip"
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+        
+        return response
+        
+    except Exception as e:
+        logger.error(f'Error al generar reporte contable ZIP: {e}')
+        import traceback
+        logger.error(traceback.format_exc())
+        messages.error(request, f'Error al generar el reporte: {str(e)}')
+        return redirect('egresos_reporte_contable')
 
 
 @login_required

@@ -1,0 +1,423 @@
+{% extends "base.html" %}
+{% load custom_filters %}
+
+{% block title %}Reporte Contable por Período - Sistema de Construcción{% endblock %}
+
+{% block extra_css %}
+<style>
+    .hero-section {
+        background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
+        color: white;
+        padding: 2.5rem 2rem;
+        border-radius: 12px;
+        margin-bottom: 2rem;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+    
+    .hero-section::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="50" cy="50" r="1" fill="white" opacity="0.1"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+        opacity: 0.3;
+    }
+    
+    .hero-content {
+        position: relative;
+        z-index: 2;
+    }
+    
+    .hero-title {
+        font-size: 2rem;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        color: white !important;
+        letter-spacing: 0.5px;
+    }
+    
+    .hero-subtitle {
+        font-size: 1.2rem;
+        margin-bottom: 2rem;
+        opacity: 0.9;
+    }
+    
+    .form-container {
+        background: white;
+        border-radius: 20px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        overflow: hidden;
+        margin-bottom: 2rem;
+    }
+    
+    .form-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 2rem;
+        text-align: center;
+    }
+    
+    .form-header-icon {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+        opacity: 0.9;
+    }
+    
+    .form-header-title {
+        font-size: 1.8rem;
+        font-weight: 600;
+        margin: 0;
+    }
+    
+    .form-body {
+        padding: 2rem;
+    }
+    
+    .form-section {
+        margin-bottom: 2rem;
+        padding: 1.5rem;
+        background: #f8f9fa;
+        border-radius: 15px;
+        border-left: 4px solid #20bf6b;
+    }
+    
+    .form-section-title {
+        font-size: 1.2rem;
+        font-weight: 600;
+        color: #495057;
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .form-section-title i {
+        color: #20bf6b;
+        font-size: 1.1rem;
+    }
+    
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+    
+    .form-label {
+        font-weight: 600;
+        color: #495057;
+        margin-bottom: 0.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .form-label i {
+        color: #6c757d;
+        font-size: 0.9rem;
+    }
+    
+    .form-control {
+        border: 2px solid #e9ecef;
+        border-radius: 10px;
+        padding: 0.75rem 1rem;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+        background: white;
+    }
+    
+    .form-control:focus {
+        border-color: #20bf6b;
+        box-shadow: 0 0 0 0.2rem rgba(32, 191, 107, 0.25);
+        outline: none;
+    }
+    
+    .form-check {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+    }
+    
+    .form-check-input {
+        width: 1.25rem;
+        height: 1.25rem;
+        border: 2px solid #e9ecef;
+        border-radius: 4px;
+        margin: 0;
+    }
+    
+    .form-check-input:checked {
+        background-color: #20bf6b;
+        border-color: #20bf6b;
+    }
+    
+    .form-check-label {
+        font-weight: 500;
+        color: #495057;
+        margin: 0;
+    }
+    
+    .btn {
+        padding: 0.75rem 2rem;
+        border-radius: 12px;
+        font-weight: 600;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: all 0.3s ease;
+        border: none;
+        cursor: pointer;
+        font-size: 1rem;
+    }
+    
+    .btn-success {
+        background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%);
+        color: white;
+    }
+    
+    .btn-success:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(40, 167, 69, 0.4);
+        color: white;
+    }
+    
+    .btn-secondary {
+        background: linear-gradient(135deg, #6c757d 0%, #545b62 100%);
+        color: white;
+    }
+    
+    .btn-secondary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(108, 117, 125, 0.4);
+        color: white;
+    }
+    
+    .btn-group {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+        margin-top: 2rem;
+    }
+    
+    .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+    }
+    
+    .help-text {
+        font-size: 0.875rem;
+        color: #6c757d;
+        margin-top: 0.25rem;
+        font-style: italic;
+    }
+    
+    .required {
+        color: #dc3545;
+    }
+    
+    .info-box {
+        background: #e7f3ff;
+        border-left: 4px solid #0066cc;
+        padding: 1rem;
+        border-radius: 8px;
+        margin-bottom: 1.5rem;
+    }
+    
+    .info-box i {
+        color: #0066cc;
+        margin-right: 0.5rem;
+    }
+    
+    @media (max-width: 768px) {
+        .form-row {
+            grid-template-columns: 1fr;
+        }
+        
+        .btn-group {
+            flex-direction: column;
+        }
+        
+        .hero-title {
+            font-size: 1.5rem;
+        }
+        
+        .form-body {
+            padding: 1.5rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block page_title %}Reporte Contable por Período{% endblock %}
+
+{% block content %}
+<!-- Header -->
+<div class="hero-section">
+    <div class="hero-content">
+        <h1 class="hero-title">
+            <i class="fas fa-file-archive me-2"></i>Reporte Contable por Período
+        </h1>
+        <p class="hero-subtitle">Genera un reporte completo con gastos, facturas y comprobantes</p>
+    </div>
+</div>
+
+<!-- Formulario -->
+<div class="form-container">
+    <div class="form-header">
+        <div class="form-header-icon">
+            <i class="fas fa-calendar-alt"></i>
+        </div>
+        <h4 class="form-header-title">Seleccionar Período</h4>
+    </div>
+    
+    <div class="form-body">
+        <form method="post" id="reporteForm">
+            {% csrf_token %}
+            
+            <!-- Mostrar errores -->
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }}" role="alert">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+            
+            <!-- Información -->
+            <div class="info-box">
+                <i class="fas fa-info-circle"></i>
+                <strong>Información:</strong> Este reporte generará un archivo ZIP que incluirá:
+                <ul style="margin: 0.5rem 0 0 1.5rem; padding: 0;">
+                    <li>Reporte PDF de gastos del período seleccionado</li>
+                    <li>Comprobantes de gastos (si están disponibles)</li>
+                    <li>Facturas relacionadas a los proyectos de los gastos (opcional)</li>
+                </ul>
+            </div>
+            
+            <!-- Período -->
+            <div class="form-section">
+                <h5 class="form-section-title">
+                    <i class="fas fa-calendar"></i>
+                    Período del Reporte
+                </h5>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="fecha_inicio" class="form-label">
+                            <i class="fas fa-calendar-check"></i>
+                            Fecha Inicio
+                            <span class="required">*</span>
+                        </label>
+                        <input type="date" 
+                               id="fecha_inicio" 
+                               name="fecha_inicio" 
+                               class="form-control" 
+                               value="{{ fecha_inicio_default }}"
+                               required>
+                        <div class="help-text">Fecha de inicio del período a reportar</div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="fecha_fin" class="form-label">
+                            <i class="fas fa-calendar-times"></i>
+                            Fecha Fin
+                            <span class="required">*</span>
+                        </label>
+                        <input type="date" 
+                               id="fecha_fin" 
+                               name="fecha_fin" 
+                               class="form-control" 
+                               value="{{ fecha_fin_default }}"
+                               required>
+                        <div class="help-text">Fecha de fin del período a reportar</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Opciones -->
+            <div class="form-section">
+                <h5 class="form-section-title">
+                    <i class="fas fa-cog"></i>
+                    Opciones Adicionales
+                </h5>
+                
+                <div class="form-group">
+                    <div class="form-check">
+                        <input type="checkbox" 
+                               id="incluir_facturas" 
+                               name="incluir_facturas" 
+                               value="si"
+                               class="form-check-input"
+                               checked>
+                        <label for="incluir_facturas" class="form-check-label">
+                            <i class="fas fa-file-invoice-dollar me-1"></i>
+                            Incluir facturas relacionadas
+                        </label>
+                    </div>
+                    <div class="help-text">
+                        Si está marcado, se incluirán las facturas de los proyectos asociados a los gastos del período seleccionado
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Botones -->
+            <div class="btn-group">
+                <button type="submit" class="btn btn-success">
+                    <i class="fas fa-file-archive me-2"></i>Generar Reporte ZIP
+                </button>
+                <a href="{% url 'egresos_list' %}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left me-2"></i>Cancelar
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Validación del formulario
+        const form = document.getElementById('reporteForm');
+        const fechaInicio = document.getElementById('fecha_inicio');
+        const fechaFin = document.getElementById('fecha_fin');
+        
+        form.addEventListener('submit', function(e) {
+            if (!fechaInicio.value || !fechaFin.value) {
+                e.preventDefault();
+                alert('Por favor, selecciona ambas fechas');
+                return false;
+            }
+            
+            if (fechaInicio.value > fechaFin.value) {
+                e.preventDefault();
+                alert('La fecha de inicio debe ser anterior a la fecha de fin');
+                return false;
+            }
+        });
+        
+        // Validación en tiempo real
+        fechaFin.addEventListener('change', function() {
+            if (fechaInicio.value && fechaFin.value && fechaInicio.value > fechaFin.value) {
+                fechaFin.setCustomValidity('La fecha de fin debe ser posterior a la fecha de inicio');
+            } else {
+                fechaFin.setCustomValidity('');
+            }
+        });
+        
+        fechaInicio.addEventListener('change', function() {
+            if (fechaInicio.value && fechaFin.value && fechaInicio.value > fechaFin.value) {
+                fechaInicio.setCustomValidity('La fecha de inicio debe ser anterior a la fecha de fin');
+            } else {
+                fechaInicio.setCustomValidity('');
+            }
+        });
+    });
+</script>
+{% endblock %}
+
