@@ -530,6 +530,11 @@
                         </td>
                         <td>
                             <div class="d-flex gap-2 justify-content-center">
+                                {% if egreso.comprobante %}
+                                    <button type="button" class="btn btn-info btn-sm" title="Ver Comprobante" onclick="previsualizarComprobante('{{ egreso.comprobante.url }}', '{{ egreso.comprobante.name|escapejs }}')">
+                                        <i class="fas fa-file-pdf"></i>
+                                    </button>
+                                {% endif %}
                                 {% if egreso.aprobado %}
                                     <button type="button" class="btn btn-warning btn-sm" title="Desaprobar Egreso" onclick="confirmarDesaprobarEgreso({{ egreso.id }}, '{{ egreso.descripcion }}')">
                                         <i class="fas fa-times"></i>
@@ -610,6 +615,49 @@
             </a>
         </div>
     {% endif %}
+</div>
+
+<!-- Modal para previsualizar comprobante -->
+<div class="modal fade" id="comprobanteModal" tabindex="-1" aria-labelledby="comprobanteModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="comprobanteModalLabel">
+                    <i class="fas fa-file-pdf me-2"></i>Vista Previa del Comprobante
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" style="padding: 0; background: #f8f9fa;">
+                <div id="comprobantePreviewContainer" style="min-height: 500px; position: relative;">
+                    <div class="text-center p-5" id="comprobanteLoading" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);">
+                        <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
+                            <span class="visually-hidden">Cargando...</span>
+                        </div>
+                        <p class="mt-3 text-muted">Cargando comprobante...</p>
+                    </div>
+                    <iframe id="comprobanteIframe" src="" style="width: 100%; height: 600px; border: none; display: none;"></iframe>
+                    <div id="comprobanteImageContainer" style="display: none; text-align: center; padding: 1rem; background: white;">
+                        <img id="comprobanteImage" src="" style="max-width: 100%; height: auto; max-height: 600px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);" alt="Comprobante">
+                    </div>
+                    <div id="comprobanteError" class="text-center p-5" style="display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 100%;">
+                        <i class="fas fa-exclamation-triangle text-warning" style="font-size: 3rem;"></i>
+                        <p class="mt-3 text-muted">No se pudo cargar el comprobante.</p>
+                        <a href="#" id="comprobanteDownloadLink" class="btn btn-primary btn-sm mt-2" target="_blank">
+                            <i class="fas fa-download me-1"></i>Descargar archivo
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <a href="#" id="comprobanteDownloadBtn" class="btn btn-primary" target="_blank">
+                    <i class="fas fa-download me-2"></i>Descargar
+                </a>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-2"></i>Cerrar
+                </button>
+            </div>
+        </div>
+    </div>
 </div>
 {% endblock %}
 
@@ -843,6 +891,76 @@ document.addEventListener('DOMContentLoaded', function() {
                 });
             }
         });
+    };
+    
+    // Función para previsualizar comprobante
+    window.previsualizarComprobante = function(comprobanteUrl, comprobanteNombre) {
+        const modalElement = document.getElementById('comprobanteModal');
+        const modal = bootstrap.Modal.getOrCreateInstance(modalElement);
+        const iframe = document.getElementById('comprobanteIframe');
+        const imageContainer = document.getElementById('comprobanteImageContainer');
+        const image = document.getElementById('comprobanteImage');
+        const loading = document.getElementById('comprobanteLoading');
+        const error = document.getElementById('comprobanteError');
+        const downloadBtn = document.getElementById('comprobanteDownloadBtn');
+        const downloadLink = document.getElementById('comprobanteDownloadLink');
+        const modalTitle = document.getElementById('comprobanteModalLabel');
+        
+        // Resetear elementos
+        iframe.style.display = 'none';
+        imageContainer.style.display = 'none';
+        loading.style.display = 'block';
+        error.style.display = 'none';
+        iframe.src = '';
+        image.src = '';
+        
+        // Actualizar título y enlaces de descarga
+        modalTitle.innerHTML = `<i class="fas fa-file-pdf me-2"></i>${comprobanteNombre || 'Comprobante'}`;
+        downloadBtn.href = comprobanteUrl;
+        downloadLink.href = comprobanteUrl;
+        
+        // Determinar tipo de archivo
+        const extension = comprobanteUrl.split('.').pop().toLowerCase().split('?')[0];
+        const isImage = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'].includes(extension);
+        const isPdf = extension === 'pdf';
+        
+        if (isImage) {
+            // Mostrar imagen
+            image.src = comprobanteUrl;
+            image.onload = function() {
+                loading.style.display = 'none';
+                imageContainer.style.display = 'block';
+            };
+            image.onerror = function() {
+                loading.style.display = 'none';
+                error.style.display = 'block';
+            };
+        } else if (isPdf) {
+            // Mostrar PDF en iframe
+            iframe.src = comprobanteUrl + '#toolbar=0';
+            setTimeout(function() {
+                loading.style.display = 'none';
+                iframe.style.display = 'block';
+            }, 500);
+            iframe.onerror = function() {
+                loading.style.display = 'none';
+                error.style.display = 'block';
+            };
+        } else {
+            // Formato no soportado para preview, mostrar opción de descarga
+            loading.style.display = 'none';
+            error.style.display = 'block';
+            error.innerHTML = `
+                <i class="fas fa-file text-info" style="font-size: 3rem;"></i>
+                <p class="mt-3 text-muted">Este tipo de archivo no se puede previsualizar.</p>
+                <a href="${comprobanteUrl}" class="btn btn-primary btn-sm mt-2" target="_blank" download>
+                    <i class="fas fa-download me-1"></i>Descargar archivo
+                </a>
+            `;
+        }
+        
+        // Abrir modal
+        modal.show();
     };
 });
 </script>
