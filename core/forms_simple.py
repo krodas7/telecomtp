@@ -277,7 +277,8 @@ class GastoForm(forms.ModelForm):
     
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # Establecer fecha por defecto si es un nuevo registro
+        # Establecer fecha por defecto SOLO si es un nuevo registro (sin pk)
+        # Si es edición (con pk), mantener la fecha existente del gasto
         if not self.instance.pk:
             from datetime import date
             self.fields['fecha_gasto'].initial = date.today()
