@@ -900,27 +900,35 @@ document.addEventListener('DOMContentLoaded', function() {
     // Función para previsualizar comprobante
     window.previsualizarComprobante = function(comprobanteUrl, comprobanteNombre) {
         try {
+            // Determinar tipo de archivo primero
+            const urlParts = comprobanteUrl.split('.');
+            const extension = urlParts.length > 1 ? urlParts.pop().toLowerCase().split('?')[0] : '';
+            const isImage = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'].includes(extension);
+            const isPdf = extension === 'pdf';
+            
+            // Para PDFs, abrir directamente en nueva pestaña (evita completamente bloqueos)
+            if (isPdf) {
+                window.open(comprobanteUrl, '_blank', 'noopener,noreferrer');
+                return;
+            }
+            
+            // Para imágenes, usar el modal
             const modalElement = document.getElementById('comprobanteModal');
             if (!modalElement) {
-                console.error('Modal no encontrado');
+                // Si no hay modal, abrir en nueva pestaña como fallback
+                window.open(comprobanteUrl, '_blank', 'noopener,noreferrer');
                 return;
             }
             
             const modal = bootstrap.Modal.getOrCreateInstance(modalElement);
-            const iframe = document.getElementById('comprobanteIframe');
             const imageContainer = document.getElementById('comprobanteImageContainer');
             const image = document.getElementById('comprobanteImage');
             const loading = document.getElementById('comprobanteLoading');
             const error = document.getElementById('comprobanteError');
             const downloadBtn = document.getElementById('comprobanteDownloadBtn');
-            const downloadLink = document.getElementById('comprobanteDownloadLink');
             const modalTitle = document.getElementById('comprobanteModalLabel');
             
-            // Resetear elementos de forma segura
-            if (iframe) {
-                iframe.style.display = 'none';
-                iframe.src = '';
-            }
+            // Resetear elementos
             if (imageContainer) imageContainer.style.display = 'none';
             if (image) {
                 image.src = '';
@@ -930,73 +938,42 @@ document.addEventListener('DOMContentLoaded', function() {
             if (loading) loading.style.display = 'block';
             if (error) error.style.display = 'none';
             
-            // Actualizar título y enlaces de descarga de forma segura
+            // Actualizar título y enlaces
             if (modalTitle) {
-                modalTitle.textContent = '';
-                modalTitle.innerHTML = `<i class="fas fa-file-pdf me-2"></i>${comprobanteNombre || 'Comprobante'}`;
+                modalTitle.innerHTML = `<i class="fas fa-file-image me-2"></i>${comprobanteNombre || 'Comprobante'}`;
             }
             if (downloadBtn) downloadBtn.href = comprobanteUrl;
-            if (downloadLink) downloadLink.href = comprobanteUrl;
             
-            // Determinar tipo de archivo
-            const urlParts = comprobanteUrl.split('.');
-            const extension = urlParts.length > 1 ? urlParts.pop().toLowerCase().split('?')[0] : '';
-            const isImage = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'].includes(extension);
-            const isPdf = extension === 'pdf';
-            
-            // Agregar event listener para limpiar al cerrar el modal
-            modalElement.addEventListener('hidden.bs.modal', function() {
-                // Limpiar al cerrar
-                if (iframe) iframe.src = '';
-                if (image) image.src = '';
-                if (image.onload) image.onload = null;
-                if (image.onerror) image.onerror = null;
-            }, { once: true });
-            
-            // Abrir modal primero
+            // Abrir modal
             modal.show();
             
-            // Usar requestAnimationFrame para evitar bloqueos
-            requestAnimationFrame(function() {
-                if (isImage && image && imageContainer && loading && error) {
-                    // Mostrar imagen
-                    image.onload = function() {
-                        if (loading) loading.style.display = 'none';
-                        if (imageContainer) imageContainer.style.display = 'block';
-                    };
-                    image.onerror = function() {
-                        if (loading) loading.style.display = 'none';
-                        if (error) {
-                            error.style.display = 'block';
-                            error.innerHTML = `
-                                <i class="fas fa-exclamation-triangle text-warning" style="font-size: 3rem;"></i>
-                                <p class="mt-3 text-muted">No se pudo cargar la imagen.</p>
-                                <a href="${comprobanteUrl}" class="btn btn-primary btn-sm mt-2" target="_blank" download>
-                                    <i class="fas fa-download me-1"></i>Descargar archivo
-                                </a>
-                            `;
-                        }
-                    };
+            // Cargar imagen de forma asíncrona
+            if (isImage && image && imageContainer && loading) {
+                image.onload = function() {
+                    if (loading) loading.style.display = 'none';
+                    if (imageContainer) imageContainer.style.display = 'block';
+                };
+                image.onerror = function() {
+                    if (loading) loading.style.display = 'none';
+                    if (error) {
+                        error.style.display = 'block';
+                        error.innerHTML = `
+                            <i class="fas fa-exclamation-triangle text-warning" style="font-size: 3rem;"></i>
+                            <p class="mt-3 text-muted">No se pudo cargar la imagen.</p>
+                            <a href="${comprobanteUrl}" class="btn btn-primary btn-sm mt-2" target="_blank" download>
+                                <i class="fas fa-download me-1"></i>Descargar archivo
+                            </a>
+                        `;
+                    }
+                };
+                // Cargar imagen de forma asíncrona
+                setTimeout(function() {
                     image.src = comprobanteUrl;
-                } else if (isPdf && loading && error) {
-                    // Para PDFs, mostrar opciones sin iframe
-                    loading.style.display = 'none';
-                    error.style.display = 'block';
-                    error.innerHTML = `
-                        <i class="fas fa-file-pdf text-danger" style="font-size: 3rem;"></i>
-                        <p class="mt-3 text-muted">Para visualizar el PDF, puedes descargarlo o abrirlo en una nueva pestaña.</p>
-                        <div class="d-flex gap-2 justify-content-center mt-3">
-                            <a href="${comprobanteUrl}" class="btn btn-primary btn-sm" target="_blank" rel="noopener">
-                                <i class="fas fa-external-link-alt me-1"></i>Abrir en nueva pestaña
-                            </a>
-                            <a href="${comprobanteUrl}" class="btn btn-success btn-sm" download>
-                                <i class="fas fa-download me-1"></i>Descargar
-                            </a>
-                        </div>
-                    `;
-                } else if (loading && error) {
-                    // Formato no soportado
-                    loading.style.display = 'none';
+                }, 100);
+            } else {
+                // Formato no soportado
+                if (loading) loading.style.display = 'none';
+                if (error) {
                     error.style.display = 'block';
                     error.innerHTML = `
                         <i class="fas fa-file text-info" style="font-size: 3rem;"></i>
@@ -1006,10 +983,11 @@ document.addEventListener('DOMContentLoaded', function() {
                         </a>
                     `;
                 }
-            });
+            }
         } catch (e) {
             console.error('Error al previsualizar comprobante:', e);
-            alert('Error al abrir el comprobante. Por favor, intenta descargarlo directamente.');
+            // Fallback: abrir en nueva pestaña
+            window.open(comprobanteUrl, '_blank', 'noopener,noreferrer');
         }
     };
 });
