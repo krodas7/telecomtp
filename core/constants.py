@@ -1,5 +1,5 @@
 """
-Constantes del sistema de construcción
+Constantes del Telecom Technology
 """
 
 # Estados de proyectos
@@ -175,7 +175,7 @@ API_CONFIG = {
 
 # Mensajes del sistema
 SYSTEM_MESSAGES = {
-    'welcome': 'Bienvenido al Sistema de Construcción',
+    'welcome': 'Bienvenido al Telecom Technology',
     'session_expired': 'Su sesión ha expirado. Por favor, inicie sesión nuevamente.',
     'access_denied': 'No tiene permisos para acceder a esta funcionalidad.',
     'operation_success': 'Operación realizada exitosamente.',

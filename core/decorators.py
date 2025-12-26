@@ -1,5 +1,5 @@
 """
-Decoradores del sistema ARCA Construcción
+Decoradores del Telecom Technology
 Para funcionalidades comunes y control de acceso
 """
 

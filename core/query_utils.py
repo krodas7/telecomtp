@@ -1,5 +1,5 @@
 """
-Utilidades para optimización de consultas del sistema ARCA Construcción
+Utilidades para optimización de consultas del Telecom Technology
 """
 
 from django.db.models import Prefetch, Q

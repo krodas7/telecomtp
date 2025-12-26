@@ -1,5 +1,5 @@
 """
-Configuración de caché para el sistema ARCA Construcción
+Configuración de caché para el Telecom Technology
 """
 
 from django.core.cache import cache

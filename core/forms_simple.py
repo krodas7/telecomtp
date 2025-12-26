@@ -1,5 +1,5 @@
 """
-Formularios simplificados del sistema ARCA Construcción
+Formularios simplificados del Telecom Technology
 Solo los formularios esenciales que funcionan correctamente
 """
 

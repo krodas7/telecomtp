@@ -1,5 +1,5 @@
 """
-Utilidades comunes para el sistema de construcción
+Utilidades comunes para el Telecom Technology
 """
 
 import logging

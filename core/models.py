@@ -1036,7 +1036,7 @@ class CarpetaProyecto(models.Model):
 # ==================== MODELO DE NOTIFICACIONES ====================
 
 class NotificacionSistema(models.Model):
-    """Notificaciones personalizadas del sistema de construcción"""
+    """Notificaciones personalizadas del Telecom Technology"""
     
     TIPO_CHOICES = [
         ('factura_vencida', 'Factura Vencida'),

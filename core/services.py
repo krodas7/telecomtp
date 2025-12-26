@@ -1,5 +1,5 @@
 """
-Servicios del sistema ARCA Construcción
+Servicios del Telecom Technology
 Contiene la lógica de negocio separada de las vistas
 """
 

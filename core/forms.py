@@ -1,5 +1,5 @@
 """
-Formularios del sistema ARCA Construcción
+Formularios del Telecom Technology
 Centralizados para mejor mantenimiento
 """
 
