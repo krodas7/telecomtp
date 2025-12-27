@@ -721,6 +721,15 @@
                             </td>
                             <td>
                                 <div class="d-flex gap-2 justify-content-center">
+                                    {% if factura.comprobante %}
+                                        <a href="{{ factura.comprobante.url }}" target="_blank" rel="noopener noreferrer" class="btn btn-info btn-sm" title="Ver Comprobante">
+                                            <i class="fas fa-file-pdf"></i>
+                                        </a>
+                                    {% else %}
+                                        <button type="button" class="btn btn-info btn-sm" title="Sin comprobante" disabled style="opacity: 0.5; cursor: not-allowed;">
+                                            <i class="fas fa-file-pdf"></i>
+                                        </button>
+                                    {% endif %}
                                     <a href="{% url 'factura_detail' factura.id %}" class="btn btn-primary btn-sm" title="Ver Detalles">
                                         <i class="fas fa-eye"></i>
                                     </a>
