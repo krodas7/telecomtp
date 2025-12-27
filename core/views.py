@@ -1195,15 +1195,23 @@ def factura_edit(request, factura_id):
     factura = get_object_or_404(Factura, id=factura_id)
     
     if request.method == 'POST':
+        logger.debug(f"POST recibido para editar factura {factura_id}")
+        logger.debug(f"Archivos recibidos: {request.FILES}")
+        logger.debug(f"Datos POST: {request.POST}")
+        
         form = FacturaForm(request.POST, request.FILES, instance=factura)
         if form.is_valid():
+            logger.debug("Formulario válido, guardando factura")
+            
             # Si se marcó el checkbox para eliminar el comprobante
             if request.POST.get('comprobante-clear'):
+                logger.debug("Eliminando comprobante existente")
                 if factura.comprobante:
                     factura.comprobante.delete(save=False)
                     factura.comprobante = None
             
             factura = form.save()
+            logger.debug(f"Factura guardada. Comprobante: {factura.comprobante}")
             
             # Registrar actividad
             LogActividad.objects.create(
@@ -1216,6 +1224,10 @@ def factura_edit(request, factura_id):
             
             messages.success(request, 'Factura actualizada exitosamente')
             return redirect('facturas_list')
+        else:
+            logger.error(f"Formulario inválido: {form.errors}")
+            logger.error(f"Datos del formulario: {form.data}")
+            messages.error(request, f'Error al actualizar la factura: {form.errors}')
     else:
         form = FacturaForm(instance=factura)
     
