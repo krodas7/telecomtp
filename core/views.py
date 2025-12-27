@@ -1209,6 +1209,8 @@ def factura_edit(request, factura_id):
                 if factura.comprobante:
                     factura.comprobante.delete(save=False)
                     factura.comprobante = None
+                    # Guardar el cambio del comprobante a None antes de form.save()
+                    factura.save()
             
             factura = form.save()
             logger.debug(f"Factura guardada. Comprobante: {factura.comprobante}")
