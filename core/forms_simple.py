@@ -172,6 +172,12 @@ class FacturaForm(forms.ModelForm):
         self.fields['subproyecto'].required = False
         self.fields['subproyecto'].empty_label = "Seleccionar subproyecto (opcional)"
         
+        # Hacer que porcentaje_itbms no sea obligatorio (siempre tiene valor por defecto)
+        self.fields['porcentaje_itbms'].required = False
+        
+        # Hacer que monto_total no sea obligatorio (se calcula automáticamente)
+        self.fields['monto_total'].required = False
+        
         # Filtrar subproyectos según el proyecto seleccionado
         if self.instance.pk and self.instance.proyecto:
             self.fields['subproyecto'].queryset = Subproyecto.objects.filter(
