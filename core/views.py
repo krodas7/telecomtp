@@ -23,7 +23,7 @@ from .models import (
     Rol, PerfilUsuario, Modulo, Permiso, RolPermiso, AnticipoProyecto,
     CarpetaProyecto, ConfiguracionSistema, EventoCalendario,
     TrabajadorDiario, RegistroTrabajo, AnticipoTrabajadorDiario, PlanillaLiquidada, PlanillaTrabajadoresDiarios,
-    ItemCotizacion, ItemReutilizable, ConfiguracionPlanilla,
+    ItemCotizacion, ItemReutilizable, ConfiguracionPlanilla, BonoColaboradorProyecto,
     ServicioTorrero, RegistroDiasTrabajados, PagoServicioTorrero, Torrero, AsignacionTorrero,
     Subproyecto, NotaPostit, CajaMenuda, PlanificacionBitacora, AvancePlanificacion, AvancePlanificacion,
     ArchivoAdjunto
@@ -6129,6 +6129,14 @@ def planilla_proyecto(request, proyecto_id):
                     bonos_monto += colaborador.bono_produccion_individual
                 else:
                     bonos_monto += Decimal(str(configuracion_planilla.bono_produccion))
+            
+            # Bono individual del proyecto
+            try:
+                bono_colab = BonoColaboradorProyecto.objects.get(proyecto=proyecto, colaborador=colaborador)
+                if bono_colab.bono_individual and bono_colab.bono_individual > 0:
+                    bonos_monto += bono_colab.bono_individual
+            except BonoColaboradorProyecto.DoesNotExist:
+                pass
         
         # Salario con bonos y retenciones (todo en Decimal)
         salario_colaborador_decimal = Decimal(str(salario_colaborador))
@@ -6384,12 +6392,29 @@ def configurar_planilla_proyecto(request, proyecto_id):
             except (ValueError, InvalidOperation):
                 bono_produccion_individual = Decimal('0')
             
+            # Obtener bono individual del proyecto
+            bono_individual_monto = request.POST.get(f'bono_individual_{colaborador.id}', '0')
+            try:
+                bono_individual = Decimal(str(bono_individual_monto)) if bono_individual_monto else Decimal('0')
+            except (ValueError, InvalidOperation):
+                bono_individual = Decimal('0')
+            
             # Actualizar colaborador
             colaborador.aplica_bono_general = aplica_bono_general
             colaborador.aplica_bono_produccion = aplica_bono_produccion
             colaborador.bono_produccion_individual = bono_produccion_individual
             colaborador.aplica_retenciones = True  # Retenciones SIEMPRE para todos
             colaborador.save()
+            
+            # Guardar o actualizar bono individual por proyecto
+            bono_colab_proyecto, created = BonoColaboradorProyecto.objects.get_or_create(
+                proyecto=proyecto,
+                colaborador=colaborador,
+                defaults={'bono_individual': bono_individual}
+            )
+            if not created:
+                bono_colab_proyecto.bono_individual = bono_individual
+                bono_colab_proyecto.save()
         
         if form.is_valid():
             config = form.save(commit=False)
@@ -6474,6 +6499,13 @@ def planilla_proyecto_pdf(request, proyecto_id):
                     bonos_monto += colaborador.bono_produccion_individual
                 else:
                     bonos_monto += configuracion_planilla.bono_produccion
+            # Bono individual del proyecto
+            try:
+                bono_colab = BonoColaboradorProyecto.objects.get(proyecto=proyecto, colaborador=colaborador)
+                if bono_colab.bono_individual and bono_colab.bono_individual > 0:
+                    bonos_monto += bono_colab.bono_individual
+            except BonoColaboradorProyecto.DoesNotExist:
+                pass
         
         # Salario quincenal (todo dividido entre 2)
         salario_quincenal = salario_colaborador / Decimal('2')

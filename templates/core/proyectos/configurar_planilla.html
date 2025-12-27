@@ -170,12 +170,15 @@
                     <table class="table table-bordered">
                         <thead style="background: #f8f9fa;">
                             <tr>
-                                <th style="width: 40%;">Colaborador</th>
-                                <th style="text-align: center; width: 30%;">
+                                <th style="width: 25%;">Colaborador</th>
+                                <th style="text-align: center; width: 20%;">
                                     <i class="fas fa-gift me-1"></i>Bono General
                                 </th>
-                                <th style="text-align: center; width: 30%;">
+                                <th style="text-align: center; width: 20%;">
                                     <i class="fas fa-chart-line me-1"></i>Bono Producción
+                                </th>
+                                <th style="text-align: center; width: 35%;">
+                                    <i class="fas fa-dollar-sign me-1"></i>Bono Individual
                                 </th>
                             </tr>
                         </thead>
@@ -224,6 +227,19 @@
                                             style="width: 100px; margin: 0 auto;">
                                         <small class="text-muted d-block mt-1">Monto individual</small>
                                     </div>
+                                </td>
+                                <td style="text-align: center; padding: 1rem;">
+                                    <input 
+                                        type="number" 
+                                        step="0.01" 
+                                        min="0" 
+                                        class="form-control" 
+                                        name="bono_individual_{{ colaborador.id }}" 
+                                        id="bono_individual_{{ colaborador.id }}"
+                                        placeholder="0.00"
+                                        value="{% if colaborador.bono_individual_proyecto %}{{ colaborador.bono_individual_proyecto }}{% else %}0.00{% endif %}"
+                                        style="width: 150px; margin: 0 auto;">
+                                    <small class="text-muted d-block mt-1">Bono mensual individual ($)</small>
                                 </td>
                             </tr>
                             {% endfor %}

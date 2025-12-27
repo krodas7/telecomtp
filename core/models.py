@@ -1862,6 +1862,29 @@ class ConfiguracionPlanilla(models.Model):
         return bono_fijo + bono_produccion
 
 
+class BonoColaboradorProyecto(models.Model):
+    """Modelo para almacenar bonos individuales por colaborador y proyecto"""
+    proyecto = models.ForeignKey(Proyecto, on_delete=models.CASCADE, related_name='bonos_colaboradores')
+    colaborador = models.ForeignKey(Colaborador, on_delete=models.CASCADE, related_name='bonos_proyectos')
+    bono_individual = models.DecimalField(
+        max_digits=10, 
+        decimal_places=2, 
+        default=0, 
+        verbose_name="Bono Individual ($)", 
+        help_text="Bono individual mensual para este colaborador en este proyecto"
+    )
+    creado_en = models.DateTimeField(auto_now_add=True)
+    modificado_en = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        verbose_name = 'Bono Individual de Colaborador'
+        verbose_name_plural = 'Bonos Individuales de Colaboradores'
+        unique_together = ['proyecto', 'colaborador']  # Un bono por colaborador por proyecto
+    
+    def __str__(self):
+        return f"{self.colaborador.nombre} - {self.proyecto.nombre}: ${self.bono_individual}"
+
+
 class IngresoProyecto(models.Model):
     """Modelo para registrar ingresos por proyecto basados en facturas"""
     
