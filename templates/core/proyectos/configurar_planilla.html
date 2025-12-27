@@ -170,14 +170,11 @@
                     <table class="table table-bordered">
                         <thead style="background: #f8f9fa;">
                             <tr>
-                                <th style="width: 25%;">Colaborador</th>
-                                <th style="text-align: center; width: 20%;">
+                                <th style="width: 30%;">Colaborador</th>
+                                <th style="text-align: center; width: 25%;">
                                     <i class="fas fa-gift me-1"></i>Bono General
                                 </th>
-                                <th style="text-align: center; width: 20%;">
-                                    <i class="fas fa-chart-line me-1"></i>Bono Producción
-                                </th>
-                                <th style="text-align: center; width: 35%;">
+                                <th style="text-align: center; width: 45%;">
                                     <i class="fas fa-dollar-sign me-1"></i>Bono
                                 </th>
                             </tr>
@@ -203,32 +200,6 @@
                                     </div>
                                 </td>
                                 <td style="text-align: center; padding: 1rem;">
-                                    <div class="form-check d-inline-block mb-2">
-                                        <input 
-                                            type="checkbox" 
-                                            class="form-check-input" 
-                                            name="bono_produccion_{{ colaborador.id }}" 
-                                            id="bono_produccion_{{ colaborador.id }}"
-                                            {% if colaborador.aplica_bono_produccion %}checked{% endif %}>
-                                        <label class="form-check-label" for="bono_produccion_{{ colaborador.id }}">
-                                            Aplicar
-                                        </label>
-                                    </div>
-                                    <div class="mt-2">
-                                        <input 
-                                            type="number" 
-                                            step="0.01" 
-                                            min="0" 
-                                            class="form-control form-control-sm" 
-                                            name="bono_produccion_monto_{{ colaborador.id }}" 
-                                            id="bono_produccion_monto_{{ colaborador.id }}"
-                                            placeholder="0.00"
-                                            value="{% if colaborador.bono_produccion_individual %}{{ colaborador.bono_produccion_individual }}{% else %}0.00{% endif %}"
-                                            style="width: 100px; margin: 0 auto;">
-                                        <small class="text-muted d-block mt-1">Monto individual</small>
-                                    </div>
-                                </td>
-                                <td style="text-align: center; padding: 1rem;">
                                     <input 
                                         type="number" 
                                         step="0.01" 
@@ -238,7 +209,7 @@
                                         id="bono_individual_{{ colaborador.id }}"
                                         placeholder="0.00"
                                         value="{% if colaborador.bono_individual_proyecto %}{{ colaborador.bono_individual_proyecto }}{% else %}0.00{% endif %}"
-                                        style="width: 150px; margin: 0 auto;">
+                                        style="width: 200px; margin: 0 auto;">
                                     <small class="text-muted d-block mt-1">Bono mensual ($)</small>
                                 </td>
                             </tr>

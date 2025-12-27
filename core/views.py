@@ -6381,16 +6381,8 @@ def configurar_planilla_proyecto(request, proyecto_id):
         
         # Procesar asignación de bonos a colaboradores
         for colaborador in colaboradores:
-            # Bonos (pueden ser individuales)
+            # Bonos
             aplica_bono_general = f'bono_general_{colaborador.id}' in request.POST
-            aplica_bono_produccion = f'bono_produccion_{colaborador.id}' in request.POST
-            
-            # Obtener bono de producción individual
-            bono_produccion_monto = request.POST.get(f'bono_produccion_monto_{colaborador.id}', '0')
-            try:
-                bono_produccion_individual = Decimal(str(bono_produccion_monto)) if bono_produccion_monto else Decimal('0')
-            except (ValueError, InvalidOperation):
-                bono_produccion_individual = Decimal('0')
             
             # Obtener bono individual del proyecto
             bono_individual_monto = request.POST.get(f'bono_individual_{colaborador.id}', '0')
@@ -6401,8 +6393,6 @@ def configurar_planilla_proyecto(request, proyecto_id):
             
             # Actualizar colaborador
             colaborador.aplica_bono_general = aplica_bono_general
-            colaborador.aplica_bono_produccion = aplica_bono_produccion
-            colaborador.bono_produccion_individual = bono_produccion_individual
             colaborador.aplica_retenciones = True  # Retenciones SIEMPRE para todos
             colaborador.save()
             
