@@ -1870,15 +1870,15 @@ class BonoColaboradorProyecto(models.Model):
         max_digits=10, 
         decimal_places=2, 
         default=0, 
-        verbose_name="Bono Individual ($)", 
-        help_text="Bono individual mensual para este colaborador en este proyecto"
+        verbose_name="Bono ($)", 
+        help_text="Bono mensual para este colaborador en este proyecto"
     )
     creado_en = models.DateTimeField(auto_now_add=True)
     modificado_en = models.DateTimeField(auto_now=True)
     
     class Meta:
-        verbose_name = 'Bono Individual de Colaborador'
-        verbose_name_plural = 'Bonos Individuales de Colaboradores'
+        verbose_name = 'Bono de Colaborador'
+        verbose_name_plural = 'Bonos de Colaboradores'
         unique_together = ['proyecto', 'colaborador']  # Un bono por colaborador por proyecto
     
     def __str__(self):
