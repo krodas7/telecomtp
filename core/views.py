@@ -1193,8 +1193,14 @@ def factura_edit(request, factura_id):
     factura = get_object_or_404(Factura, id=factura_id)
     
     if request.method == 'POST':
-        form = FacturaForm(request.POST, instance=factura)
+        form = FacturaForm(request.POST, request.FILES, instance=factura)
         if form.is_valid():
+            # Si se marcó el checkbox para eliminar el comprobante
+            if request.POST.get('comprobante-clear'):
+                if factura.comprobante:
+                    factura.comprobante.delete(save=False)
+                    factura.comprobante = None
+            
             factura = form.save()
             
             # Registrar actividad
