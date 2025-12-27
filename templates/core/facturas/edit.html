@@ -425,10 +425,12 @@ document.addEventListener('DOMContentLoaded', function() {
         if (file) {
             // Validar tamaño (50MB)
             const maxSize = 50 * 1024 * 1024;
+            const clearBtn = document.getElementById('clear-comprobante-btn');
             if (file.size > maxSize) {
                 alert('El archivo no puede ser mayor a 50MB');
                 input.value = '';
                 comprobantePreview.style.display = 'none';
+                if (clearBtn) clearBtn.style.display = 'none';
                 return;
             }
             
@@ -438,6 +440,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 alert('Solo se permiten archivos PDF, JPG o PNG');
                 input.value = '';
                 comprobantePreview.style.display = 'none';
+                if (clearBtn) clearBtn.style.display = 'none';
                 return;
             }
             
@@ -470,7 +473,6 @@ document.addEventListener('DOMContentLoaded', function() {
             
             comprobantePreview.style.display = 'block';
             // Mostrar botón de eliminar
-            const clearBtn = document.getElementById('clear-comprobante-btn');
             if (clearBtn) clearBtn.style.display = 'block';
         } else {
             comprobantePreview.style.display = 'none';
