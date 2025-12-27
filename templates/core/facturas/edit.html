@@ -237,6 +237,22 @@
                         </div>
                         
                         <div class="col-md-6 mb-3">
+                            <label for="{{ form.porcentaje_itbms.id_for_label }}" class="form-label">
+                                <i class="fas fa-percentage me-1"></i>Porcentaje de ITBMS
+                            </label>
+                            {{ form.porcentaje_itbms }}
+                            {% if form.porcentaje_itbms.errors %}
+                                <div class="text-danger small">
+                                    {% for error in form.porcentaje_itbms.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
                             <label for="{{ form.monto_iva.id_for_label }}" class="form-label">
                                 <i class="fas fa-calculator me-1"></i>Monto ITBMS ($)
                             </label>
@@ -244,6 +260,20 @@
                             {% if form.monto_iva.errors %}
                                 <div class="text-danger small">
                                     {% for error in form.monto_iva.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.monto_total.id_for_label }}" class="form-label">
+                                <i class="fas fa-dollar-sign me-1"></i>Monto Total ($)
+                            </label>
+                            {{ form.monto_total }}
+                            {% if form.monto_total.errors %}
+                                <div class="text-danger small">
+                                    {% for error in form.monto_total.errors %}
                                         {{ error }}
                                     {% endfor %}
                                 </div>
@@ -595,6 +625,12 @@ document.addEventListener('DOMContentLoaded', function() {
         montoSubtotalInput.addEventListener('change', calcularTodoEdit);
         montoSubtotalInput.addEventListener('keyup', calcularTodoEdit);
         console.log('✅ Event listeners agregados al campo subtotal');
+    }
+    
+    const porcentajeItbmsSelect = document.getElementById('id_porcentaje_itbms');
+    if (porcentajeItbmsSelect) {
+        porcentajeItbmsSelect.addEventListener('change', calcularTodoEdit);
+        console.log('✅ Event listeners agregados al campo porcentaje ITBMS');
     }
     
     // Ejecutar cálculo inicial

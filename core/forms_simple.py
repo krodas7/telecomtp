@@ -174,6 +174,9 @@ class FacturaForm(forms.ModelForm):
         
         # Hacer que porcentaje_itbms no sea obligatorio (siempre tiene valor por defecto)
         self.fields['porcentaje_itbms'].required = False
+        # Establecer valor inicial del porcentaje_itbms si es una edición
+        if self.instance.pk and self.instance.porcentaje_itbms:
+            self.fields['porcentaje_itbms'].initial = str(self.instance.porcentaje_itbms)
         
         # Hacer que monto_total no sea obligatorio (se calcula automáticamente)
         self.fields['monto_total'].required = False
