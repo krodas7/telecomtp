@@ -216,11 +216,11 @@ class FacturaForm(forms.ModelForm):
             'fecha_emision': forms.DateInput(attrs={
                 'class': 'form-control',
                 'type': 'date'
-            }),
+            }, format='%Y-%m-%d'),
             'fecha_vencimiento': forms.DateInput(attrs={
                 'class': 'form-control',
                 'type': 'date'
-            }),
+            }, format='%Y-%m-%d'),
             'monto_subtotal': forms.NumberInput(attrs={
                 'class': 'form-control',
                 'step': '0.01',
