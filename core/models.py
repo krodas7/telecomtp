@@ -433,6 +433,7 @@ class Factura(models.Model):
     
     # Campos adicionales
     observaciones = models.TextField(blank=True, help_text="Observaciones adicionales")
+    comprobante = models.FileField(upload_to='comprobantes_facturas/', blank=True, help_text="Comprobante de la factura")
     archivos_adjuntos = models.ManyToManyField(ArchivoAdjunto, blank=True, related_name='facturas')
     
     # Campos de auditoría

@@ -3,6 +3,101 @@
 
 {% block title %}Editar Factura - Telecom Technology{% endblock %}
 
+{% block extra_css %}
+<style>
+    /* Vista previa de comprobante */
+    .file-upload-wrapper {
+        position: relative;
+    }
+    
+    .comprobante-preview {
+        background: #f8f9fa;
+        border: 2px dashed #20bf6b;
+        border-radius: 10px;
+        padding: 1.5rem;
+    }
+    
+    .preview-container {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        position: relative;
+    }
+    
+    .preview-image-container {
+        width: 120px;
+        height: 120px;
+        border-radius: 10px;
+        overflow: hidden;
+        background: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 2px solid #e9ecef;
+        flex-shrink: 0;
+    }
+    
+    .preview-image {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    
+    .preview-icon {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        height: 100%;
+    }
+    
+    .preview-info {
+        flex: 1;
+        min-width: 0;
+    }
+    
+    .preview-file-name {
+        font-weight: 600;
+        color: #495057;
+        margin-bottom: 0.5rem;
+        word-break: break-word;
+    }
+    
+    .preview-file-size,
+    .preview-file-type {
+        font-size: 0.875rem;
+        color: #6c757d;
+        margin-bottom: 0.25rem;
+    }
+    
+    .btn-remove-preview {
+        background: #dc3545;
+        color: white;
+        border: none;
+        border-radius: 50%;
+        width: 35px;
+        height: 35px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        flex-shrink: 0;
+    }
+    
+    .btn-remove-preview:hover {
+        background: #c82333;
+        transform: scale(1.1);
+    }
+    
+    .help-text {
+        font-size: 0.875rem;
+        color: #6c757d;
+        margin-top: 0.5rem;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
     <h1 class="h2">
@@ -24,7 +119,7 @@
                 </h5>
             </div>
             <div class="card-body">
-                <form method="post">
+                <form method="post" enctype="multipart/form-data">
                     {% csrf_token %}
                     
                     <div class="row">
@@ -162,6 +257,68 @@
                     </div>
                     
                     <div class="mb-3">
+                        <label for="{{ form.comprobante.id_for_label }}" class="form-label">
+                            <i class="fas fa-file-upload me-1"></i>Comprobante
+                        </label>
+                        <div class="file-upload-wrapper">
+                            <div class="d-flex align-items-center gap-2">
+                                {{ form.comprobante }}
+                                <button type="button" class="btn btn-sm btn-outline-danger" onclick="clearComprobanteFile()" id="clear-comprobante-btn" style="display: none;" title="Eliminar archivo seleccionado">
+                                    <i class="fas fa-times"></i> Eliminar
+                                </button>
+                            </div>
+                            {% if form.comprobante.errors %}
+                                <div class="text-danger small mt-1">
+                                    {% for error in form.comprobante.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            {% if factura.comprobante %}
+                                <div class="current-file mt-2 p-2" style="background: #e7f3ff; border-radius: 5px; border: 1px solid #b3d9ff;">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <small class="text-muted">
+                                            <strong>Archivo actual:</strong> 
+                                            <a href="{{ factura.comprobante.url }}" target="_blank" class="text-primary">
+                                                <i class="fas fa-file"></i> {{ factura.comprobante.name|slice:":50" }}
+                                            </a>
+                                        </small>
+                                        <div class="form-check">
+                                            <input type="checkbox" class="form-check-input" id="comprobante-clear" name="comprobante-clear">
+                                            <label class="form-check-label text-danger" for="comprobante-clear" style="font-size: 0.875rem; cursor: pointer;">
+                                                <i class="fas fa-trash me-1"></i>Eliminar archivo
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endif %}
+                            <div class="help-text" style="font-size: 0.875rem; color: #6c757d; margin-top: 0.5rem;">
+                                Sube un comprobante de la factura (PDF, JPG, PNG) - Máximo 50MB
+                            </div>
+                            
+                            <!-- Vista previa del archivo -->
+                            <div id="comprobantePreview" class="comprobante-preview" style="display: none; margin-top: 1rem;">
+                                <div class="preview-container">
+                                    <div class="preview-image-container">
+                                        <img id="previewComprobanteImage" src="" alt="Vista previa" class="preview-image" style="display: none;">
+                                        <div id="previewComprobanteIcon" class="preview-icon">
+                                            <i class="fas fa-file-pdf" style="font-size: 3rem; color: #dc3545;"></i>
+                                        </div>
+                                    </div>
+                                    <div class="preview-info">
+                                        <h6 id="previewComprobanteFileName" class="preview-file-name"></h6>
+                                        <p id="previewComprobanteFileSize" class="preview-file-size"></p>
+                                        <p id="previewComprobanteFileType" class="preview-file-type"></p>
+                                    </div>
+                                    <button type="button" class="btn-remove-preview" onclick="removeComprobantePreview()" title="Quitar archivo">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
                         <label for="{{ form.estado.id_for_label }}" class="form-label">
                             {{ form.estado.label }}
                         </label>
@@ -243,6 +400,135 @@
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Vista previa de comprobante
+    const comprobanteField = document.getElementById('id_comprobante');
+    const comprobantePreview = document.getElementById('comprobantePreview');
+    const previewImage = document.getElementById('previewComprobanteImage');
+    const previewIcon = document.getElementById('previewComprobanteIcon');
+    const previewFileName = document.getElementById('previewComprobanteFileName');
+    const previewFileSize = document.getElementById('previewComprobanteFileSize');
+    const previewFileType = document.getElementById('previewComprobanteFileType');
+    
+    if (comprobanteField) {
+        comprobanteField.addEventListener('change', function() {
+            handleComprobantePreview(this);
+        });
+    }
+    
+    function handleComprobantePreview(input) {
+        const file = input.files[0];
+        if (file) {
+            // Validar tamaño (50MB)
+            const maxSize = 50 * 1024 * 1024;
+            if (file.size > maxSize) {
+                alert('El archivo no puede ser mayor a 50MB');
+                input.value = '';
+                comprobantePreview.style.display = 'none';
+                return;
+            }
+            
+            // Validar tipo de archivo
+            const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'application/pdf'];
+            if (!allowedTypes.includes(file.type)) {
+                alert('Solo se permiten archivos PDF, JPG o PNG');
+                input.value = '';
+                comprobantePreview.style.display = 'none';
+                return;
+            }
+            
+            // Mostrar información del archivo
+            previewFileName.textContent = file.name;
+            const fileSizeMB = (file.size / (1024 * 1024)).toFixed(2);
+            previewFileSize.textContent = `Tamaño: ${fileSizeMB} MB`;
+            previewFileType.textContent = `Tipo: ${file.type || 'Desconocido'}`;
+            
+            // Si es una imagen, mostrar preview
+            if (file.type.startsWith('image/')) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    previewImage.src = e.target.result;
+                    previewImage.style.display = 'block';
+                    previewIcon.style.display = 'none';
+                };
+                reader.readAsDataURL(file);
+            } else {
+                // Si es PDF, mostrar icono
+                previewImage.style.display = 'none';
+                previewIcon.style.display = 'flex';
+                // Cambiar icono según el tipo
+                const iconElement = previewIcon.querySelector('i');
+                if (file.type === 'application/pdf') {
+                    iconElement.className = 'fas fa-file-pdf';
+                    iconElement.style.color = '#dc3545';
+                }
+            }
+            
+            comprobantePreview.style.display = 'block';
+            // Mostrar botón de eliminar
+            const clearBtn = document.getElementById('clear-comprobante-btn');
+            if (clearBtn) clearBtn.style.display = 'block';
+        } else {
+            comprobantePreview.style.display = 'none';
+            // Ocultar botón de eliminar
+            const clearBtn = document.getElementById('clear-comprobante-btn');
+            if (clearBtn) clearBtn.style.display = 'none';
+        }
+    }
+    
+    // Función para remover preview
+    window.removeComprobantePreview = function() {
+        clearComprobanteFile();
+    }
+    
+    // Función para limpiar el campo de archivo
+    function clearComprobanteFile() {
+        const comprobanteField = document.getElementById('id_comprobante');
+        const clearBtn = document.getElementById('clear-comprobante-btn');
+        
+        if (comprobanteField) {
+            comprobanteField.value = '';
+            // También necesitamos resetear el input file (crear uno nuevo)
+            const newInput = comprobanteField.cloneNode(true);
+            comprobanteField.parentNode.replaceChild(newInput, comprobanteField);
+            // Reasignar el event listener
+            const newField = document.getElementById('id_comprobante');
+            if (newField) {
+                newField.addEventListener('change', function() {
+                    handleComprobantePreview(this);
+                });
+            }
+        }
+        
+        if (comprobantePreview) comprobantePreview.style.display = 'none';
+        if (previewImage) {
+            previewImage.src = '';
+            previewImage.style.display = 'none';
+        }
+        if (previewIcon) previewIcon.style.display = 'flex';
+        if (previewFileName) previewFileName.textContent = '';
+        if (previewFileSize) previewFileSize.textContent = '';
+        if (previewFileType) previewFileType.textContent = '';
+        if (clearBtn) clearBtn.style.display = 'none';
+    }
+    
+    // Si el checkbox de eliminar está marcado, mostrar advertencia
+    const clearCheckbox = document.getElementById('comprobante-clear');
+    if (clearCheckbox) {
+        clearCheckbox.addEventListener('change', function() {
+            if (this.checked) {
+                if (!confirm('¿Estás seguro de que quieres eliminar el archivo actual? Esta acción no se puede deshacer.')) {
+                    this.checked = false;
+                }
+            }
+        });
+    }
+});
+</script>
 {% endblock %}
 
 {% block extra_js %}

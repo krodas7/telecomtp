@@ -1131,7 +1131,7 @@ def factura_create(request):
     
     if request.method == 'POST':
         logger.debug("Creando nueva factura")
-        form = FacturaForm(request.POST)
+        form = FacturaForm(request.POST, request.FILES)
         
         if form.is_valid():
             logger.debug("Formulario válido, guardando factura")

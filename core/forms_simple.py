@@ -188,7 +188,7 @@ class FacturaForm(forms.ModelForm):
             'fecha_emision', 'fecha_vencimiento', 'monto_subtotal',
             'porcentaje_itbms', 'monto_iva', 'monto_total', 'descripcion_servicios',
             'porcentaje_avance', 'metodo_pago', 'referencia_pago',
-            'banco_origen', 'observaciones'
+            'banco_origen', 'observaciones', 'comprobante'
         ]
         widgets = {
             'numero_factura': forms.TextInput(attrs={
@@ -268,6 +268,10 @@ class FacturaForm(forms.ModelForm):
                 'class': 'form-control',
                 'rows': 2,
                 'placeholder': 'Observaciones adicionales'
+            }),
+            'comprobante': forms.FileInput(attrs={
+                'class': 'form-control',
+                'accept': '.pdf,.jpg,.jpeg,.png'
             })
         }
 
