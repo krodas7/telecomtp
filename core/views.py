@@ -6425,6 +6425,14 @@ def configurar_planilla_proyecto(request, proyecto_id):
     else:
         form = ConfiguracionPlanillaForm(instance=configuracion)
     
+    # Agregar bono individual del proyecto a cada colaborador para el template
+    for colaborador in colaboradores:
+        try:
+            bono_colab = BonoColaboradorProyecto.objects.get(proyecto=proyecto, colaborador=colaborador)
+            colaborador.bono_individual_proyecto = bono_colab.bono_individual
+        except BonoColaboradorProyecto.DoesNotExist:
+            colaborador.bono_individual_proyecto = Decimal('0')
+    
     context = {
         'proyecto': proyecto,
         'form': form,
