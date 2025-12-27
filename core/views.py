@@ -1135,12 +1135,14 @@ def factura_create(request):
         
         if form.is_valid():
             logger.debug("Formulario válido, guardando factura")
+            logger.debug(f"Archivos recibidos: {request.FILES}")
             
             factura = form.save(commit=False)
             factura.usuario_creacion = request.user
             factura.estado = 'emitida'
             
             factura.save()
+            logger.debug(f"Factura guardada. Comprobante: {factura.comprobante}")
             logger.info(f"Factura {factura.numero_factura} creada exitosamente por {request.user}")
             
             # Registrar actividad
