@@ -801,9 +801,9 @@ document.addEventListener('DOMContentLoaded', function() {
         });
         
         // Actualizar contador
-        const contadorElement = document.querySelector('.text-muted');
+        const contadorElement = document.querySelector('.text-muted.mb-0');
         if (contadorElement) {
-            contadorElement.textContent = `Mostrando ${facturasVisibles} de ${filasFacturas.length} facturas`;
+            contadorElement.textContent = `Mostrando ${facturasVisibles} factura${facturasVisibles !== 1 ? 's' : ''}`;
         }
     }
     
