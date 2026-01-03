@@ -650,13 +650,23 @@ document.addEventListener('DOMContentLoaded', function() {
     console.log('Página de crear factura cargada');
     
     // ===== FILTRO DE PROYECTOS POR CLIENTE =====
+    console.log('🔄 Inicializando filtro de proyectos por cliente');
+    
+    // Obtener elementos del formulario - usar los IDs correctos
     const clienteSelect = document.getElementById('id_cliente');
-    const proyectoSelect = document.getElementById('id_proyecto');
+    // El ID puede ser id_proyecto o id_proyecto_factura dependiendo del widget
+    const proyectoSelect = document.getElementById('id_proyecto') || document.getElementById('id_proyecto_factura');
+    
+    // Debug: Verificar que los elementos se encontraron
+    console.log('🔍 Cliente select encontrado:', clienteSelect);
+    console.log('🔍 Proyecto select encontrado:', proyectoSelect);
     
     // Datos de proyectos por cliente (se pasan desde la vista)
     const proyectosPorCliente = {{ proyectos_por_cliente|safe }};
     
+    // Debug: Verificar que los datos se cargaron correctamente
     console.log('🔍 Proyectos por cliente cargados:', proyectosPorCliente);
+    console.log('🔍 Claves disponibles:', Object.keys(proyectosPorCliente));
     
     // Función para filtrar proyectos por cliente
     function filtrarProyectosPorCliente() {
@@ -670,6 +680,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const clienteId = clienteSelect.value;
         
         console.log('🔍 Cliente seleccionado ID:', clienteId);
+        console.log('🔍 Tipo de clienteId:', typeof clienteId);
         
         // Guardar el valor actual del proyecto si existe
         const proyectoActual = proyectoSelect.value;
@@ -680,11 +691,13 @@ document.addEventListener('DOMContentLoaded', function() {
         if (clienteId) {
             // Convertir clienteId a número para comparar con las claves del objeto
             const clienteIdNum = parseInt(clienteId);
+            console.log('🔍 Cliente ID convertido a número:', clienteIdNum);
             
-            // Obtener proyectos del cliente seleccionado
+            // Obtener proyectos del cliente seleccionado - probar ambas formas
             const proyectosCliente = proyectosPorCliente[clienteIdNum] || proyectosPorCliente[clienteId] || [];
             
             console.log('🔍 Proyectos encontrados para cliente', clienteId, ':', proyectosCliente);
+            console.log('🔍 Cantidad de proyectos:', proyectosCliente.length);
             
             if (proyectosCliente.length > 0) {
                 proyectosCliente.forEach(proyecto => {
@@ -696,6 +709,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         option.selected = true;
                     }
                     proyectoSelect.appendChild(option);
+                    console.log('✅ Agregado proyecto:', proyecto.nombre, 'con ID:', proyecto.id);
                 });
                 
                 // Habilitar el select de proyectos
@@ -718,8 +732,17 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
+    // Verificar que ambos elementos existen antes de continuar
+    if (!clienteSelect) {
+        console.error('❌ No se encontró el select de cliente con ID "id_cliente"');
+    }
+    
+    if (!proyectoSelect) {
+        console.error('❌ No se encontró el select de proyecto con ID "id_proyecto"');
+    }
+    
     // Agregar event listener al cambio de cliente
-    if (clienteSelect) {
+    if (clienteSelect && proyectoSelect) {
         clienteSelect.addEventListener('change', filtrarProyectosPorCliente);
         console.log('✅ Event listener agregado al select de cliente');
         
@@ -727,13 +750,11 @@ document.addEventListener('DOMContentLoaded', function() {
         if (clienteSelect.value) {
             console.log('🔄 Cliente ya seleccionado, ejecutando filtro inicial');
             filtrarProyectosPorCliente();
+        } else {
+            // Inicialmente deshabilitar el select de proyectos si no hay cliente
+            proyectoSelect.disabled = true;
+            console.log('✅ Select de proyectos deshabilitado inicialmente (sin cliente)');
         }
-    }
-    
-    // Inicialmente deshabilitar el select de proyectos si no hay cliente
-    if (proyectoSelect && !clienteSelect?.value) {
-        proyectoSelect.disabled = true;
-        console.log('✅ Select de proyectos deshabilitado inicialmente');
     }
     
     // ===== CÁLCULO DE FACTURA =====
@@ -800,7 +821,8 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Función para actualizar subproyectos cuando cambia el proyecto
     function actualizarSubproyectosFactura() {
-        const proyectoSelect = document.getElementById('id_proyecto_factura');
+        // Usar el mismo select de proyecto que se usa en el filtro
+        const proyectoSelect = document.getElementById('id_proyecto') || document.getElementById('id_proyecto_factura');
         const subproyectoSelect = document.getElementById('id_subproyecto_factura');
         const subproyectoContainer = document.getElementById('subproyecto-container-factura');
         
@@ -866,12 +888,15 @@ document.addEventListener('DOMContentLoaded', function() {
         return cookieValue;
     }
     
-    // Agregar event listener al selector de proyecto
-    const proyectoSelectFactura = document.getElementById('id_proyecto_factura');
-    if (proyectoSelectFactura) {
-        proyectoSelectFactura.addEventListener('change', actualizarSubproyectosFactura);
+    // Agregar event listener al selector de proyecto para subproyectos
+    // Usar el mismo select que se usa en el filtro de proyectos por cliente
+    if (proyectoSelect) {
+        proyectoSelect.addEventListener('change', function() {
+            // Actualizar subproyectos cuando cambia el proyecto
+            actualizarSubproyectosFactura();
+        });
         // Cargar subproyectos si ya hay un proyecto seleccionado
-        if (proyectoSelectFactura.value) {
+        if (proyectoSelect.value) {
             actualizarSubproyectosFactura();
         }
     }

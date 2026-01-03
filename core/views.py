@@ -1171,20 +1171,24 @@ def factura_create(request):
     # Organizar proyectos por cliente para el filtro dinámico
     proyectos_por_cliente = {}
     for cliente in clientes:
+        proyectos_del_cliente = proyectos.filter(cliente=cliente, activo=True)
         proyectos_por_cliente[cliente.id] = [
             {'id': p.id, 'nombre': p.nombre} 
-            for p in proyectos.filter(cliente=cliente)
+            for p in proyectos_del_cliente
         ]
     
     # Obtener estadísticas para el sidebar
     total_facturas = Factura.objects.count()
     total_facturado = Factura.objects.aggregate(total=Sum('monto_total'))['total'] or 0.00
     
+    # Convertir proyectos_por_cliente a JSON para usar en JavaScript
+    proyectos_por_cliente_json = json.dumps(proyectos_por_cliente)
+    
     context = {
         'form': form,
         'clientes': clientes,
         'proyectos': proyectos,
-        'proyectos_por_cliente': proyectos_por_cliente,
+        'proyectos_por_cliente': proyectos_por_cliente_json,
         'total_facturas': total_facturas,
         'total_facturado': total_facturado
     }

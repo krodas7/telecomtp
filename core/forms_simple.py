@@ -181,6 +181,20 @@ class FacturaForm(forms.ModelForm):
         # Hacer que monto_total no sea obligatorio (se calcula automáticamente)
         self.fields['monto_total'].required = False
         
+        # Inicialmente, el queryset de proyectos está vacío - se llenará dinámicamente con JavaScript
+        # cuando se seleccione un cliente
+        if not self.instance.pk:
+            # Para nuevas facturas, empezar con queryset vacío
+            self.fields['proyecto'].queryset = Proyecto.objects.none()
+            self.fields['proyecto'].empty_label = "Primero seleccione un cliente"
+        else:
+            # Para ediciones, mostrar solo proyectos del cliente de la factura
+            if self.instance.cliente:
+                self.fields['proyecto'].queryset = Proyecto.objects.filter(
+                    cliente=self.instance.cliente,
+                    activo=True
+                ).order_by('nombre')
+        
         # Filtrar subproyectos según el proyecto seleccionado
         if self.instance.pk and self.instance.proyecto:
             self.fields['subproyecto'].queryset = Subproyecto.objects.filter(
@@ -206,7 +220,7 @@ class FacturaForm(forms.ModelForm):
             }),
             'proyecto': forms.Select(attrs={
                 'class': 'form-select',
-                'id': 'id_proyecto_factura',
+                'id': 'id_proyecto',
                 'onchange': 'actualizarSubproyectosFactura()'
             }),
             'subproyecto': forms.Select(attrs={
