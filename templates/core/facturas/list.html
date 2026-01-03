@@ -86,6 +86,36 @@
         border: 1px solid rgba(255,255,255,0.2);
     }
     
+    .facturas-search {
+        margin-bottom: 2rem;
+    }
+    
+    .facturas-search .card {
+        border-radius: 12px;
+    }
+    
+    .facturas-search .form-control-lg {
+        border-radius: 8px;
+        border: 2px solid #e9ecef;
+        transition: all 0.3s ease;
+    }
+    
+    .facturas-search .form-control-lg:focus {
+        border-color: #56ab2f;
+        box-shadow: 0 0 0 0.2rem rgba(86, 171, 47, 0.25);
+    }
+    
+    .facturas-search .form-select {
+        border-radius: 8px;
+        border: 2px solid #e9ecef;
+        transition: all 0.3s ease;
+    }
+    
+    .facturas-search .form-select:focus {
+        border-color: #56ab2f;
+        box-shadow: 0 0 0 0.2rem rgba(86, 171, 47, 0.25);
+    }
+    
     .facturas-table-container {
         background: white;
         border-radius: 20px;
@@ -597,6 +627,75 @@
                 <a href="{% url 'proyectos_list' %}" class="btn btn-secondary">
                     <i class="fas fa-project-diagram"></i> Proyectos
                 </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Buscador -->
+    <div class="facturas-search">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body">
+                <form method="get" action="{% url 'facturas_list' %}" class="row g-3 align-items-end">
+                    <div class="col-md-4">
+                        <label for="buscar" class="form-label fw-bold">
+                            <i class="fas fa-search me-1"></i>Buscar Facturas
+                        </label>
+                        <input type="text" 
+                               name="buscar" 
+                               id="buscar" 
+                               class="form-control form-control-lg" 
+                               placeholder="Número, cliente, proyecto, descripción..." 
+                               value="{{ request.GET.buscar }}">
+                    </div>
+                    
+                    <div class="col-md-2">
+                        <label for="estado" class="form-label fw-bold">Estado</label>
+                        <select name="estado" id="estado" class="form-select">
+                            <option value="">Todos</option>
+                            {% for estado_code, estado_label in estados %}
+                                <option value="{{ estado_code }}" 
+                                    {% if request.GET.estado == estado_code %}selected{% endif %}>
+                                    {{ estado_label }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="col-md-2">
+                        <label for="cliente" class="form-label fw-bold">Cliente</label>
+                        <select name="cliente" id="cliente" class="form-select">
+                            <option value="">Todos</option>
+                            {% for cliente in clientes %}
+                                <option value="{{ cliente.id }}" 
+                                    {% if request.GET.cliente == cliente.id|stringformat:"s" %}selected{% endif %}>
+                                    {{ cliente.razon_social|truncatewords:3 }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="col-md-2">
+                        <label for="proyecto" class="form-label fw-bold">Proyecto</label>
+                        <select name="proyecto" id="proyecto" class="form-select">
+                            <option value="">Todos</option>
+                            {% for proyecto in proyectos %}
+                                <option value="{{ proyecto.id }}" 
+                                    {% if request.GET.proyecto == proyecto.id|stringformat:"s" %}selected{% endif %}>
+                                    {{ proyecto.nombre|truncatewords:3 }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="col-md-2">
+                        <button type="submit" class="btn btn-primary w-100 mb-2">
+                            <i class="fas fa-search me-1"></i>Buscar
+                        </button>
+                        <a href="{% url 'facturas_list' %}" class="btn btn-outline-secondary w-100">
+                            <i class="fas fa-times me-1"></i>Limpiar
+                        </a>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
