@@ -998,11 +998,7 @@ def colaborador_delete(request, colaborador_id):
 # ===== CRUD FACTURAS =====
 @login_required
 def facturas_list(request):
-    """Lista de facturas con paginación"""
-    
-    # Obtener parámetros de paginación
-    per_page = int(request.GET.get('per_page', 25))
-    page = request.GET.get('page', 1)
+    """Lista de facturas - muestra todas las facturas sin paginación"""
     
     # Aplicar filtros si existen
     filters = {}
@@ -1037,14 +1033,8 @@ def facturas_list(request):
         if value:
             facturas = facturas.filter(**{field: value})
     
-    # Paginar resultados
-    from django.core.paginator import Paginator
-    paginator = Paginator(facturas, per_page)
-    
-    try:
-        page_obj = paginator.page(page)
-    except:
-        page_obj = paginator.page(1)
+    # Obtener todas las facturas sin paginación
+    facturas_lista = list(facturas)
     
     # Obtener opciones de filtro
     clientes = Cliente.objects.filter(activo=True).order_by('razon_social')
@@ -1071,7 +1061,7 @@ def facturas_list(request):
     facturas_cobradas = Factura.objects.filter(estado='pagada').count()
     
     context = {
-        'facturas': page_obj,
+        'facturas': facturas_lista,
         'clientes': clientes,
         'proyectos': proyectos,
         'estados': estados,
@@ -1088,8 +1078,6 @@ def facturas_list(request):
             'fecha_desde': request.GET.get('fecha_desde'),
             'fecha_hasta': request.GET.get('fecha_hasta'),
         },
-        'paginator': paginator,
-        'page_obj': page_obj,
     }
     
     return render(request, 'core/facturas/list.html', context)
@@ -1209,8 +1197,6 @@ def factura_edit(request, factura_id):
                 if factura.comprobante:
                     factura.comprobante.delete(save=False)
                     factura.comprobante = None
-                    # Guardar el cambio del comprobante a None antes de form.save()
-                    factura.save()
             
             factura = form.save()
             logger.debug(f"Factura guardada. Comprobante: {factura.comprobante}")
