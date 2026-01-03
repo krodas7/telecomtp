@@ -649,6 +649,94 @@
 document.addEventListener('DOMContentLoaded', function() {
     console.log('Página de crear factura cargada');
     
+    // ===== FILTRO DE PROYECTOS POR CLIENTE =====
+    const clienteSelect = document.getElementById('id_cliente');
+    const proyectoSelect = document.getElementById('id_proyecto');
+    
+    // Datos de proyectos por cliente (se pasan desde la vista)
+    const proyectosPorCliente = {{ proyectos_por_cliente|safe }};
+    
+    console.log('🔍 Proyectos por cliente cargados:', proyectosPorCliente);
+    
+    // Función para filtrar proyectos por cliente
+    function filtrarProyectosPorCliente() {
+        console.log('🔄 Función filtrarProyectosPorCliente ejecutada');
+        
+        if (!clienteSelect || !proyectoSelect) {
+            console.error('❌ No se encontraron los selects de cliente o proyecto');
+            return;
+        }
+        
+        const clienteId = clienteSelect.value;
+        
+        console.log('🔍 Cliente seleccionado ID:', clienteId);
+        
+        // Guardar el valor actual del proyecto si existe
+        const proyectoActual = proyectoSelect.value;
+        
+        // Limpiar opciones actuales
+        proyectoSelect.innerHTML = '<option value="">Seleccionar proyecto...</option>';
+        
+        if (clienteId) {
+            // Convertir clienteId a número para comparar con las claves del objeto
+            const clienteIdNum = parseInt(clienteId);
+            
+            // Obtener proyectos del cliente seleccionado
+            const proyectosCliente = proyectosPorCliente[clienteIdNum] || proyectosPorCliente[clienteId] || [];
+            
+            console.log('🔍 Proyectos encontrados para cliente', clienteId, ':', proyectosCliente);
+            
+            if (proyectosCliente.length > 0) {
+                proyectosCliente.forEach(proyecto => {
+                    const option = document.createElement('option');
+                    option.value = proyecto.id;
+                    option.textContent = proyecto.nombre;
+                    // Restaurar selección si el proyecto sigue siendo válido
+                    if (proyectoActual == proyecto.id) {
+                        option.selected = true;
+                    }
+                    proyectoSelect.appendChild(option);
+                });
+                
+                // Habilitar el select de proyectos
+                proyectoSelect.disabled = false;
+                console.log('✅ Select de proyectos actualizado con', proyectosCliente.length, 'proyectos');
+            } else {
+                console.log('⚠️ No se encontraron proyectos para este cliente');
+                // Agregar opción de "Sin proyectos"
+                const option = document.createElement('option');
+                option.value = '';
+                option.textContent = 'No hay proyectos disponibles para este cliente';
+                option.disabled = true;
+                proyectoSelect.appendChild(option);
+                proyectoSelect.disabled = true;
+            }
+        } else {
+            console.log('⚠️ No se seleccionó ningún cliente');
+            // Deshabilitar el select de proyectos si no hay cliente seleccionado
+            proyectoSelect.disabled = true;
+        }
+    }
+    
+    // Agregar event listener al cambio de cliente
+    if (clienteSelect) {
+        clienteSelect.addEventListener('change', filtrarProyectosPorCliente);
+        console.log('✅ Event listener agregado al select de cliente');
+        
+        // Ejecutar filtro inicial si ya hay un cliente seleccionado
+        if (clienteSelect.value) {
+            console.log('🔄 Cliente ya seleccionado, ejecutando filtro inicial');
+            filtrarProyectosPorCliente();
+        }
+    }
+    
+    // Inicialmente deshabilitar el select de proyectos si no hay cliente
+    if (proyectoSelect && !clienteSelect?.value) {
+        proyectoSelect.disabled = true;
+        console.log('✅ Select de proyectos deshabilitado inicialmente');
+    }
+    
+    // ===== CÁLCULO DE FACTURA =====
     // Definir variables globales
     const montoSubtotalInput = document.getElementById('id_monto_subtotal');
     const porcentajeItbmsSelect = document.getElementById('id_porcentaje_itbms');
