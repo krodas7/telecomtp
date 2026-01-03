@@ -1007,6 +1007,7 @@ def facturas_list(request):
     proyecto_id = request.GET.get('proyecto')
     fecha_desde = request.GET.get('fecha_desde')
     fecha_hasta = request.GET.get('fecha_hasta')
+    buscar = request.GET.get('buscar', '').strip()
     
     if estado:
         filters['estado'] = estado
@@ -1021,6 +1022,20 @@ def facturas_list(request):
     ).prefetch_related(
         'pagos'
     ).order_by('-fecha_emision')
+    
+    # Aplicar búsqueda por texto si existe
+    if buscar:
+        # Búsqueda inteligente: busca en múltiples campos relacionados
+        # La búsqueda es case-insensitive y busca en cualquier parte del texto
+        facturas = facturas.filter(
+            Q(numero_factura__icontains=buscar) |
+            Q(descripcion_servicios__icontains=buscar) |
+            Q(cliente__razon_social__icontains=buscar) |
+            Q(cliente__nombre_contacto__icontains=buscar) |
+            Q(proyecto__nombre__icontains=buscar) |
+            Q(proyecto__codigo__icontains=buscar) |
+            Q(observaciones__icontains=buscar)
+        ).distinct()
     
     # Aplicar filtros de fecha si existen
     if fecha_desde:
