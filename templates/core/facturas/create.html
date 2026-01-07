@@ -820,7 +820,8 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // Función para actualizar subproyectos cuando cambia el proyecto
-    function actualizarSubproyectosFactura() {
+    // Hacerla global para que pueda ser llamada desde el atributo onchange del widget
+    window.actualizarSubproyectosFactura = function() {
         // Usar el mismo select de proyecto que se usa en el filtro
         const proyectoSelect = document.getElementById('id_proyecto') || document.getElementById('id_proyecto_factura');
         const subproyectoSelect = document.getElementById('id_subproyecto_factura');
@@ -870,7 +871,7 @@ document.addEventListener('DOMContentLoaded', function() {
             console.error('Error al cargar subproyectos:', error);
             subproyectoContainer.style.display = 'none';
         });
-    }
+    };;
     
     // Función auxiliar para obtener cookie CSRF
     function getCookie(name) {
