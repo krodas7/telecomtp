@@ -181,24 +181,50 @@ class FacturaForm(forms.ModelForm):
         # Hacer que monto_total no sea obligatorio (se calcula automáticamente)
         self.fields['monto_total'].required = False
         
-        # Inicialmente, el queryset de proyectos está vacío - se llenará dinámicamente con JavaScript
-        # cuando se seleccione un cliente
-        if not self.instance.pk:
-            # Para nuevas facturas, empezar con queryset vacío
-            self.fields['proyecto'].queryset = Proyecto.objects.none()
-            self.fields['proyecto'].empty_label = "Primero seleccione un cliente"
+        # Determinar el cliente para filtrar proyectos
+        cliente_id = None
+        
+        # Si es una edición, usar el cliente de la instancia
+        if self.instance.pk and self.instance.cliente:
+            cliente_id = self.instance.cliente.id
+        # Si es un POST request (hay datos), obtener el cliente de los datos
+        elif self.data and 'cliente' in self.data and self.data['cliente']:
+            try:
+                cliente_id = int(self.data['cliente'])
+            except (ValueError, TypeError):
+                cliente_id = None
+        
+        # Configurar queryset de proyectos basado en el cliente
+        if cliente_id:
+            # Si hay un cliente, mostrar solo sus proyectos activos
+            self.fields['proyecto'].queryset = Proyecto.objects.filter(
+                cliente_id=cliente_id,
+                activo=True
+            ).order_by('nombre')
         else:
-            # Para ediciones, mostrar solo proyectos del cliente de la factura
-            if self.instance.cliente:
-                self.fields['proyecto'].queryset = Proyecto.objects.filter(
-                    cliente=self.instance.cliente,
-                    activo=True
-                ).order_by('nombre')
+            # Si no hay cliente, queryset vacío (se llenará dinámicamente con JavaScript)
+            if not self.instance.pk:
+                self.fields['proyecto'].queryset = Proyecto.objects.none()
+                self.fields['proyecto'].empty_label = "Primero seleccione un cliente"
+            else:
+                self.fields['proyecto'].queryset = Proyecto.objects.none()
         
         # Filtrar subproyectos según el proyecto seleccionado
+        proyecto_id = None
+        
+        # Si es una edición, usar el proyecto de la instancia
         if self.instance.pk and self.instance.proyecto:
+            proyecto_id = self.instance.proyecto.id
+        # Si es un POST request (hay datos), obtener el proyecto de los datos
+        elif self.data and 'proyecto' in self.data and self.data['proyecto']:
+            try:
+                proyecto_id = int(self.data['proyecto'])
+            except (ValueError, TypeError):
+                proyecto_id = None
+        
+        if proyecto_id:
             self.fields['subproyecto'].queryset = Subproyecto.objects.filter(
-                proyecto=self.instance.proyecto,
+                proyecto_id=proyecto_id,
                 activo=True
             ).order_by('nombre')
         else:
