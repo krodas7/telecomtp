@@ -172,13 +172,13 @@ SESSION_COOKIE_HTTPONLY = True  # Protección XSS
 SESSION_COOKIE_SAMESITE = 'Lax'  # Protección CSRF
 
 # Configuración de Email para Notificaciones
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp.gmail.com'  # Cambiar según tu proveedor de email
-EMAIL_PORT = 587
-EMAIL_USE_TLS = True
-EMAIL_HOST_USER = 'tu-email@gmail.com'  # Cambiar por tu email
-EMAIL_HOST_PASSWORD = 'tu-password-app'  # Cambiar por tu contraseña de aplicación
-DEFAULT_FROM_EMAIL = 'Sistema de Construcción <tu-email@gmail.com>'
+EMAIL_BACKEND = os.environ.get('EMAIL_BACKEND', 'django.core.mail.backends.smtp.EmailBackend')
+EMAIL_HOST = os.environ.get('EMAIL_HOST', 'smtp.gmail.com')
+EMAIL_PORT = int(os.environ.get('EMAIL_PORT', '587'))
+EMAIL_USE_TLS = os.environ.get('EMAIL_USE_TLS', 'True').lower() in ('true', '1', 'yes')
+EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', '')
+EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')
+DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', 'Sistema de Construcción <noreply@example.com>')
 
 # Configuración para desarrollo (usar console backend)
 if DEBUG:
