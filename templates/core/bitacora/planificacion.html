@@ -176,7 +176,7 @@
         cursor: pointer;
         transition: all 0.2s;
         min-height: 40px;
-        max-height: 40px;
+        height: auto;
     }
     
     .dropdown-trigger:hover {
@@ -194,6 +194,7 @@
         flex-wrap: wrap;
         gap: 0.5rem;
         align-items: center;
+        min-height: 24px;
     }
     
     .dropdown-placeholder {
@@ -212,6 +213,8 @@
         font-size: 0.75rem;
         font-weight: 500;
         line-height: 1.2;
+        max-width: 100%;
+        word-break: break-word;
     }
     
     .selected-tag i {
@@ -393,6 +396,73 @@
         border-radius: 8px;
         margin-bottom: 1.5rem;
     }
+
+    .tareas-container {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+        margin-top: 1rem;
+    }
+
+    .tarea-card {
+        border: 1px solid #e5e7eb;
+        border-radius: 12px;
+        padding: 1rem;
+        background: #fff;
+    }
+
+    .tarea-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 0.75rem;
+    }
+
+    .tarea-title {
+        font-weight: 700;
+        color: #111827;
+    }
+
+    .subtareas-container {
+        margin-top: 0.75rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        padding-left: 0.75rem;
+        border-left: 3px solid #e5e7eb;
+    }
+
+    .subtarea-row {
+        display: flex;
+        gap: 0.5rem;
+        align-items: flex-start;
+    }
+
+    .link-button {
+        background: none;
+        border: none;
+        color: #6366f1;
+        font-weight: 600;
+        cursor: pointer;
+        padding: 0;
+    }
+
+    .link-button:hover {
+        color: #4f46e5;
+        text-decoration: underline;
+    }
+
+    .btn-outline {
+        background: transparent;
+        border: 1px solid #6366f1;
+        color: #6366f1;
+    }
+
+    .btn-outline:hover {
+        background: #eef2ff;
+        color: #4f46e5;
+    }
 </style>
 {% endblock %}
 
@@ -429,6 +499,7 @@
 <div class="container">
     <form method="POST" id="planificacionForm">
         {% csrf_token %}
+        <input type="hidden" name="guardar" value="1">
         
         <div class="form-container">
             <div class="form-content-wrapper">
@@ -462,6 +533,7 @@
                                 {% endfor %}
                             </select>
                         </div>
+
                     </div>
                     
                     {% if proyecto_seleccionado %}
@@ -479,8 +551,11 @@
                         <div class="form-group">
                             <label class="form-label">
                                 <i class="fas fa-user-check"></i>
-                                Seleccionar Colaboradores ({{ colaboradores.count }} disponibles)
+                                Seleccionar Team Leaders ({{ colaboradores|length }} disponibles)
                             </label>
+                            <div class="dropdown-item-info" style="margin-bottom: 0.5rem;">
+                                Se muestran usuarios Firebase con rol TEAM_LEADER.
+                            </div>
                             <div class="custom-dropdown" id="dropdown_colaboradores">
                                 <div class="dropdown-trigger" onclick="toggleDropdown('colaboradores', event)">
                                     <div class="dropdown-selected" id="selected_colaboradores">
@@ -493,17 +568,15 @@
                                         <div class="dropdown-item">
                                             <input type="checkbox" 
                                                    name="colaboradores" 
-                                                   id="colaborador_{{ colaborador.id }}" 
-                                                   value="{{ colaborador.id }}"
+                                                   id="colaborador_{{ colaborador.email|slugify }}" 
+                                                   value="{{ colaborador.email }}"
                                                    onchange="updateSelected('colaboradores', this)">
-                                            <label for="colaborador_{{ colaborador.id }}">
+                                            <label for="colaborador_{{ colaborador.email|slugify }}">
                                                 {{ colaborador.nombre }}
                                             </label>
-                                            {% if colaborador.telefono %}
-                                                <span class="dropdown-item-info">
-                                                    <i class="fas fa-phone"></i> {{ colaborador.telefono }}
-                                                </span>
-                                            {% endif %}
+                                            <span class="dropdown-item-info">
+                                                <i class="fas fa-envelope"></i> {{ colaborador.email }}
+                                            </span>
                                         </div>
                                     {% endfor %}
                                 </div>
@@ -513,8 +586,20 @@
                     {% else %}
                         <div class="empty-checklist">
                             <i class="fas fa-user-slash"></i>
-                            <p>No hay colaboradores asignados a este proyecto.</p>
+                            <p>No hay Team Leaders registrados en Firebase.</p>
                             <p style="font-size: 0.875rem; margin-top: 0.5rem;">Proyecto seleccionado: <strong>{{ proyecto_seleccionado.nombre }}</strong></p>
+                        </div>
+                    {% endif %}
+                    {% if firebase_auth_error %}
+                        <div class="alert-info" style="margin-top: 0.75rem;">
+                            <i class="fas fa-info-circle"></i>
+                            {{ firebase_auth_error }}
+                        </div>
+                    {% endif %}
+                    {% if firebase_team_error %}
+                        <div class="alert-info" style="margin-top: 0.75rem;">
+                            <i class="fas fa-info-circle"></i>
+                            {{ firebase_team_error }}
                         </div>
                     {% endif %}
                 </div>
@@ -526,45 +611,52 @@
                         Trabajadores Diarios
                     </h3>
                     
-                    {% if trabajadores_diarios %}
-                        <div class="form-group">
-                            <label class="form-label">
-                                <i class="fas fa-user-check"></i>
-                                Seleccionar Trabajadores Diarios ({{ trabajadores_diarios.count }} disponibles)
-                            </label>
-                            <div class="custom-dropdown" id="dropdown_trabajadores_diarios">
-                                <div class="dropdown-trigger" onclick="toggleDropdown('trabajadores_diarios', event)">
-                                    <div class="dropdown-selected" id="selected_trabajadores_diarios">
-                                        <span class="dropdown-placeholder">Haz clic para seleccionar trabajadores diarios</span>
-                                    </div>
-                                    <i class="fas fa-chevron-down dropdown-arrow"></i>
-                                </div>
-                                <div class="dropdown-menu" id="menu_trabajadores_diarios">
-                                    {% for trabajador in trabajadores_diarios %}
-                                        <div class="dropdown-item">
-                                            <input type="checkbox" 
-                                                   name="trabajadores_diarios" 
-                                                   id="trabajador_{{ trabajador.id }}" 
-                                                   value="{{ trabajador.id }}"
-                                                   onchange="updateSelected('trabajadores_diarios', this)">
-                                            <label for="trabajador_{{ trabajador.id }}">
-                                                {{ trabajador.nombre }}
-                                            </label>
-                                            <span class="dropdown-item-info">
-                                                <i class="fas fa-dollar-sign"></i> ${{ trabajador.pago_diario|floatformat:2 }}
-                                            </span>
-                                        </div>
-                                    {% endfor %}
-                                </div>
-                            </div>
-                            <input type="hidden" id="selected_trabajadores_diarios_count" value="0">
+                    {% if solo_firebase_auth %}
+                        <div class="alert-info">
+                            <i class="fas fa-info-circle"></i>
+                            Solo se pueden asignar usuarios con acceso a la app (Firebase Auth). Los trabajadores diarios no aplican.
                         </div>
                     {% else %}
-                        <div class="empty-checklist">
-                            <i class="fas fa-user-slash"></i>
-                            <p>No hay trabajadores diarios registrados en este proyecto.</p>
-                            <p style="font-size: 0.875rem; margin-top: 0.5rem;">Proyecto seleccionado: <strong>{{ proyecto_seleccionado.nombre }}</strong></p>
-                        </div>
+                        {% if trabajadores_diarios %}
+                            <div class="form-group">
+                                <label class="form-label">
+                                    <i class="fas fa-user-check"></i>
+                                    Seleccionar Trabajadores Diarios ({{ trabajadores_diarios.count }} disponibles)
+                                </label>
+                                <div class="custom-dropdown" id="dropdown_trabajadores_diarios">
+                                    <div class="dropdown-trigger" onclick="toggleDropdown('trabajadores_diarios', event)">
+                                        <div class="dropdown-selected" id="selected_trabajadores_diarios">
+                                            <span class="dropdown-placeholder">Haz clic para seleccionar trabajadores diarios</span>
+                                        </div>
+                                        <i class="fas fa-chevron-down dropdown-arrow"></i>
+                                    </div>
+                                    <div class="dropdown-menu" id="menu_trabajadores_diarios">
+                                        {% for trabajador in trabajadores_diarios %}
+                                            <div class="dropdown-item">
+                                                <input type="checkbox" 
+                                                       name="trabajadores_diarios" 
+                                                       id="trabajador_{{ trabajador.id }}" 
+                                                       value="{{ trabajador.id }}"
+                                                       onchange="updateSelected('trabajadores_diarios', this)">
+                                                <label for="trabajador_{{ trabajador.id }}">
+                                                    {{ trabajador.nombre }}
+                                                </label>
+                                                <span class="dropdown-item-info">
+                                                    <i class="fas fa-dollar-sign"></i> ${{ trabajador.pago_diario|floatformat:2 }}
+                                                </span>
+                                            </div>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                                <input type="hidden" id="selected_trabajadores_diarios_count" value="0">
+                            </div>
+                        {% else %}
+                            <div class="empty-checklist">
+                                <i class="fas fa-user-slash"></i>
+                                <p>No hay trabajadores diarios registrados en este proyecto.</p>
+                                <p style="font-size: 0.875rem; margin-top: 0.5rem;">Proyecto seleccionado: <strong>{{ proyecto_seleccionado.nombre }}</strong></p>
+                            </div>
+                        {% endif %}
                     {% endif %}
                 </div>
                     {% endif %}
@@ -580,13 +672,26 @@
                             <div class="form-group">
                                 <label class="form-label" for="descripcion">
                                     <i class="fas fa-align-left"></i>
-                                    Descripción
+                                    Descripción general
                                 </label>
                                 <textarea name="descripcion" 
                                           id="descripcion" 
                                           class="form-control" 
                                           rows="5" 
                                           placeholder="Describe la planificación, actividades a realizar, objetivos, etc...">{% if form_data.descripcion %}{{ form_data.descripcion }}{% endif %}</textarea>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">
+                                    <i class="fas fa-tasks"></i>
+                                    Actividades y subactividades
+                                </label>
+                                <div class="tareas-container" id="tareasContainer"></div>
+                                <button type="button" class="btn btn-outline" onclick="addTarea()">
+                                    <i class="fas fa-plus"></i>
+                                    <span>Agregar actividad</span>
+                                </button>
+                                <input type="hidden" name="tareas_payload" id="tareasPayload">
                             </div>
                             
                             <div class="form-group">
@@ -666,6 +771,86 @@
             window.location.href = '{% url "bitacora_planificacion" %}?proyecto_id=' + proyectoId;
         }
     }
+
+    let tareaCounter = 0;
+
+    function addTarea() {
+        tareaCounter += 1;
+        const container = document.getElementById('tareasContainer');
+        const tareaId = `tarea_${tareaCounter}`;
+        const tareaCard = document.createElement('div');
+        tareaCard.className = 'tarea-card';
+        tareaCard.setAttribute('data-tarea-id', tareaId);
+        tareaCard.innerHTML = `
+            <div class="tarea-header">
+                <div class="tarea-title">Actividad ${tareaCounter}</div>
+                <button type="button" class="link-button" onclick="removeTarea('${tareaId}')">Eliminar</button>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Título</label>
+                <input type="text" class="form-control tarea-titulo" placeholder="Ej: Instalar antena microonda">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Descripción</label>
+                <textarea class="form-control tarea-descripcion" rows="2" placeholder="Detalle opcional"></textarea>
+            </div>
+            <div class="subtareas-container" id="${tareaId}_subtareas"></div>
+            <button type="button" class="link-button" onclick="addSubtarea('${tareaId}')">
+                + Agregar subactividad
+            </button>
+        `;
+        container.appendChild(tareaCard);
+    }
+
+    function removeTarea(tareaId) {
+        const tareaCard = document.querySelector(`[data-tarea-id="${tareaId}"]`);
+        if (tareaCard) {
+            tareaCard.remove();
+        }
+    }
+
+    function addSubtarea(tareaId) {
+        const subtareasContainer = document.getElementById(`${tareaId}_subtareas`);
+        const row = document.createElement('div');
+        row.className = 'subtarea-row';
+        row.innerHTML = `
+            <input type="text" class="form-control subtarea-titulo" placeholder="Ej: Armado de tambor">
+            <input type="text" class="form-control subtarea-descripcion" placeholder="Detalle opcional">
+            <button type="button" class="link-button" onclick="this.parentElement.remove()">Quitar</button>
+        `;
+        subtareasContainer.appendChild(row);
+    }
+
+    function buildTareasPayload() {
+        const tareas = [];
+        const tareaCards = document.querySelectorAll('.tarea-card');
+        tareaCards.forEach((card, index) => {
+            const titulo = (card.querySelector('.tarea-titulo')?.value || '').trim();
+            const descripcion = (card.querySelector('.tarea-descripcion')?.value || '').trim();
+            const subtareas = [];
+            const subtareaRows = card.querySelectorAll('.subtarea-row');
+            subtareaRows.forEach((row, subIndex) => {
+                const subtitulo = (row.querySelector('.subtarea-titulo')?.value || '').trim();
+                const subdesc = (row.querySelector('.subtarea-descripcion')?.value || '').trim();
+                if (subtitulo) {
+                    subtareas.push({
+                        titulo: subtitulo,
+                        descripcion: subdesc,
+                        orden: subIndex,
+                    });
+                }
+            });
+            if (titulo) {
+                tareas.push({
+                    titulo: titulo,
+                    descripcion: descripcion,
+                    orden: index,
+                    subtareas: subtareas,
+                });
+            }
+        });
+        return tareas;
+    }
     
     function toggleDropdown(type, event) {
         if (event) {
@@ -733,8 +918,18 @@
         }
     }
     
+    function slugifyValue(value) {
+        return (value || "")
+            .toString()
+            .toLowerCase()
+            .trim()
+            .replace(/[^a-z0-9]+/g, "-")
+            .replace(/^-+|-+$/g, "");
+    }
+
     function removeSelection(type, value) {
-        const checkbox = document.getElementById(type === 'colaboradores' ? 'colaborador_' + value : 'trabajador_' + value);
+        const slug = slugifyValue(value);
+        const checkbox = document.getElementById(type === 'colaboradores' ? 'colaborador_' + slug : 'trabajador_' + value);
         if (checkbox) {
             checkbox.checked = false;
             updateSelected(type, checkbox);
@@ -791,6 +986,9 @@
                 console.error('❌ Error: Fecha de inicio no seleccionada');
                 return false;
             }
+
+            const tareasPayload = buildTareasPayload();
+            document.getElementById('tareasPayload').value = JSON.stringify(tareasPayload);
             
             console.log('✅ Validación pasada, enviando formulario...');
             console.log('📋 Datos del formulario:', {
@@ -857,7 +1055,7 @@
         // Restaurar checkboxes seleccionados si hay datos del formulario (errores de validación)
         {% if form_data.colaboradores_ids %}
             {% for colaborador_id in form_data.colaboradores_ids %}
-                const checkboxColab = document.getElementById('colaborador_{{ colaborador_id }}');
+                const checkboxColab = document.getElementById('colaborador_{{ colaborador_id|slugify }}');
                 if (checkboxColab) {
                     checkboxColab.checked = true;
                     updateSelected('colaboradores', checkboxColab);

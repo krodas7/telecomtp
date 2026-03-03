@@ -348,6 +348,14 @@ class GastoForm(forms.ModelForm):
             ).order_by('nombre')
         else:
             self.fields['subproyecto'].queryset = Subproyecto.objects.none()
+        
+        # Cargar cuentas bancarias activas
+        self.fields['cuenta_bancaria'].queryset = BancoCuenta.objects.filter(activo=True).order_by('nombre')
+        self.fields['cuenta_bancaria'].empty_label = "Seleccionar cuenta bancaria (opcional)"
+
+        # Etiqueta amigable para gastos administrativos
+        if 'es_administrativo' in self.fields:
+            self.fields['es_administrativo'].label = "Gasto administrativo (sin proyecto)"
     
     def clean_monto(self):
         monto = self.cleaned_data.get('monto')
@@ -372,15 +380,33 @@ class GastoForm(forms.ModelForm):
             except ValueError:
                 raise forms.ValidationError('Ingrese un monto válido.')
         return monto
+
+    def clean(self):
+        cleaned_data = super().clean()
+        es_administrativo = cleaned_data.get('es_administrativo')
+        proyecto = cleaned_data.get('proyecto')
+        subproyecto = cleaned_data.get('subproyecto')
+
+        if es_administrativo and proyecto:
+            self.add_error('proyecto', 'Un gasto administrativo no debe asociarse a un proyecto.')
+        if not es_administrativo and not proyecto:
+            self.add_error('proyecto', 'Debes seleccionar un proyecto para gastos no administrativos.')
+        if es_administrativo and subproyecto:
+            self.add_error('subproyecto', 'Un gasto administrativo no debe asociarse a un subproyecto.')
+
+        return cleaned_data
     
     class Meta:
         model = Gasto
         fields = [
-            'proyecto', 'subproyecto', 'categoria', 'descripcion', 'monto', 
-            'fecha_gasto', 'aprobado', 
+            'es_administrativo', 'proyecto', 'subproyecto', 'categoria', 'descripcion', 'monto', 
+            'fecha_gasto', 'aprobado', 'cuenta_bancaria',
             'observaciones', 'comprobante'
         ]
         widgets = {
+            'es_administrativo': forms.CheckboxInput(attrs={
+                'class': 'form-check-input'
+            }),
             'proyecto': forms.Select(attrs={
                 'class': 'form-select'
             }),
@@ -409,6 +435,9 @@ class GastoForm(forms.ModelForm):
             ),
             'aprobado': forms.CheckboxInput(attrs={
                 'class': 'form-check-input'
+            }),
+            'cuenta_bancaria': forms.Select(attrs={
+                'class': 'form-select'
             }),
             'observaciones': forms.Textarea(attrs={
                 'class': 'form-control form-textarea',
@@ -725,11 +754,16 @@ class AnticipoForm(forms.ModelForm):
 class PagoForm(forms.ModelForm):
     """Formulario para pagos"""
     
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['cuenta_bancaria'].queryset = BancoCuenta.objects.filter(activo=True).order_by('nombre')
+        self.fields['cuenta_bancaria'].empty_label = "Seleccionar cuenta bancaria (opcional)"
+    
     class Meta:
         model = Pago
         fields = [
             'factura', 'monto', 'fecha_pago', 'metodo_pago', 
-            'estado', 'comprobante_pago'
+            'estado', 'cuenta_bancaria', 'comprobante_pago'
         ]
         widgets = {
             'factura': forms.Select(attrs={
@@ -750,10 +784,99 @@ class PagoForm(forms.ModelForm):
             'estado': forms.Select(attrs={
                 'class': 'form-select'
             }),
+            'cuenta_bancaria': forms.Select(attrs={
+                'class': 'form-select'
+            }),
             'comprobante_pago': forms.FileInput(attrs={
                 'class': 'form-control',
                 'accept': '.pdf,.jpg,.jpeg,.png'
             })
+        }
+
+
+class BancoCuentaForm(forms.ModelForm):
+    """Formulario para cuentas bancarias"""
+    
+    class Meta:
+        model = BancoCuenta
+        fields = [
+            'nombre', 'banco', 'numero_cuenta', 'tipo_cuenta', 'moneda',
+            'saldo_inicial', 'activo'
+        ]
+        widgets = {
+            'nombre': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Nombre de la cuenta'
+            }),
+            'banco': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Banco'
+            }),
+            'numero_cuenta': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Número de cuenta'
+            }),
+            'tipo_cuenta': forms.Select(attrs={
+                'class': 'form-select'
+            }),
+            'moneda': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'USD'
+            }),
+            'saldo_inicial': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'step': '0.01',
+                'min': '0'
+            }),
+            'activo': forms.CheckboxInput(attrs={
+                'class': 'form-check-input'
+            }),
+        }
+
+
+class MovimientoBancoForm(forms.ModelForm):
+    """Formulario para movimientos bancarios"""
+    
+    class Meta:
+        model = MovimientoBanco
+        fields = [
+            'cuenta', 'tipo', 'monto', 'fecha_movimiento',
+            'descripcion', 'referencia', 'factura', 'gasto', 'pago'
+        ]
+        widgets = {
+            'cuenta': forms.Select(attrs={
+                'class': 'form-select'
+            }),
+            'tipo': forms.Select(attrs={
+                'class': 'form-select'
+            }),
+            'monto': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'step': '0.01',
+                'min': '0'
+            }),
+            'fecha_movimiento': forms.DateInput(attrs={
+                'class': 'form-control',
+                'type': 'date'
+            }),
+            'descripcion': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 2,
+                'placeholder': 'Descripción del movimiento'
+            }),
+            'referencia': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Referencia (opcional)'
+            }),
+            'factura': forms.Select(attrs={
+                'class': 'form-select'
+            }),
+            'gasto': forms.Select(attrs={
+                'class': 'form-select'
+            }),
+            'pago': forms.Select(attrs={
+                'class': 'form-select'
+            }),
         }
 
 
@@ -1375,7 +1498,7 @@ class CajaMenudaForm(forms.ModelForm):
     
     class Meta:
         model = CajaMenuda
-        fields = ['folio', 'fecha', 'descripcion', 'monto', 'proyecto']
+        fields = ['folio', 'fecha', 'tipo_movimiento', 'descripcion', 'monto', 'proyecto']
         widgets = {
             'folio': forms.TextInput(attrs={
                 'class': 'form-control',
@@ -1384,6 +1507,9 @@ class CajaMenudaForm(forms.ModelForm):
             'fecha': forms.DateInput(attrs={
                 'class': 'form-control',
                 'type': 'date'
+            }),
+            'tipo_movimiento': forms.Select(attrs={
+                'class': 'form-select'
             }),
             'descripcion': forms.Textarea(attrs={
                 'class': 'form-control',

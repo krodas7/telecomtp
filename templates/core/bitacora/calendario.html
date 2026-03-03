@@ -113,6 +113,51 @@
         box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         border: 1px solid #e5e7eb;
     }
+
+    .calendar-legend {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem;
+        margin-bottom: 1rem;
+        color: #6b7280;
+        font-size: 0.875rem;
+    }
+
+    .legend-item {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .legend-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+    }
+
+    .event-content {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+    }
+
+    .event-title {
+        font-weight: 600;
+        font-size: 0.85rem;
+    }
+
+    .event-progress {
+        height: 6px;
+        background: rgba(255, 255, 255, 0.25);
+        border-radius: 999px;
+        overflow: hidden;
+    }
+
+    .event-progress > span {
+        display: block;
+        height: 100%;
+        background: rgba(255, 255, 255, 0.9);
+    }
     
     #calendar {
         max-width: 100%;
@@ -162,6 +207,12 @@
     </div>
     
     <div class="calendar-container">
+        <div class="calendar-legend">
+            <div class="legend-item"><span class="legend-dot" style="background:#667eea;"></span>Programada</div>
+            <div class="legend-item"><span class="legend-dot" style="background:#ffc107;"></span>En progreso</div>
+            <div class="legend-item"><span class="legend-dot" style="background:#28a745;"></span>Completada</div>
+            <div class="legend-item"><span class="legend-dot" style="background:#dc3545;"></span>Cancelada</div>
+        </div>
         <div id="calendar"></div>
     </div>
 </div>
@@ -192,6 +243,22 @@
             events: eventos,
             eventClick: function(info) {
                 window.location.href = `/bitacora/planificacion/${info.event.id}/`;
+            },
+            eventContent: function(arg) {
+                const progress = arg.event.extendedProps.progreso || 0;
+                const container = document.createElement('div');
+                container.className = 'event-content';
+                const title = document.createElement('div');
+                title.className = 'event-title';
+                title.textContent = arg.event.title;
+                const bar = document.createElement('div');
+                bar.className = 'event-progress';
+                const fill = document.createElement('span');
+                fill.style.width = `${progress}%`;
+                bar.appendChild(fill);
+                container.appendChild(title);
+                container.appendChild(bar);
+                return { domNodes: [container] };
             },
             height: 'auto',
             dayMaxEvents: 3,

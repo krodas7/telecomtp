@@ -49,3 +49,6 @@ test_*.py
 # Deployment files
 deploy_*.sh
 *.sh
+
+# Large local exports
+todos los reportes.rar

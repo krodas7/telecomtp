@@ -1,0 +1,14 @@
+{
+    "type": "service_account",
+    "project_id": "reportestelecom",
+    "private_key_id": "e9940dce7f5db767813542eb02b0f6da03903819",
+    "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQDO3em6KH2SaHVs\nbmRU/8OMN3u4nc+/1dblQfz8MsI5IBExh2xgTyYrInMrZxA0z+RkMy0PvCHwoSrg\nAb8RAOidMtnCedW0c0cESSTikeh486PhnMup8mM3NKbY0tyDKtqVfJps6GpdUOg9\ntlSer0/mnNEy7L0lZsnBrkse0nnjdAmMBxBAQxnx0D/aQBzeSGku2HQew8duIMyT\nGzChn/ntn5MomK05ToBaHCrkfBhbece9S2bSt9CQV+SA6EiWTm51MBx+2rIEGkl7\n2BBkM1yPpSY2hOpy/7qqzHFBlVXLYErDw9KK5zJ2vRWgPyrElb+HSMQfE9KNtR8Q\nnMPYf6atAgMBAAECggEAFVBvExO18H5bzurG4q0hmFJlKH32GFVvmVqFtvSB54Hi\n06AY7glprNsVU70AQfjDlwFg3LStKI5qjP8RES7vSLcjEbMc7kVMZWgl6URQWBn+\nYjIWF/IV/+uoX0HGn6ssL2fRv3Po9alu7GDbcigtCt1Qfrc+u9pN4mtTaR8VmPY9\n0zuHCCaavbtVe5RTS7+CH84xS9cWfJuHHGTTJ/sMuN30yTt4YK6GcRzSiYMgi7kZ\nBZ2lfUeUI78e5/x86pS1w3nb2ERvs34bF7U9L1chZIU8EoWLNJV4U68YMJiABm0+\nIvgAAuGPrWqSJzHbqyP5D6rtJlqt3YBqEOWA0MvLLwKBgQDnxWirev+4UM2b6Cu7\nVEUr8/I+37Ac3QWwRRJs20d9+fAd/jJM5m+gxIofr7S8zH+j3PewO73N20c9nS8Q\nvueK1BFnNwQwUJ+gJbDT/ujfvbw//bQGLl0OEsKwTbiOryQPIoRJ4j31WBcAJGl4\nziTHlTE1EYAMj9ukOhZ3Oogu/wKBgQDkfgXm6lEg5o6LzI3a/K9AD8MxSIpMk2sA\nZ5bbSZuUneJPh+s3IG65r6TSzK94kRhAeQK/mLynO4dUS2Dsz6nAr7/STCFYjOk/\nSPw6nF1vR5o1rO+I6iIUmWzD8L8Wk42De9ykNNGOSjgUeA/lJM1aJq0gy21vqM11\njnOU7DGWUwKBgQCmAaqH8LCK9y1d9zyjj6d/5NnlGNkOw2yYpdCdsa4SWFwZT4H9\nvKvFziBUs8hT1nGyD8pFK3U2plHvms8kQmib8muIr0pLxOOglH6ESbfI0iCtAO3Z\n44l5VAyotPJ1GJNOV93DAc55FaBb1LjK83Q6k+zL4v4BgWTDy2td+MmkRwKBgHS5\nKDyxQKaFARbLdUAES2Z3ZuhbPUMnH8dCI997971w9jZYocE0kTvMTW/eXllCDdiJ\nuOy1ktH/Z/+YzjfLUdV8Moq0l2hL+693klpCnLyHIHEBGhCgQq6xPc3Ow18+G1Gq\nyakczlxY79MNDlmpdjnyfgi9wvcCjYrbLZJLIn2/AoGAPXZ7/bA0T+CCJKRa3QYV\nuk/FVySbQf7GlNzOdD8FYu2DE8Nez+YNYeVmSYQM+/A3uzRvfvL+Y80WbHJ5iBaO\nIjNFnFjQRIbXlc+lhgBYpOpigS31s25x88f+8iFhgkYrK3DHc4HIzY8/4CFw6HZA\nZU6lMkY+sT/iHLj9STpTS4I=\n-----END PRIVATE KEY-----\n",
+    "client_email": "phoenix@reportestelecom.iam.gserviceaccount.com",
+    "client_id": "104332434754469964115",
+    "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+    "token_uri": "https://oauth2.googleapis.com/token",
+    "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+    "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/phoenix%40reportestelecom.iam.gserviceaccount.com",
+    "universe_domain": "googleapis.com"
+  }
+  

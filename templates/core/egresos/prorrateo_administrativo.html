@@ -1,0 +1,128 @@
+{% extends "base.html" %}
+{% load custom_filters %}
+
+{% block title %}Prorrateo Administrativo - Telecom Technology{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="card shadow-sm">
+        <div class="card-header d-flex align-items-center gap-2">
+            <i class="fas fa-balance-scale text-secondary"></i>
+            <h5 class="mb-0">Prorrateo Administrativo</h5>
+        </div>
+
+        <div class="card-body">
+            <div class="mb-3">
+                <div class="d-flex flex-wrap gap-2 align-items-center">
+                    <span class="badge text-bg-info">Período: {{ periodo }}</span>
+                    <span class="badge text-bg-success">Monto total: ${{ monto_total|currency_format }}</span>
+                </div>
+            </div>
+
+            <form method="post" action="{% url 'egresos_prorrateo_administrativo' %}">
+            {% csrf_token %}
+            <input type="hidden" name="periodo" value="{{ periodo }}">
+
+            <div class="row g-3 mb-3">
+                <div class="col-md-4">
+                    <label for="montoTotal" class="form-label fw-semibold">Monto total a prorratear</label>
+                    <input type="number" step="0.01" min="0" class="form-control" id="montoTotal" name="monto_total" value="{{ monto_total }}">
+                </div>
+                <div class="col-md-8 d-flex align-items-end">
+                    <div class="text-muted">
+                        Ajusta los porcentajes por proyecto. La suma debe ser 100%.
+                    </div>
+                </div>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead>
+                        <tr>
+                            <th>Proyecto</th>
+                            <th class="text-end">Ingresos</th>
+                            <th class="text-end">Gastos</th>
+                            <th class="text-end">Rentabilidad</th>
+                            <th class="text-center">% Prorrateo</th>
+                            <th class="text-end">Monto a debitar</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in items %}
+                        <tr>
+                            <td class="fw-semibold">{{ item.proyecto.nombre }}</td>
+                            <td class="text-end">${{ item.ingresos|currency_format }}</td>
+                            <td class="text-end">${{ item.gastos|currency_format }}</td>
+                            <td class="text-end">${{ item.rentabilidad|currency_format }}</td>
+                            <td class="text-center" style="max-width: 140px;">
+                                <input type="number"
+                                       step="0.01"
+                                       min="0"
+                                       class="form-control form-control-sm porcentaje-input"
+                                       name="porcentaje_{{ item.proyecto.id }}"
+                                       value="{{ item.porcentaje }}">
+                            </td>
+                            <td class="text-end fw-semibold monto-proyecto" data-proyecto="{{ item.proyecto.id }}">
+                                ${{ item.monto|currency_format }}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <th colspan="4" class="text-end">Total</th>
+                            <th class="text-center" id="totalPorcentaje">100.00%</th>
+                            <th class="text-end" id="totalMonto">${{ monto_total|currency_format }}</th>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+
+            <div class="d-flex flex-wrap gap-2 justify-content-end">
+                <a href="{% url 'egresos_dashboard' %}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Volver
+                </a>
+                <button type="submit" name="accion" value="confirmar" class="btn btn-success">
+                    <i class="fas fa-check"></i> Validar y aprobar
+                </button>
+            </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    function formatMoney(value) {
+        const num = isNaN(value) ? 0 : value;
+        return num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    function recalcProrrateo() {
+        const montoTotal = parseFloat(document.getElementById('montoTotal').value || '0');
+        let totalPct = 0;
+
+        document.querySelectorAll('.porcentaje-input').forEach((input) => {
+            const pct = parseFloat(input.value || '0');
+            totalPct += pct;
+        });
+
+        document.getElementById('totalPorcentaje').textContent = `${totalPct.toFixed(2)}%`;
+        document.getElementById('totalMonto').textContent = `$${formatMoney(montoTotal)}`;
+
+        document.querySelectorAll('.porcentaje-input').forEach((input) => {
+            const pct = parseFloat(input.value || '0');
+            const monto = (montoTotal * pct) / 100;
+            const cell = input.closest('tr').querySelector('.monto-proyecto');
+            if (cell) {
+                cell.textContent = `$${formatMoney(monto)}`;
+            }
+        });
+    }
+
+    document.getElementById('montoTotal').addEventListener('input', recalcProrrateo);
+    document.querySelectorAll('.porcentaje-input').forEach((input) => {
+        input.addEventListener('input', recalcProrrateo);
+    });
+</script>
+{% endblock %}
+

@@ -1,0 +1,13 @@
+{
+  "type": "service_account",
+  "project_id": "telecom-technologies",
+  "private_key_id": "2eb5074019e261f43311135291339d40ca6a0771",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvAIBADANBgkqhkiG9w0BAQEFAASCBKYwggSiAgEAAoIBAQDNScrBxHeesl34\nxO7UbLjVHGb1NWehvZsm0Ptm+w0BpM+qGAgE70bstMjweqemEm84o6aaQXdOZoXY\nkN4pZDnFAn309bl+3ofcEIzuaNJ9B6ZJrgt6VtQD6t90GvZqqKf52kELJrjpC+ua\n6X9bee/K0O0jyjMp1KOsriUMIEOJxqbbDtmYj6/KSJcGExqEagdVucD5ysz6jjD5\nS2WviEYmraKPWkxpCSj8ltIVsrSPKH/hm0M0lB6ecqRXvsAkb14gYxgwr+KP0p5p\nt4DNxJezEekuHFkna/zmb8jkzFaa6xUKD0z8jjrX92IZQ9bGHAaB4qDoD25biIfm\n5ocs2YFvAgMBAAECggEAMgvgUza7VsPzJteTxdOvh7zB2NupJQQdU+w0rdlcRV9R\nhQ0Qv2s55jD4n6+3OURbOvqifg6hsEpMLQy8LGkTsFS4MkTJcQV9J4gdY23IitSX\nlHTKtYt/amkTCrIcCsqNENtFahuJjr7qNDziYIGslMw0U7pSmMsPD+TwgTFIZcjI\n8Bwn8UQptG+kxNT8WKiiYYU9Vn8VvcINcXmrUNw28aGIH3AQoEq9dP8vKdyROGjR\ns5zN0SQ2xdDIJbLEIrLoDwNx8w9z91v5qXmx2TJWL0x/73Kl8vlf9oZjPDatOy3P\nqaRbBBd41umBPD6vpfdDD7iDsFtVXb2hT29WqGgXUQKBgQD5O1dJ93qieYRWSRZx\nOK+896ioB1XkfTfxHJCs0dkZOocEO3LyMY4GQZc9WuREyg4rzxY7RGPQWZvxfqm6\nKcPoDlrXI8wguPM21t/w+9848qsnnGDkF9U4fMLkXgEvKfe/ZsCnnHtAkoeXzHwg\n3Da4ZeZsfsIV9GHA8KlBs0ISpwKBgQDS3PSfvdugPLM/yQYxMV7AEfalTAz6nTne\nk/Nyb6167NDyf0qEl4iAved+6+/0meuOLlPZdM+TeM754uvxZe1iRGqm8uC6eMU0\n4rHzVzh903lOmtcK5fjQLODb9eoq43NQIn9s83ZST8gz9bZTy08nICRV+027/CI5\n0F3UJexb+QKBgF0CCSQgR9KkOH+ezNI5zlNdtMHn4uTe2eaPu2nS8gqZLdOlf9Lk\nLVUmWxNZfQAyyzEMGgbKEdmp5ykrFJnVhjduS/YndMDtZE4dx/p9dCMjZD3m/L2C\nK17mKDDi59w69CqoZNLn8ZL6W8GJXPVCWOVdmaz5bOKWjXhcFz3ecJTXAoGAPZeK\n4MotR93TIfOPGnloSsQ0fk37kIyyZaBjwO58Bub7lYm284nrtmdCImG6YoE/O/Wu\nSluDcnkcRAOTlZyHPWfsmz1ghTdXqz34arL0blSCH4K9A5LvHaeuOrHXJ5Xujd61\nx9ZJnnttaDgCfPFq+mu6EV9pclqQiMCjV5+ILckCgYAldbVGmU9RZgGnf5w3Y8/F\nGKr874Xg/9jOWwOeWeCsRA1aznULjoe933ZpRhMCu60KRvTWIIoFQ5zf4VmDHfcr\nPuh3E9hLJZNlOfbdHoI4wHncHb4SBeLZ+xNWJBwfI5MF4YcZWbpLJ1M40g/VA/sZ\nSBlXsyHJ9fF/LG//t828Pg==\n-----END PRIVATE KEY-----\n",
+  "client_email": "firebase-adminsdk-fbsvc@telecom-technologies.iam.gserviceaccount.com",
+  "client_id": "106146685167673567888",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/firebase-adminsdk-fbsvc%40telecom-technologies.iam.gserviceaccount.com",
+  "universe_domain": "googleapis.com"
+}

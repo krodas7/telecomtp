@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+{% load custom_filters %}
+
+{% block title %}Editar Movimiento Bancario - Telecom Technology{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">
+        <i class="fas fa-edit me-2"></i>Editar Movimiento
+    </h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <a href="{% url 'movimientos_list' %}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-1"></i>Volver
+        </a>
+    </div>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    {{ form.non_field_errors }}
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.cuenta.id_for_label }}" class="form-label">Cuenta *</label>
+                            {{ form.cuenta }}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.tipo.id_for_label }}" class="form-label">Tipo *</label>
+                            {{ form.tipo }}
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.monto.id_for_label }}" class="form-label">Monto *</label>
+                            {{ form.monto }}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.fecha_movimiento.id_for_label }}" class="form-label">Fecha *</label>
+                            {{ form.fecha_movimiento }}
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.descripcion.id_for_label }}" class="form-label">Descripción</label>
+                        {{ form.descripcion }}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.referencia.id_for_label }}" class="form-label">Referencia</label>
+                        {{ form.referencia }}
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label for="{{ form.factura.id_for_label }}" class="form-label">Factura</label>
+                            {{ form.factura }}
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label for="{{ form.pago.id_for_label }}" class="form-label">Pago</label>
+                            {{ form.pago }}
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label for="{{ form.gasto.id_for_label }}" class="form-label">Gasto</label>
+                            {{ form.gasto }}
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-1"></i>Guardar
+                        </button>
+                        <a href="{% url 'movimientos_list' %}" class="btn btn-secondary">Cancelar</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+

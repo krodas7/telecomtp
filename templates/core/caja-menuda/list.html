@@ -8,9 +8,14 @@
 <div class="container-fluid py-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h2><i class="fas fa-wallet me-2"></i>Todos los Movimientos</h2>
-        <a href="{% url 'caja_menuda_create' %}" class="btn btn-primary">
-            <i class="fas fa-plus me-2"></i>Nuevo Movimiento
-        </a>
+        <div class="d-flex gap-2">
+            <a href="{% url 'caja_menuda_firebase_deposit' %}" class="btn btn-outline-primary">
+                <i class="fas fa-hand-holding-usd me-2"></i>Depositar a técnico
+            </a>
+            <a href="{% url 'caja_menuda_cuadre' %}" class="btn btn-outline-secondary">
+                <i class="fas fa-balance-scale me-2"></i>Cuadre por técnico
+            </a>
+        </div>
     </div>
 
     <div class="card shadow-sm">
@@ -24,6 +29,7 @@
                                 <th>Fecha</th>
                                 <th>Descripción</th>
                                 <th>Proyecto</th>
+                                <th>Movimiento</th>
                                 <th>Monto</th>
                                 <th>Acciones</th>
                             </tr>
@@ -39,6 +45,13 @@
                                         <span class="badge bg-info">{{ movimiento.proyecto.nombre }}</span>
                                     {% else %}
                                         <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if movimiento.tipo_movimiento == 'deposito' %}
+                                        <span class="badge bg-success">Depósito</span>
+                                    {% else %}
+                                        <span class="badge bg-danger">Gasto</span>
                                     {% endif %}
                                 </td>
                                 <td><strong>{{ movimiento.monto|currency_gtq }}</strong></td>
@@ -63,7 +76,177 @@
             {% endif %}
         </div>
     </div>
+
+    <div class="card shadow-sm mt-4">
+        <div class="card-header bg-white">
+            <h5 class="mb-0"><i class="fas fa-users me-2"></i>Balance actual por técnico</h5>
+        </div>
+        <div class="card-body">
+            {% if firebase_balances_error %}
+                <div class="alert alert-warning mb-3">
+                    {{ firebase_balances_error }}
+                </div>
+            {% endif %}
+            {% if firebase_balances %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Técnico</th>
+                                <th>Balance actual</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for tecnico in firebase_tecnicos %}
+                            <tr>
+                                <td><strong>{{ tecnico }}</strong></td>
+                                <td><strong>${{ firebase_balances_by_name|get_item:tecnico|default:"0.00" }}</strong></td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="text-center py-4">
+                    <i class="fas fa-inbox fa-2x text-muted mb-2"></i>
+                    <p class="text-muted mb-0">No hay balances disponibles</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+    <div class="card shadow-sm mt-4">
+        <div class="card-header bg-white">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <h5 class="mb-0"><i class="fas fa-user-cog me-2"></i>Gastos reportados por técnicos</h5>
+                <div class="d-flex align-items-center gap-2">
+                    <small class="text-muted">Total: {{ firebase_expenses|length }}</small>
+                    <a class="btn btn-sm btn-outline-success" href="{% url 'caja_menuda_firebase_export' %}?{{ request.GET.urlencode }}">
+                        <i class="fas fa-file-excel me-1"></i>Exportar Excel
+                    </a>
+                    <a class="btn btn-sm btn-outline-danger" href="{% url 'caja_menuda_firebase_export_pdf' %}?{{ request.GET.urlencode }}">
+                        <i class="fas fa-file-pdf me-1"></i>Exportar PDF
+                    </a>
+                </div>
+            </div>
+            <form class="row g-2" method="get">
+                <div class="col-md-4">
+                    <select name="tecnico" class="form-select">
+                        <option value="">Todos los técnicos</option>
+                        {% for tecnico in firebase_tecnicos %}
+                            <option value="{{ tecnico }}" {% if tecnico == firebase_tecnico %}selected{% endif %}>{{ tecnico }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <input type="text" name="fecha_desde" class="form-control js-date" placeholder="dd/mm/aaaa" value="{{ firebase_fecha_desde }}">
+                </div>
+                <div class="col-md-3">
+                    <input type="text" name="fecha_hasta" class="form-control js-date" placeholder="dd/mm/aaaa" value="{{ firebase_fecha_hasta }}">
+                </div>
+                <div class="col-md-2 d-grid">
+                    <button type="submit" class="btn btn-primary">Aplicar filtros</button>
+                </div>
+                <input type="hidden" name="sort" value="{{ firebase_sort|default:'timestamp' }}">
+                <input type="hidden" name="order" value="{{ firebase_order|default:'desc' }}">
+            </form>
+        </div>
+        <div class="card-body">
+            {% if firebase_error %}
+                <div class="alert alert-warning mb-3">
+                    {{ firebase_error }}
+                </div>
+            {% endif %}
+            {% if firebase_expenses %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>
+                                    <a class="text-decoration-none" href="?sort=userName&order={% if firebase_sort == 'userName' and firebase_order == 'asc' %}desc{% else %}asc{% endif %}">
+                                        Técnico
+                                        {% if firebase_sort == 'userName' %}
+                                            <i class="fas fa-sort-{% if firebase_order == 'asc' %}up{% else %}down{% endif %}"></i>
+                                        {% endif %}
+                                    </a>
+                                </th>
+                                <th>Tipo</th>
+                                <th>Descripción</th>
+                                <th>Factura</th>
+                                <th>
+                                    <a class="text-decoration-none" href="?sort=amount&order={% if firebase_sort == 'amount' and firebase_order == 'asc' %}desc{% else %}asc{% endif %}">
+                                        Monto
+                                        {% if firebase_sort == 'amount' %}
+                                            <i class="fas fa-sort-{% if firebase_order == 'asc' %}up{% else %}down{% endif %}"></i>
+                                        {% endif %}
+                                    </a>
+                                </th>
+                                <th>
+                                    <a class="text-decoration-none" href="?sort=timestamp&order={% if firebase_sort == 'timestamp' and firebase_order == 'asc' %}desc{% else %}asc{% endif %}">
+                                        Fecha
+                                        {% if firebase_sort == 'timestamp' %}
+                                            <i class="fas fa-sort-{% if firebase_order == 'asc' %}up{% else %}down{% endif %}"></i>
+                                        {% endif %}
+                                    </a>
+                                </th>
+                                <th>Detalle</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for exp in firebase_expenses %}
+                            <tr>
+                                <td><strong>{{ exp.userName }}</strong></td>
+                                <td>
+                                    {% if exp.type == 'DEPOSIT' %}
+                                        Depósito
+                                    {% else %}
+                                        {{ exp.expenseType|default:"Gasto" }}
+                                    {% endif %}
+                                </td>
+                                <td>{{ exp.description|default:"-"|truncatewords:12 }}</td>
+                                <td>{{ exp.invoiceNumber|default:"-" }}</td>
+                                <td><strong>${{ exp.amount }}</strong></td>
+                                <td>
+                                    {% if exp.timestamp_dt %}
+                                        {{ exp.timestamp_dt|date:"d/m/Y" }}
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <a class="btn btn-sm btn-outline-primary" href="{% url 'caja_menuda_firebase_detail' exp.id %}">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="text-center py-4">
+                    <i class="fas fa-inbox fa-2x text-muted mb-2"></i>
+                    <p class="text-muted mb-0">No hay gastos de técnicos</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
 </div>
+{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/es.js"></script>
+<script>
+    flatpickr(".js-date", {
+        dateFormat: "d/m/Y",
+        allowInput: true,
+        locale: "es"
+    });
+</script>
 {% endblock %}
 
 

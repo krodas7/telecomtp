@@ -9,12 +9,16 @@ from django.db.models import Sum, Count, Q, F, Avg
 from django.db.models.functions import Extract
 from django.utils import timezone
 from django.views.decorators.http import require_http_methods
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, time
+import calendar
 from decimal import Decimal, InvalidOperation
 from django.core.cache import cache
 import os
+from collections import defaultdict
 import json
+import csv
 import logging
+import re
 from .models import (
     Cliente, Proyecto, Colaborador, Factura, Pago, 
     Gasto, CategoriaGasto, GastoFijoMensual, LogActividad, Anticipo, AplicacionAnticipo, ArchivoProyecto,
@@ -26,7 +30,8 @@ from .models import (
     ItemCotizacion, ItemReutilizable, ConfiguracionPlanilla, BonoColaboradorProyecto,
     ServicioTorrero, RegistroDiasTrabajados, PagoServicioTorrero, Torrero, AsignacionTorrero,
     Subproyecto, NotaPostit, CajaMenuda, PlanificacionBitacora, AvancePlanificacion, AvancePlanificacion,
-    ArchivoAdjunto
+    ArchivoAdjunto, BancoCuenta, MovimientoBanco, BitacoraTarea, BitacoraSubtarea,
+    BitacoraAsignacion, BitacoraAvanceDiario
 )
 from .forms_simple import (
     ClienteForm, ProyectoForm, ColaboradorForm, FacturaForm, 
@@ -37,13 +42,33 @@ from .forms_simple import (
     AsignacionInventarioForm, TrabajadorDiarioForm, RegistroTrabajoForm,
     AnticipoTrabajadorDiarioForm, PlanillaTrabajadoresDiariosForm, IngresoProyectoForm, CotizacionForm,
     ConfiguracionPlanillaForm, ServicioTorreroForm, RegistroDiasTrabajarForm, PagoServicioTorreroForm,
-    TorreroForm, SubproyectoForm, CajaMenudaForm
+    TorreroForm, SubproyectoForm, CajaMenudaForm, BancoCuentaForm, MovimientoBancoForm
 )
 from django.contrib.auth.models import User
 from django.contrib.auth.forms import UserCreationForm, UserChangeForm
 from django.core.paginator import Paginator
 from django.http import JsonResponse, HttpResponse
 from .services import NotificacionService, DashboardService, ProyectoService
+from .firebase_sync import (
+    fetch_expenses_for_caja_menuda,
+    fetch_expense_detail,
+    fetch_firebase_team_leaders,
+    fetch_firebase_transactions_for_user,
+    fetch_firebase_cuadres,
+    create_firebase_cuadre,
+    fetch_firebase_auth_emails,
+    fetch_firestore_collection_docs,
+    fetch_firestore_document,
+    ensure_bitacora_proyecto,
+    create_firebase_deposit,
+    sync_bitacora_asignacion_to_firebase,
+    sync_bitacora_avance_diario_to_firebase,
+    sync_bitacora_avance_to_firebase,
+    sync_bitacora_planificacion_to_firebase,
+    sync_bitacora_updates,
+    sync_caja_menuda_to_firebase,
+)
+from .reportes_pdf import generar_pdf_reporte
 from .query_utils import QueryOptimizer, DashboardQueries
 from .decorators import api_view, secure_view, cache_view
 from reportlab.lib.pagesizes import letter, A4, landscape
@@ -52,12 +77,46 @@ from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.units import inch
 from reportlab.lib import colors
 from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_RIGHT
-from io import BytesIO
+from io import BytesIO, StringIO
 import os
 from django.conf import settings
 
 # Configurar logger
 logger = logging.getLogger(__name__)
+
+def _build_bitacora_progress_map(planificaciones):
+    """Calcula progreso (%) por planificación con base en asignaciones más recientes."""
+    plan_ids = [plan.id for plan in planificaciones]
+    if not plan_ids:
+        return {}
+
+    asignaciones = (
+        BitacoraAsignacion.objects.filter(planificacion_id__in=plan_ids)
+        .order_by("planificacion_id", "fecha", "id")
+        .select_related("tarea", "subtarea")
+    )
+    latest_by_item = {}
+    for asignacion in asignaciones:
+        if asignacion.subtarea_id:
+            key = (asignacion.planificacion_id, "sub", asignacion.subtarea_id)
+        elif asignacion.tarea_id:
+            key = (asignacion.planificacion_id, "tarea", asignacion.tarea_id)
+        else:
+            continue
+        latest_by_item[key] = asignacion
+
+    progress_map = defaultdict(lambda: {"total": 0, "count": 0})
+    for (plan_id, _, _), asignacion in latest_by_item.items():
+        progress_map[plan_id]["total"] += int(asignacion.porcentaje or 0)
+        progress_map[plan_id]["count"] += 1
+
+    result = {}
+    for plan_id, data in progress_map.items():
+        if data["count"]:
+            result[plan_id] = int(round(data["total"] / data["count"]))
+        else:
+            result[plan_id] = 0
+    return result
 
 def login_view(request):
     """Vista de login"""
@@ -319,8 +378,6 @@ def dashboard(request):
         periodo = request.GET.get('periodo', '6')
         
         # Calcular datos reales para el gráfico según el período
-        
-        from datetime import datetime, timedelta
         hoy = timezone.now().date()
         
         if periodo == '1':
@@ -1865,6 +1922,12 @@ def gastos_reporte_contable_zip(request):
 def gastos_dashboard(request):
     """Dashboard del módulo de gastos"""
     try:
+        # Periodo por defecto para prorrateo administrativo (YYYY-MM)
+        periodo_prorrateo_default = request.session.get(
+            'egresos_periodo_prorrateo',
+            timezone.now().strftime('%Y-%m')
+        )
+
         # Estadísticas generales
         total_gastos = Gasto.objects.count()
         total_monto = Gasto.objects.aggregate(total=Sum('monto'))['total'] or Decimal('0.00')
@@ -1901,6 +1964,7 @@ def gastos_dashboard(request):
             'gastos_por_categoria': gastos_por_categoria,
             'gastos_recientes': gastos_recientes,
             'gastos_por_mes': gastos_por_mes,
+            'periodo_prorrateo_default': periodo_prorrateo_default,
         }
         
         return render(request, 'core/egresos/dashboard.html', context)
@@ -1909,6 +1973,184 @@ def gastos_dashboard(request):
         logger.error(f'Error en gastos_dashboard: {e}')
         messages.error(request, 'Error al cargar el dashboard de gastos')
         return redirect('egresos_list')
+
+
+@login_required
+@require_http_methods(["POST"])
+def egresos_prorrateo_administrativo(request):
+    """
+    Prorrateo administrativo:
+    - Vista previa con porcentaje editable por proyecto.
+    - Confirmación para crear egresos prorrateados.
+    """
+    periodo = request.POST.get('periodo')
+    if not periodo:
+        messages.error(request, 'Debes seleccionar un período para prorratear.')
+        return redirect('egresos_dashboard')
+
+    try:
+        # Validar formato YYYY-MM
+        datetime.strptime(periodo, '%Y-%m')
+    except (ValueError, TypeError):
+        messages.error(request, 'Formato de período inválido.')
+        return redirect('egresos_dashboard')
+
+    request.session['egresos_periodo_prorrateo'] = periodo
+
+    # Convertir período a rango de fechas (primer y último día del mes)
+    year, month = map(int, periodo.split('-'))
+    fecha_inicio = datetime(year, month, 1).date()
+    last_day = calendar.monthrange(year, month)[1]
+    fecha_fin = datetime(year, month, last_day).date()
+
+    # Detectar proyectos facturados en el mes (facturas emitidas/enviadas/pagadas/vencidas)
+    estados_facturados = ['emitida', 'enviada', 'pagada', 'vencida']
+    proyectos_ids = Factura.objects.filter(
+        fecha_emision__range=[fecha_inicio, fecha_fin],
+        estado__in=estados_facturados
+    ).values_list('proyecto_id', flat=True).distinct()
+
+    proyectos = Proyecto.objects.filter(id__in=proyectos_ids).order_by('nombre')
+
+    # Monto a prorratear (por defecto suma de gastos administrativos no prorrateados del mes)
+    monto_total_raw = request.POST.get('monto_total')
+    if monto_total_raw:
+        try:
+            monto_total = Decimal(str(monto_total_raw))
+        except (InvalidOperation, TypeError):
+            messages.error(request, 'Monto total inválido.')
+            return redirect('egresos_dashboard')
+    else:
+        monto_total_admin = Gasto.objects.filter(
+            es_administrativo=True,
+            es_prorrateado=False,
+            aprobado=True,
+            fecha_gasto__range=[fecha_inicio, fecha_fin]
+        ).aggregate(total=Sum('monto'))['total'] or 0
+        monto_total = Decimal(str(monto_total_admin))
+
+    # Preparar datos por proyecto
+    items = []
+    pesos = []
+    for proyecto in proyectos:
+        rentabilidad_data = calcular_rentabilidad_proyecto(proyecto, fecha_inicio, fecha_fin)
+        rentabilidad = Decimal(str(rentabilidad_data['rentabilidad']))
+        ingresos = Decimal(str(rentabilidad_data['ingresos']))
+        gastos = Decimal(str(rentabilidad_data['gastos']))
+
+        peso_base = rentabilidad if rentabilidad > 0 else Decimal('0')
+        pesos.append(peso_base)
+        items.append({
+            'proyecto': proyecto,
+            'ingresos': ingresos,
+            'gastos': gastos,
+            'rentabilidad': rentabilidad,
+            'peso_base': peso_base,
+            'porcentaje': Decimal('0.00'),
+            'monto': Decimal('0.00'),
+        })
+
+    # Si no hay proyectos facturados, volver con mensaje
+    if not items:
+        messages.warning(request, 'No hay proyectos facturados en el período seleccionado.')
+        return redirect('egresos_dashboard')
+
+    # Si ya existe prorrateo para el período, bloquear para evitar duplicados
+    periodo_prorrateo = datetime(year, month, 1).date()
+    if Gasto.objects.filter(es_prorrateado=True, periodo_prorrateo=periodo_prorrateo).exists():
+        messages.error(request, 'Ya existe un prorrateo para este período.')
+        return redirect('egresos_dashboard')
+
+    # Detectar si es confirmación
+    accion = request.POST.get('accion', 'preview')
+
+    if accion == 'confirmar':
+        # Usar porcentajes enviados por el usuario
+        total_pct = Decimal('0.00')
+        for item in items:
+            pct_raw = request.POST.get(f'porcentaje_{item["proyecto"].id}', '0')
+            try:
+                pct = Decimal(str(pct_raw))
+            except (InvalidOperation, TypeError):
+                pct = Decimal('0.00')
+            item['porcentaje'] = pct
+            total_pct += pct
+
+        if abs(total_pct - Decimal('100')) > Decimal('0.01'):
+            messages.error(request, 'La suma de porcentajes debe ser 100%.')
+        else:
+            # Crear gastos prorrateados por proyecto
+            categoria, _ = CategoriaGasto.objects.get_or_create(
+                nombre='Prorrateo Administrativo',
+                defaults={
+                    'descripcion': 'Egresos administrativos prorrateados por proyecto.',
+                    'color': '#6c757d',
+                    'icono': 'fas fa-balance-scale'
+                }
+            )
+
+            for item in items:
+                monto_proyecto = (monto_total * item['porcentaje'] / Decimal('100')).quantize(Decimal('0.01'))
+                if monto_proyecto <= 0:
+                    continue
+
+                Gasto.objects.create(
+                    proyecto=item['proyecto'],
+                    categoria=categoria,
+                    descripcion=f'Prorrateo administrativo {periodo}',
+                    monto=float(monto_proyecto),
+                    fecha_gasto=fecha_fin,
+                    aprobado=True,
+                    aprobado_por=request.user,
+                    es_administrativo=True,
+                    es_prorrateado=True,
+                    periodo_prorrateo=periodo_prorrateo,
+                    observaciones=f'Prorrateo administrativo del período {periodo}.'
+                )
+
+            messages.success(request, 'Prorrateo administrativo aplicado y egresos creados.')
+            return redirect('egresos_dashboard')
+
+    # Calcular porcentajes por defecto si no se confirmo o si hubo error
+    total_peso = sum(pesos)
+    if total_peso > 0:
+        for item in items:
+            item['porcentaje'] = (item['peso_base'] / total_peso * Decimal('100')).quantize(Decimal('0.01'))
+    else:
+        # Fallback a ingresos
+        total_ingresos = sum([item['ingresos'] for item in items])
+        if total_ingresos > 0:
+            for item in items:
+                item['porcentaje'] = (item['ingresos'] / total_ingresos * Decimal('100')).quantize(Decimal('0.01'))
+        else:
+            # Fallback a distribución equitativa
+            porcentaje_equivalente = (Decimal('100.00') / Decimal(str(len(items)))).quantize(Decimal('0.01'))
+            for item in items:
+                item['porcentaje'] = porcentaje_equivalente
+
+    # Si venimos de confirmación con error, mantener porcentajes enviados
+    if accion == 'confirmar':
+        for item in items:
+            pct_raw = request.POST.get(f'porcentaje_{item["proyecto"].id}')
+            if pct_raw is not None:
+                try:
+                    item['porcentaje'] = Decimal(str(pct_raw))
+                except (InvalidOperation, TypeError):
+                    pass
+
+    # Calcular montos por proyecto
+    for item in items:
+        item['monto'] = (monto_total * item['porcentaje'] / Decimal('100')).quantize(Decimal('0.01'))
+
+    context = {
+        'periodo': periodo,
+        'fecha_inicio': fecha_inicio,
+        'fecha_fin': fecha_fin,
+        'monto_total': monto_total,
+        'items': items,
+    }
+
+    return render(request, 'core/egresos/prorrateo_administrativo.html', context)
 
 
 @login_required
@@ -2175,7 +2417,9 @@ def pago_create(request):
     else:
         form = PagoForm()
     
-    return render(request, 'core/pagos/create.html', {'form': form})
+    facturas = Factura.objects.all().order_by('-fecha_emision')
+    cuentas = BancoCuenta.objects.filter(activo=True).order_by('nombre')
+    return render(request, 'core/pagos/create.html', {'form': form, 'facturas': facturas, 'cuentas': cuentas})
 
 
 @login_required
@@ -2225,6 +2469,176 @@ def pago_delete(request, pago_id):
         return redirect('pagos_list')
     
     return render(request, 'core/pagos/delete.html', {'pago': pago})
+
+
+# ===== MÓDULO DE BANCOS =====
+@login_required
+def bancos_list(request):
+    """Lista de cuentas bancarias"""
+    cuentas = BancoCuenta.objects.all().order_by('nombre')
+    total_saldo = sum((cuenta.saldo_actual for cuenta in cuentas), Decimal('0.00'))
+    context = {
+        'cuentas': cuentas,
+        'total_saldo': total_saldo
+    }
+    return render(request, 'core/bancos/list.html', context)
+
+
+@login_required
+def banco_create(request):
+    """Crear cuenta bancaria"""
+    if request.method == 'POST':
+        form = BancoCuentaForm(request.POST)
+        if form.is_valid():
+            cuenta = form.save()
+            LogActividad.objects.create(
+                usuario=request.user,
+                accion='Crear',
+                modulo='Bancos',
+                descripcion=f'Cuenta bancaria creada: {cuenta.nombre}',
+                ip_address=request.META.get('REMOTE_ADDR')
+            )
+            messages.success(request, 'Cuenta bancaria creada exitosamente')
+            return redirect('bancos_list')
+    else:
+        form = BancoCuentaForm()
+    return render(request, 'core/bancos/create.html', {'form': form})
+
+
+@login_required
+def banco_edit(request, cuenta_id):
+    """Editar cuenta bancaria"""
+    cuenta = get_object_or_404(BancoCuenta, id=cuenta_id)
+    if request.method == 'POST':
+        form = BancoCuentaForm(request.POST, instance=cuenta)
+        if form.is_valid():
+            cuenta = form.save()
+            LogActividad.objects.create(
+                usuario=request.user,
+                accion='Editar',
+                modulo='Bancos',
+                descripcion=f'Cuenta bancaria editada: {cuenta.nombre}',
+                ip_address=request.META.get('REMOTE_ADDR')
+            )
+            messages.success(request, 'Cuenta bancaria actualizada exitosamente')
+            return redirect('bancos_list')
+    else:
+        form = BancoCuentaForm(instance=cuenta)
+    return render(request, 'core/bancos/edit.html', {'form': form, 'cuenta': cuenta})
+
+
+@login_required
+def banco_delete(request, cuenta_id):
+    """Eliminar cuenta bancaria"""
+    cuenta = get_object_or_404(BancoCuenta, id=cuenta_id)
+    if request.method == 'POST':
+        LogActividad.objects.create(
+            usuario=request.user,
+            accion='Eliminar',
+            modulo='Bancos',
+            descripcion=f'Cuenta bancaria eliminada: {cuenta.nombre}',
+            ip_address=request.META.get('REMOTE_ADDR')
+        )
+        cuenta.delete()
+        messages.success(request, 'Cuenta bancaria eliminada exitosamente')
+        return redirect('bancos_list')
+    return render(request, 'core/bancos/delete.html', {'cuenta': cuenta})
+
+
+@login_required
+def movimientos_list(request):
+    """Lista de movimientos bancarios"""
+    movimientos = MovimientoBanco.objects.select_related(
+        'cuenta', 'factura', 'gasto', 'pago'
+    ).order_by('-fecha_movimiento', '-id')
+    
+    filtro_cuenta = request.GET.get('cuenta')
+    filtro_tipo = request.GET.get('tipo')
+    filtro_fecha_desde = request.GET.get('fecha_desde')
+    filtro_fecha_hasta = request.GET.get('fecha_hasta')
+    
+    if filtro_cuenta:
+        movimientos = movimientos.filter(cuenta_id=filtro_cuenta)
+    if filtro_tipo:
+        movimientos = movimientos.filter(tipo=filtro_tipo)
+    if filtro_fecha_desde:
+        movimientos = movimientos.filter(fecha_movimiento__gte=filtro_fecha_desde)
+    if filtro_fecha_hasta:
+        movimientos = movimientos.filter(fecha_movimiento__lte=filtro_fecha_hasta)
+    
+    cuentas = BancoCuenta.objects.filter(activo=True).order_by('nombre')
+    context = {
+        'movimientos': movimientos,
+        'cuentas': cuentas,
+        'filtro_cuenta': filtro_cuenta or '',
+        'filtro_tipo': filtro_tipo or '',
+        'filtro_fecha_desde': filtro_fecha_desde or '',
+        'filtro_fecha_hasta': filtro_fecha_hasta or '',
+    }
+    return render(request, 'core/bancos/movimientos_list.html', context)
+
+
+@login_required
+def movimiento_create(request):
+    """Crear movimiento bancario manual"""
+    if request.method == 'POST':
+        form = MovimientoBancoForm(request.POST)
+        if form.is_valid():
+            movimiento = form.save(commit=False)
+            movimiento.creado_por = request.user
+            movimiento.save()
+            LogActividad.objects.create(
+                usuario=request.user,
+                accion='Crear',
+                modulo='Bancos',
+                descripcion=f'Movimiento bancario creado: {movimiento.get_tipo_display()} ${movimiento.monto}',
+                ip_address=request.META.get('REMOTE_ADDR')
+            )
+            messages.success(request, 'Movimiento bancario creado exitosamente')
+            return redirect('movimientos_list')
+    else:
+        form = MovimientoBancoForm()
+    return render(request, 'core/bancos/movimiento_create.html', {'form': form})
+
+
+@login_required
+def movimiento_edit(request, movimiento_id):
+    """Editar movimiento bancario"""
+    movimiento = get_object_or_404(MovimientoBanco, id=movimiento_id)
+    if request.method == 'POST':
+        form = MovimientoBancoForm(request.POST, instance=movimiento)
+        if form.is_valid():
+            movimiento = form.save()
+            LogActividad.objects.create(
+                usuario=request.user,
+                accion='Editar',
+                modulo='Bancos',
+                descripcion=f'Movimiento bancario editado: {movimiento.get_tipo_display()} ${movimiento.monto}',
+                ip_address=request.META.get('REMOTE_ADDR')
+            )
+            messages.success(request, 'Movimiento bancario actualizado exitosamente')
+            return redirect('movimientos_list')
+    else:
+        form = MovimientoBancoForm(instance=movimiento)
+    return render(request, 'core/bancos/movimiento_edit.html', {'form': form, 'movimiento': movimiento})
+
+
+@login_required
+def movimiento_delete(request, movimiento_id):
+    """Eliminar movimiento bancario"""
+    movimiento = get_object_or_404(MovimientoBanco, id=movimiento_id)
+    if request.method == 'POST':
+        LogActividad.objects.create(
+            usuario=request.user,
+            accion='Eliminar',
+            modulo='Bancos',
+            descripcion=f'Movimiento bancario eliminado: {movimiento.get_tipo_display()} ${movimiento.monto}',
+            ip_address=request.META.get('REMOTE_ADDR')
+        )
+        movimiento.delete()
+        messages.success(request, 'Movimiento bancario eliminado exitosamente')
+        return redirect('movimientos_list')
+    return render(request, 'core/bancos/movimiento_delete.html', {'movimiento': movimiento})
 
 
 # ===== CRUD CATEGORÍAS DE GASTO =====
@@ -10448,19 +10862,64 @@ def item_reutilizable_create(request):
 def caja_menuda_dashboard(request):
     """Dashboard principal de Caja Menuda"""
     try:
-        # Estadísticas básicas
-        total_movimientos = CajaMenuda.objects.filter(activo=True).count()
-        total_monto = CajaMenuda.objects.filter(activo=True).aggregate(
+        # Estadísticas básicas (Firebase)
+        movimientos_activos = CajaMenuda.objects.filter(activo=True)
+        total_movimientos = movimientos_activos.count()
+        total_depositos = movimientos_activos.filter(tipo_movimiento='deposito').aggregate(
             total=Sum('monto')
         )['total'] or Decimal('0.00')
+        total_gastos = movimientos_activos.filter(tipo_movimiento='gasto').aggregate(
+            total=Sum('monto')
+        )['total'] or Decimal('0.00')
+        saldo_caja = total_depositos - total_gastos
         
         # Movimientos recientes
-        movimientos_recientes = CajaMenuda.objects.filter(activo=True).order_by('-fecha', '-creado_en')[:10]
+        movimientos_recientes = movimientos_activos.order_by('-fecha', '-creado_en')[:10]
         
+        sort = request.GET.get("sort", "timestamp")
+        order = request.GET.get("order", "desc")
+        tecnico = request.GET.get("tecnico", "").strip()
+        fecha_desde = request.GET.get("fecha_desde", "").strip()
+        fecha_hasta = request.GET.get("fecha_hasta", "").strip()
+        firebase_expenses, firebase_error = fetch_expenses_for_caja_menuda(sort, order)
+        firebase_expenses = _filter_firebase_expenses(
+            firebase_expenses, tecnico, fecha_desde, fecha_hasta
+        )
+        firebase_total_depositos = sum(
+            Decimal(str(exp.get("amount") or 0))
+            for exp in firebase_expenses
+            if exp.get("type") == "DEPOSIT"
+        )
+        firebase_total_gastos = sum(
+            Decimal(str(exp.get("amount") or 0))
+            for exp in firebase_expenses
+            if exp.get("type") == "EXPENSE"
+        )
+        firebase_total_movimientos = len(firebase_expenses)
+        firebase_saldo = firebase_total_depositos - firebase_total_gastos
+        tecnicos_disponibles = _get_firebase_tecnicos(firebase_expenses)
+        firebase_balances, balances_error = _get_firebase_balances(firebase_expenses)
+        firebase_balances_by_name = _map_firebase_balances_by_name(
+            firebase_expenses, firebase_balances
+        )
+
         context = {
-            'total_movimientos': total_movimientos,
-            'total_monto': total_monto,
+            'total_movimientos': firebase_total_movimientos or total_movimientos,
+            'total_depositos': firebase_total_depositos or total_depositos,
+            'total_gastos': firebase_total_gastos or total_gastos,
+            'saldo_caja': firebase_saldo if firebase_total_movimientos else saldo_caja,
             'movimientos_recientes': movimientos_recientes,
+            'firebase_expenses': firebase_expenses,
+            'firebase_error': firebase_error,
+            'firebase_sort': sort,
+            'firebase_order': order,
+            'firebase_tecnico': tecnico,
+            'firebase_fecha_desde': fecha_desde,
+            'firebase_fecha_hasta': fecha_hasta,
+            'firebase_tecnicos': tecnicos_disponibles,
+            'firebase_balances': firebase_balances,
+            'firebase_balances_by_name': firebase_balances_by_name,
+            'firebase_balances_error': balances_error,
         }
         
         return render(request, 'core/caja-menuda/dashboard.html', context)
@@ -10474,12 +10933,596 @@ def caja_menuda_dashboard(request):
 def caja_menuda_list(request):
     """Lista todos los movimientos de caja menuda"""
     movimientos = CajaMenuda.objects.filter(activo=True).order_by('-fecha', '-creado_en')
+    sort = request.GET.get("sort", "timestamp")
+    order = request.GET.get("order", "desc")
+    tecnico = request.GET.get("tecnico", "").strip()
+    fecha_desde = request.GET.get("fecha_desde", "").strip()
+    fecha_hasta = request.GET.get("fecha_hasta", "").strip()
+    firebase_expenses, firebase_error = fetch_expenses_for_caja_menuda(sort, order)
+    tecnicos_disponibles = _get_firebase_tecnicos(firebase_expenses)
+    firebase_balances, balances_error = _get_firebase_balances(firebase_expenses)
+    firebase_balances_by_name = _map_firebase_balances_by_name(
+        firebase_expenses, firebase_balances
+    )
+    firebase_expenses = _filter_firebase_expenses(
+        firebase_expenses, tecnico, fecha_desde, fecha_hasta
+    )
     
     context = {
         'movimientos': movimientos,
+        'firebase_expenses': firebase_expenses,
+        'firebase_error': firebase_error,
+        'firebase_sort': sort,
+        'firebase_order': order,
+        'firebase_tecnico': tecnico,
+        'firebase_fecha_desde': fecha_desde,
+        'firebase_fecha_hasta': fecha_hasta,
+        'firebase_tecnicos': tecnicos_disponibles,
+        'firebase_balances': firebase_balances,
+        'firebase_balances_by_name': firebase_balances_by_name,
+        'firebase_balances_error': balances_error,
     }
     
     return render(request, 'core/caja-menuda/list.html', context)
+
+
+@login_required
+def caja_menuda_firebase_detail(request, transaction_id):
+    """Detalle de gasto proveniente de Firebase"""
+    expense, error = fetch_expense_detail(transaction_id)
+    if error:
+        messages.error(request, error)
+        return redirect('caja_menuda_list')
+    if not expense:
+        messages.error(request, 'Gasto no encontrado')
+        return redirect('caja_menuda_list')
+    return render(request, 'core/caja-menuda/firebase_detail.html', {'expense': expense})
+
+
+@login_required
+def caja_menuda_firebase_deposit(request):
+    """Registrar depósito a técnico (Firebase)"""
+    team_leaders, error = fetch_firebase_team_leaders()
+    team_map = {leader.get("id"): leader for leader in team_leaders}
+    if error:
+        messages.error(request, error)
+
+    if request.method == "POST":
+        user_id = request.POST.get("user_id", "").strip()
+        amount_str = request.POST.get("amount", "").strip()
+        transfer_number = request.POST.get("transfer_number", "").strip()
+        description = request.POST.get("description", "").strip()
+        receipt = request.FILES.get("receipt")
+
+        if not user_id or user_id not in team_map:
+            messages.error(request, "Selecciona un técnico válido.")
+        elif not amount_str:
+            messages.error(request, "Ingresa el monto a depositar.")
+        elif not transfer_number:
+            messages.error(request, "Ingresa el número de transferencia.")
+        elif receipt is None:
+            messages.error(request, "Adjunta el comprobante del depósito.")
+        else:
+            try:
+                amount = float(amount_str)
+            except ValueError:
+                amount = 0
+            if amount <= 0:
+                messages.error(request, "El monto debe ser mayor a 0.")
+            else:
+                leader = team_map[user_id]
+                result = create_firebase_deposit(
+                    user_id=user_id,
+                    user_name=leader.get("name") or "",
+                    amount=amount,
+                    transfer_number=transfer_number,
+                    description=description,
+                    receipt_file=receipt,
+                    actor=request.user,
+                )
+                if result.ok:
+                    messages.success(request, "✅ Depósito registrado correctamente.")
+                    return redirect("caja_menuda_list")
+                messages.error(request, f"❌ Error al registrar depósito: {result.message}")
+
+    context = {
+        "team_leaders": team_leaders,
+    }
+    return render(request, "core/caja-menuda/firebase_deposit.html", context)
+
+
+@login_required
+def caja_menuda_cuadre(request):
+    """Cuadre por técnico con registro en Firebase"""
+    team_leaders, error = fetch_firebase_team_leaders()
+    team_map = {leader.get("id"): leader for leader in team_leaders}
+    if error:
+        messages.error(request, error)
+
+    selected_user_id = request.POST.get("user_id", "").strip() or request.GET.get("user_id", "").strip()
+    fecha_desde = request.POST.get("fecha_desde", "").strip() or request.GET.get("fecha_desde", "").strip()
+    fecha_hasta = request.POST.get("fecha_hasta", "").strip() or request.GET.get("fecha_hasta", "").strip()
+
+    cuadre_result = None
+    cuadres = []
+    if selected_user_id:
+        cuadres, _ = fetch_firebase_cuadres(selected_user_id)
+        if not fecha_desde and cuadres:
+            last_end_ms = cuadres[0].get("endMs")
+            if last_end_ms:
+                last_end_dt = datetime.fromtimestamp(float(last_end_ms) / 1000.0)
+                fecha_desde = (last_end_dt + timedelta(days=1)).strftime("%d/%m/%Y")
+        if not fecha_hasta:
+            fecha_hasta = timezone.localtime(timezone.now()).strftime("%d/%m/%Y")
+
+    if request.method == "POST":
+        if not selected_user_id or selected_user_id not in team_map:
+            messages.error(request, "Selecciona un técnico válido.")
+        else:
+            start_dt, end_dt = _date_range_to_ms(fecha_desde, fecha_hasta)
+            if start_dt is None or end_dt is None:
+                messages.error(request, "Ingresa un rango de fechas válido (dd/mm/aaaa).")
+            else:
+                transactions, tx_error = fetch_firebase_transactions_for_user(
+                    selected_user_id,
+                    start_ms=start_dt,
+                    end_ms=end_dt,
+                )
+                if tx_error:
+                    messages.error(request, tx_error)
+                else:
+                    ingresos = sum(
+                        Decimal(str(t.get("amount") or 0))
+                        for t in transactions
+                        if t.get("type") == "DEPOSIT"
+                    )
+                    egresos = sum(
+                        Decimal(str(t.get("amount") or 0))
+                        for t in transactions
+                        if t.get("type") == "EXPENSE"
+                    )
+                    balance = ingresos - egresos
+                    status = "superhabit" if balance > 0 else "deficit" if balance < 0 else "cero"
+                    leader = team_map[selected_user_id]
+                    result = create_firebase_cuadre(
+                        user_id=selected_user_id,
+                        user_name=leader.get("name") or "",
+                        start_ms=start_dt,
+                        end_ms=end_dt,
+                        ingresos=ingresos,
+                        egresos=egresos,
+                        balance=balance,
+                        status=status,
+                        created_by=request.user.get_full_name() or request.user.username,
+                    )
+                    if result.ok:
+                        messages.success(request, "✅ Cuadre registrado correctamente.")
+                        cuadre_result = {
+                            "ingresos": ingresos,
+                            "egresos": egresos,
+                            "balance": balance,
+                            "status": status,
+                            "fecha_desde": fecha_desde,
+                            "fecha_hasta": fecha_hasta,
+                        }
+                        cuadres, _ = fetch_firebase_cuadres(selected_user_id)
+                    else:
+                        messages.error(request, f"❌ Error al registrar cuadre: {result.message}")
+
+    selected_user_name = ""
+    if selected_user_id and selected_user_id in team_map:
+        selected_user_name = team_map[selected_user_id].get("name") or ""
+    context = {
+        "team_leaders": team_leaders,
+        "selected_user_id": selected_user_id,
+        "selected_user_name": selected_user_name,
+        "fecha_desde": fecha_desde,
+        "fecha_hasta": fecha_hasta,
+        "cuadre_result": cuadre_result,
+        "cuadres": cuadres,
+    }
+    return render(request, "core/caja-menuda/cuadre.html", context)
+
+
+@login_required
+def caja_menuda_firebase_export(request):
+    """Exportar gastos de técnicos (Firebase) a CSV compatible con Excel"""
+    sort = request.GET.get("sort", "timestamp")
+    order = request.GET.get("order", "desc")
+    tecnico = request.GET.get("tecnico", "").strip()
+    fecha_desde = request.GET.get("fecha_desde", "").strip()
+    fecha_hasta = request.GET.get("fecha_hasta", "").strip()
+
+    firebase_expenses, firebase_error = fetch_expenses_for_caja_menuda(sort, order)
+    if firebase_error:
+        messages.error(request, firebase_error)
+        return redirect('caja_menuda_list')
+    firebase_expenses = _filter_firebase_expenses(
+        firebase_expenses, tecnico, fecha_desde, fecha_hasta
+    )
+    firebase_balances, _ = _get_firebase_balances(firebase_expenses)
+
+    response = HttpResponse(content_type='text/csv')
+    timestamp = timezone.now().strftime("%Y%m%d_%H%M")
+    response['Content-Disposition'] = f'attachment; filename="caja_menuda_gastos_tecnicos_{timestamp}.csv"'
+
+    writer = csv.writer(response)
+    writer.writerow([
+        'Tecnico',
+        'Movimiento',
+        'Descripcion',
+        'Factura',
+        'Deposito ($)',
+        'Gasto ($)',
+        'Fecha',
+        'Comprobante URL',
+        'Kilometraje URL',
+        'Vehiculo',
+    ])
+    for exp in firebase_expenses:
+        fecha_txt = ""
+        if exp.get("timestamp_dt"):
+            fecha_txt = exp["timestamp_dt"].strftime("%d/%m/%Y %H:%M")
+        movimiento = "Depósito" if exp.get("type") == "DEPOSIT" else "Gasto"
+        deposito_val = exp.get("amount", "") if exp.get("type") == "DEPOSIT" else ""
+        gasto_val = exp.get("amount", "") if exp.get("type") == "EXPENSE" else ""
+        writer.writerow([
+            exp.get("userName", ""),
+            movimiento,
+            exp.get("description", ""),
+            exp.get("invoiceNumber", ""),
+            deposito_val,
+            gasto_val,
+            fecha_txt,
+            exp.get("receiptUrl", ""),
+            exp.get("odometerUrl", ""),
+            exp.get("vehicleLabel", ""),
+        ])
+    return response
+
+
+@login_required
+def caja_menuda_firebase_export_pdf(request):
+    """Exportar gastos de técnicos (Firebase) a PDF tipo estado bancario"""
+    sort = request.GET.get("sort", "timestamp")
+    order = request.GET.get("order", "desc")
+    tecnico = request.GET.get("tecnico", "").strip()
+    fecha_desde = request.GET.get("fecha_desde", "").strip()
+    fecha_hasta = request.GET.get("fecha_hasta", "").strip()
+
+    firebase_expenses, firebase_error = fetch_expenses_for_caja_menuda(sort, order)
+    if firebase_error:
+        messages.error(request, firebase_error)
+        return redirect('caja_menuda_list')
+    firebase_expenses = _filter_firebase_expenses(
+        firebase_expenses, tecnico, fecha_desde, fecha_hasta
+    )
+
+    total_depositos = sum(
+        float(exp.get("amount") or 0)
+        for exp in firebase_expenses
+        if exp.get("type") == "DEPOSIT"
+    )
+    total_gastos = sum(
+        float(exp.get("amount") or 0)
+        for exp in firebase_expenses
+        if exp.get("type") == "EXPENSE"
+    )
+    cierre_periodo = total_depositos - total_gastos
+
+    # Agrupar gastos por tipo para gráfica
+    categorias = {}
+    for exp in firebase_expenses:
+        if exp.get("type") != "EXPENSE":
+            continue
+        categoria = exp.get("expenseType") or "Otros"
+        categorias[categoria] = categorias.get(categoria, 0) + float(exp.get("amount") or 0)
+
+    buffer = BytesIO()
+    doc = SimpleDocTemplate(
+        buffer,
+        pagesize=A4,
+        leftMargin=36,
+        rightMargin=36,
+        topMargin=36,
+        bottomMargin=36,
+    )
+    styles = getSampleStyleSheet()
+    story = []
+
+    title_style = ParagraphStyle(
+        "ExecutiveTitle",
+        parent=styles["Title"],
+        textColor=colors.HexColor("#0B3D91"),
+        fontSize=18,
+        spaceAfter=6,
+    )
+    subtitle_style = ParagraphStyle(
+        "ExecutiveSubtitle",
+        parent=styles["Normal"],
+        textColor=colors.HexColor("#C62828"),
+        fontSize=10,
+        spaceAfter=10,
+    )
+    section_style = ParagraphStyle(
+        "SectionTitle",
+        parent=styles["Heading3"],
+        textColor=colors.HexColor("#0B3D91"),
+        spaceBefore=6,
+        spaceAfter=6,
+    )
+
+    # Header con logo
+    logo_path = os.path.join(settings.BASE_DIR, "static", "images", "LOGO-TELECOM.png")
+    header_row = []
+    if os.path.exists(logo_path):
+        logo = Image(logo_path, width=1.5 * inch, height=0.7 * inch)
+        header_row.append(logo)
+    else:
+        header_row.append(Paragraph("Telecom", title_style))
+
+    titulo = "Estado de Caja Menuda"
+    if tecnico:
+        titulo = f"Estado de Caja Menuda - {tecnico}"
+
+    rango_txt = "Rango: "
+    rango_txt += fecha_desde or "Inicio"
+    rango_txt += " - "
+    rango_txt += fecha_hasta or "Hoy"
+
+    header_right = Paragraph(f"{titulo}<br/>{rango_txt}", subtitle_style)
+    header_row.append(header_right)
+    header_table = Table([header_row], colWidths=[120, 350])
+    header_table.setStyle(
+        TableStyle([
+            ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+            ("ALIGN", (1, 0), (1, -1), "RIGHT"),
+            ("BOTTOMPADDING", (0, 0), (-1, -1), 8),
+        ])
+    )
+    story.append(header_table)
+    story.append(Spacer(1, 8))
+
+    resumen_data = [
+        ["Total Depósitos ($)", f"{total_depositos:,.2f}"],
+        ["Total Gastos ($)", f"{total_gastos:,.2f}"],
+        ["Cierre del periodo ($)", f"{cierre_periodo:,.2f}"],
+    ]
+    resumen_table = Table(resumen_data, colWidths=[220, 180])
+    resumen_table.setStyle(
+        TableStyle([
+            ("BACKGROUND", (0, 0), (-1, -1), colors.whitesmoke),
+            ("TEXTCOLOR", (0, 0), (-1, 0), colors.HexColor("#0B3D91")),
+            ("GRID", (0, 0), (-1, -1), 0.5, colors.lightgrey),
+            ("ALIGN", (1, 0), (1, -1), "RIGHT"),
+            ("FONTNAME", (0, 0), (-1, -1), "Helvetica"),
+        ])
+    )
+    story.append(Paragraph("Resumen", section_style))
+    story.append(resumen_table)
+    story.append(Spacer(1, 14))
+
+    table_data = [[
+        "Fecha",
+        "No. Factura",
+        "Tipo Gasto",
+        "Descripción",
+        "Depósito ($)",
+        "Gasto ($)",
+    ]]
+    for exp in firebase_expenses:
+        fecha_txt = ""
+        if exp.get("timestamp_dt"):
+            fecha_txt = exp["timestamp_dt"].strftime("%d/%m/%Y")
+        deposito_val = f"{float(exp.get('amount') or 0):,.2f}" if exp.get("type") == "DEPOSIT" else ""
+        gasto_val = f"{float(exp.get('amount') or 0):,.2f}" if exp.get("type") == "EXPENSE" else ""
+        tipo_gasto = exp.get("expenseType") if exp.get("type") == "EXPENSE" else "-"
+        descripcion = exp.get("description", "") or ""
+        descripcion = _wrap_text_pdf(descripcion, 39)
+        descripcion_cell = Paragraph(descripcion.replace("\n", "<br/>"), styles["Normal"])
+        table_data.append([
+            fecha_txt,
+            exp.get("invoiceNumber", ""),
+            tipo_gasto or "-",
+            descripcion_cell,
+            deposito_val,
+            gasto_val,
+        ])
+    movimientos_table = Table(table_data, repeatRows=1, colWidths=[70, 70, 80, 180, 70, 70])
+    movimientos_table.setStyle(
+        TableStyle([
+            ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#0B3D91")),
+            ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+            ("GRID", (0, 0), (-1, -1), 0.25, colors.lightgrey),
+            ("VALIGN", (0, 0), (-1, -1), "TOP"),
+            ("ALIGN", (4, 1), (-1, -1), "RIGHT"),
+            ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.whitesmoke, colors.white]),
+        ])
+    )
+    story.append(Paragraph("Detalle de movimientos", section_style))
+    story.append(movimientos_table)
+
+    if categorias:
+        story.append(Spacer(1, 18))
+        story.append(Paragraph("Distribución de gastos por tipo", section_style))
+
+        from reportlab.graphics.shapes import Drawing
+        from reportlab.graphics.charts.piecharts import Pie
+
+        palette = [
+            colors.HexColor("#0B3D91"),
+            colors.HexColor("#C62828"),
+            colors.HexColor("#1565C0"),
+            colors.HexColor("#EF5350"),
+            colors.HexColor("#90CAF9"),
+            colors.HexColor("#FFCDD2"),
+        ]
+        etiquetas = list(categorias.keys())
+        valores = list(categorias.values())
+        color_map = {}
+        for idx, label in enumerate(etiquetas):
+            color_map[label] = palette[idx % len(palette)]
+
+        legend_data = []
+        for label in etiquetas:
+            swatch = ""
+            legend_data.append([
+                swatch,
+                f"{label} - {categorias[label]:,.2f}",
+            ])
+        legend_table = Table(legend_data, colWidths=[12, 220])
+        legend_style = TableStyle([
+            ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+            ("FONTSIZE", (0, 0), (-1, -1), 9),
+            ("LEFTPADDING", (0, 0), (-1, -1), 2),
+            ("RIGHTPADDING", (0, 0), (-1, -1), 6),
+        ])
+        for row_idx, label in enumerate(etiquetas):
+            legend_style.add("BACKGROUND", (0, row_idx), (0, row_idx), color_map[label])
+            legend_style.add("BOX", (0, row_idx), (0, row_idx), 0.25, colors.lightgrey)
+        legend_table.setStyle(legend_style)
+
+        drawing = Drawing(300, 200)
+        pie = Pie()
+        pie.x = 10
+        pie.y = 10
+        pie.width = 180
+        pie.height = 180
+        pie.data = valores
+        total_val = sum(valores) or 0
+        pie.labels = [
+            f"{(val / total_val * 100):.2f}%" if total_val else ""
+            for val in valores
+        ]
+        pie.slices.strokeWidth = 0.5
+        for idx, _ in enumerate(pie.data):
+            pie.slices[idx].fillColor = palette[idx % len(palette)]
+        drawing.add(pie)
+
+        chart_table = Table(
+            [[legend_table, drawing]],
+            colWidths=[260, 220],
+        )
+        chart_table.setStyle(
+            TableStyle([
+                ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+            ])
+        )
+        story.append(chart_table)
+
+    doc.build(story)
+    response = HttpResponse(buffer.getvalue(), content_type="application/pdf")
+    timestamp = timezone.now().strftime("%Y%m%d_%H%M")
+    response["Content-Disposition"] = f'attachment; filename="caja_menuda_estado_{timestamp}.pdf"'
+    return response
+
+
+def _filter_firebase_expenses(expenses, tecnico, fecha_desde, fecha_hasta):
+    if not expenses:
+        return []
+    filtered = expenses
+    if tecnico:
+        tecnico_lower = tecnico.lower()
+        filtered = [
+            exp for exp in filtered
+            if tecnico_lower in (exp.get("userName") or "").lower()
+        ]
+    if fecha_desde:
+        dt_start = _parse_firebase_fecha(fecha_desde)
+        if dt_start:
+            filtered = [
+                exp for exp in filtered
+                if exp.get("timestamp_dt") and exp["timestamp_dt"].date() >= dt_start
+            ]
+    if fecha_hasta:
+        dt_end = _parse_firebase_fecha(fecha_hasta)
+        if dt_end:
+            filtered = [
+                exp for exp in filtered
+                if exp.get("timestamp_dt") and exp["timestamp_dt"].date() <= dt_end
+            ]
+    return filtered
+
+
+def _wrap_text_pdf(text, max_len):
+    if not text:
+        return ""
+    words = text.split()
+    lines = []
+    current = ""
+    for word in words:
+        if not current:
+            current = word
+            continue
+        if len(current) + 1 + len(word) <= max_len:
+            current = f"{current} {word}"
+        else:
+            lines.append(current)
+            current = word
+    if current:
+        lines.append(current)
+    return "\n".join(lines)
+
+
+def _get_firebase_tecnicos(expenses):
+    nombres = {
+        (exp.get("userName") or "").strip()
+        for exp in (expenses or [])
+        if (exp.get("userName") or "").strip()
+    }
+    return sorted(nombres, key=lambda value: value.lower())
+
+
+def _get_firebase_balances(expenses):
+    user_ids = {
+        exp.get("userId") for exp in (expenses or [])
+        if exp.get("userId")
+    }
+    docs, error = fetch_firestore_collection_docs("users")
+    if error:
+        return {}, error
+    balances = {}
+    for doc in docs:
+        data = doc.get("data", {}) or {}
+        user_id = doc.get("id")
+        if user_ids and user_id not in user_ids:
+            continue
+        if data.get("role") == "COORDINATOR":
+            continue
+        balances[user_id] = data.get("balance", 0)
+    return balances, ""
+
+
+def _map_firebase_balances_by_name(expenses, balances):
+    mapping = {}
+    for exp in (expenses or []):
+        user_id = exp.get("userId")
+        user_name = (exp.get("userName") or "").strip()
+        if not user_id or not user_name:
+            continue
+        if user_id not in balances:
+            continue
+        mapping[user_name] = balances.get(user_id, 0)
+    return mapping
+
+
+def _parse_firebase_fecha(value):
+    for fmt in ("%d/%m/%Y", "%Y-%m-%d"):
+        try:
+            return datetime.strptime(value, fmt).date()
+        except ValueError:
+            continue
+    return None
+
+
+def _date_range_to_ms(fecha_desde, fecha_hasta):
+    start_date = _parse_firebase_fecha(fecha_desde)
+    end_date = _parse_firebase_fecha(fecha_hasta)
+    if not start_date or not end_date:
+        return None, None
+    start_dt = timezone.make_aware(datetime.combine(start_date, time.min))
+    end_dt = timezone.make_aware(datetime.combine(end_date, time.max))
+    return int(start_dt.timestamp() * 1000), int(end_dt.timestamp() * 1000)
 
 
 @login_required
@@ -10492,8 +11535,23 @@ def caja_menuda_create(request):
                 movimiento = form.save(commit=False)
                 movimiento.creado_por = request.user
                 movimiento.save()
-                
-                messages.success(request, '✅ Movimiento de caja menuda registrado exitosamente')
+
+                sync_result = sync_caja_menuda_to_firebase(movimiento, actor=request.user)
+                if sync_result.ok:
+                    movimiento.firebase_transaction_id = sync_result.transaction_id
+                    movimiento.firebase_synced_at = timezone.now()
+                    movimiento.firebase_sync_error = ""
+                    movimiento.save(update_fields=[
+                        'firebase_transaction_id', 'firebase_synced_at', 'firebase_sync_error'
+                    ])
+                    messages.success(request, '✅ Movimiento de caja menuda registrado y sincronizado')
+                else:
+                    movimiento.firebase_sync_error = sync_result.message
+                    movimiento.save(update_fields=['firebase_sync_error'])
+                    messages.warning(
+                        request,
+                        f'⚠️ Movimiento registrado, pero no se pudo sincronizar: {sync_result.message}'
+                    )
                 return redirect('caja_menuda_list')
             except Exception as e:
                 logger.error(f"Error al crear movimiento de caja menuda: {str(e)}")
@@ -10517,11 +11575,33 @@ def caja_menuda_edit(request, pk):
     movimiento = get_object_or_404(CajaMenuda, pk=pk)
     
     if request.method == 'POST':
+        previous_monto = movimiento.monto
+        previous_tipo = movimiento.tipo_movimiento
         form = CajaMenudaForm(request.POST, instance=movimiento)
         if form.is_valid():
             try:
-                form.save()
-                messages.success(request, '✅ Movimiento actualizado exitosamente')
+                movimiento = form.save()
+                sync_result = sync_caja_menuda_to_firebase(
+                    movimiento,
+                    actor=request.user,
+                    previous_monto=previous_monto,
+                    previous_tipo=previous_tipo,
+                )
+                if sync_result.ok:
+                    movimiento.firebase_transaction_id = sync_result.transaction_id
+                    movimiento.firebase_synced_at = timezone.now()
+                    movimiento.firebase_sync_error = ""
+                    movimiento.save(update_fields=[
+                        'firebase_transaction_id', 'firebase_synced_at', 'firebase_sync_error'
+                    ])
+                    messages.success(request, '✅ Movimiento actualizado y sincronizado exitosamente')
+                else:
+                    movimiento.firebase_sync_error = sync_result.message
+                    movimiento.save(update_fields=['firebase_sync_error'])
+                    messages.warning(
+                        request,
+                        f'⚠️ Movimiento actualizado, pero no se pudo sincronizar: {sync_result.message}'
+                    )
                 return redirect('caja_menuda_list')
             except Exception as e:
                 logger.error(f"Error al actualizar movimiento: {str(e)}")
@@ -12965,13 +14045,19 @@ def planillas_trabajadores_diarios_gestor(request):
 @login_required
 def bitacora_dashboard(request):
     """Dashboard principal del módulo de Bitácora"""
-    # TODO: Agregar estadísticas reales cuando se implemente el modelo
+    planificaciones = PlanificacionBitacora.objects.all().select_related('proyecto', 'creado_por')
+    total_registros = planificaciones.count()
+    actividades_programadas = planificaciones.filter(estado='programada').count()
+    completadas = planificaciones.filter(estado='completada').count()
+    en_progreso = planificaciones.filter(estado='en_progreso').count()
+    planificaciones_recientes = planificaciones.order_by('-fecha_inicio', '-creado_en')[:6]
     context = {
         'titulo': 'Bitácora',
-        'total_registros': 0,
-        'actividades_programadas': 0,
-        'completadas': 0,
-        'en_progreso': 0,
+        'total_registros': total_registros,
+        'actividades_programadas': actividades_programadas,
+        'completadas': completadas,
+        'en_progreso': en_progreso,
+        'planificaciones_recientes': planificaciones_recientes,
     }
     return render(request, 'core/bitacora/dashboard.html', context)
 
@@ -12980,18 +14066,33 @@ def bitacora_dashboard(request):
 def bitacora_planificacion(request):
     """Formulario de planificación para la bitácora"""
     proyectos = Proyecto.objects.filter(activo=True).order_by('nombre')
+    firebase_auth_emails, firebase_auth_error = fetch_firebase_auth_emails()
+    firebase_team_leaders, firebase_team_error = fetch_firebase_team_leaders()
+    firebase_team_by_email = {
+        (leader.get("email") or "").strip().lower(): leader
+        for leader in (firebase_team_leaders or [])
+        if leader.get("email")
+    }
     
     colaboradores = []
     trabajadores_diarios = []
     proyecto_seleccionado = None
     
     # Inicializar variables del contexto
-    colaboradores = []
+    colaboradores = [
+        {
+            "email": leader.get("email") or "",
+            "nombre": leader.get("name") or leader.get("email") or "Team Leader",
+            "firebase_id": leader.get("id") or "",
+        }
+        for leader in (firebase_team_leaders or [])
+        if leader.get("email")
+    ]
     trabajadores_diarios = []
     proyecto_seleccionado = None
     form_data = {}  # Para preservar datos del formulario en caso de errores
     
-    if request.method == 'POST' and request.POST.get('guardar'):
+    if request.method == 'POST':
         import logging
         logger = logging.getLogger(__name__)
         logger.info(f"POST recibido para crear planificación. Usuario: {request.user.username}")
@@ -13001,12 +14102,17 @@ def bitacora_planificacion(request):
         proyecto_id = request.POST.get('proyecto')
         titulo = request.POST.get('titulo', '').strip()
         descripcion = request.POST.get('descripcion', '').strip()
+        tareas_payload = request.POST.get('tareas_payload', '').strip()
         fecha_inicio = request.POST.get('fecha_inicio')
         fecha_fin = request.POST.get('fecha_fin')
         estado = request.POST.get('estado', 'programada')
         prioridad = request.POST.get('prioridad', 'media')
         colaboradores_ids = request.POST.getlist('colaboradores')
         trabajadores_diarios_ids = request.POST.getlist('trabajadores_diarios')
+        trabajadores_diarios_ids = []
+        trabajadores_diarios_ids = []
+        firebase_project_id = ""
+        firebase_project_name = ""
         
         logger.info(f"Procesando planificación - Proyecto: {proyecto_id}, Título: {titulo}, Fecha inicio: {fecha_inicio}")
         
@@ -13038,11 +14144,16 @@ def bitacora_planificacion(request):
             if proyecto_id:
                 try:
                     proyecto_seleccionado = Proyecto.objects.get(id=proyecto_id, activo=True)
-                    colaboradores = proyecto_seleccionado.colaboradores.filter(activo=True).order_by('nombre')
-                    trabajadores_diarios = TrabajadorDiario.objects.filter(
-                        proyecto=proyecto_seleccionado,
-                        activo=True
-                    ).order_by('nombre')
+                    colaboradores = [
+                        {
+                            "email": leader.get("email") or "",
+                            "nombre": leader.get("name") or leader.get("email") or "Team Leader",
+                            "firebase_id": leader.get("id") or "",
+                        }
+                        for leader in (firebase_team_leaders or [])
+                        if leader.get("email")
+                    ]
+                    trabajadores_diarios = TrabajadorDiario.objects.none()
                 except Proyecto.DoesNotExist:
                     pass
         else:
@@ -13050,6 +14161,14 @@ def bitacora_planificacion(request):
                 proyecto_seleccionado = Proyecto.objects.get(id=proyecto_id, activo=True)
                 
                 # Crear planificación
+                ensure_result = ensure_bitacora_proyecto(
+                    proyecto_seleccionado.nombre,
+                    actor=request.user
+                )
+                if ensure_result.ok:
+                    firebase_project_id = ensure_result.document_id
+                    firebase_project_name = proyecto_seleccionado.nombre
+
                 planificacion = PlanificacionBitacora.objects.create(
                     proyecto=proyecto_seleccionado,
                     titulo=titulo,
@@ -13058,12 +14177,59 @@ def bitacora_planificacion(request):
                     fecha_fin=fecha_fin if fecha_fin else None,
                     estado=estado,
                     prioridad=prioridad,
-                    creado_por=request.user
+                    creado_por=request.user,
+                    firebase_project_id=firebase_project_id,
+                    firebase_project_name=firebase_project_name
                 )
+
+                if tareas_payload:
+                    try:
+                        tareas_data = json.loads(tareas_payload)
+                    except json.JSONDecodeError:
+                        tareas_data = []
+                    for idx, tarea_data in enumerate(tareas_data):
+                        titulo_tarea = (tarea_data.get('titulo') or '').strip()
+                        if not titulo_tarea:
+                            continue
+                        tarea = BitacoraTarea.objects.create(
+                            planificacion=planificacion,
+                            titulo=titulo_tarea,
+                            descripcion=(tarea_data.get('descripcion') or '').strip() or None,
+                            orden=int(tarea_data.get('orden') or idx),
+                            creado_por=request.user
+                        )
+                        for sub_idx, subtarea_data in enumerate(tarea_data.get('subtareas') or []):
+                            titulo_sub = (subtarea_data.get('titulo') or '').strip()
+                            if not titulo_sub:
+                                continue
+                            BitacoraSubtarea.objects.create(
+                                tarea=tarea,
+                                titulo=titulo_sub,
+                                descripcion=(subtarea_data.get('descripcion') or '').strip() or None,
+                                orden=int(subtarea_data.get('orden') or sub_idx)
+                            )
                 
-                # Asignar colaboradores
+                # Asignar colaboradores (Team Leaders de Firebase)
                 if colaboradores_ids:
-                    planificacion.colaboradores.set(Colaborador.objects.filter(id__in=colaboradores_ids))
+                    colaboradores_objs = []
+                    for email in colaboradores_ids:
+                        email_normalized = (email or "").strip().lower()
+                        if not email_normalized:
+                            continue
+                        leader = firebase_team_by_email.get(email_normalized)
+                        nombre = (leader.get("name") if leader else "") or email_normalized
+                        colaborador, _ = Colaborador.objects.get_or_create(
+                            email__iexact=email_normalized,
+                            defaults={"nombre": nombre, "activo": True},
+                        )
+                        if not colaborador.activo:
+                            colaborador.activo = True
+                            colaborador.save(update_fields=["activo"])
+                        if not colaborador.nombre and nombre:
+                            colaborador.nombre = nombre
+                            colaborador.save(update_fields=["nombre"])
+                        colaboradores_objs.append(colaborador)
+                    planificacion.colaboradores.set(colaboradores_objs)
                 
                 # Asignar trabajadores diarios
                 if trabajadores_diarios_ids:
@@ -13077,6 +14243,22 @@ def bitacora_planificacion(request):
                     descripcion=f'Planificación creada: {planificacion.titulo} - {planificacion.proyecto.nombre}',
                     ip_address=request.META.get('REMOTE_ADDR')
                 )
+
+                sync_result = sync_bitacora_planificacion_to_firebase(planificacion)
+                if sync_result.ok:
+                    planificacion.firebase_document_id = sync_result.document_id
+                    planificacion.firebase_synced_at = timezone.now()
+                    planificacion.firebase_sync_error = ""
+                    planificacion.save(update_fields=[
+                        'firebase_document_id', 'firebase_synced_at', 'firebase_sync_error'
+                    ])
+                else:
+                    planificacion.firebase_sync_error = sync_result.message
+                    planificacion.save(update_fields=['firebase_sync_error'])
+                    messages.warning(
+                        request,
+                        f'Planificación creada, pero no se pudo sincronizar con Firebase: {sync_result.message}'
+                    )
                 
                 messages.success(request, 'Planificación creada exitosamente')
                 return redirect('bitacora_dashboard')
@@ -13085,11 +14267,16 @@ def bitacora_planificacion(request):
                 if proyecto_id:
                     try:
                         proyecto_seleccionado = Proyecto.objects.get(id=proyecto_id, activo=True)
-                        colaboradores = proyecto_seleccionado.colaboradores.filter(activo=True).order_by('nombre')
-                        trabajadores_diarios = TrabajadorDiario.objects.filter(
-                            proyecto=proyecto_seleccionado,
-                            activo=True
-                        ).order_by('nombre')
+                        colaboradores = [
+                            {
+                                "email": leader.get("email") or "",
+                                "nombre": leader.get("name") or leader.get("email") or "Team Leader",
+                                "firebase_id": leader.get("id") or "",
+                            }
+                            for leader in (firebase_team_leaders or [])
+                            if leader.get("email")
+                        ]
+                        trabajadores_diarios = TrabajadorDiario.objects.none()
                     except:
                         pass
             except Exception as e:
@@ -13101,11 +14288,16 @@ def bitacora_planificacion(request):
                 if proyecto_id:
                     try:
                         proyecto_seleccionado = Proyecto.objects.get(id=proyecto_id, activo=True)
-                        colaboradores = proyecto_seleccionado.colaboradores.filter(activo=True).order_by('nombre')
-                        trabajadores_diarios = TrabajadorDiario.objects.filter(
-                            proyecto=proyecto_seleccionado,
-                            activo=True
-                        ).order_by('nombre')
+                        colaboradores = [
+                            {
+                                "email": leader.get("email") or "",
+                                "nombre": leader.get("name") or leader.get("email") or "Team Leader",
+                                "firebase_id": leader.get("id") or "",
+                            }
+                            for leader in (firebase_team_leaders or [])
+                            if leader.get("email")
+                        ]
+                        trabajadores_diarios = TrabajadorDiario.objects.none()
                     except:
                         pass
     else:
@@ -13115,11 +14307,16 @@ def bitacora_planificacion(request):
         if proyecto_id:
             try:
                 proyecto_seleccionado = Proyecto.objects.get(id=proyecto_id, activo=True)
-                colaboradores = proyecto_seleccionado.colaboradores.filter(activo=True).order_by('nombre')
-                trabajadores_diarios = TrabajadorDiario.objects.filter(
-                    proyecto=proyecto_seleccionado,
-                    activo=True
-                ).order_by('nombre')
+                colaboradores = [
+                    {
+                        "email": leader.get("email") or "",
+                        "nombre": leader.get("name") or leader.get("email") or "Team Leader",
+                        "firebase_id": leader.get("id") or "",
+                    }
+                    for leader in (firebase_team_leaders or [])
+                    if leader.get("email")
+                ]
+                trabajadores_diarios = TrabajadorDiario.objects.none()
             except Proyecto.DoesNotExist:
                 messages.error(request, 'Proyecto no encontrado')
     
@@ -13130,6 +14327,9 @@ def bitacora_planificacion(request):
         'trabajadores_diarios': trabajadores_diarios,
         'proyecto_seleccionado': proyecto_seleccionado,
         'form_data': form_data,  # Pasar datos del formulario para preservarlos
+        'firebase_auth_error': firebase_auth_error,
+        'firebase_team_error': firebase_team_error,
+        'solo_firebase_auth': True,
     }
     return render(request, 'core/bitacora/planificacion.html', context)
 
@@ -13149,9 +14349,18 @@ def bitacora_calendario(request):
     
     if estado:
         planificaciones = planificaciones.filter(estado=estado)
+
+    for plan in planificaciones:
+        sync_bitacora_updates(plan, actor=request.user, sync_avances=False)
     
     # Convertir a formato de calendario
-    eventos_calendario = [plan.to_calendar_event() for plan in planificaciones]
+    progress_map = _build_bitacora_progress_map(planificaciones)
+    eventos_calendario = []
+    for plan in planificaciones:
+        event = plan.to_calendar_event()
+        event.setdefault('extendedProps', {})
+        event['extendedProps']['progreso'] = progress_map.get(plan.id, 0)
+        eventos_calendario.append(event)
     
     proyectos = Proyecto.objects.filter(activo=True).order_by('nombre')
     
@@ -13176,7 +14385,12 @@ def bitacora_kanban(request):
     
     if proyecto_id:
         planificaciones = planificaciones.filter(proyecto_id=proyecto_id)
+
+    for plan in planificaciones:
+        sync_bitacora_updates(plan, actor=request.user, sync_avances=False)
     
+    progress_map = _build_bitacora_progress_map(planificaciones)
+
     # Agrupar por estado
     planificaciones_por_estado = {
         'programada': planificaciones.filter(estado='programada').order_by('fecha_inicio'),
@@ -13192,6 +14406,7 @@ def bitacora_kanban(request):
         'planificaciones_por_estado': planificaciones_por_estado,
         'proyectos': proyectos,
         'proyecto_seleccionado': proyecto_id,
+        'progress_map': progress_map,
     }
     return render(request, 'core/bitacora/kanban.html', context)
 
@@ -13215,6 +14430,9 @@ def bitacora_timeline(request):
     
     if fecha_fin:
         planificaciones = planificaciones.filter(fecha_fin__lte=fecha_fin if fecha_fin else planificaciones.filter(fecha_inicio__lte=fecha_fin))
+
+    for plan in planificaciones:
+        sync_bitacora_updates(plan, actor=request.user, sync_avances=False)
     
     # Agrupar por proyecto para el timeline
     proyectos_con_planificaciones = {}
@@ -13240,6 +14458,244 @@ def bitacora_timeline(request):
 
 
 @login_required
+def bitacora_tablero_proyecto(request):
+    """Tablero de asignaciones por proyecto y fecha"""
+    proyectos = Proyecto.objects.filter(activo=True).order_by('nombre')
+    proyecto_id = request.GET.get('proyecto_id')
+    fecha = request.GET.get('fecha')
+    if not fecha:
+        fecha = timezone.localdate().isoformat()
+
+    planificaciones = PlanificacionBitacora.objects.none()
+    if proyecto_id:
+        planificaciones = (
+            PlanificacionBitacora.objects.filter(proyecto_id=proyecto_id)
+            .select_related('proyecto')
+            .prefetch_related('tareas__subtareas')
+            .order_by('-fecha_inicio')
+        )
+        for plan in planificaciones:
+            sync_bitacora_updates(plan, actor=request.user, sync_avances=False)
+
+    asignaciones = BitacoraAsignacion.objects.filter(fecha=fecha)
+    if proyecto_id:
+        asignaciones = asignaciones.filter(planificacion__proyecto_id=proyecto_id)
+    asignaciones = asignaciones.select_related('tarea', 'subtarea', 'colaborador', 'planificacion')
+
+    asignaciones_por_item = {}
+    for asignacion in asignaciones:
+        if asignacion.subtarea_id:
+            key = f"sub_{asignacion.subtarea_id}"
+        else:
+            key = f"tarea_{asignacion.tarea_id}"
+        asignaciones_por_item.setdefault(key, []).append(asignacion)
+
+    asignaciones_estado = {
+        'pendiente': [],
+        'en_progreso': [],
+        'completada': [],
+    }
+    for asignacion in asignaciones:
+        asignaciones_estado.setdefault(asignacion.estado, []).append(asignacion)
+
+    pendientes_items = []
+    items_dia = []
+    if planificaciones:
+        for plan in planificaciones:
+            for tarea in plan.tareas.all():
+                key = f"tarea_{tarea.id}"
+                items_dia.append({
+                    "tipo": "tarea",
+                    "id": tarea.id,
+                    "titulo": tarea.titulo,
+                    "plan_id": plan.id,
+                    "asignaciones": asignaciones_por_item.get(key, []),
+                })
+                if key not in asignaciones_por_item:
+                    pendientes_items.append({
+                        "tipo": "tarea",
+                        "id": tarea.id,
+                        "titulo": tarea.titulo,
+                        "plan_id": plan.id,
+                    })
+                for subtarea in tarea.subtareas.all():
+                    key = f"sub_{subtarea.id}"
+                    items_dia.append({
+                        "tipo": "subtarea",
+                        "id": subtarea.id,
+                        "titulo": subtarea.titulo,
+                        "plan_id": plan.id,
+                        "asignaciones": asignaciones_por_item.get(key, []),
+                    })
+                    if key not in asignaciones_por_item:
+                        pendientes_items.append({
+                            "tipo": "subtarea",
+                            "id": subtarea.id,
+                            "titulo": subtarea.titulo,
+                            "plan_id": plan.id,
+                        })
+
+    avances_map = {}
+    avances = BitacoraAvanceDiario.objects.filter(fecha=fecha)
+    if proyecto_id:
+        avances = avances.filter(asignacion__planificacion__proyecto_id=proyecto_id)
+    for avance in avances.order_by('-creado_en'):
+        if avance.asignacion_id not in avances_map:
+            avances_map[avance.asignacion_id] = avance
+
+    # Eventos de calendario (mes seleccionado)
+    fecha_val = datetime.strptime(fecha, "%Y-%m-%d").date()
+    month_start = fecha_val.replace(day=1)
+    last_day = calendar.monthrange(fecha_val.year, fecha_val.month)[1]
+    month_end = fecha_val.replace(day=last_day)
+    asignaciones_mes = BitacoraAsignacion.objects.filter(
+        fecha__gte=month_start,
+        fecha__lte=month_end,
+    )
+    if proyecto_id:
+        asignaciones_mes = asignaciones_mes.filter(planificacion__proyecto_id=proyecto_id)
+    asignaciones_mes = asignaciones_mes.select_related('tarea', 'subtarea', 'planificacion')
+
+    eventos_asignaciones = []
+    for asignacion in asignaciones_mes:
+        titulo = asignacion.subtarea.titulo if asignacion.subtarea_id else asignacion.tarea.titulo if asignacion.tarea_id else "Asignación"
+        tecnico = asignacion.tecnico_nombre or asignacion.tecnico_email
+        eventos_asignaciones.append({
+            "id": f"asg_{asignacion.id}",
+            "title": f"{titulo} ({tecnico})",
+            "start": asignacion.fecha.isoformat(),
+            "backgroundColor": "#667eea" if asignacion.estado == "pendiente" else "#ffc107" if asignacion.estado == "en_progreso" else "#28a745",
+            "borderColor": "#667eea" if asignacion.estado == "pendiente" else "#ffc107" if asignacion.estado == "en_progreso" else "#28a745",
+            "extendedProps": {
+                "porcentaje": asignacion.porcentaje,
+                "estado": asignacion.estado,
+                "planificacion_id": asignacion.planificacion_id,
+            }
+        })
+
+    team_leaders, team_error = fetch_firebase_team_leaders()
+    asignaciones_por_tecnico = { (leader.get("email") or "").lower(): [] for leader in (team_leaders or []) }
+    for asignacion in asignaciones:
+        email = (asignacion.tecnico_email or "").lower()
+        asignaciones_por_tecnico.setdefault(email, []).append(asignacion)
+    progress_map = _build_bitacora_progress_map(planificaciones)
+
+    context = {
+        'proyectos': proyectos,
+        'proyecto_id': proyecto_id,
+        'fecha': fecha,
+        'planificaciones': planificaciones,
+        'asignaciones_por_item': asignaciones_por_item,
+        'asignaciones_estado': asignaciones_estado,
+        'eventos_asignaciones': json.dumps(eventos_asignaciones, ensure_ascii=False),
+        'pendientes_items': pendientes_items,
+        'items_dia': items_dia,
+        'avances_map': avances_map,
+        'team_leaders': team_leaders,
+        'team_error': team_error,
+        'asignaciones_por_tecnico': asignaciones_por_tecnico,
+        'progress_map': progress_map,
+    }
+    return render(request, 'core/bitacora/tablero_proyecto.html', context)
+
+
+@login_required
+@require_http_methods(["POST"])
+def bitacora_asignar_item(request):
+    """Asignar tarea o subtarea a un técnico en una fecha"""
+    planificacion_id = request.POST.get('planificacion_id')
+    tarea_id = request.POST.get('tarea_id') or None
+    subtarea_id = request.POST.get('subtarea_id') or None
+    tecnico_email = (request.POST.get('tecnico_email') or '').strip().lower()
+    tecnico_nombre = (request.POST.get('tecnico_nombre') or '').strip()
+    fecha = request.POST.get('fecha') or timezone.localdate().isoformat()
+    porcentaje = request.POST.get('porcentaje') or 0
+
+    if not planificacion_id or not tecnico_email:
+        messages.error(request, 'Debe seleccionar técnico y planificación.')
+        return redirect('bitacora_tablero_proyecto')
+
+    planificacion = get_object_or_404(PlanificacionBitacora, id=planificacion_id)
+    tarea = BitacoraTarea.objects.filter(id=tarea_id).first() if tarea_id else None
+    subtarea = BitacoraSubtarea.objects.filter(id=subtarea_id).first() if subtarea_id else None
+    if not tarea and not subtarea:
+        messages.error(request, 'Debe seleccionar una actividad o subactividad.')
+        return redirect(f"{reverse('bitacora_tablero_proyecto')}?proyecto_id={planificacion.proyecto_id}&fecha={fecha}")
+
+    try:
+        fecha_val = datetime.strptime(fecha, "%Y-%m-%d").date()
+    except ValueError:
+        fecha_val = timezone.localdate()
+
+    if not tecnico_nombre:
+        team_leaders, _ = fetch_firebase_team_leaders()
+        leader_map = {
+            (leader.get("email") or "").strip().lower(): leader
+            for leader in (team_leaders or [])
+            if leader.get("email")
+        }
+        leader = leader_map.get(tecnico_email, {})
+        tecnico_nombre = leader.get("name") or tecnico_email
+
+    colaborador, _ = Colaborador.objects.get_or_create(
+        email__iexact=tecnico_email,
+        defaults={"nombre": tecnico_nombre or tecnico_email, "activo": True},
+    )
+    if not colaborador.activo:
+        colaborador.activo = True
+        colaborador.save(update_fields=["activo"])
+    if tecnico_nombre and colaborador.nombre != tecnico_nombre:
+        colaborador.nombre = tecnico_nombre
+        colaborador.save(update_fields=["nombre"])
+
+    try:
+        porcentaje_val = int(porcentaje)
+    except (TypeError, ValueError):
+        porcentaje_val = 0
+
+    asignacion = BitacoraAsignacion.objects.create(
+        planificacion=planificacion,
+        tarea=tarea,
+        subtarea=subtarea,
+        colaborador=colaborador,
+        tecnico_email=tecnico_email,
+        tecnico_nombre=tecnico_nombre or colaborador.nombre,
+        fecha=fecha_val,
+        porcentaje=porcentaje_val,
+        comentario="",
+        creado_por=request.user,
+    )
+    asignacion.actualizar_estado_porcentaje()
+    asignacion.save(update_fields=["estado"])
+
+    sync_result = sync_bitacora_asignacion_to_firebase(asignacion)
+    if sync_result.ok:
+        asignacion.firebase_document_id = sync_result.document_id
+        asignacion.firebase_synced_at = timezone.now()
+        asignacion.firebase_sync_error = ""
+        asignacion.save(update_fields=["firebase_document_id", "firebase_synced_at", "firebase_sync_error"])
+    else:
+        asignacion.firebase_sync_error = sync_result.message
+        asignacion.save(update_fields=["firebase_sync_error"])
+        messages.warning(request, f'Asignación creada, pero no se pudo sincronizar con Firebase: {sync_result.message}')
+
+    messages.success(request, 'Asignación creada.')
+    return redirect(f"{reverse('bitacora_tablero_proyecto')}?proyecto_id={planificacion.proyecto_id}&fecha={fecha}")
+
+
+@login_required
+@require_http_methods(["POST"])
+def bitacora_desasignar_item(request, asignacion_id):
+    """Eliminar asignación"""
+    asignacion = get_object_or_404(BitacoraAsignacion, id=asignacion_id)
+    proyecto_id = asignacion.planificacion.proyecto_id
+    fecha = asignacion.fecha.isoformat()
+    asignacion.delete()
+    messages.success(request, 'Asignación eliminada.')
+    return redirect(f"{reverse('bitacora_tablero_proyecto')}?proyecto_id={proyecto_id}&fecha={fecha}")
+
+
+@login_required
 def bitacora_planificacion_detail(request, planificacion_id):
     """Vista de detalle de una planificación (ticket)"""
     planificacion = get_object_or_404(
@@ -13247,16 +14703,20 @@ def bitacora_planificacion_detail(request, planificacion_id):
         .prefetch_related('colaboradores', 'trabajadores_diarios'),
         id=planificacion_id
     )
+
+    sync_bitacora_updates(planificacion, actor=request.user)
     
     # Obtener avances ordenados por fecha
     avances = planificacion.avances.all().select_related('registrado_por').prefetch_related('colaboradores', 'trabajadores_diarios').order_by('-fecha_avance', '-creado_en')
     
-    # Obtener trabajadores disponibles del proyecto para el formulario de avances
-    colaboradores = planificacion.proyecto.colaboradores.filter(activo=True).order_by('nombre')
-    trabajadores_diarios = TrabajadorDiario.objects.filter(
-        proyecto=planificacion.proyecto,
-        activo=True
-    ).order_by('nombre')
+    # Obtener trabajadores disponibles (solo usuarios con Firebase Auth)
+    firebase_auth_emails, _ = fetch_firebase_auth_emails()
+    colaboradores = Colaborador.objects.filter(activo=True).order_by('nombre')
+    if firebase_auth_emails is not None:
+        colaboradores = colaboradores.filter(email__isnull=False).exclude(email="").filter(
+            email__in=firebase_auth_emails
+        )
+    trabajadores_diarios = TrabajadorDiario.objects.none()
     
     context = {
         'planificacion': planificacion,
@@ -13308,6 +14768,32 @@ def bitacora_avance_create(request, planificacion_id):
                     descripcion=f'Avance registrado en planificación: {planificacion.titulo}',
                     ip_address=request.META.get('REMOTE_ADDR')
                 )
+
+                sync_result = sync_bitacora_avance_to_firebase(avance)
+                if sync_result.ok:
+                    avance.firebase_document_id = sync_result.document_id
+                    avance.firebase_synced_at = timezone.now()
+                    avance.firebase_sync_error = ""
+                    avance.firebase_source = "web"
+                    avance.save(update_fields=[
+                        'firebase_document_id', 'firebase_synced_at', 'firebase_sync_error', 'firebase_source'
+                    ])
+                else:
+                    avance.firebase_sync_error = sync_result.message
+                    avance.save(update_fields=['firebase_sync_error'])
+
+                if planificacion.estado == 'en_progreso':
+                    planificacion_sync = sync_bitacora_planificacion_to_firebase(planificacion)
+                    if planificacion_sync.ok:
+                        planificacion.firebase_document_id = planificacion_sync.document_id
+                        planificacion.firebase_synced_at = timezone.now()
+                        planificacion.firebase_sync_error = ""
+                        planificacion.save(update_fields=[
+                            'firebase_document_id', 'firebase_synced_at', 'firebase_sync_error'
+                        ])
+                    else:
+                        planificacion.firebase_sync_error = planificacion_sync.message
+                        planificacion.save(update_fields=['firebase_sync_error'])
                 
                 messages.success(request, 'Avance registrado exitosamente')
             except Exception as e:
@@ -13316,3 +14802,228 @@ def bitacora_avance_create(request, planificacion_id):
             messages.error(request, 'La descripción del avance es obligatoria')
     
     return redirect('bitacora_planificacion_detail', planificacion_id=planificacion_id)
+
+
+# ============================================================================
+# EXPORTACION DE REPORTES (FIREBASE)
+# ============================================================================
+
+FIREBASE_REPORT_COLLECTIONS = {
+    "routers_nokia": {
+        "label": "Instalaciones Routers Nokia",
+        "collection": "instalacionesRoutersTigo",
+        "description": "Reportes de instalación y configuración de routers Nokia.",
+        "icon": "fas fa-network-wired",
+    },
+    "enlaces_ericsson": {
+        "label": "Enlaces Ericsson",
+        "collection": "reportesEnlacesEricssonTigo",
+        "description": "Reportes de enlaces y antenas Ericsson.",
+        "icon": "fas fa-link",
+    },
+    "ran_setar": {
+        "label": "Instalaciones Nokia RAN",
+        "collection": "InstalacionesRanSetar",
+        "description": "Instalaciones y evidencias de sitios Nokia RAN.",
+        "icon": "fas fa-broadcast-tower",
+    },
+    "metro_celdas": {
+        "label": "Instalaciones Metro Celdas",
+        "collection": "InstalacionesNokiaMetroCeldas",
+        "description": "Instalaciones Nokia Metro Celdas.",
+        "icon": "fas fa-satellite-dish",
+    },
+}
+
+DEFAULT_REPORT_TYPE = "routers_nokia"
+
+
+def _get_report_config(tipo):
+    if tipo in FIREBASE_REPORT_COLLECTIONS:
+        return FIREBASE_REPORT_COLLECTIONS[tipo]
+    return FIREBASE_REPORT_COLLECTIONS.get(DEFAULT_REPORT_TYPE)
+
+
+def _build_report_summary(tipo, data):
+    if tipo == "routers_nokia":
+        titulo = data.get("nombreSitio") or "Reporte sin nombre"
+        detalle = data.get("tipoEquipo") or ""
+        fecha = data.get("fecha") or ""
+        return titulo, detalle, fecha
+    if tipo == "enlaces_ericsson":
+        generales = data.get("DatosGenerales") or {}
+        sitio_a = generales.get("SitioA") or "Sitio A"
+        sitio_b = generales.get("SitioB") or "Sitio B"
+        titulo = f"Enlace: {sitio_a} - {sitio_b}"
+        return titulo, "", ""
+    if tipo == "ran_setar":
+        titulo = data.get("nombre") or "Instalacion sin nombre"
+        detalle = data.get("region") or ""
+        fecha = data.get("fecha") or ""
+        return titulo, detalle, fecha
+    if tipo == "metro_celdas":
+        titulo = data.get("nombre") or "Instalacion sin nombre"
+        detalle = data.get("region") or ""
+        fecha = data.get("fecha") or ""
+        return titulo, detalle, fecha
+    return "Reporte", "", ""
+
+
+def _flatten_for_csv(data, parent_key=""):
+    items = {}
+    for key, value in (data or {}).items():
+        normalized_key = str(key)
+        new_key = f"{parent_key}.{normalized_key}" if parent_key else normalized_key
+        if isinstance(value, dict):
+            items.update(_flatten_for_csv(value, parent_key=new_key))
+        elif isinstance(value, list):
+            items[new_key] = json.dumps(value, ensure_ascii=False)
+        else:
+            items[new_key] = value
+    return items
+
+
+def _normalize_csv_value(value):
+    if value is None:
+        return ""
+    if isinstance(value, (dict, list)):
+        return json.dumps(value, ensure_ascii=False)
+    return str(value)
+
+
+@login_required
+def reportes_exportacion(request):
+    tipo = request.GET.get("tipo", DEFAULT_REPORT_TYPE)
+    if tipo not in FIREBASE_REPORT_COLLECTIONS:
+        tipo = DEFAULT_REPORT_TYPE
+    include_drafts = request.GET.get("borradores") == "1"
+    limit = request.GET.get("limit")
+    try:
+        limit = int(limit) if limit else 200
+    except ValueError:
+        limit = 200
+
+    config = _get_report_config(tipo)
+    reportes = []
+    firebase_error = ""
+
+    if config:
+        reportes, firebase_error = fetch_firestore_collection_docs(
+            config["collection"],
+            limit=limit,
+            include_drafts=include_drafts,
+        )
+
+    items = []
+    for doc in reportes:
+        titulo, detalle, fecha = _build_report_summary(tipo, doc.get("data", {}))
+        items.append(
+            {
+                "id": doc.get("id"),
+                "titulo": titulo,
+                "detalle": detalle,
+                "fecha": fecha,
+                "raw": doc.get("data", {}),
+            }
+        )
+
+    context = {
+        "tipo": tipo,
+        "config": config,
+        "items": items,
+        "total_items": len(items),
+        "firebase_error": firebase_error,
+        "include_drafts": include_drafts,
+        "limit": limit,
+        "report_types": FIREBASE_REPORT_COLLECTIONS,
+    }
+
+    return render(request, "core/reportes/exportacion.html", context)
+
+
+@login_required
+def reportes_exportacion_exportar(request, tipo):
+    if tipo not in FIREBASE_REPORT_COLLECTIONS:
+        return HttpResponse("Tipo de reporte no soportado", status=404)
+
+    config = _get_report_config(tipo)
+    if not config:
+        return HttpResponse("Tipo de reporte no soportado", status=404)
+
+    formato = request.GET.get("formato", "json").lower()
+    doc_id = request.GET.get("doc_id")
+    include_drafts = request.GET.get("borradores") == "1"
+
+    if doc_id:
+        doc, firebase_error = fetch_firestore_document(config["collection"], doc_id)
+        if doc is None:
+            return HttpResponse(firebase_error or "Documento no encontrado", status=404)
+        documentos = [doc]
+    else:
+        documentos, firebase_error = fetch_firestore_collection_docs(
+            config["collection"],
+            include_drafts=include_drafts,
+        )
+
+    if firebase_error:
+        return HttpResponse(firebase_error, status=400)
+
+    timestamp = timezone.now().strftime("%Y%m%d_%H%M")
+
+    if formato == "pdf":
+        if not doc_id:
+            return HttpResponse(
+                "Selecciona un reporte especifico para exportar en PDF.",
+                status=400,
+            )
+
+        data = documentos[0].get("data", {})
+        pdf_bytes, error = generar_pdf_reporte(tipo, doc_id, data)
+        if error:
+            return HttpResponse(error, status=500)
+
+        titulo, _, _ = _build_report_summary(tipo, data)
+        safe_title = re.sub(r"[^A-Za-z0-9_-]+", "_", titulo).strip("_") or tipo
+        filename = f"reporte_{safe_title}_{doc_id[:8]}_{timestamp}.pdf"
+        response = HttpResponse(pdf_bytes, content_type="application/pdf")
+        response["Content-Disposition"] = f'attachment; filename="{filename}"'
+        return response
+
+    if formato == "csv":
+        rows = []
+        headers_set = set()
+        for doc in documentos:
+            row = {"document_id": doc.get("id")}
+            flat = _flatten_for_csv(doc.get("data", {}))
+            row.update(flat)
+            rows.append(row)
+            headers_set.update(row.keys())
+
+        ordered_headers = ["document_id"] + sorted(
+            header for header in headers_set if header != "document_id"
+        )
+
+        output = StringIO()
+        writer = csv.DictWriter(output, fieldnames=ordered_headers)
+        writer.writeheader()
+        for row in rows:
+            writer.writerow(
+                {key: _normalize_csv_value(row.get(key)) for key in ordered_headers}
+            )
+
+        filename = f"reportes_{tipo}_{timestamp}.csv"
+        response = HttpResponse(output.getvalue(), content_type="text/csv")
+        response["Content-Disposition"] = f'attachment; filename="{filename}"'
+        return response
+
+    payload = []
+    for doc in documentos:
+        payload.append({"id": doc.get("id"), "data": doc.get("data", {})})
+
+    filename = f"reportes_{tipo}_{timestamp}.json"
+    response = HttpResponse(
+        json.dumps(payload, ensure_ascii=False, indent=2),
+        content_type="application/json",
+    )
+    response["Content-Disposition"] = f'attachment; filename="{filename}"'
+    return response

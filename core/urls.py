@@ -45,6 +45,9 @@ urlpatterns = [
     path('bitacora/calendario/', views.bitacora_calendario, name='bitacora_calendario'),
     path('bitacora/kanban/', views.bitacora_kanban, name='bitacora_kanban'),
     path('bitacora/timeline/', views.bitacora_timeline, name='bitacora_timeline'),
+    path('bitacora/tablero/', views.bitacora_tablero_proyecto, name='bitacora_tablero_proyecto'),
+    path('bitacora/asignar/', views.bitacora_asignar_item, name='bitacora_asignar_item'),
+    path('bitacora/asignacion/<int:asignacion_id>/eliminar/', views.bitacora_desasignar_item, name='bitacora_desasignar_item'),
     path('bitacora/planificacion/<int:planificacion_id>/', views.bitacora_planificacion_detail, name='bitacora_planificacion_detail'),
     path('bitacora/planificacion/<int:planificacion_id>/avance/', views.bitacora_avance_create, name='bitacora_avance_create'),
     path('planillas/<int:planilla_id>/pdf/', views.planilla_liquidada_pdf, name='planilla_liquidada_pdf'),
@@ -65,6 +68,11 @@ urlpatterns = [
     path('caja-menuda/crear/', views.caja_menuda_create, name='caja_menuda_create'),
     path('caja-menuda/<int:pk>/editar/', views.caja_menuda_edit, name='caja_menuda_edit'),
     path('caja-menuda/<int:pk>/eliminar/', views.caja_menuda_delete, name='caja_menuda_delete'),
+    path('caja-menuda/cuadre/', views.caja_menuda_cuadre, name='caja_menuda_cuadre'),
+    path('caja-menuda/firebase/depositar/', views.caja_menuda_firebase_deposit, name='caja_menuda_firebase_deposit'),
+    path('caja-menuda/firebase/exportar/', views.caja_menuda_firebase_export, name='caja_menuda_firebase_export'),
+    path('caja-menuda/firebase/exportar-pdf/', views.caja_menuda_firebase_export_pdf, name='caja_menuda_firebase_export_pdf'),
+    path('caja-menuda/firebase/<str:transaction_id>/', views.caja_menuda_firebase_detail, name='caja_menuda_firebase_detail'),
     
     # Torreros - Dashboard y Servicios
     path('torreros/', views.torreros_dashboard, name='torreros_dashboard'),
@@ -155,9 +163,18 @@ urlpatterns = [
     path('facturas/reportes/pdf/', views.facturas_reporte_pdf, name='facturas_reporte_pdf'),
     path('facturas/reportes/excel/', views.facturas_reporte_excel, name='facturas_reporte_excel'),
     path('facturas/reportes/detallado/', views.facturas_reporte_detallado, name='facturas_reporte_detallado'),
+
+    # Exportación de Reportes (Firebase)
+    path('reportes/exportacion/', views.reportes_exportacion, name='reportes_exportacion'),
+    path(
+        'reportes/exportacion/<str:tipo>/exportar/',
+        views.reportes_exportacion_exportar,
+        name='reportes_exportacion_exportar'
+    ),
     
     # Egresos
     path('egresos/dashboard/', views.gastos_dashboard, name='egresos_dashboard'),
+    path('egresos/prorrateo-administrativo/', views.egresos_prorrateo_administrativo, name='egresos_prorrateo_administrativo'),
     path('egresos/', views.gastos_list, name='egresos_list'),
     path('egresos/exportar/pdf/', views.gastos_exportar_pdf, name='egresos_exportar_pdf'),
     path('egresos/reporte-contable/', views.gastos_reporte_contable, name='egresos_reporte_contable'),
@@ -174,6 +191,16 @@ urlpatterns = [
     path('pagos/crear/', views.pago_create, name='pago_create'),
     path('pagos/<int:pago_id>/editar/', views.pago_edit, name='pago_edit'),
     path('pagos/<int:pago_id>/eliminar/', views.pago_delete, name='pago_delete'),
+    
+    # Bancos
+    path('bancos/', views.bancos_list, name='bancos_list'),
+    path('bancos/crear/', views.banco_create, name='banco_create'),
+    path('bancos/<int:cuenta_id>/editar/', views.banco_edit, name='banco_edit'),
+    path('bancos/<int:cuenta_id>/eliminar/', views.banco_delete, name='banco_delete'),
+    path('bancos/movimientos/', views.movimientos_list, name='movimientos_list'),
+    path('bancos/movimientos/crear/', views.movimiento_create, name='movimiento_create'),
+    path('bancos/movimientos/<int:movimiento_id>/editar/', views.movimiento_edit, name='movimiento_edit'),
+    path('bancos/movimientos/<int:movimiento_id>/eliminar/', views.movimiento_delete, name='movimiento_delete'),
     
     # Categorías de Egreso
     path('categorias-egreso/', views.categorias_gasto_list, name='categoria_egreso_list'),

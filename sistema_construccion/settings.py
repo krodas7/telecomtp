@@ -18,8 +18,9 @@ from dotenv import load_dotenv
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# Cargar variables de entorno desde .env
+# Cargar variables de entorno desde .env y local.env (si existen)
 load_dotenv(BASE_DIR / '.env')
+load_dotenv(BASE_DIR / 'local.env')
 
 
 # Quick-start development settings - unsuitable for production
@@ -186,6 +187,31 @@ if DEBUG:
 
 # URL base para enlaces en emails
 BASE_URL = 'http://localhost:8000'
+
+# ----------------------------------------------------------------------------
+# Firebase (Caja Menuda / App Móvil)
+# ----------------------------------------------------------------------------
+FIREBASE_ENABLED = os.environ.get('FIREBASE_ENABLED', 'False').lower() in ('true', '1', 'yes')
+FIREBASE_CREDENTIALS_FILE = os.environ.get('FIREBASE_CREDENTIALS_FILE', '')
+FIREBASE_PROJECT_ID = os.environ.get('FIREBASE_PROJECT_ID', '')
+FIREBASE_CAJA_MENUDA_USER_ID = os.environ.get('FIREBASE_CAJA_MENUDA_USER_ID', '')
+FIREBASE_CAJA_MENUDA_USER_NAME = os.environ.get('FIREBASE_CAJA_MENUDA_USER_NAME', 'Caja Menuda')
+FIREBASE_COORDINATOR_ID = os.environ.get('FIREBASE_COORDINATOR_ID', '')
+FIREBASE_BITACORA_PLANIFICACIONES_COLLECTION = os.environ.get(
+    'FIREBASE_BITACORA_PLANIFICACIONES_COLLECTION', 'bitacora_planificaciones'
+)
+FIREBASE_BITACORA_AVANCES_COLLECTION = os.environ.get(
+    'FIREBASE_BITACORA_AVANCES_COLLECTION', 'bitacora_avances'
+)
+FIREBASE_BITACORA_PROYECTOS_COLLECTION = os.environ.get(
+    'FIREBASE_BITACORA_PROYECTOS_COLLECTION', 'bitacora_proyectos'
+)
+FIREBASE_BITACORA_ASIGNACIONES_COLLECTION = os.environ.get(
+    'FIREBASE_BITACORA_ASIGNACIONES_COLLECTION', 'bitacora_asignaciones'
+)
+FIREBASE_BITACORA_AVANCES_DIARIOS_COLLECTION = os.environ.get(
+    'FIREBASE_BITACORA_AVANCES_DIARIOS_COLLECTION', 'bitacora_avances_diarios'
+)
 
 # Configuración de caché con fallback
 # Configuración de cache simplificada (sin Redis)

@@ -8,7 +8,8 @@ from .models import (
     ArchivoProyecto, CarpetaProyecto, ConfiguracionSistema,
     Cotizacion, ItemCotizacion, ItemReutilizable, ConfiguracionPlanilla, PlanillaLiquidada,
     EventoCalendario, NotaPostit, CajaMenuda, ServicioTorrero, RegistroDiasTrabajados, 
-    PagoServicioTorrero, Torrero, AsignacionTorrero
+    PagoServicioTorrero, Torrero, AsignacionTorrero,
+    BancoCuenta, MovimientoBanco
 )
 
 
@@ -167,6 +168,20 @@ class PagoAdmin(admin.ModelAdmin):
     list_editable = ['estado']
 
 
+@admin.register(BancoCuenta)
+class BancoCuentaAdmin(admin.ModelAdmin):
+    list_display = ['nombre', 'banco', 'numero_cuenta', 'tipo_cuenta', 'moneda', 'saldo_inicial', 'saldo_actual', 'activo']
+    list_filter = ['activo', 'tipo_cuenta', 'moneda']
+    search_fields = ['nombre', 'banco', 'numero_cuenta']
+
+
+@admin.register(MovimientoBanco)
+class MovimientoBancoAdmin(admin.ModelAdmin):
+    list_display = ['id', 'cuenta', 'tipo', 'monto', 'fecha_movimiento', 'factura', 'pago', 'gasto']
+    list_filter = ['tipo', 'fecha_movimiento', 'cuenta']
+    search_fields = ['descripcion', 'referencia', 'cuenta__nombre']
+
+
 @admin.register(CategoriaGasto)
 class CategoriaGastoAdmin(admin.ModelAdmin):
     list_display = ['nombre', 'descripcion', 'creado_en']
@@ -175,8 +190,8 @@ class CategoriaGastoAdmin(admin.ModelAdmin):
 
 @admin.register(Gasto)
 class GastoAdmin(admin.ModelAdmin):
-    list_display = ['descripcion', 'proyecto', 'categoria', 'monto', 'fecha_gasto', 'aprobado']
-    list_filter = ['aprobado', 'categoria', 'fecha_gasto', 'proyecto']
+    list_display = ['descripcion', 'proyecto', 'categoria', 'monto', 'fecha_gasto', 'aprobado', 'es_administrativo', 'es_prorrateado']
+    list_filter = ['aprobado', 'es_administrativo', 'es_prorrateado', 'categoria', 'fecha_gasto', 'proyecto']
     search_fields = ['descripcion', 'proyecto__nombre']
     list_editable = ['aprobado']
     date_hierarchy = 'fecha_gasto'
@@ -425,17 +440,21 @@ class NotaPostitAdmin(admin.ModelAdmin):
 
 @admin.register(CajaMenuda)
 class CajaMenudaAdmin(admin.ModelAdmin):
-    list_display = ['folio', 'fecha', 'monto', 'proyecto', 'activo', 'creado_en']
-    list_filter = ['activo', 'fecha', 'proyecto']
+    list_display = ['folio', 'fecha', 'tipo_movimiento', 'monto', 'proyecto', 'activo', 'creado_en']
+    list_filter = ['activo', 'fecha', 'tipo_movimiento', 'proyecto']
     search_fields = ['folio', 'descripcion']
-    readonly_fields = ['creado_por', 'creado_en', 'actualizado_en']
+    readonly_fields = ['creado_por', 'creado_en', 'actualizado_en', 'firebase_synced_at', 'firebase_sync_error']
     
     fieldsets = (
         ('Información Básica', {
-            'fields': ('folio', 'fecha', 'descripcion', 'monto')
+            'fields': ('folio', 'fecha', 'tipo_movimiento', 'descripcion', 'monto')
         }),
         ('Relaciones', {
             'fields': ('proyecto', 'creado_por')
+        }),
+        ('Integración Firebase', {
+            'fields': ('firebase_transaction_id', 'firebase_synced_at', 'firebase_sync_error'),
+            'classes': ('collapse',)
         }),
         ('Metadatos', {
             'fields': ('activo', 'creado_en', 'actualizado_en'),

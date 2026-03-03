@@ -1,5 +1,5 @@
 from django.db import models
-from django.db.models import Sum
+from django.db.models import Sum, Case, When, DecimalField
 from django.contrib.auth.models import User
 from django.utils import timezone
 from decimal import Decimal
@@ -574,6 +574,13 @@ class Pago(models.Model):
     ]
     
     factura = models.ForeignKey(Factura, on_delete=models.CASCADE, related_name='pagos')
+    cuenta_bancaria = models.ForeignKey(
+        'BancoCuenta',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='pagos'
+    )
     monto = models.DecimalField(max_digits=12, decimal_places=2)
     fecha_pago = models.DateField()
     metodo_pago = models.CharField(max_length=20, choices=METODO_CHOICES, default='transferencia')
@@ -588,6 +595,149 @@ class Pago(models.Model):
     
     def __str__(self):
         return f"Pago {self.id} - {self.factura.numero_factura}"
+    
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        self._sync_movimiento_bancario()
+    
+    def _sync_movimiento_bancario(self):
+        """Crear o actualizar el movimiento bancario asociado al pago."""
+        if self.estado != 'confirmado' or not self.cuenta_bancaria:
+            MovimientoBanco.objects.filter(pago=self).delete()
+            return
+        
+        movimiento, created = MovimientoBanco.objects.get_or_create(
+            pago=self,
+            defaults={
+                'cuenta': self.cuenta_bancaria,
+                'tipo': 'ingreso',
+                'monto': self.monto,
+                'fecha_movimiento': self.fecha_pago,
+                'descripcion': f"Pago de factura {self.factura.numero_factura}",
+                'referencia': self.factura.referencia_pago or self.factura.numero_factura,
+                'creado_por': self.registrado_por,
+            }
+        )
+        
+        if not created:
+            movimiento_actualizado = False
+            if movimiento.cuenta_id != self.cuenta_bancaria_id:
+                movimiento.cuenta = self.cuenta_bancaria
+                movimiento_actualizado = True
+            if movimiento.monto != self.monto:
+                movimiento.monto = self.monto
+                movimiento_actualizado = True
+            if movimiento.fecha_movimiento != self.fecha_pago:
+                movimiento.fecha_movimiento = self.fecha_pago
+                movimiento_actualizado = True
+            descripcion_nueva = f"Pago de factura {self.factura.numero_factura}"
+            if movimiento.descripcion != descripcion_nueva:
+                movimiento.descripcion = descripcion_nueva
+                movimiento_actualizado = True
+            referencia_nueva = self.factura.referencia_pago or self.factura.numero_factura
+            if movimiento.referencia != referencia_nueva:
+                movimiento.referencia = referencia_nueva
+                movimiento_actualizado = True
+            if movimiento.creado_por_id != self.registrado_por_id:
+                movimiento.creado_por = self.registrado_por
+                movimiento_actualizado = True
+            
+            if movimiento_actualizado:
+                movimiento.save()
+
+
+class BancoCuenta(models.Model):
+    """Modelo para cuentas bancarias"""
+    TIPO_CUENTA_CHOICES = [
+        ('ahorro', 'Ahorro'),
+        ('corriente', 'Corriente'),
+        ('monedero', 'Monedero/Virtual'),
+        ('otros', 'Otros'),
+    ]
+    
+    nombre = models.CharField(max_length=100, unique=True)
+    banco = models.CharField(max_length=100, blank=True)
+    numero_cuenta = models.CharField(max_length=50, blank=True)
+    tipo_cuenta = models.CharField(max_length=20, choices=TIPO_CUENTA_CHOICES, default='corriente')
+    moneda = models.CharField(max_length=10, default='USD')
+    saldo_inicial = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    activo = models.BooleanField(default=True)
+    creado_en = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        verbose_name = 'Cuenta Bancaria'
+        verbose_name_plural = 'Cuentas Bancarias'
+        ordering = ['nombre']
+    
+    def __str__(self):
+        return f"{self.nombre} ({self.banco})" if self.banco else self.nombre
+    
+    @property
+    def saldo_actual(self):
+        """Saldo actual calculado a partir de movimientos."""
+        totales = self.movimientos.aggregate(
+            ingresos=Sum(
+                Case(
+                    When(tipo='ingreso', then='monto'),
+                    default=Decimal('0.00'),
+                    output_field=DecimalField(max_digits=12, decimal_places=2)
+                )
+            ),
+            egresos=Sum(
+                Case(
+                    When(tipo='egreso', then='monto'),
+                    default=Decimal('0.00'),
+                    output_field=DecimalField(max_digits=12, decimal_places=2)
+                )
+            ),
+        )
+        ingresos = totales['ingresos'] or Decimal('0.00')
+        egresos = totales['egresos'] or Decimal('0.00')
+        return self.saldo_inicial + ingresos - egresos
+
+
+class MovimientoBanco(models.Model):
+    """Movimientos bancarios (ingresos/egresos)"""
+    TIPO_CHOICES = [
+        ('ingreso', 'Ingreso'),
+        ('egreso', 'Egreso'),
+    ]
+    
+    cuenta = models.ForeignKey(BancoCuenta, on_delete=models.CASCADE, related_name='movimientos')
+    tipo = models.CharField(max_length=10, choices=TIPO_CHOICES)
+    monto = models.DecimalField(max_digits=12, decimal_places=2)
+    fecha_movimiento = models.DateField(default=timezone.now)
+    descripcion = models.TextField(blank=True)
+    referencia = models.CharField(max_length=100, blank=True)
+    
+    factura = models.ForeignKey(Factura, on_delete=models.SET_NULL, null=True, blank=True, related_name='movimientos_bancarios')
+    pago = models.ForeignKey('Pago', on_delete=models.CASCADE, null=True, blank=True, related_name='movimiento_bancario')
+    gasto = models.ForeignKey('Gasto', on_delete=models.CASCADE, null=True, blank=True, related_name='movimiento_bancario')
+    
+    creado_por = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='movimientos_bancarios_creados')
+    creado_en = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        verbose_name = 'Movimiento Bancario'
+        verbose_name_plural = 'Movimientos Bancarios'
+        ordering = ['-fecha_movimiento', '-id']
+        constraints = [
+            models.UniqueConstraint(fields=['pago'], name='unique_movimiento_por_pago'),
+            models.UniqueConstraint(fields=['gasto'], name='unique_movimiento_por_gasto'),
+        ]
+    
+    def clean(self):
+        if self.monto <= 0:
+            raise ValidationError("El monto del movimiento debe ser mayor a 0.")
+        if self.pago and self.gasto:
+            raise ValidationError("No se puede asociar un movimiento a un pago y un gasto al mismo tiempo.")
+        if self.pago and self.tipo != 'ingreso':
+            raise ValidationError("Los movimientos asociados a pagos deben ser de tipo ingreso.")
+        if self.gasto and self.tipo != 'egreso':
+            raise ValidationError("Los movimientos asociados a gastos deben ser de tipo egreso.")
+    
+    def __str__(self):
+        return f"{self.get_tipo_display()} - {self.cuenta.nombre} - ${self.monto}"
 
 
 class CategoriaGasto(models.Model):
@@ -613,7 +763,7 @@ class CategoriaGasto(models.Model):
 
 class Gasto(models.Model):
     """Modelo para gastos"""
-    proyecto = models.ForeignKey(Proyecto, on_delete=models.CASCADE)
+    proyecto = models.ForeignKey(Proyecto, on_delete=models.CASCADE, null=True, blank=True)
     subproyecto = models.ForeignKey('Subproyecto', on_delete=models.SET_NULL,
                                    null=True, blank=True,
                                    related_name='gastos',
@@ -623,6 +773,26 @@ class Gasto(models.Model):
     monto = models.FloatField()
     fecha_gasto = models.DateField()
     aprobado = models.BooleanField(default=False)
+    es_administrativo = models.BooleanField(
+        default=False,
+        help_text="Marca el gasto como administrativo (sin proyecto) o prorrateado."
+    )
+    es_prorrateado = models.BooleanField(
+        default=False,
+        help_text="Indica si el gasto administrativo fue prorrateado a un proyecto."
+    )
+    periodo_prorrateo = models.DateField(
+        null=True,
+        blank=True,
+        help_text="Periodo de prorrateo (primer día del mes)."
+    )
+    cuenta_bancaria = models.ForeignKey(
+        'BancoCuenta',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='gastos'
+    )
     aprobado_por = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
     observaciones = models.TextField(blank=True, help_text="Observaciones adicionales sobre el gasto")
     comprobante = models.FileField(upload_to='comprobantes_gastos/', blank=True)
@@ -634,6 +804,68 @@ class Gasto(models.Model):
     
     def __str__(self):
         return f"{self.descripcion} - ${self.monto}"
+
+    def clean(self):
+        """Validaciones del gasto según su tipo."""
+        super().clean()
+        if self.es_prorrateado and not self.es_administrativo:
+            raise ValidationError("Un gasto prorrateado debe ser administrativo.")
+        if self.es_prorrateado and not self.proyecto:
+            raise ValidationError("Un gasto prorrateado debe tener un proyecto asociado.")
+        if self.es_administrativo and not self.es_prorrateado and self.proyecto:
+            raise ValidationError("Un gasto administrativo no debe asociarse a un proyecto.")
+        if not self.es_administrativo and not self.proyecto:
+            raise ValidationError("Los gastos no administrativos deben tener un proyecto asociado.")
+    
+    def save(self, *args, **kwargs):
+        gasto_anterior = None
+        if self.pk:
+            gasto_anterior = Gasto.objects.filter(pk=self.pk).only(
+                'aprobado', 'cuenta_bancaria', 'monto', 'fecha_gasto', 'descripcion'
+            ).first()
+        
+        super().save(*args, **kwargs)
+        self._sync_movimiento_bancario(gasto_anterior)
+    
+    def _sync_movimiento_bancario(self, gasto_anterior=None):
+        """Crear o actualizar el movimiento bancario cuando el gasto está aprobado."""
+        if not self.aprobado or not self.cuenta_bancaria:
+            MovimientoBanco.objects.filter(gasto=self).delete()
+            return
+        
+        movimiento, created = MovimientoBanco.objects.get_or_create(
+            gasto=self,
+            defaults={
+                'cuenta': self.cuenta_bancaria,
+                'tipo': 'egreso',
+                'monto': Decimal(str(self.monto)),
+                'fecha_movimiento': self.fecha_gasto,
+                'descripcion': self.descripcion,
+                'creado_por': self.aprobado_por,
+            }
+        )
+        
+        if not created:
+            movimiento_actualizado = False
+            if movimiento.cuenta_id != self.cuenta_bancaria_id:
+                movimiento.cuenta = self.cuenta_bancaria
+                movimiento_actualizado = True
+            monto_decimal = Decimal(str(self.monto))
+            if movimiento.monto != monto_decimal:
+                movimiento.monto = monto_decimal
+                movimiento_actualizado = True
+            if movimiento.fecha_movimiento != self.fecha_gasto:
+                movimiento.fecha_movimiento = self.fecha_gasto
+                movimiento_actualizado = True
+            if movimiento.descripcion != self.descripcion:
+                movimiento.descripcion = self.descripcion
+                movimiento_actualizado = True
+            if movimiento.creado_por_id != self.aprobado_por_id:
+                movimiento.creado_por = self.aprobado_por
+                movimiento_actualizado = True
+            
+            if movimiento_actualizado:
+                movimiento.save()
 
 
 class GastoFijoMensual(models.Model):
@@ -2193,11 +2425,16 @@ class CajaMenuda(models.Model):
     Modelo para Caja Menuda (Petty Cash)
     Sistema para gestionar gastos menores y efectivo en caja
     """
+    TIPO_CHOICES = [
+        ('deposito', 'Depósito'),
+        ('gasto', 'Gasto'),
+    ]
     # Campos básicos (ajustables según necesidad)
     folio = models.CharField(max_length=50, unique=True, help_text="Número de folio único")
     fecha = models.DateField(default=timezone.now)
     descripcion = models.TextField(blank=True)
     monto = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    tipo_movimiento = models.CharField(max_length=20, choices=TIPO_CHOICES, default='gasto')
     
     # Relaciones opcionales
     proyecto = models.ForeignKey('Proyecto', on_delete=models.SET_NULL, null=True, blank=True, related_name='movimientos_caja_menuda')
@@ -2207,6 +2444,9 @@ class CajaMenuda(models.Model):
     activo = models.BooleanField(default=True)
     creado_en = models.DateTimeField(auto_now_add=True)
     actualizado_en = models.DateTimeField(auto_now=True)
+    firebase_transaction_id = models.CharField(max_length=120, blank=True, null=True)
+    firebase_sync_error = models.TextField(blank=True)
+    firebase_synced_at = models.DateTimeField(null=True, blank=True)
     
     class Meta:
         verbose_name = 'Caja Menuda'
@@ -2264,6 +2504,14 @@ class PlanificacionBitacora(models.Model):
     creado_por = models.ForeignKey(User, on_delete=models.CASCADE, related_name='planificaciones_creadas', verbose_name="Creado por")
     creado_en = models.DateTimeField(auto_now_add=True, verbose_name="Creado en")
     actualizado_en = models.DateTimeField(auto_now=True, verbose_name="Actualizado en")
+    
+    # Integración Firebase
+    firebase_document_id = models.CharField(max_length=120, blank=True, null=True)
+    firebase_sync_error = models.TextField(blank=True)
+    firebase_synced_at = models.DateTimeField(null=True, blank=True)
+    firebase_updated_at = models.DateTimeField(null=True, blank=True)
+    firebase_project_id = models.CharField(max_length=120, blank=True, default="")
+    firebase_project_name = models.CharField(max_length=200, blank=True, default="")
     
     class Meta:
         verbose_name = 'Planificación de Bitácora'
@@ -2338,6 +2586,15 @@ class AvancePlanificacion(models.Model):
     registrado_por = models.ForeignKey(User, on_delete=models.CASCADE, related_name='avances_registrados', verbose_name="Registrado por")
     creado_en = models.DateTimeField(auto_now_add=True, verbose_name="Creado en")
     
+    # Integración Firebase
+    firebase_document_id = models.CharField(max_length=120, blank=True, null=True)
+    firebase_sync_error = models.TextField(blank=True)
+    firebase_synced_at = models.DateTimeField(null=True, blank=True)
+    firebase_source = models.CharField(max_length=20, blank=True, default="")
+    firebase_user_id = models.CharField(max_length=120, blank=True, default="")
+    firebase_user_name = models.CharField(max_length=200, blank=True, default="")
+    firebase_user_email = models.EmailField(blank=True, default="")
+    
     class Meta:
         verbose_name = 'Avance de Planificación'
         verbose_name_plural = 'Avances de Planificaciones'
@@ -2348,6 +2605,209 @@ class AvancePlanificacion(models.Model):
     
     def __str__(self):
         return f"Avance de {self.planificacion.titulo} - {self.fecha_avance.strftime('%d/%m/%Y %H:%M')}"
+
+
+class BitacoraTarea(models.Model):
+    """Tareas asociadas a una planificación de bitácora"""
+    ESTADO_CHOICES = [
+        ('pendiente', 'Pendiente'),
+        ('en_progreso', 'En Progreso'),
+        ('completada', 'Completada'),
+    ]
+
+    planificacion = models.ForeignKey(
+        PlanificacionBitacora,
+        on_delete=models.CASCADE,
+        related_name='tareas',
+        verbose_name="Planificación",
+    )
+    titulo = models.CharField(max_length=200, verbose_name="Título")
+    descripcion = models.TextField(blank=True, null=True, verbose_name="Descripción")
+    estado = models.CharField(max_length=20, choices=ESTADO_CHOICES, default='pendiente', verbose_name="Estado")
+    comentario = models.TextField(blank=True, null=True, verbose_name="Comentario")
+    asignado_a = models.ForeignKey(
+        'Colaborador',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='tareas_bitacora',
+        verbose_name="Asignado a",
+    )
+    orden = models.PositiveIntegerField(default=0, verbose_name="Orden")
+
+    # Integración Firebase
+    firebase_id = models.CharField(max_length=120, blank=True, default="")
+    firebase_source_id = models.CharField(max_length=120, blank=True, default="")
+
+    creado_por = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='tareas_bitacora_creadas')
+    creado_en = models.DateTimeField(auto_now_add=True)
+    actualizado_en = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = 'Tarea de Bitácora'
+        verbose_name_plural = 'Tareas de Bitácora'
+        ordering = ['orden', 'creado_en']
+        indexes = [
+            models.Index(fields=['planificacion', 'estado']),
+        ]
+
+    def __str__(self):
+        return f"{self.titulo} ({self.get_estado_display()})"
+
+
+class BitacoraSubtarea(models.Model):
+    """Subtareas asociadas a una tarea de bitácora"""
+    ESTADO_CHOICES = [
+        ('pendiente', 'Pendiente'),
+        ('en_progreso', 'En Progreso'),
+        ('completada', 'Completada'),
+    ]
+
+    tarea = models.ForeignKey(
+        BitacoraTarea,
+        on_delete=models.CASCADE,
+        related_name='subtareas',
+        verbose_name="Tarea",
+    )
+    titulo = models.CharField(max_length=200, verbose_name="Título")
+    descripcion = models.TextField(blank=True, null=True, verbose_name="Descripción")
+    estado = models.CharField(max_length=20, choices=ESTADO_CHOICES, default='pendiente', verbose_name="Estado")
+    comentario = models.TextField(blank=True, null=True, verbose_name="Comentario")
+    orden = models.PositiveIntegerField(default=0, verbose_name="Orden")
+
+    # Integración Firebase
+    firebase_id = models.CharField(max_length=120, blank=True, default="")
+    firebase_source_id = models.CharField(max_length=120, blank=True, default="")
+
+    creado_en = models.DateTimeField(auto_now_add=True)
+    actualizado_en = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = 'Subtarea de Bitácora'
+        verbose_name_plural = 'Subtareas de Bitácora'
+        ordering = ['orden', 'creado_en']
+        indexes = [
+            models.Index(fields=['tarea', 'estado']),
+        ]
+
+    def __str__(self):
+        return f"{self.titulo} ({self.get_estado_display()})"
+
+
+class BitacoraAsignacion(models.Model):
+    """Asignación diaria de tarea/subtarea a un técnico"""
+    ESTADO_CHOICES = [
+        ('pendiente', 'Pendiente'),
+        ('en_progreso', 'En Progreso'),
+        ('completada', 'Completada'),
+    ]
+
+    planificacion = models.ForeignKey(
+        PlanificacionBitacora,
+        on_delete=models.CASCADE,
+        related_name='asignaciones',
+        verbose_name="Planificación",
+    )
+    tarea = models.ForeignKey(
+        BitacoraTarea,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name='asignaciones',
+        verbose_name="Tarea",
+    )
+    subtarea = models.ForeignKey(
+        BitacoraSubtarea,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name='asignaciones',
+        verbose_name="Subtarea",
+    )
+    colaborador = models.ForeignKey(
+        Colaborador,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='asignaciones_bitacora',
+        verbose_name="Técnico (Colaborador)",
+    )
+    tecnico_email = models.EmailField(blank=True, default="", verbose_name="Email técnico")
+    tecnico_nombre = models.CharField(max_length=200, blank=True, default="", verbose_name="Nombre técnico")
+    fecha = models.DateField(verbose_name="Fecha asignada")
+    porcentaje = models.PositiveIntegerField(default=0, verbose_name="Porcentaje")
+    estado = models.CharField(max_length=20, choices=ESTADO_CHOICES, default='pendiente', verbose_name="Estado")
+    comentario = models.TextField(blank=True, null=True, verbose_name="Comentario")
+    asignacion_origen = models.ForeignKey(
+        'self',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='reasignaciones',
+        verbose_name="Asignación origen",
+    )
+
+    # Integración Firebase
+    firebase_document_id = models.CharField(max_length=120, blank=True, default="")
+    firebase_sync_error = models.TextField(blank=True)
+    firebase_synced_at = models.DateTimeField(null=True, blank=True)
+
+    creado_por = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='asignaciones_bitacora_creadas')
+    creado_en = models.DateTimeField(auto_now_add=True)
+    actualizado_en = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = 'Asignación de Bitácora'
+        verbose_name_plural = 'Asignaciones de Bitácora'
+        ordering = ['-fecha', '-creado_en']
+        indexes = [
+            models.Index(fields=['planificacion', 'fecha']),
+            models.Index(fields=['estado', 'fecha']),
+        ]
+
+    def __str__(self):
+        destino = self.subtarea.titulo if self.subtarea_id else self.tarea.titulo if self.tarea_id else "Asignación"
+        return f"{destino} - {self.tecnico_nombre or self.tecnico_email} ({self.fecha})"
+
+    def actualizar_estado_porcentaje(self):
+        if self.porcentaje >= 100:
+            self.estado = 'completada'
+        elif self.porcentaje > 0:
+            self.estado = 'en_progreso'
+        else:
+            self.estado = 'pendiente'
+
+
+class BitacoraAvanceDiario(models.Model):
+    """Registro diario de avance sobre una asignación"""
+    asignacion = models.ForeignKey(
+        BitacoraAsignacion,
+        on_delete=models.CASCADE,
+        related_name='avances_diarios',
+        verbose_name="Asignación",
+    )
+    fecha = models.DateField(verbose_name="Fecha del avance")
+    porcentaje = models.PositiveIntegerField(default=0, verbose_name="Porcentaje")
+    comentario = models.TextField(blank=True, null=True, verbose_name="Comentario")
+    registrado_por = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='avances_bitacora_registrados')
+    creado_en = models.DateTimeField(auto_now_add=True)
+
+    # Integración Firebase
+    firebase_document_id = models.CharField(max_length=120, blank=True, default="")
+    firebase_sync_error = models.TextField(blank=True)
+    firebase_synced_at = models.DateTimeField(null=True, blank=True)
+    firebase_source = models.CharField(max_length=20, blank=True, default="")
+
+    class Meta:
+        verbose_name = 'Avance Diario Bitácora'
+        verbose_name_plural = 'Avances Diarios Bitácora'
+        ordering = ['-fecha', '-creado_en']
+        indexes = [
+            models.Index(fields=['fecha', 'porcentaje']),
+        ]
+
+    def __str__(self):
+        return f"Avance {self.asignacion_id} - {self.fecha} ({self.porcentaje}%)"
 
 
 class Torrero(models.Model):

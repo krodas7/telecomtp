@@ -69,6 +69,30 @@
                         </div>
                     </div>
                     
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="cuenta_bancaria" class="form-label">
+                                <i class="fas fa-university me-1"></i>Cuenta Bancaria
+                            </label>
+                            <select class="form-select" id="cuenta_bancaria" name="cuenta_bancaria">
+                                <option value="">Seleccionar cuenta...</option>
+                                {% for cuenta in cuentas %}
+                                    <option value="{{ cuenta.id }}">{{ cuenta.nombre }}{% if cuenta.banco %} - {{ cuenta.banco }}{% endif %}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="estado" class="form-label">
+                                <i class="fas fa-check-circle me-1"></i>Estado *
+                            </label>
+                            <select class="form-select" id="estado" name="estado" required>
+                                <option value="pendiente" selected>Pendiente</option>
+                                <option value="confirmado">Confirmado</option>
+                                <option value="rechazado">Rechazado</option>
+                            </select>
+                        </div>
+                    </div>
+                    
                     <div class="d-grid gap-2 d-md-flex justify-content-md-end">
                         <a href="{% url 'pagos_list' %}" class="btn btn-outline-secondary me-md-2">
                             <i class="fas fa-times me-1"></i>Cancelar

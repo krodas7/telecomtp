@@ -1,0 +1,39 @@
+# Credenciales de Firebase - NUNCA COMMITEAR
+firebase-key.json
+**/firebase-key.json
+
+# Archivos Python compilados
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Archivos temporales de imágenes
+*_temp.jpg
+temp_img.jpg
+*.tmp
+
+# PDFs generados (opcional - descomentar si no quieres commitearlos)
+# *.pdf
+
+# Archivos del sistema
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# Entornos virtuales
+venv/
+env/
+ENV/
+.venv
+
+# IDE
+.vscode/
+.idea/
+*.code-workspace
+
+# Logs
+*.log
+

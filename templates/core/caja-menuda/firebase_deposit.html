@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load custom_filters %}
+
+{% block title %}Depósito a Técnico{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="fas fa-hand-holding-usd me-2"></i>Depósito a Técnico</h2>
+        <a href="{% url 'caja_menuda_list' %}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-2"></i>Volver
+        </a>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label">Técnico</label>
+                        <select name="user_id" class="form-select" required>
+                            <option value="">Selecciona un técnico</option>
+                            {% for leader in team_leaders %}
+                                <option value="{{ leader.id }}">{{ leader.name }}{% if leader.email %} ({{ leader.email }}){% endif %}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Monto</label>
+                        <input type="number" name="amount" step="0.01" min="0" class="form-control" placeholder="0.00" required>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">No. Transferencia</label>
+                        <input type="text" name="transfer_number" class="form-control" placeholder="Ej: 123456789" required>
+                    </div>
+                    <div class="col-md-12">
+                        <label class="form-label">Descripción</label>
+                        <textarea name="description" class="form-control" rows="3" placeholder="Descripción del depósito"></textarea>
+                    </div>
+                    <div class="col-md-12">
+                        <label class="form-label">Comprobante</label>
+                        <input type="file" name="receipt" class="form-control" accept=".jpg,.jpeg,.png,.pdf" required>
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-2"></i>Registrar Depósito
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+

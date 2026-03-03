@@ -224,14 +224,29 @@ class FacturaForm(forms.ModelForm):
 
 class GastoForm(forms.ModelForm):
     """Formulario para gastos"""
+
+    def clean(self):
+        cleaned_data = super().clean()
+        es_administrativo = cleaned_data.get('es_administrativo')
+        proyecto = cleaned_data.get('proyecto')
+
+        if es_administrativo and proyecto:
+            self.add_error('proyecto', 'Un gasto administrativo no debe asociarse a un proyecto.')
+        if not es_administrativo and not proyecto:
+            self.add_error('proyecto', 'Debes seleccionar un proyecto para gastos no administrativos.')
+
+        return cleaned_data
     
     class Meta:
         model = Gasto
         fields = [
-            'proyecto', 'categoria', 'descripcion', 'monto', 
+            'es_administrativo', 'proyecto', 'categoria', 'descripcion', 'monto', 
             'fecha_gasto', 'comprobante'
         ]
         widgets = {
+            'es_administrativo': forms.CheckboxInput(attrs={
+                'class': 'form-check-input'
+            }),
             'proyecto': forms.Select(attrs={
                 'class': 'form-select'
             }),

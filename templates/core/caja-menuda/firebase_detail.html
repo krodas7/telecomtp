@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load custom_filters %}
+
+{% block title %}Detalle de Gasto - Caja Menuda{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="fas fa-receipt me-2"></i>Detalle de Gasto</h2>
+        <a href="{% url 'caja_menuda_list' %}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-2"></i>Volver
+        </a>
+    </div>
+
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <strong>Técnico:</strong> {{ expense.userName|default:"-" }}
+                </div>
+                <div class="col-md-4">
+                    <strong>Tipo:</strong> {{ expense.expenseType|default:"Gasto" }}
+                </div>
+                <div class="col-md-4">
+                    <strong>Fecha:</strong>
+                    {% if expense.timestamp_dt %}
+                        {{ expense.timestamp_dt|date:"d/m/Y H:i" }}
+                    {% else %}
+                        -
+                    {% endif %}
+                </div>
+                <div class="col-md-4">
+                    <strong>Monto:</strong> ${{ expense.amount|default:"0.00" }}
+                </div>
+                <div class="col-md-4">
+                    <strong>Factura:</strong> {{ expense.invoiceNumber|default:"-" }}
+                </div>
+                <div class="col-md-12">
+                    <strong>Descripción:</strong> {{ expense.description|default:"-" }}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-header bg-white">
+            <h5 class="mb-0"><i class="fas fa-image me-2"></i>Comprobante</h5>
+        </div>
+        <div class="card-body text-center">
+            {% if expense.receiptUrl %}
+                <img src="{{ expense.receiptUrl }}" alt="Comprobante" class="img-fluid rounded border">
+            {% else %}
+                <p class="text-muted mb-0">No hay comprobante disponible</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+

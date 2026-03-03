@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% load static %}
+{% load custom_filters %}
 
 {% block title %}Kanban - Bitácora{% endblock %}
 
@@ -122,6 +123,26 @@
         transition: all 0.2s;
         border-left: 4px solid;
     }
+
+    .progress-bar {
+        height: 8px;
+        background: #e5e7eb;
+        border-radius: 999px;
+        overflow: hidden;
+        margin-top: 0.75rem;
+    }
+
+    .progress-bar span {
+        display: block;
+        height: 100%;
+        background: linear-gradient(90deg, #6366f1 0%, #8b5cf6 100%);
+    }
+
+    .progress-label {
+        font-size: 0.75rem;
+        color: #6b7280;
+        margin-top: 0.25rem;
+    }
     
     .kanban-card.programada {
         border-left-color: #667eea;
@@ -234,6 +255,10 @@
                         {% endif %}
                     </div>
                     <span class="card-priority priority-{{ plan.prioridad }}">{{ plan.get_prioridad_display }}</span>
+                    <div class="progress-bar">
+                        <span style="width: {{ progress_map|get_item:plan.id|default:0 }}%;"></span>
+                    </div>
+                    <div class="progress-label">Progreso: {{ progress_map|get_item:plan.id|default:0 }}%</div>
                 </div>
             {% empty %}
                 <div class="empty-column">
@@ -257,6 +282,10 @@
                         <i class="fas fa-calendar"></i> {{ plan.fecha_inicio|date:"d/m/Y" }}
                     </div>
                     <span class="card-priority priority-{{ plan.prioridad }}">{{ plan.get_prioridad_display }}</span>
+                    <div class="progress-bar">
+                        <span style="width: {{ progress_map|get_item:plan.id|default:0 }}%;"></span>
+                    </div>
+                    <div class="progress-label">Progreso: {{ progress_map|get_item:plan.id|default:0 }}%</div>
                 </div>
             {% empty %}
                 <div class="empty-column">
@@ -280,6 +309,10 @@
                         <i class="fas fa-calendar"></i> {{ plan.fecha_inicio|date:"d/m/Y" }}
                     </div>
                     <span class="card-priority priority-{{ plan.prioridad }}">{{ plan.get_prioridad_display }}</span>
+                    <div class="progress-bar">
+                        <span style="width: {{ progress_map|get_item:plan.id|default:0 }}%;"></span>
+                    </div>
+                    <div class="progress-label">Progreso: {{ progress_map|get_item:plan.id|default:0 }}%</div>
                 </div>
             {% empty %}
                 <div class="empty-column">
@@ -303,6 +336,10 @@
                         <i class="fas fa-calendar"></i> {{ plan.fecha_inicio|date:"d/m/Y" }}
                     </div>
                     <span class="card-priority priority-{{ plan.prioridad }}">{{ plan.get_prioridad_display }}</span>
+                    <div class="progress-bar">
+                        <span style="width: {{ progress_map|get_item:plan.id|default:0 }}%;"></span>
+                    </div>
+                    <div class="progress-label">Progreso: {{ progress_map|get_item:plan.id|default:0 }}%</div>
                 </div>
             {% empty %}
                 <div class="empty-column">

@@ -149,6 +149,13 @@
                         <span>Facturas</span>
                     </a>
                 </li>
+
+                <li class="nav-item">
+                    <a class="nav-link {% if 'reportes_exportacion' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'reportes_exportacion' %}">
+                        <i class="fas fa-file-export"></i>
+                        <span>Exportación Reportes</span>
+                    </a>
+                </li>
                 
                 <li class="nav-item">
                     <a class="nav-link {% if 'colaboradores' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'colaboradores_list' %}">
@@ -213,6 +220,13 @@
                     <a class="nav-link {% if 'pagos' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'pagos_list' %}">
                         <i class="fas fa-credit-card"></i>
                         <span>Pagos</span>
+                    </a>
+                </li>
+                
+                <li class="nav-item">
+                    <a class="nav-link {% if 'bancos' in request.resolver_match.url_name or 'movimientos' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'bancos_list' %}">
+                        <i class="fas fa-university"></i>
+                        <span>Bancos</span>
                     </a>
                 </li>
                 

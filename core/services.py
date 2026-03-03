@@ -171,6 +171,8 @@ class GastoService:
     def obtener_gastos_por_categoria(proyecto_id=None, fecha_inicio=None, fecha_fin=None):
         """Obtiene gastos agrupados por categoría"""
         queryset = Gasto.objects.filter(aprobado=True)
+        if not proyecto_id:
+            queryset = queryset.filter(es_prorrateado=False)
         
         if proyecto_id:
             queryset = queryset.filter(proyecto_id=proyecto_id)
@@ -237,7 +239,7 @@ class DashboardService:
     @staticmethod
     def obtener_gastos_recientes(limite=5):
         """Obtiene los gastos más recientes"""
-        return Gasto.objects.filter(aprobado=True).order_by('-creado_en')[:limite]
+        return Gasto.objects.filter(aprobado=True, es_prorrateado=False).order_by('-creado_en')[:limite]
 
 
 class NotificacionService:

@@ -1,0 +1,308 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load custom_filters %}
+
+{% block title %}Tablero por Proyecto - Bitácora{% endblock %}
+
+{% block extra_css %}
+<link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/main.min.css" rel="stylesheet">
+<style>
+    .tab-header {
+        display: flex;
+        gap: 0.75rem;
+        margin-bottom: 1.5rem;
+        flex-wrap: wrap;
+    }
+    .tab-button {
+        padding: 0.5rem 1rem;
+        border-radius: 8px;
+        border: 1px solid #e5e7eb;
+        background: white;
+        font-weight: 600;
+        cursor: pointer;
+    }
+    .tab-button.active {
+        background: #6366f1;
+        border-color: #6366f1;
+        color: white;
+    }
+    .tab-pane {
+        display: none;
+    }
+    .tab-pane.active {
+        display: block;
+    }
+    .calendar-shell {
+        background: white;
+        border-radius: 16px;
+        padding: 1.5rem;
+        border: 1px solid #e5e7eb;
+    }
+    .kanban-board {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1rem;
+    }
+    .kanban-column {
+        background: #f9fafb;
+        border-radius: 12px;
+        padding: 1rem;
+        min-height: 300px;
+    }
+    .kanban-card {
+        background: white;
+        border-radius: 10px;
+        padding: 0.75rem;
+        border: 1px solid #e5e7eb;
+        margin-bottom: 0.75rem;
+    }
+    .progress-bar {
+        height: 6px;
+        background: #e5e7eb;
+        border-radius: 999px;
+        overflow: hidden;
+        margin-top: 0.5rem;
+    }
+    .progress-bar span {
+        display: block;
+        height: 100%;
+        background: linear-gradient(90deg, #6366f1 0%, #8b5cf6 100%);
+    }
+    .assignment-meta {
+        font-size: 0.75rem;
+        color: #6b7280;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2 class="mb-3">Tablero de Asignación</h2>
+
+    <form method="GET" class="row g-3 align-items-end mb-4">
+        <div class="col-md-6">
+            <label class="form-label">Proyecto</label>
+            <select name="proyecto_id" class="form-select">
+                <option value="">-- Seleccione un proyecto --</option>
+                {% for proyecto in proyectos %}
+                    <option value="{{ proyecto.id }}" {% if proyecto_id == proyecto.id|stringformat:"s" %}selected{% endif %}>
+                        {{ proyecto.nombre }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-3">
+            <label class="form-label">Fecha</label>
+            <input type="date" name="fecha" class="form-control" value="{{ fecha }}">
+        </div>
+        <div class="col-md-3">
+            <button type="submit" class="btn btn-primary w-100">Ver tablero</button>
+        </div>
+    </form>
+
+    {% if team_error %}
+        <div class="alert alert-warning">{{ team_error }}</div>
+    {% endif %}
+
+    <div class="tab-header">
+        <button type="button" class="tab-button active" data-tab="tab_asignaciones">Asignaciones</button>
+        <button type="button" class="tab-button" data-tab="tab_calendario">Calendario</button>
+        <button type="button" class="tab-button" data-tab="tab_kanban">Kanban</button>
+    </div>
+
+    {% if not proyecto_id %}
+        <div class="alert alert-info">Selecciona un proyecto para ver las actividades.</div>
+    {% else %}
+        <div id="tab_asignaciones" class="tab-pane active">
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <div>
+                        <strong>Fecha:</strong> {{ fecha }}{% if proyecto_id %} · <strong>Proyecto:</strong> {{ planificaciones.0.proyecto.nombre|default:"" }}{% endif %}
+                    </div>
+                    <div class="text-muted">Pendientes sin asignar: {{ pendientes_items|length }}</div>
+                </div>
+                <div class="card-body">
+                    {% if items_dia %}
+                        <div class="table-responsive">
+                            <table class="table table-sm align-middle">
+                                <thead>
+                                    <tr>
+                                        <th>Actividad / Subactividad</th>
+                                        <th>Asignaciones del día</th>
+                                        <th>Asignar</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for item in items_dia %}
+                                        <tr>
+                                            <td>
+                                                {% if item.tipo == "subtarea" %}
+                                                    <span class="text-muted">↳</span>
+                                                {% endif %}
+                                                {{ item.titulo }}
+                                            </td>
+                                            <td>
+                                                {% if item.asignaciones %}
+                                                    {% for asignacion in item.asignaciones %}
+                                                        <div>
+                                                            {{ asignacion.tecnico_nombre|default:asignacion.tecnico_email }}
+                                                            - {{ asignacion.porcentaje }}% ({{ asignacion.get_estado_display }})
+                                                            <form method="POST" action="{% url 'bitacora_desasignar_item' asignacion.id %}" style="display:inline;">
+                                                                {% csrf_token %}
+                                                                <button type="submit" class="btn btn-link btn-sm">Desasignar</button>
+                                                            </form>
+                                                        </div>
+                                                    {% endfor %}
+                                                {% else %}
+                                                    <span class="text-muted">Sin asignar</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                <form method="POST" action="{% url 'bitacora_asignar_item' %}" class="d-flex gap-2">
+                                                    {% csrf_token %}
+                                                    <input type="hidden" name="planificacion_id" value="{{ item.plan_id }}">
+                                                    {% if item.tipo == "tarea" %}
+                                                        <input type="hidden" name="tarea_id" value="{{ item.id }}">
+                                                    {% else %}
+                                                        <input type="hidden" name="subtarea_id" value="{{ item.id }}">
+                                                    {% endif %}
+                                                    <input type="hidden" name="fecha" value="{{ fecha }}">
+                                                    <select name="tecnico_email" class="form-select form-select-sm" required>
+                                                        <option value="">Técnico</option>
+                                                        {% for leader in team_leaders %}
+                                                            <option value="{{ leader.email }}">{{ leader.name|default:leader.email }}</option>
+                                                        {% endfor %}
+                                                    </select>
+                                                    <input type="number" name="porcentaje" min="0" max="100" value="0" class="form-control form-control-sm" style="max-width:90px;">
+                                                    <button type="submit" class="btn btn-sm btn-primary">Asignar</button>
+                                                </form>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-muted">No hay actividades registradas para este proyecto.</div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="row g-3">
+                {% for leader in team_leaders %}
+                    {% with key=leader.email|lower %}
+                        <div class="col-md-6 col-lg-4">
+                            <div class="card h-100">
+                                <div class="card-header">
+                                    <strong>{{ leader.name|default:leader.email }}</strong>
+                                </div>
+                                <div class="card-body">
+                                    {% if asignaciones_por_tecnico|get_item:key %}
+                                        {% for asignacion in asignaciones_por_tecnico|get_item:key %}
+                                            <div class="kanban-card">
+                                                <div><strong>{{ asignacion.subtarea.titulo|default:asignacion.tarea.titulo }}</strong></div>
+                                                <div class="assignment-meta">Estado: {{ asignacion.get_estado_display }} · {{ asignacion.porcentaje }}%</div>
+                                                {% with avance=avances_map|get_item:asignacion.id %}
+                                                    {% if avance %}
+                                                        <div class="assignment-meta">Avance: {{ avance.comentario|default:"Sin comentario" }}</div>
+                                                    {% else %}
+                                                        <div class="assignment-meta">Avance: sin registro</div>
+                                                    {% endif %}
+                                                {% endwith %}
+                                                <div class="progress-bar">
+                                                    <span style="width: {{ asignacion.porcentaje }}%;"></span>
+                                                </div>
+                                                <form method="POST" action="{% url 'bitacora_desasignar_item' asignacion.id %}" class="mt-2">
+                                                    {% csrf_token %}
+                                                    <button type="submit" class="btn btn-link btn-sm">Desasignar</button>
+                                                </form>
+                                            </div>
+                                        {% endfor %}
+                                    {% else %}
+                                        <div class="text-muted">Sin actividades asignadas</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    {% endwith %}
+                {% endfor %}
+            </div>
+        </div>
+
+        <div id="tab_calendario" class="tab-pane">
+            <div class="calendar-shell">
+                <div id="calendar"></div>
+            </div>
+        </div>
+
+        <div id="tab_kanban" class="tab-pane">
+            <div class="kanban-board">
+                {% for estado, lista in asignaciones_estado.items %}
+                    <div class="kanban-column">
+                        <div class="mb-2"><strong>{{ estado|capfirst }}</strong> ({{ lista|length }})</div>
+                        {% for asignacion in lista %}
+                            <div class="kanban-card">
+                                <div><strong>{{ asignacion.subtarea.titulo|default:asignacion.tarea.titulo }}</strong></div>
+                                <div class="assignment-meta">{{ asignacion.tecnico_nombre|default:asignacion.tecnico_email }} · {{ asignacion.fecha }}</div>
+                                <div class="progress-bar">
+                                    <span style="width: {{ asignacion.porcentaje }}%;"></span>
+                                </div>
+                                <div class="assignment-meta">Progreso: {{ asignacion.porcentaje }}%</div>
+                            </div>
+                        {% empty %}
+                            <div class="text-muted">Sin asignaciones</div>
+                        {% endfor %}
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/main.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/locales/es.js"></script>
+<script>
+    const tabButtons = document.querySelectorAll('.tab-button');
+    tabButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+            tabButtons.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+            document.getElementById(btn.dataset.tab).classList.add('active');
+        });
+    });
+
+    document.addEventListener('DOMContentLoaded', () => {
+        const calendarEl = document.getElementById('calendar');
+        if (!calendarEl) return;
+        const eventos = {{ eventos_asignaciones|safe }};
+        const calendar = new FullCalendar.Calendar(calendarEl, {
+            initialView: 'dayGridMonth',
+            locale: 'es',
+            headerToolbar: {
+                left: 'prev,next today',
+                center: 'title',
+                right: 'dayGridMonth,timeGridWeek,timeGridDay'
+            },
+            events: eventos,
+            eventContent: function(arg) {
+                const progress = arg.event.extendedProps.porcentaje || 0;
+                const container = document.createElement('div');
+                container.innerHTML = `
+                    <div style="font-weight:600;font-size:0.75rem;">${arg.event.title}</div>
+                    <div style="height:6px;background:rgba(255,255,255,0.4);border-radius:999px;overflow:hidden;margin-top:4px;">
+                        <span style="display:block;height:100%;width:${progress}%;background:rgba(255,255,255,0.9);"></span>
+                    </div>
+                `;
+                return { domNodes: [container] };
+            },
+            height: 'auto',
+            dayMaxEvents: 3,
+        });
+        calendar.render();
+    });
+</script>
+{% endblock %}
+

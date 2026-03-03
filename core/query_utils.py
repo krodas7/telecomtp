@@ -101,7 +101,7 @@ class DashboardQueries:
                 total_facturado=Sum('monto_total'),
                 total_pagado=Sum('monto_pagado')
             ),
-            'gastos': Gasto.objects.filter(aprobado=True).aggregate(
+            'gastos': Gasto.objects.filter(aprobado=True, es_prorrateado=False).aggregate(
                 total=Sum('monto'),
                 cantidad=Count('id')
             )
@@ -115,7 +115,7 @@ class DashboardQueries:
     @staticmethod
     def gastos_recientes(limite=5):
         """Obtiene gastos recientes optimizados"""
-        return QueryOptimizer.gastos_con_relaciones().order_by('-creado_en')[:limite]
+        return QueryOptimizer.gastos_con_relaciones().filter(es_prorrateado=False).order_by('-creado_en')[:limite]
     
     @staticmethod
     def facturas_vencidas():
@@ -132,7 +132,8 @@ class DashboardQueries:
     def gastos_pendientes_aprobacion():
         """Obtiene gastos pendientes de aprobación optimizados"""
         return QueryOptimizer.gastos_con_relaciones().filter(
-            aprobado=False
+            aprobado=False,
+            es_prorrateado=False
         ).order_by('-creado_en')
 
 
@@ -145,6 +146,8 @@ class ReporteQueries:
         from django.db.models import Sum, Count
         
         queryset = Gasto.objects.filter(aprobado=True).select_related('categoria')
+        if not proyecto_id:
+            queryset = queryset.filter(es_prorrateado=False)
         
         if proyecto_id:
             queryset = queryset.filter(proyecto_id=proyecto_id)

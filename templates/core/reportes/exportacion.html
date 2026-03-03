@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+
+{% block title %}Exportación de Reportes - Telecom Technology{% endblock %}
+{% block page_title %}Exportación de Reportes{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-lg-12">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title mb-3">Tipos de reporte</h5>
+                    <div class="d-flex flex-wrap gap-2">
+                        {% for key, data in report_types.items %}
+                            <a
+                                class="btn btn-sm {% if key == tipo %}btn-primary{% else %}btn-outline-primary{% endif %}"
+                                href="?tipo={{ key }}{% if include_drafts %}&borradores=1{% endif %}"
+                            >
+                                <i class="{{ data.icon }}"></i> {{ data.label }}
+                            </a>
+                        {% endfor %}
+                    </div>
+                    {% if config %}
+                        <div class="mt-3">
+                            <strong>{{ config.label }}</strong>
+                            <div class="text-muted">{{ config.description }}</div>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% if firebase_error %}
+        <div class="alert alert-warning">
+            {{ firebase_error }}
+        </div>
+    {% endif %}
+
+    <div class="row mb-4">
+        <div class="col-lg-12">
+            <div class="card shadow-sm">
+                <div class="card-body d-flex flex-wrap justify-content-between align-items-center gap-2">
+                    <div>
+                        <div class="fw-semibold">Reportes encontrados: {{ total_items }}</div>
+                        <div class="text-muted">Mostrando hasta {{ limit }} registros</div>
+                    </div>
+                    <div class="d-flex flex-wrap gap-2">
+                        <a
+                            class="btn btn-outline-secondary btn-sm"
+                            href="{% url 'reportes_exportacion_exportar' tipo=tipo %}?formato=csv{% if include_drafts %}&borradores=1{% endif %}"
+                        >
+                            Exportar CSV
+                        </a>
+                        {% if include_drafts %}
+                            <a class="btn btn-outline-primary btn-sm" href="?tipo={{ tipo }}">
+                                Ocultar borradores
+                            </a>
+                        {% else %}
+                            <a class="btn btn-outline-primary btn-sm" href="?tipo={{ tipo }}&borradores=1">
+                                Mostrar borradores
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-12">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    {% if items %}
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle">
+                                <thead>
+                                    <tr>
+                                        <th>Reporte</th>
+                                        <th>Detalle</th>
+                                        <th>Fecha</th>
+                                        <th class="text-end">Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for item in items %}
+                                        <tr>
+                                            <td>
+                                                <div class="fw-semibold">{{ item.titulo }}</div>
+                                                <div class="text-muted small">ID: {{ item.id }}</div>
+                                            </td>
+                                            <td>{{ item.detalle|default:"-" }}</td>
+                                            <td>{{ item.fecha|default:"-" }}</td>
+                                            <td class="text-end">
+                                                <a
+                                                    class="btn btn-sm btn-outline-primary"
+                                                    href="{% url 'reportes_exportacion_exportar' tipo=tipo %}?formato=pdf&doc_id={{ item.id }}"
+                                                >
+                                                    Exportar PDF
+                                                </a>
+                                                <a
+                                                    class="btn btn-sm btn-outline-secondary"
+                                                    href="{% url 'reportes_exportacion_exportar' tipo=tipo %}?formato=imagenes&doc_id={{ item.id }}"
+                                                >
+                                                    Descargar imagenes
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-muted">No hay reportes disponibles para este tipo.</div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+
+
+

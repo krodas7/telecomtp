@@ -88,6 +88,20 @@
                     </div>
                     
                     <div class="mb-3">
+                        <label for="{{ form.cuenta_bancaria.id_for_label }}" class="form-label">
+                            Cuenta Bancaria
+                        </label>
+                        {{ form.cuenta_bancaria }}
+                        {% if form.cuenta_bancaria.errors %}
+                            <div class="text-danger small">
+                                {% for error in form.cuenta_bancaria.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
                         <label for="{{ form.estado.id_for_label }}" class="form-label">
                             {{ form.estado.label }}
                         </label>

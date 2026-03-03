@@ -1,0 +1,166 @@
+# Reglas de Cursor para ReporteEricsson
+
+## Contexto del Proyecto
+
+Este proyecto genera reportes PDF desde Firebase Firestore para enlaces Ericsson Tigo. Es un sistema de exportación de datos que combina plantillas de imágenes con datos dinámicos de Firestore.
+
+## Estructura y Arquitectura
+
+### Directorio Base
+- **Directorio de trabajo:** `ReporteEricsson/`
+- **Punto de entrada:** `main.py`
+- **Módulo principal:** `generar_reporte_ericsson.py`
+- **Configuración Firebase:** `firebase_config.py`
+
+### Archivos Críticos
+- `firebase-key.json`: Credenciales de Firebase (NUNCA commitear)
+- `r1.jpg` - `r34.jpg`: Plantillas de páginas del PDF (34 páginas)
+- `plantillas/`: Directorio alternativo para plantillas
+
+## Reglas de Desarrollo
+
+### 1. Estructura de Código
+- Mantener la separación de responsabilidades:
+  - `main.py`: Solo punto de entrada y configuración de IDs
+  - `generar_reporte_ericsson.py`: Lógica de generación de PDF
+  - `firebase_config.py`: Solo configuración de Firebase
+  - `export.py`: Utilidades de exportación
+
+### 2. Firebase y Firestore
+- **Colección:** `reportesEnlacesEricssonTigo`
+- **Estructura de datos:** Documentos con subdocumentos anidados:
+  - `DatosGenerales`: Información básica de sitios
+  - `cantidadAntenas`: Cantidad de antenas (1-4) - ⭐ NUEVO
+  - `cantidadOdus`: Cantidad de ODUs (1-8) - ⭐ NUEVO
+  - `Generales`: URLs de imágenes generales
+  - `SiteACapturas` / `SiteBCapturas`: Capturas de pantalla
+  - `SiteATorre` / `SiteAPiso` / `SiteBTorre` / `SiteBPiso`: Fotografías
+
+#### Estructura Dinámica de Antenas y ODUs
+- **Antenas:** Campos numerados: `fijacionAntena1-4`, `SerieAntena1-4`
+- **ODUs:** Campos numerados: `ConexionOdu1-8` (mayúscula), `etiquetaRadio1-8`, `serieOdu1-8`, `aterrizajeOdu1-8`
+- **Compatibilidad:** El sistema detecta automáticamente documentos antiguos (campos sin número) y los mapea
+- **Funciones auxiliares:** Usar `obtener_antenas()` y `obtener_odus()` para leer datos con compatibilidad hacia atrás
+
+### 3. Generación de PDF
+- **Formato:** Letter (8.5 x 11 pulgadas)
+- **Total de páginas:** 34 páginas fijas
+- **Coordenadas:** Usar centímetros (cm) para posicionamiento
+- **Plantillas:** Cada página usa una imagen de fondo (r1.jpg - r34.jpg)
+
+### 4. Imágenes
+- **Plantillas locales:** r1.jpg - r34.jpg (deben existir)
+- **Imágenes remotas:** Descargadas desde URLs en Firestore
+- **Temporal:** Las imágenes remotas se descargan, insertan y eliminan
+- **Validación:** Verificar que URLs comienzan con "http"
+
+### 5. Dependencias
+- `firebase-admin`: Para conexión a Firestore
+- `reportlab`: Para generación de PDFs
+- `Pillow (PIL)`: Para procesamiento de imágenes
+- `requests`: Para descarga de imágenes remotas
+
+### 6. Convenciones de Código
+- **Funciones:** Usar nombres descriptivos en español (mantener consistencia)
+- **Variables:** Nombres descriptivos que reflejen su propósito
+- **Manejo de errores:** Usar try/except con mensajes informativos
+- **Imports:** Agrupar por: stdlib, terceros, locales
+
+### 7. Seguridad
+- **NUNCA** commitear `firebase-key.json`
+- Verificar que `.gitignore` incluye archivos sensibles
+- No hardcodear credenciales en el código
+
+### 8. Flujo de Datos
+1. Inicializar Firestore desde `firebase_config.py`
+2. Obtener documento por ID desde colección `reportesEnlacesEricssonTigo`
+3. Leer `cantidadAntenas` y `cantidadOdus` de la raíz (default: 1 si no existen)
+4. Extraer datos de subdocumentos anidados
+5. Usar `obtener_antenas()` y `obtener_odus()` para leer datos dinámicos con compatibilidad hacia atrás
+6. Generar PDF página por página usando plantillas
+7. Insertar textos y imágenes remotas en posiciones específicas
+8. Renderizar múltiples antenas/ODUs según las cantidades leídas
+9. Guardar PDF final
+
+### 9. Patrones a Mantener
+- **Inicialización Firebase:** Usar patrón singleton (verificar `firebase_admin._apps`)
+- **Inserción de imágenes:** Usar función `insertar_imagen_remota()` para todas las imágenes remotas
+- **Manejo de plantillas:** Verificar existencia antes de usar con `os.path.exists()`
+
+### 10. Errores Comunes a Evitar
+- No asumir que las imágenes de plantilla existen (siempre verificar)
+- No asumir que las URLs en Firestore son válidas (validar con `startswith("http")`)
+- No olvidar llamar `c.showPage()` después de cada página
+- No olvidar llamar `c.save()` al final
+
+### 11. Modificaciones Futuras
+- Al agregar nuevas páginas, seguir el patrón existente:
+  1. Cargar plantilla (rX.jpg)
+  2. Insertar textos en encabezado
+  3. Insertar imágenes remotas desde Firestore
+  4. Llamar `c.showPage()`
+- Mantener la numeración secuencial de plantillas
+- Documentar cambios en estructura de datos de Firestore
+
+### 12. Testing y Debugging
+- Usar `export.py` para exportar documentos de Firestore a JSON
+- Verificar estructura de datos antes de generar PDF
+- Revisar logs de errores para URLs de imágenes fallidas
+
+### 13. Mantenimiento
+- Las plantillas (r1.jpg - r34.jpg) son críticas - no eliminar
+- Mantener sincronización entre estructura de Firestore y código
+- Documentar cambios en estructura de datos
+
+### 14. Dirección del Proyecto
+- **Propósito:** Generar reportes técnicos estandarizados desde Firebase
+- **Formato:** PDF de 34 páginas con plantillas predefinidas
+- **Datos:** Dinámicos desde Firestore, imágenes desde URLs
+- **Salida:** Archivos PDF nombrados como `reporte_ericsson_{document_id}.pdf`
+
+## Comandos Importantes
+
+```bash
+# Ejecutar generación de reportes
+python main.py
+
+# Exportar documento a JSON (debugging)
+python export.py
+
+# Instalar dependencias
+pip install firebase-admin reportlab Pillow requests google-cloud-firestore
+```
+
+## Cambios Recientes - Estructura Dinámica
+
+### Nueva Estructura de Antenas y ODUs (2025)
+- **Campos nuevos en raíz:** `cantidadAntenas` (1-4), `cantidadOdus` (1-8)
+- **Campos numerados:** Antenas y ODUs ahora usan numeración (ej: `fijacionAntena1`, `ConexionOdu1`)
+- **Compatibilidad hacia atrás:** El sistema detecta automáticamente documentos antiguos
+- **Funciones auxiliares:** `obtener_antenas()` y `obtener_odus()` manejan la lógica de compatibilidad
+- **Mapeo automático:** Campos antiguos se mapean a nuevos (ej: `conexionOdu` → `ConexionOdu1`)
+
+### Reglas para Modificaciones Futuras
+- **SIEMPRE** usar `obtener_antenas()` y `obtener_odus()` en lugar de acceder directamente a campos
+- **SIEMPRE** leer `cantidadAntenas` y `cantidadOdus` al inicio de la función principal
+- **NUNCA** asumir que solo existe 1 antena o 1 ODU
+- **MANTENER** compatibilidad hacia atrás con documentos antiguos
+- **VALIDAR** rangos: cantidadAntenas (1-4), cantidadOdus (1-8)
+
+## Notas para AI Assistant
+
+- Este proyecto es específico para reportes de Ericsson Tigo
+- La estructura de 34 páginas es fija y debe mantenerse
+- Las coordenadas en centímetros son precisas y no deben cambiarse sin razón
+- Las plantillas de imagen son parte integral del diseño
+- El proyecto depende críticamente de la estructura de datos en Firestore
+- **NUEVO:** Mantener compatibilidad con estructura antigua Y nueva de Firestore
+- **NUEVO:** Usar funciones auxiliares para leer antenas/ODUs dinámicamente
+
+## Archivos a NO Modificar Sin Razón
+
+- Estructura de páginas (34 páginas fijas)
+- Coordenadas de posicionamiento (a menos que se cambien las plantillas)
+- Nombre de la colección de Firestore (`reportesEnlacesEricssonTigo`)
+- Formato de salida del PDF (letter size)
+
