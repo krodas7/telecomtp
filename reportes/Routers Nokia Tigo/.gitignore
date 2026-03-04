@@ -1,0 +1,61 @@
+# Credenciales de Firebase
+firebase-credentials.json
+*-firebase-adminsdk-*.json
+
+# PDFs generados
+reporte_*.pdf
+test_*.pdf
+
+# Archivos JSON descargados
+reporte_*.json
+
+# Carpetas de debug
+imagenes_debug_*/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# PyInstaller
+*.spec
+build/
+dist/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Sistema operativo
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Archivos temporales
+temp_*.jpg
+*.tmp
+
+
