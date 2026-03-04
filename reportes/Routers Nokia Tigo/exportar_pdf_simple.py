@@ -8,11 +8,6 @@ import sys
 import os
 from exportar_reportes import generar_pdf_routers_tigo
 
-
-def _get_templates_base_dir():
-    base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
-    return os.path.join(base_dir, "reportes_templates", "routers_nokia")
-
 def exportar_por_id(doc_id=None, nombre_salida=None):
     """Exportar PDF por ID de documento"""
     
@@ -35,15 +30,28 @@ def exportar_por_id(doc_id=None, nombre_salida=None):
     print(f"📄 Archivo de salida: {nombre_salida}")
     print("⏳ Generando PDF...\n")
     
-    # Directorios base
+    # Obtener directorio raíz del script (donde está firebase-credentials.json)
     script_dir = os.path.dirname(os.path.abspath(__file__))
     dir_actual = os.getcwd()
-    templates_dir = _get_templates_base_dir()
-    archivo_completo = os.path.join(dir_actual, nombre_salida)
+    
+    # Cambiar al directorio raíz para que encuentre las credenciales
+    os.chdir(script_dir)
+    
+    # Cambiar al directorio de plantillas si existe
+    plantillas_dir = os.path.join(script_dir, 'plantillas')
+    
+    if os.path.exists(plantillas_dir):
+        os.chdir(plantillas_dir)
+        archivo_completo = os.path.join('..', nombre_salida)
+    else:
+        archivo_completo = os.path.join(script_dir, nombre_salida)
     
     try:
+        # Cambiar temporalmente al directorio raíz para cargar credenciales
+        os.chdir(script_dir)
+        
         # Generar PDF
-        generar_pdf_routers_tigo(doc_id, archivo_completo, templates_dir=templates_dir)
+        generar_pdf_routers_tigo(doc_id, archivo_completo)
         
         print(f"\n✅ ¡PDF generado exitosamente!")
         print(f"📂 Ubicación: {os.path.abspath(archivo_completo)}\n")
